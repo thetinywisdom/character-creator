@@ -135,43 +135,118 @@ export function createTaperMesh(radiusTop, radiusBottom, length, material) {
   return shade(mesh, 'cylinder');
 }
 
+/** Quarter-circle samples on each corner of a chest or pelvis block. */
+export const BLOCK_BEVEL_SEGMENTS = 2;
+
 /**
- * Block that can taper in both width and depth.
+ * Points around a rounded rectangle, CCW when viewed from above.
+ * Each corner is a quarter circle of `segments` straight cuts.
+ */
+function roundedRectLoop(hx, hz, radius, segments) {
+  const c = Math.min(radius, hx * 0.999, hz * 0.999);
+  const corners = [
+    { cx: hx - c, cz: hz - c, a0: 0 },
+    { cx: -(hx - c), cz: hz - c, a0: Math.PI / 2 },
+    { cx: -(hx - c), cz: -(hz - c), a0: Math.PI },
+    { cx: hx - c, cz: -(hz - c), a0: (Math.PI * 3) / 2 },
+  ];
+  const pts = [];
+  for (const corner of corners) {
+    for (let k = 0; k <= segments; k += 1) {
+      const a = corner.a0 + (k / segments) * (Math.PI / 2);
+      const nx = Math.cos(a);
+      const nz = Math.sin(a);
+      pts.push({ x: corner.cx + c * nx, z: corner.cz + c * nz, nx, nz });
+    }
+  }
+  return pts;
+}
+
+function bevelRadius(minSpan, height) {
+  const h = Math.max(height, 1e-4);
+  let r = Math.min(minSpan * 0.14, h * 0.09);
+  r = Math.min(r, minSpan * 0.22, h * 0.2);
+  if (!(r > 1e-4)) r = Math.min(minSpan, h) * 0.08;
+  return r;
+}
+
+/**
+ * Tapered block with a small roundover on every edge.
  * Bottom sits on y=0, top on y=height. +Z is the front.
+ * Two bevel segments trace a quarter circle; vertex normals follow that arc
+ * so the edge shades as a rounded wooden corner. The flat faces stay flat.
  */
 export function createFrustumGeometry(topWidth, bottomWidth, height, topDepth, bottomDepth) {
-  const tw = topWidth / 2;
-  const bw = bottomWidth / 2;
-  const td = topDepth / 2;
-  const bd = bottomDepth / 2;
-  const h = height;
-  const positions = new Float32Array([
-    -tw, h, td,
-    tw, h, td,
-    tw, h, -td,
-    -tw, h, -td,
-    -bw, 0, bd,
-    bw, 0, bd,
-    bw, 0, -bd,
-    -bw, 0, -bd,
-  ]);
-  const indices = [
-    0, 1, 2, 0, 2, 3,
-    4, 7, 6, 4, 6, 5,
-    4, 5, 1, 4, 1, 0,
-    6, 7, 3, 6, 3, 2,
-    1, 5, 6, 1, 6, 2,
-    0, 3, 7, 0, 7, 4,
-  ];
+  const S = BLOCK_BEVEL_SEGMENTS;
+  const hw0 = bottomWidth / 2;
+  const hw1 = topWidth / 2;
+  const hd0 = bottomDepth / 2;
+  const hd1 = topDepth / 2;
+  const h = Math.max(height, 1e-4);
+  const minSpan = Math.min(topWidth, bottomWidth, topDepth, bottomDepth);
+  const r = bevelRadius(minSpan, h);
+  const rings = [];
+  for (let i = 0; i <= S; i += 1) {
+    const theta = (i / S) * (Math.PI / 2);
+    rings.push({
+      y: r * (1 - Math.cos(theta)),
+      inset: r * (1 - Math.sin(theta)),
+      ny: -Math.cos(theta),
+      nh: Math.sin(theta),
+    });
+  }
+  for (let i = 0; i <= S; i += 1) {
+    const theta = (i / S) * (Math.PI / 2);
+    rings.push({
+      y: (h - r) + r * Math.sin(theta),
+      inset: r * (1 - Math.cos(theta)),
+      ny: Math.sin(theta),
+      nh: Math.cos(theta),
+    });
+  }
+
+  const positions = [];
+  const normals = [];
+  for (const ring of rings) {
+    const wN = hw0 + (hw1 - hw0) * (ring.y / h);
+    const dN = hd0 + (hd1 - hd0) * (ring.y / h);
+    const hx = Math.max(wN - ring.inset, r);
+    const hz = Math.max(dN - ring.inset, r);
+    for (const p of roundedRectLoop(hx, hz, r, S)) {
+      positions.push(p.x, ring.y, p.z);
+      normals.push(p.nx * ring.nh, ring.ny, p.nz * ring.nh);
+    }
+  }
+
+  const P = 4 * (S + 1);
+  const indices = [];
+  for (let ring = 0; ring < rings.length - 1; ring += 1) {
+    const base = ring * P;
+    for (let k = 0; k < P; k += 1) {
+      const i = base + k;
+      const j = base + ((k + 1) % P);
+      const iu = i + P;
+      const ju = j + P;
+      indices.push(iu, ju, j, iu, j, i);
+    }
+  }
+  const top = (rings.length - 1) * P;
+  for (let k = 1; k < P - 1; k += 1) {
+    indices.push(0, k, k + 1);
+    indices.push(top, top + k + 1, top + k);
+  }
+
   const geo = new BufferGeometry();
   geo.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geo.setAttribute('normal', new Float32BufferAttribute(normals, 3));
   geo.setIndex(new Uint16BufferAttribute(indices, 1));
-  geo.computeVertexNormals();
   geo.userData.topWidth = topWidth;
   geo.userData.bottomWidth = bottomWidth;
   geo.userData.topDepth = topDepth;
   geo.userData.bottomDepth = bottomDepth;
   geo.userData.height = height;
+  geo.userData.bevelSegments = S;
+  geo.userData.bevelRadius = r;
   return geo;
 }
 

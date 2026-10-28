@@ -124,10 +124,26 @@ describe('createBody', () => {
     assert.equal(elbow.geometry.parameters.heightSegments, 16);
     assert.equal(elbow.material.flatShading, false);
     assert.equal(upper.material.flatShading, true);
-    assert.equal(chest.material.flatShading, true);
+    assert.equal(chest.material.flatShading, false);
+    assert.equal(pelvis.material.flatShading, false);
     assert.equal(head.material, elbow.material);
+    assert.equal(chest.material, elbow.material);
     assert.equal(foot.material, elbow.material);
-    assert.equal(upper.material, chest.material);
+    assert.equal(upper.material.flatShading, true);
+    assert.notEqual(upper.material, chest.material);
+    assert.equal(chest.geometry.userData.bevelSegments, 2);
+    assert.ok(chest.geometry.userData.bevelRadius > 0.008 && chest.geometry.userData.bevelRadius < 0.04);
+    assert.ok(chest.geometry.getAttribute('position').count < 120);
+    let blended = 0;
+    const chestN = chest.geometry.getAttribute('normal');
+    for (let i = 0; i < chestN.count; i += 1) {
+      const ax = Math.abs(chestN.getX(i));
+      const ay = Math.abs(chestN.getY(i));
+      const az = Math.abs(chestN.getZ(i));
+      if (ax > 0.2 && ay > 0.2) blended += 1;
+      if (az > 0.2 && ay > 0.2) blended += 1;
+    }
+    assert.ok(blended > 8, 'bevel normals tilt between the face and the side');
 
     assert.equal(upper.geometry.parameters.radiusTop, shoulder.geometry.parameters.radius);
     assert.equal(upper.geometry.parameters.radiusBottom, elbow.geometry.parameters.radius);
@@ -188,8 +204,8 @@ describe('createBody', () => {
     assert.ok(hand.rotation.z > 0.1, 'left paddle turns inward');
     assert.ok(findMesh(body.root, 'handRMesh').rotation.z < -0.1);
 
-    assert.equal(stats.vertices, 6595);
-    assert.equal(stats.triangles, 10984);
+    assert.equal(stats.vertices, 6723);
+    assert.equal(stats.triangles, 11240);
   });
 
   it('plants the feet, fits the crown to the height, and keeps the neck short', () => {

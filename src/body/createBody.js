@@ -72,7 +72,7 @@ function layoutBody(root, pelvis, joints, spec, flat, smooth, markers) {
     spec.pelvisMeshHeight,
     spec.pelvisTopDepth,
     spec.pelvisBottomDepth,
-    flat,
+    smooth,
   );
   pelvisMesh.name = 'pelvisMesh';
   pelvisMesh.position.set(0, spec.pelvisMeshY, 0);
@@ -95,7 +95,7 @@ function layoutBody(root, pelvis, joints, spec, flat, smooth, markers) {
     spec.chestMeshHeight,
     spec.chestTopDepth,
     spec.chestBottomDepth,
-    flat,
+    smooth,
   );
   chest.name = 'chestMesh';
   chest.position.y = spec.chestMeshY;
