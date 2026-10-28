@@ -27,18 +27,26 @@ export const METRICS = {
 };
 
 const matCache = new Map();
-export function mat(color, double = false) {
-  const key = color + (double ? 'd' : '');
+export function mat(color, double = false, bias = 0) {
+  const key = color + (double ? 'd' : '') + (bias || '');
   if (!matCache.has(key)) {
-    matCache.set(key, new THREE.MeshLambertMaterial({
+    const m = new THREE.MeshLambertMaterial({
       color, flatShading: true, side: double ? THREE.DoubleSide : THREE.FrontSide,
-    }));
+    });
+    // Outer shells (shirt, sleeves, hair) draw in front of the skin they wrap,
+    // so a shared edge does not flicker.
+    if (bias) {
+      m.polygonOffset = true;
+      m.polygonOffsetFactor = bias;
+      m.polygonOffsetUnits = bias;
+    }
+    matCache.set(key, m);
   }
   return matCache.get(key);
 }
 
-export function mesh(geo, color, parent, { double = false, pos, rot, scale } = {}) {
-  const m = new THREE.Mesh(geo, mat(color, double));
+export function mesh(geo, color, parent, { double = false, pos, rot, scale, bias = 0 } = {}) {
+  const m = new THREE.Mesh(geo, mat(color, double, bias));
   if (pos) m.position.set(...pos);
   if (rot) m.rotation.set(...rot);
   if (scale) m.scale.set(...scale);

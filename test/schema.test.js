@@ -90,7 +90,7 @@ describe('migrate', () => {
     expect(d.v).toBe(2);
     expect(d.name).toBe('TEST PERSON NAME!!'.slice(0, 18));
     expect(d.body).toMatchObject({ base: 'woman', type: 'fat', height: 1.15, shoulder: 0, belly: 0, hip: 0, torso: 'normal' });
-    expect(d.body.skin).toBe(PALETTE.npcSkin);
+    expect(d.body.skin).toBe(PALETTE.peach);
     expect(d.head.hair.style).toBe('longStraight');
     expect(d.head.hair.color).toBe('#FF5491');
     expect(d.head.hair.highlight).toBe(PALETTE.npcLine);
@@ -118,7 +118,7 @@ describe('migrate', () => {
 
   it('round-trips the iso-city man and woman presets', () => {
     const man = {
-      v: 1, name: 'NEW GUY', gender: 'man', body: 'average', height: 1, skin: PALETTE.npcSkin,
+      v: 1, name: 'NEW GUY', gender: 'man', body: 'average', height: 1, skin: PALETTE.peach,
       hair: 'curtains', hairColor: PALETTE.black, hat: 'none', hatColor: COMIC.blues[1],
       top: 'tee', topColor: COMIC.blues[1], innerColor: PALETTE.white,
       bottom: 'pants', bottomColor: COMIC.blues[0], shoes: 'sneakers', shoeColor: PALETTE.white,

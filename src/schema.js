@@ -44,7 +44,7 @@ export function defaults(base = 'man') {
       base: w ? 'woman' : 'man',
       type: 'average',
       height: w ? 0.96 : 1,
-      skin: PALETTE.npcSkin,
+      skin: PALETTE.peach,
       shoulder: 0,
       belly: 0,
       hip: 0,

@@ -64,7 +64,11 @@ function buildCharacter(input) {
   for (const slot of ORDER) {
     const { id, opts } = readSlot(def, slot);
     const part = getPart(slot, id);
-    if (part) part.build(ctx, opts);
+    if (!part) continue;
+    const seen = new Set();
+    ctx.P.root.traverse((o) => seen.add(o));
+    part.build(ctx, opts);
+    ctx.P.root.traverse((o) => { if (!seen.has(o)) o.userData.slot = slot; });
   }
 
   const ch = new Character(P, cfg);

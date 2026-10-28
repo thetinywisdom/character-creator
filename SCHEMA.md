@@ -27,7 +27,7 @@ Slots follow this tree. Each slot is a registered part (`registerPart` / `getPar
 | `animation.dance` | string | | robot, chicken, disco, sprinkler, flail, hula, flex, mbappe |
 | `animation.walkStyle` | string | | normal |
 
-`shoulder`, `belly`, and `hip` are offsets on top of the body type. **0 matches iso-city.** Colours are Comic palette hex strings (`COLORS`, 30 swatches) plus the creator skin list. Hair `highlight` defaults to the npc line colour (`#5B6A7B`), which is what iso-city used for every accent.
+`shoulder`, `belly`, and `hip` are offsets on top of the body type. **0 matches iso-city.** Colours are Comic palette hex strings (`COLORS`, 30 swatches) plus the creator skin list. The default skin is peach (`#F1CDC3`). iso-city's creator default was the NPC blue-grey (`#B6C2CA`); that swatch is still valid, and the toon ramp shades it with the skin colours instead of near-white. Hair `highlight` defaults to the npc line colour (`#5B6A7B`), which is what iso-city used for every accent.
 
 Held items in v1 were in the left hand. `hands.right` exists so a later part can put something there; migrated characters keep it `none`.
 
@@ -43,7 +43,7 @@ Held items in v1 were in the left hand. `hands.right` exists so a later part can
     "base": "man",
     "type": "average",
     "height": 1,
-    "skin": "#B6C2CA",
+    "skin": "#F1CDC3",
     "shoulder": 0,
     "belly": 0,
     "hip": 0,

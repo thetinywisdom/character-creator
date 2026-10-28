@@ -115,7 +115,10 @@ export const RAMPS = {
   '#FFF3C1': ['#FFE166', '#FFCC3F'], '#FCF9EB': ['#FFF3C1', '#FFF3C1'],
 };
 // Off-palette colours used by the character module, mapped onto palette ramps.
-export const ALIASES = { '#B6C2CA': ['#DBF5FE', '#B0E9FF', '#B0E9FF'], '#ED612B': ['#ED8F02', '#93616B', '#93616B'],
+// #B6C2CA is the NPC blue-grey. The old ramp lit it as #DBF5FE (near white),
+// so a close-up face was blank. The Comic palette has no cool grey at that
+// lightness — the nearest swatch is a green — so this uses the skin ramp.
+export const ALIASES = { '#B6C2CA': ['#F1CDC3', '#DF9E89', '#93616B'], '#ED612B': ['#ED8F02', '#93616B', '#93616B'],
   '#4DBA5A': ['#4DBA5A', '#1F6B35', '#1F6B35'], '#1F6B35': ['#1F6B35', '#194A4C', '#194A4C'] };   // prop-only greens (see PROP_GREENS)
 
 const MATCH = [], OUT0 = [], OUT1 = [], OUT2 = [];

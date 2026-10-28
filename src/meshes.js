@@ -7,6 +7,61 @@ import {
   HEAD, HEAD_Z, TORSO, TORSO_Z, THIGH, SHIN, UPPER, FORE, LAYER_TOPS,
 } from './geom.js';
 
+function headRadius(y) {
+  for (let i = 0; i < HEAD.length - 1; i++) {
+    const [r0, a] = HEAD[i], [r1, b] = HEAD[i + 1];
+    if (y >= a && y <= b) return r0 + (r1 - r0) * ((y - a) / (b - a || 1));
+  }
+  return y < HEAD[0][1] ? HEAD[0][0] : HEAD[HEAD.length - 1][0];
+}
+
+/** Slide a hair piece outward, as a whole, until its deepest point clears the skull.
+ *  Per-vertex scaling flung near-axis verts across the face. */
+function seatHair(hc) {
+  const inv = new THREE.Matrix4();
+  const back = new THREE.Matrix4();
+  hc.updateWorldMatrix(true, true);
+  hc.traverse((mesh) => {
+    if (!mesh.isMesh) return;
+    if (!mesh.geometry.boundingSphere) mesh.geometry.computeBoundingSphere();
+    // Sideburns and finger-scale bits are placed by hand. Sliding them makes them float.
+    if (mesh.geometry.boundingSphere.radius < 0.034) return;
+    const pos = mesh.geometry.attributes.position;
+    const toHc = inv.copy(hc.matrixWorld).invert().multiply(mesh.matrixWorld);
+    back.copy(toHc).invert();
+    const verts = [];
+    const mid = new THREE.Vector3();
+    let worst = 0;
+    let counted = 0;
+    for (let i = 0; i < pos.count; i++) {
+      const p = new THREE.Vector3().fromBufferAttribute(pos, i).applyMatrix4(toHc);
+      verts.push(p);
+      if (p.y < -0.16 || p.y > 0.22) continue;
+      const r = headRadius(p.y);
+      const er = Math.hypot(p.x, p.z / HEAD_Z);
+      worst = Math.max(worst, r + 0.012 - er);
+      mid.add(p);
+      counted++;
+    }
+    if (worst < 0.004 || !counted) return;
+    mid.multiplyScalar(1 / counted);
+    const er = Math.hypot(mid.x, mid.z / HEAD_Z);
+    const shift = Math.min(worst, 0.08);
+    // Bangs sit on the forehead. A radial push sends them down over the eyes.
+    const out = (mid.z > 0.05 && mid.y < 0.13)
+      ? new THREE.Vector3(Math.sign(mid.x || 1) * shift * 0.2, shift, shift * 0.05)
+      : er < 0.04
+        ? new THREE.Vector3(0, shift, 0)
+        : new THREE.Vector3(mid.x / er, 0, (mid.z / HEAD_Z) / er * HEAD_Z).multiplyScalar(shift);
+    for (let i = 0; i < verts.length; i++) {
+      verts[i].add(out).applyMatrix4(back);
+      pos.setXYZ(i, verts[i].x, verts[i].y, verts[i].z);
+    }
+    pos.needsUpdate = true;
+    mesh.geometry.computeVertexNormals();
+  });
+}
+
 export function buildHair(hc, style, color, accent, rnd) {
   const D = true; // hair is double-sided (open lathes)
   const cap = (hairline = 0.05, grow = 1.09, segs = 8) =>
@@ -16,7 +71,8 @@ export function buildHair(hc, style, color, accent, rnd) {
   const blob = (r, pos, scale, rot, detail = 0, c = color) =>
     mesh(new THREE.IcosahedronGeometry(r, detail), c, hc, { pos, scale, rot });
   const sideburns = () => {
-    for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(0.014, 0.07, 0.03), color, hc, { pos: [sx * 0.108, 0.035, 0.035] });
+    // High on the temple. The old boxes sat inside the cheek and read as cuts.
+    for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(0.014, 0.045, 0.016), color, hc, { pos: [sx * 0.102, 0.072, 0.04] });
   };
   // outward-pointing spikes / curls placed on the cap surface
   const onCap = (n, fn, front = 0.6) => {
@@ -164,6 +220,7 @@ export function buildHair(hc, style, color, accent, rnd) {
     }
     default: break;
   }
+  seatHair(hc);
 }
 
 export function buildHat(hc, hat, color, accent) {
@@ -191,9 +248,10 @@ export function buildGlasses(hc, color) {
 export function sleeves(P, color, upperLen, foreLen = 0, r = [0.066, 0.06], puff = false) {
   for (const side of ['L', 'R']) {
     const sh = P['arm' + side];
-    mesh(new THREE.SphereGeometry(r[0] + 0.003, 7, 3, 0, Math.PI * 2, 0, Math.PI / 2), color, sh, { scale: [1, 0.8, 1] });
-    mesh(limb(r[0], puff ? r[1] + 0.02 : r[1], upperLen, 7, 0.0), color, sh);
-    if (foreLen) mesh(limb(r[1] - 0.004, r[1] - 0.008, foreLen, 7, 0.01), color, P['elbow' + side]);
+    // A few millimetres proud of the skin, and drawn in front of it.
+    mesh(new THREE.SphereGeometry(r[0] + 0.01, 7, 3, 0, Math.PI * 2, 0, Math.PI / 2), color, sh, { scale: [1, 0.8, 1], bias: -2 });
+    mesh(limb(r[0] + 0.006, (puff ? r[1] + 0.02 : r[1]) + 0.006, upperLen, 7, 0.0), color, sh, { bias: -2 });
+    if (foreLen) mesh(limb(r[1] + 0.002, r[1] - 0.002, foreLen, 7, 0.01), color, P['elbow' + side], { bias: -2 });
   }
 }
 
@@ -201,7 +259,9 @@ export function shell(y0, grow = 1.07, hemFlare = 0.012, close = true) {
   const pr = clip(TORSO, Math.max(y0, 0.9), 1.672, grow);
   if (y0 < 0.9) pr.unshift([0.168 * grow + 0.012, y0]);
   pr[0] = [pr[0][0] + hemFlare, pr[0][1] - 0.01];
-  if (close) pr.unshift([0, pr[0][1] + 0.005]);
+  // A short inward lip, not a disk through the torso. The old disk cut the
+  // waistband and the two surfaces z-fought along the hem.
+  if (close) pr.unshift([Math.min(0.15, pr[0][0] - 0.02), pr[0][1] + 0.008]);
   pr.push([0.055, 1.684]);
   return pr;
 }
@@ -209,31 +269,31 @@ export function shell(y0, grow = 1.07, hemFlare = 0.012, close = true) {
 export function customTop(P, d, T) {
   const c = d.topColor, inner = d.innerColor, top = d.top;
   if (top === 'none') return;
-  if (top === 'tee') { mesh(lathe(shell(0.87, 1.07), 8, TORSO_Z), c, T); sleeves(P, c, 0.25, 0, [0.07, 0.066]); }
+  if (top === 'tee') { mesh(lathe(shell(0.87, 1.07), 8, TORSO_Z), c, T, { bias: -2 }); sleeves(P, c, 0.25, 0, [0.07, 0.066]); }
   else if (top === 'stripetee') {   // Kimata's striped crew-neck tee: body colour + stripes / collar rib / cuffs in the inner colour
-    mesh(lathe(shell(0.87, 1.07), 8, TORSO_Z), c, T);
+    mesh(lathe(shell(0.87, 1.07), 8, TORSO_Z), c, T, { bias: -2 });
     for (const y of [0.96, 1.12, 1.28, 1.44, 1.6]) mesh(lathe(clip(TORSO, y, y + 0.075, 1.085), 8, TORSO_Z), inner, T);
     mesh(lathe(clip(TORSO, 1.655, 1.672, 1.09), 8, TORSO_Z), inner, T, { double: true });
     sleeves(P, c, 0.22, 0, [0.07, 0.066]);
     for (const side of ['L', 'R']) for (const y of [-0.05, -0.16]) mesh(limb(0.0725, 0.071, 0.05, 7, y), inner, P['arm' + side]);
   }
   else if (top === 'shirt') {
-    const prof = shell(0.87, 1.07); mesh(lathe(prof, 8, TORSO_Z), c, T);
+    const prof = shell(0.87, 1.07); mesh(lathe(prof, 8, TORSO_Z), c, T, { bias: -2 });
     frontLine(T, prof, 0.87, 1.64, TORSO_Z, PALETTE.npcLine);
     for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(0.05, 0.035, 0.01), c, T, { pos: [sx * 0.03, 1.69, 0.062], rot: [-0.9, 0, sx * -0.6] });
-    mesh(limb(0.06, 0.06, 0.035, 6, 1.715), c, T); sleeves(P, c, UPPER, 0.09);
+    mesh(limb(0.06, 0.06, 0.035, 6, 1.715), c, T, { bias: -2 }); sleeves(P, c, UPPER, 0.09);
   } else if (top === 'hoodie') {
-    mesh(lathe(shell(0.84, 1.1, 0.0), 8, TORSO_Z), c, T);
-    mesh(lathe(clip(TORSO, 0.84, 0.92, 1.12), 8, TORSO_Z), c, T);
+    mesh(lathe(shell(0.84, 1.1, 0.0), 8, TORSO_Z), c, T, { bias: -2 });
+    mesh(lathe(clip(TORSO, 0.84, 0.92, 1.12), 8, TORSO_Z), c, T, { bias: -2 });
     mesh(lathe([[0.1, 1.6], [0.165, 1.66], [0.15, 1.76], [0.08, 1.8]], 8, 0.95, Math.PI * 0.55, Math.PI * 0.9), c, T, { double: true });
     mesh(new THREE.BoxGeometry(0.2, 0.12, 0.02), c, T, { pos: [0, 1.06, 0.13], rot: [0.08, 0, 0] });
     for (const sx of [-1, 1]) mesh(limb(0.006, 0.006, 0.13, 3), inner, T, { pos: [sx * 0.035, 1.66, 0.14], rot: [0.12, 0, 0] });
     sleeves(P, c, UPPER, FORE - 0.015, [0.072, 0.068]);
   } else if (top === 'sweater') {
-    mesh(lathe(shell(0.86, 1.11, 0.0), 8, TORSO_Z), c, T);
-    mesh(lathe(clip(TORSO, 0.86, 0.93, 1.13), 8, TORSO_Z), c, T);
-    mesh(limb(0.064, 0.064, 0.03, 7, 1.71), c, T); sleeves(P, c, UPPER, FORE - 0.01, [0.075, 0.072]);
-  } else if (top === 'tank') mesh(lathe(shell(0.87, 1.06), 8, TORSO_Z), c, T);
+    mesh(lathe(shell(0.86, 1.11, 0.0), 8, TORSO_Z), c, T, { bias: -2 });
+    mesh(lathe(clip(TORSO, 0.86, 0.93, 1.13), 8, TORSO_Z), c, T, { bias: -2 });
+    mesh(limb(0.064, 0.064, 0.03, 7, 1.71), c, T, { bias: -2 }); sleeves(P, c, UPPER, FORE - 0.01, [0.075, 0.072]);
+  } else if (top === 'tank') mesh(lathe(shell(0.87, 1.06), 8, TORSO_Z), c, T, { bias: -2 });
   else if (top === 'blazer' || top === 'coat' || top === 'cardigan') {
     if (d.bottom !== 'dress') mesh(lathe(shell(0.9, 1.04), 8, TORSO_Z), inner, T);
     const [y0, grow, gap] = top === 'coat' ? [0.62, 1.15, 0.3] : top === 'blazer' ? [0.86, 1.12, 0.33] : [0.83, 1.11, 0.36];
@@ -243,7 +303,7 @@ export function customTop(P, d, T) {
     else for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(0.045, 0.15, 0.012), c, T, { pos: [sx * 0.06, 1.53, 0.145], rot: [0.12, 0, sx * 0.3] });
     sleeves(P, c, UPPER, FORE - 0.02, [0.072, 0.068]);
   } else if (top === 'blouse') {
-    const prof = shell(0.9, 1.07); mesh(lathe(prof, 8, TORSO_Z), c, T);
+    const prof = shell(0.9, 1.07); mesh(lathe(prof, 8, TORSO_Z), c, T, { bias: -2 });
     frontLine(T, prof, 1.45, 1.65, TORSO_Z, inner, 0, 0.012);
     sleeves(P, c, 0.36, 0, [0.07, 0.07], true);
   }
@@ -431,8 +491,9 @@ export function buildHeadShape(P, skin, line) {
   mesh(lathe(HEAD, 8, HEAD_Z), skin, hc);
   const nose = new THREE.ConeGeometry(0.017, 0.045, 4); nose.rotateX(Math.PI / 2 + 0.5);
   mesh(nose, skin, hc, { pos: [0, -0.012, 0.12] });
-  mesh(new THREE.BoxGeometry(0.0045, 0.04, 0.0045), line, hc, { pos: [0.012, -0.006, 0.128], rot: [0.35, 0, 0.15] });
-  mesh(new THREE.BoxGeometry(0.02, 0.0045, 0.0045), line, hc, { pos: [0.006, -0.028, 0.134] });
+  // Sit the nose marks on the wedge. The old positions floated in front of the face.
+  mesh(new THREE.BoxGeometry(0.0045, 0.032, 0.004), line, hc, { pos: [0.01, -0.004, 0.116], rot: [0.35, 0, 0.12] });
+  mesh(new THREE.BoxGeometry(0.016, 0.004, 0.004), line, hc, { pos: [0.004, -0.022, 0.12] });
 }
 
 export function buildEars(P, skin, line, earrings) {
@@ -453,14 +514,17 @@ export function buildArm(P, side, skin, line) {
   const sh = P['arm' + side];
   mesh(new THREE.SphereGeometry(0.05, 6, 4), skin, sh, { scale: [1, 0.85, 0.9] });
   mesh(limb(0.052, 0.045, UPPER, 6), skin, sh);
-  mesh(limb(0.045, 0.036, FORE, 6), skin, P['elbow' + side]);
-  const hg = group(P['wrist' + side]); hg.rotation.y = sx * 0.9;
-  const hand = taperBox(0.04, 0.19, 0.115, { botX: 0.8, botZ: 0.85 });
-  hand.translate(0, -0.085, 0.006);
+  mesh(limb(0.046, 0.038, FORE, 6), skin, P['elbow' + side]);
+  const hg = group(P['wrist' + side]); hg.name = 'hand' + side;
+  // 0.9 swung the paddle off the bone, so the hand floated beside the wrist.
+  // A wider cuff covers the forearm end; the palm still turns a little toward the camera.
+  hg.rotation.y = sx * 0.35;
+  const hand = taperBox(0.088, 0.2, 0.056, { botX: 0.62, botZ: 0.82 });
+  hand.translate(0, -0.052, 0.004);
   mesh(hand, skin, hg);
-  mesh(new THREE.BoxGeometry(0.03, 0.085, 0.032), skin, hg, { pos: [-sx * 0.012, -0.055, 0.062], rot: [0.55, 0, 0] });
-  for (const dz of [-0.02, 0.0, 0.02])
-    mesh(new THREE.BoxGeometry(0.005, 0.075, 0.005), line, hg, { pos: [sx * 0.019, -0.13, dz] });
+  mesh(new THREE.BoxGeometry(0.022, 0.05, 0.022), skin, hg, { pos: [-sx * 0.006, -0.028, 0.03], rot: [0.4, 0, 0] });
+  for (const x of [-0.012, 0, 0.012])
+    mesh(new THREE.BoxGeometry(0.0035, 0.04, 0.0035), line, hg, { pos: [x, -0.12, 0.024] });
 }
 
 export function legSpec(d) {
@@ -477,13 +541,15 @@ export function legSpec(d) {
 export function buildBottomGarment(P, d, T) {
   const c = d.bottomColor;
   P.legSwing = 0.34;
-  if (d.bottom === 'pants') mesh(lathe(clip(TORSO, 0.84, 0.95, 1.09), 8, TORSO_Z), c, T);
-  else if (d.bottom === 'shorts') mesh(lathe(clip(TORSO, 0.84, 0.95, 1.09), 8, TORSO_Z), c, T);
+  // Waistband sits just outside the skin and under the shirt. The old 1.09 band
+  // was wider than the tee, so the hem and the belt cut through each other.
+  if (d.bottom === 'pants') mesh(lathe(clip(TORSO, 0.84, 0.92, 1.03), 8, TORSO_Z), c, T, { bias: -1 });
+  else if (d.bottom === 'shorts') mesh(lathe(clip(TORSO, 0.84, 0.92, 1.03), 8, TORSO_Z), c, T, { bias: -1 });
   else if (d.bottom === 'skirt') {
     mesh(lathe([[0, 1.0], [0.176, 1.0], [0.182, 0.92], [0.206, 0.76], [0.236, 0.57], [0, 0.57]], 10, 0.86), c, T, { double: true });
     P.legSwing = 0.27;
   } else {
-    mesh(lathe(shell(0.98, 1.06), 8, TORSO_Z), c, T);
+    mesh(lathe(shell(0.98, 1.06), 8, TORSO_Z), c, T, { bias: -2 });
     if (!LAYER_TOPS.includes(d.top)) sleeves(P, c, 0.16, 0, [0.068, 0.066]);
     mesh(lathe([[0, 0.99], [0.174, 0.99], [0.182, 0.92], [0.206, 0.76], [0.236, 0.57], [0, 0.57]], 10, 0.86), c, T, { double: true });
     mesh(lathe(clip(TORSO, 0.98, 1.02, 1.08), 8, TORSO_Z), d.accColor, T);

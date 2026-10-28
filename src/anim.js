@@ -546,7 +546,7 @@ export const DANCES = {
     dur: 6.6, blendIn: 0.2, blendOut: 0.35,
     pose(t) {
       const c = (t * 0.9) % 1, ratchet = c < 0.8 ? Math.floor(c / 0.8 * 6) / 6 : 1 - (c - 0.8) / 0.2;
-      return SIL(arm([0.13, 1.86, -0.06], [0.5, 1.82, 0.02], 0.3, 0.2), arm([-0.55, 1.48, 0.42], [-0.45, 1.6, 0.0], 0, 0),
+      return SIL(arm([0.32, 1.7, -0.18], [0.58, 1.68, -0.02], 0.3, 0.2), arm([-0.55, 1.48, 0.42], [-0.45, 1.6, 0.0], 0, 0),
         { dip: 0.08, yaw: -0.7 + 1.4 * ratchet, ty: 0.1, stance: 0.14, head: [0.05, 0.15, 0], fz: [0.08, -0.06] });
     },
   },
@@ -562,8 +562,10 @@ export const DANCES = {
     dur: 6.6, blendIn: 0.2, blendOut: 0.35,
     pose(t) {
       const u = (Math.sin(t * 4.6) + 1) / 2, s = Math.sin(t * 4.6);
-      const R = arm([-0.25 + 0.42 * (1 - u), 0.98 + 1.3 * u, 0.12 + 0.2 * (1 - u)], [-0.45, 1.55, 0.05], 0, 0);
-      return SIL(arm([0.3, 1.05, -0.06], [0.5, 1.25, -0.1], 0, 0.3), R,
+      // Raised wrist stays outside the head; the hip hand stays in front of the ribs.
+      // Bone lengths are unchanged — only the IK targets moved.
+      const R = arm([-0.4 + 0.16 * (1 - u), 1.12 + 1.16 * u, 0.2], [-0.58, 1.72, 0.14], 0, 0);
+      return SIL(arm([0.38, 1.02, 0.2], [0.55, 1.22, 0.12], 0, 0.25), R,
         { dip: 0.06 + 0.04 * Math.abs(s), hx: 0.06 * s, roll: -0.1 * s, ty: -0.25 * s, yaw: 0.15 * s, head: [-0.2 * u + 0.05, -0.3 * u, 0.1 * s], stance: 0.12 });
     },
   },
@@ -571,7 +573,7 @@ export const DANCES = {
     dur: 1.7, blendIn: 0.12, blendOut: 0.3,
     pose(t) {
       const b = Math.abs(Math.sin(t * 7)) * 0.04, f = 0.9 + 0.3 * Math.sin(t * 7);
-      return SIL(arm([0.36, 1.82 + b, 0.04], [0.52, 1.5, -0.02], 0.3, f), arm([-0.36, 1.82 + b, 0.04], [-0.52, 1.5, -0.02], -0.3, f),
+      return SIL(arm([0.44, 1.78 + b, 0.1], [0.58, 1.48, 0.02], 0.3, f), arm([-0.44, 1.78 + b, 0.1], [-0.58, 1.48, 0.02], -0.3, f),
         { lean: -0.12, dip: 0.05 - b, head: [-0.15, 0.2 * Math.sin(t * 3.5), 0], stance: 0.16 });
     },
   },
