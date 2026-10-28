@@ -92,6 +92,170 @@ export function limb(rTop, rBot, len, segs = 6, y0 = 0) {
   return g;
 }
 
+// A bent limb is one tube. Straight parts stay on the bones; a fillet of radius
+// rho replaces the corner, so a straight joint has no crease and a bend reads
+// as an arc. The wrist / ankle stay on the bone. rho is shared by a sleeve and
+// the skin under it so the two centerlines match.
+const _bendBox = new THREE.Box3();
+const _bendV = new THREE.Vector3();
+const MAX_RINGS = 24;
+const MAX_RADIAL = 8;
+
+/**
+ * Tube along -Y of `parent`, bending with `joint` (a child whose rest position
+ * is (0, -dElbow, 0)). Call applyBends after the joint rotates.
+ */
+export function bendTube(root, parent, joint, color, spec) {
+  const radial = spec.radial ?? 6;
+  const posArr = new Float32Array(MAX_RINGS * MAX_RADIAL * 3 + 6);
+  const idxArr = new Uint16Array((MAX_RINGS - 1) * MAX_RADIAL * 6 + MAX_RADIAL * 6);
+  const geo = new THREE.BufferGeometry();
+  const posAttr = new THREE.BufferAttribute(posArr, 3);
+  const idxAttr = new THREE.BufferAttribute(idxArr, 1);
+  geo.setAttribute('position', posAttr);
+  geo.setIndex(idxAttr);
+  geo.boundingSphere = new THREE.Sphere();
+  const m = mesh(geo, color, parent, { bias: spec.bias || 0 });
+  m.name = spec.name || 'bend';
+  m.userData.spec = spec;
+  m.userData.joint = joint;
+  m.userData.radial = radial;
+  m.userData.applyBend = () => fillBend(m);
+  const list = root.userData.bends || (root.userData.bends = []);
+  list.push(m);
+  m.userData.applyBend();
+  return m;
+}
+
+export function applyBends(root) {
+  const list = root?.userData?.bends;
+  if (!list) return;
+  for (let i = 0; i < list.length; i++) list[i].userData.applyBend();
+}
+
+function radiusAt(spec, d) {
+  const { d0, d1, dElbow, r0, rElbow, r1 } = spec;
+  if (dElbow <= d0 + 1e-4 || dElbow >= d1 - 1e-4) {
+    const span = Math.max(d1 - d0, 1e-4);
+    return r0 + (r1 - r0) * ((d - d0) / span);
+  }
+  if (d <= dElbow) return r0 + (rElbow - r0) * ((d - d0) / Math.max(dElbow - d0, 1e-4));
+  return rElbow + (r1 - rElbow) * ((d - dElbow) / Math.max(d1 - dElbow, 1e-4));
+}
+
+function fillBend(m) {
+  const spec = m.userData.spec;
+  const joint = m.userData.joint;
+  const radial = m.userData.radial;
+  const { d0, d1, dElbow, rho, tMax, innerFrac = 0.85 } = spec;
+  const bend = -joint.rotation.x;
+  const sign = bend >= 0 ? 1 : -1;
+  const alpha = Math.min(Math.abs(bend), Math.PI - 0.08);
+  let t = 0;
+  let rhoEff = rho;
+  if (alpha > 1e-4) {
+    const tanH = Math.tan(alpha * 0.5);
+    t = Math.min(tMax, rho * tanH);
+    rhoEff = t / tanH;
+  }
+  const limit = rhoEff * innerFrac;
+  const pivotY = -dElbow;
+  const ds = [];
+  const push = (d) => {
+    const c = Math.max(d0, Math.min(d1, d));
+    if (ds.length && c - ds[ds.length - 1] < 0.008) return;
+    ds.push(c);
+  };
+  push(d0);
+  if (t > 0.004) {
+    const dA = dElbow - t;
+    const dB = dElbow + t;
+    if (dA > d0 + 0.05) push((d0 + dA) * 0.5);
+    const steps = 10;
+    for (let i = 0; i <= steps; i++) push(dA + (dB - dA) * (i / steps));
+    if (d1 > dB + 0.05) push((dB + d1) * 0.5);
+  } else if (d1 > d0 + 0.05) {
+    push((d0 + d1) * 0.5);
+  }
+  push(d1);
+
+  const pos = m.geometry.attributes.position.array;
+  let v = 0;
+  const place = (d, x, zRest) => {
+    const s = dElbow - d;
+    const z0 = zRest * sign;
+    let y;
+    let z;
+    if (t < 1e-4 || s >= t) {
+      y = s;
+      z = z0;
+    } else if (s <= -t) {
+      const c = Math.cos(alpha);
+      const sn = Math.sin(alpha);
+      y = s * c + z0 * sn;
+      z = -s * sn + z0 * c;
+    } else {
+      const zc = z0 > limit ? limit : z0;
+      const phi = ((t - s) / (2 * t)) * alpha;
+      const sp = Math.sin(phi);
+      const cp = Math.cos(phi);
+      y = (t - rhoEff * sp) + zc * sp;
+      z = rhoEff * (1 - cp) + zc * cp;
+    }
+    pos[v++] = x;
+    pos[v++] = pivotY + y;
+    pos[v++] = z * sign;
+  };
+
+  const ringStart = [];
+  for (let i = 0; i < ds.length; i++) {
+    ringStart.push(v / 3);
+    const r = radiusAt(spec, ds[i]);
+    for (let k = 0; k < radial; k++) {
+      const a = (k / radial) * Math.PI * 2;
+      place(ds[i], Math.cos(a) * r, Math.sin(a) * r);
+    }
+  }
+  let topCenter = -1;
+  let botCenter = -1;
+  if (spec.caps !== false) {
+    topCenter = v / 3;
+    place(ds[0], 0, 0);
+    botCenter = v / 3;
+    place(ds[ds.length - 1], 0, 0);
+  }
+  const vertCount = v / 3;
+
+  const idx = m.geometry.index.array;
+  let n = 0;
+  const tri = (a, b, c) => { idx[n++] = a; idx[n++] = b; idx[n++] = c; };
+  for (let i = 0; i < ds.length - 1; i++) {
+    const a0 = ringStart[i];
+    const b0 = ringStart[i + 1];
+    for (let k = 0; k < radial; k++) {
+      const k1 = (k + 1) % radial;
+      tri(a0 + k, a0 + k1, b0 + k);
+      tri(a0 + k1, b0 + k1, b0 + k);
+    }
+  }
+  if (topCenter >= 0) {
+    for (let k = 0; k < radial; k++) {
+      const k1 = (k + 1) % radial;
+      // Caps face out of the tube: +Y at the shoulder end, down the bone at the wrist.
+      tri(topCenter, ringStart[0] + k1, ringStart[0] + k);
+      tri(botCenter, ringStart[ds.length - 1] + k, ringStart[ds.length - 1] + k1);
+    }
+  }
+
+  const geo = m.geometry;
+  geo.attributes.position.needsUpdate = true;
+  geo.index.needsUpdate = true;
+  geo.setDrawRange(0, n);
+  _bendBox.makeEmpty();
+  for (let i = 0; i < vertCount; i++) _bendBox.expandByPoint(_bendV.fromArray(pos, i * 3));
+  _bendBox.getBoundingSphere(geo.boundingSphere);
+}
+
 /** Tapered box (hands / feet): bottom / front verts scaled. */
 export function taperBox(w, h, d, { botX = 1, botZ = 1, frontTopY = 0 } = {}) {
   const g = new THREE.BoxGeometry(w, h, d);

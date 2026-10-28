@@ -3,9 +3,15 @@
 import * as THREE from 'three';
 import { PALETTE, COMIC } from './palette.js';
 import {
-  mesh, group, lathe, clip, limb, taperBox, frontLine, mulberry32,
+  mesh, group, lathe, clip, limb, taperBox, frontLine, bendTube, mulberry32,
   HEAD, HEAD_Z, TORSO, TORSO_Z, THIGH, SHIN, UPPER, FORE, LAYER_TOPS,
 } from './geom.js';
+
+// Fillet radius shared by skin and the sleeve over it, so the cloth follows
+// the same curve and stays outside the arm. tMax keeps the tangent points on
+// the bone, short of the shoulder sphere and the hand.
+const ARM_RHO = 0.11, ARM_TMAX = 0.22;
+const LEG_RHO = 0.125, LEG_TMAX = 0.24;
 
 function headRadius(y) {
   for (let i = 0; i < HEAD.length - 1; i++) {
@@ -250,8 +256,14 @@ export function sleeves(P, color, upperLen, foreLen = 0, r = [0.066, 0.06], puff
     const sh = P['arm' + side];
     // A few millimetres proud of the skin, and drawn in front of it.
     mesh(new THREE.SphereGeometry(r[0] + 0.01, 7, 3, 0, Math.PI * 2, 0, Math.PI / 2), color, sh, { scale: [1, 0.8, 1], bias: -2 });
-    mesh(limb(r[0] + 0.006, (puff ? r[1] + 0.02 : r[1]) + 0.006, upperLen, 7, 0.0), color, sh, { bias: -2 });
-    if (foreLen) mesh(limb(r[1] + 0.002, r[1] - 0.002, foreLen, 7, 0.01), color, P['elbow' + side], { bias: -2 });
+    const rTop = r[0] + 0.006;
+    const rEl = (puff ? r[1] + 0.02 : r[1]) + 0.006;
+    bendTube(P.root, sh, P['elbow' + side], color, {
+      d0: 0, d1: upperLen + foreLen, dElbow: UPPER,
+      r0: rTop, rElbow: rEl, r1: foreLen ? r[1] - 0.002 : rEl,
+      radial: 7, bias: -2, rho: ARM_RHO, tMax: ARM_TMAX, innerFrac: 0.88,
+      caps: false, name: 'sleeve' + side,
+    });
   }
 }
 
@@ -513,8 +525,12 @@ export function buildArm(P, side, skin, line) {
   const sx = side === 'L' ? 1 : -1;
   const sh = P['arm' + side];
   mesh(new THREE.SphereGeometry(0.05, 6, 4), skin, sh, { scale: [1, 0.85, 0.9] });
-  mesh(limb(0.052, 0.045, UPPER, 6), skin, sh);
-  mesh(limb(0.046, 0.038, FORE, 6), skin, P['elbow' + side]);
+  bendTube(P.root, sh, P['elbow' + side], skin, {
+    d0: 0, d1: UPPER + FORE, dElbow: UPPER,
+    r0: 0.052, rElbow: 0.045, r1: 0.038,
+    radial: 6, rho: ARM_RHO, tMax: ARM_TMAX, innerFrac: 0.62,
+    name: 'arm' + side,
+  });
   const hg = group(P['wrist' + side]); hg.name = 'hand' + side;
   // 0.9 swung the paddle off the bone, so the hand floated beside the wrist.
   // A wider cuff covers the forearm end; the palm still turns a little toward the camera.
@@ -564,9 +580,18 @@ export function buildLegLimbs(P, d) {
     const tr = o.thighR || [0.086, 0.082];
     const sr = o.shinR || [0.082, 0.082];
     mesh(new THREE.SphereGeometry(tr[0], 6, 3, 0, Math.PI * 2, 0, Math.PI / 2), o.thigh, hip);
-    mesh(limb(tr[0], tr[1], THIGH, 6), o.thigh, hip);
-    mesh(limb(sr[0], sr[1], SHIN, 6), o.shin, knee);
-    if (o.shorts) mesh(limb(tr[0] + 0.022, tr[0] + 0.016, o.shorts, 7), o.shortsColor, hip);
+    bendTube(P.root, hip, knee, o.thigh, {
+      d0: 0, d1: THIGH + SHIN, dElbow: THIGH,
+      r0: tr[0], rElbow: tr[1], r1: sr[1],
+      radial: 6, rho: LEG_RHO, tMax: LEG_TMAX, innerFrac: 0.7,
+      name: 'leg' + side,
+    });
+    if (o.shorts) bendTube(P.root, hip, knee, o.shortsColor, {
+      d0: 0, d1: o.shorts, dElbow: THIGH,
+      r0: tr[0] + 0.022, rElbow: tr[0] + 0.016, r1: tr[0] + 0.016,
+      radial: 7, bias: -1, rho: LEG_RHO, tMax: LEG_TMAX, innerFrac: 0.9,
+      caps: false, name: 'shorts' + side,
+    });
   }
 }
 

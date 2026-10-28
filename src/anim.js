@@ -1,7 +1,7 @@
 // Procedural walk / run, IK, reactions and the eight creator dances.
 // Pose numbers are copied from iso-city.
 import * as THREE from 'three';
-import { mulberry32, HIP_Y, HIP_X, THIGH, SHIN, SHOULDER_Y, SHOULDER_X, UPPER, FORE } from './geom.js';
+import { mulberry32, applyBends, HIP_Y, HIP_X, THIGH, SHIN, SHOULDER_Y, SHOULDER_X, UPPER, FORE } from './geom.js';
 
 /** Angular rate shared by the hula dance and the idle watermelon hoop. */
 export const HULA_W = Math.PI * 2 * 1.75;
@@ -243,6 +243,8 @@ export class Character {
     P.head.rotation.z = 0;
     P.head.rotation.x = -this.lean * 0.6 + 0.03 * Math.sin(this.t * 0.5) * idle + this.air * (vy > 0 ? -0.1 : 0.12);
     this._actions(D);
+    // Limb meshes fillet around the elbow and knee after every pose, including dances.
+    applyBends(P.root);
   }
 
   // one leg's foot target at leg-phase lp (0 = heel strike), stance first then swing

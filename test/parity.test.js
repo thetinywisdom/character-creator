@@ -4,8 +4,9 @@ import { createCustom, customDefaults, randomCustom, KIMATA_STYLE, CUSTOM } from
 import { createCharacter } from '../src/index.js';
 
 // Mesh shells are no longer bit-identical to iso-city: hair is seated on the
-// skull, hands meet the wrists, and the waistband tucks under the shirt.
-// Those were overlapping in iso-city. The rig contract is the joints.
+// skull, hands meet the wrists, the waistband tucks under the shirt, and
+// elbows and knees are filleted tubes instead of two straight segments.
+// Those were overlapping or creased in iso-city. The rig contract is the joints.
 const JOINTS = ['body', 'torso', 'head', 'headCenter', 'armL', 'armR', 'elbowL', 'elbowR', 'wristL', 'wristR', 'legL', 'legR', 'kneeL', 'kneeR', 'ankleL', 'ankleR'];
 
 function jointSnapshot(ch) {
