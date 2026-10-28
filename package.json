@@ -1,0 +1,36 @@
+{
+  "name": "character-creator",
+  "version": "0.1.0",
+  "description": "Reusable low-poly 3D character creator for web games. Procedural meshes, a part registry, and a versioned JSON format.",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./style": "./src/style/pixel.js",
+    "./palette": "./src/palette.js",
+    "./geom": "./src/geom.js"
+  },
+  "files": [
+    "src",
+    "SCHEMA.md",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "three": "0.169.0",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
