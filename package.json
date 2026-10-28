@@ -1,0 +1,23 @@
+{
+  "name": "character-creator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Low-poly naked base body for a reusable web character creator.",
+  "exports": {
+    ".": "./src/body/index.js"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test test/body.test.js"
+  },
+  "peerDependencies": {
+    "three": ">=0.160.0"
+  },
+  "devDependencies": {
+    "three": "^0.186.1",
+    "vite": "^8.3.5"
+  }
+}

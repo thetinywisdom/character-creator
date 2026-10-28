@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Base body</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <aside id="panel">
+        <header>
+          <p class="eyebrow">Character creator</p>
+          <h1>Base body</h1>
+          <p id="stats" class="stats">Measuring…</p>
+        </header>
+        <div class="modes" role="group" aria-label="Animation">
+          <button type="button" data-mode="idle">Idle</button>
+          <button type="button" data-mode="walk">Walk</button>
+          <button type="button" data-mode="pose">Pose test</button>
+        </div>
+        <label class="check"><input id="wire" type="checkbox" /> Wireframe</label>
+        <label class="check"><input id="turn" type="checkbox" checked /> Turntable</label>
+        <div class="sliders">
+          <label class="slider">
+            <span class="row"><span>Height</span><output id="height-val"></output></span>
+            <input id="height" type="range" min="1.35" max="2.15" step="0.01" />
+          </label>
+          <label class="slider">
+            <span class="row"><span>Shoulder width</span><output id="shoulder-val"></output></span>
+            <input id="shoulder" type="range" min="0.28" max="0.72" step="0.005" />
+          </label>
+          <label class="slider">
+            <span class="row"><span>Hip width</span><output id="hip-val"></output></span>
+            <input id="hip" type="range" min="0.16" max="0.46" step="0.005" />
+          </label>
+          <label class="slider">
+            <span class="row"><span>Limb thickness</span><output id="thick-val"></output></span>
+            <input id="thick" type="range" min="0.65" max="1.7" step="0.01" />
+          </label>
+          <label class="slider skin">
+            <span class="row"><span>Skin</span></span>
+            <input id="skin" type="color" />
+          </label>
+        </div>
+      </aside>
+      <canvas id="view"></canvas>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
