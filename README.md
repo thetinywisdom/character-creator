@@ -8,6 +8,8 @@ The look is the iso-city creator catalogue: 20 hairstyles, 4 hats, 11 tops, 4 bo
 
 ## Run the preview
 
+GitHub Actions publishes the preview to [https://thetinywisdom.github.io/character-creator/](https://thetinywisdom.github.io/character-creator/). A push to `main` or `cursor/character-creator-foundation-4dd4` builds it with Vite (`base` `/character-creator/`) and deploys it through GitHub Pages. The same workflow can be run by hand from the Actions tab. The site appears after the repository owner sets Settings → Pages → Build and deployment → Source to GitHub Actions.
+
 ```bash
 npm install
 npm run dev
