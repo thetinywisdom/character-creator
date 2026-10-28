@@ -90,8 +90,10 @@ wireInput.checked = query.get('wire') === '1';
 turnInput.checked = controls.autoRotate;
 
 function applyWireframe(on) {
-  body.material.wireframe = on;
-  body.material.needsUpdate = true;
+  for (const material of body.materials) {
+    material.wireframe = on;
+    material.needsUpdate = true;
+  }
   body.root.traverse((obj) => {
     if (obj.isMesh) obj.castShadow = !on;
   });

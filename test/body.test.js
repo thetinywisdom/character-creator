@@ -1,168 +1,262 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { Vector3 } from 'three';
-import { POSE_BEND, createBody } from '../src/body/index.js';
+import { JOINT_NAMES, POSE_BEND, createBody } from '../src/body/index.js';
 
-const MESH_NAMES = [
-  'headMesh',
-  'neckMesh',
-  'clavicleMesh',
-  'torsoMesh',
-  'pelvisMesh',
-  'shoulderLMesh',
-  'shoulderRMesh',
-  'upperArmLMesh',
-  'upperArmRMesh',
-  'elbowLMesh',
-  'elbowRMesh',
-  'forearmLMesh',
-  'forearmRMesh',
-  'wristLMesh',
-  'wristRMesh',
-  'handLMesh',
-  'handRMesh',
-  'hipLMesh',
-  'hipRMesh',
-  'thighLMesh',
-  'thighRMesh',
-  'kneeLMesh',
-  'kneeRMesh',
-  'shinLMesh',
-  'shinRMesh',
-  'ankleLMesh',
-  'ankleRMesh',
-  'footLMesh',
-  'footRMesh',
+const EXPECTED_JOINTS = [
+  'neck',
+  'waist',
+  'shoulderL',
+  'shoulderR',
+  'elbowL',
+  'elbowR',
+  'wristL',
+  'wristR',
+  'hipL',
+  'hipR',
+  'kneeL',
+  'kneeR',
+  'ankleL',
+  'ankleR',
 ];
 
-function meshNames(root) {
-  const names = [];
-  root.traverse((obj) => {
-    if (obj.isMesh) names.push(obj.name);
-  });
-  return names.sort();
+function findMesh(root, name) {
+  return root.getObjectByName(name);
 }
 
-function worldDistance(a, b) {
-  const av = new Vector3();
-  const bv = new Vector3();
-  a.getWorldPosition(av);
-  b.getWorldPosition(bv);
-  return av.distanceTo(bv);
+function assertOutward(geo, label) {
+  const pos = geo.attributes.position;
+  const index = geo.index;
+  const centroid = new Vector3();
+  for (let i = 0; i < pos.count; i += 1) {
+    centroid.x += pos.getX(i);
+    centroid.y += pos.getY(i);
+    centroid.z += pos.getZ(i);
+  }
+  centroid.multiplyScalar(1 / pos.count);
+  const a = new Vector3();
+  const b = new Vector3();
+  const c = new Vector3();
+  for (let i = 0; i < index.count; i += 3) {
+    a.fromBufferAttribute(pos, index.getX(i));
+    b.fromBufferAttribute(pos, index.getX(i + 1));
+    c.fromBufferAttribute(pos, index.getX(i + 2));
+    const normal = b.clone().sub(a).cross(c.clone().sub(a));
+    if (normal.lengthSq() < 1e-12) continue;
+    const mid = a.clone().add(b).add(c).multiplyScalar(1 / 3);
+    assert.ok(normal.dot(mid.sub(centroid)) > 0, `${label} face ${i / 3} points inward`);
+  }
 }
 
 describe('createBody', () => {
-  it('returns the public api and a stable joint hierarchy', () => {
+  it('exposes exactly fourteen joints in the mannequin hierarchy', () => {
     const body = createBody();
     assert.equal(typeof body.update, 'function');
     assert.equal(typeof body.setParams, 'function');
     assert.equal(body.root.name, 'root');
-    const { joints } = body;
+    assert.deepEqual([...JOINT_NAMES], EXPECTED_JOINTS);
+    assert.deepEqual(Object.keys(body.joints).sort(), [...EXPECTED_JOINTS].sort());
+    assert.equal(JOINT_NAMES.length, 14);
 
-    assert.equal(joints.head.parent, joints.neck);
-    assert.equal(joints.neck.parent, joints.spine);
-    assert.equal(joints.spine.parent, joints.hips);
-    assert.equal(joints.hips.parent, joints.root);
+    const { joints, pelvis } = body;
+    assert.equal(pelvis.parent, body.root);
+    assert.equal(pelvis.name, 'pelvis');
+    assert.equal(joints.waist.parent, pelvis);
+    assert.equal(joints.neck.parent, joints.waist);
+    assert.equal(findMesh(body.root, 'headMesh').parent, joints.neck);
 
-    assert.equal(joints.clavicle.parent, joints.spine);
-    assert.equal(joints.shoulderL.parent, joints.clavicle);
+    assert.equal(joints.shoulderL.parent, joints.waist);
     assert.equal(joints.elbowL.parent, joints.shoulderL);
     assert.equal(joints.wristL.parent, joints.elbowL);
-    assert.equal(body.root.getObjectByName('handLMesh').parent, joints.wristL);
+    assert.equal(findMesh(body.root, 'handLMesh').parent, joints.wristL);
 
-    assert.equal(joints.hipL.parent, joints.hips);
+    assert.equal(joints.hipL.parent, pelvis);
     assert.equal(joints.kneeL.parent, joints.hipL);
     assert.equal(joints.ankleL.parent, joints.kneeL);
-    assert.equal(body.root.getObjectByName('footLMesh').parent, joints.ankleL);
+    assert.equal(findMesh(body.root, 'footLMesh').parent, joints.ankleL);
 
-    assert.equal(joints.shoulderR.parent, joints.clavicle);
-    assert.equal(joints.hipR.parent, joints.hips);
-    assert.deepEqual(meshNames(body.root), [...MESH_NAMES].sort());
+    assert.equal(joints.shoulderR.parent, joints.waist);
+    assert.equal(joints.hipR.parent, pelvis);
+    assert.equal(findMesh(body.root, 'clavicleMesh'), undefined);
+    assert.equal(findMesh(body.root, 'clavicle'), undefined);
+    assert.equal(body.joints.clavicle, undefined);
+    assert.equal(body.joints.head, undefined);
+    assert.equal(body.joints.spine, undefined);
   });
 
-  it('builds the drawing primitives and keeps joint balls larger than their limbs', () => {
+  it('uses flush smooth spheres and keeps the blocks and paddles low-poly', () => {
     const body = createBody();
     const stats = body.getStats();
-    const resolved = body.getResolved();
+    const spec = body.getResolved();
 
-    assert.equal(stats.roles.ball, 13);
-    assert.equal(stats.roles.cylinder, 10);
-    assert.equal(stats.roles.box, 5);
-    assert.equal(stats.roles.trapezoid, 1);
-    assert.equal(stats.sphereDetail, 1);
+    assert.equal(stats.roles.ball, 14);
+    assert.equal(stats.roles.cylinder, 9);
+    assert.equal(stats.roles.frustum, 2);
+    assert.equal(stats.roles.paddle, 2);
+    assert.equal(stats.roles.foot, 2);
+    assert.equal(stats.roles.head, 1);
+    assert.equal(stats.meshes, 30);
     assert.equal(stats.cylinderSides, 8);
-    assert.ok(stats.vertices > 400 && stats.vertices < 2000);
-    assert.ok(stats.triangles > 400 && stats.triangles < 3000);
+    assert.equal(stats.jointWidth, 24);
+    assert.equal(stats.jointHeight, 16);
 
-    const head = body.root.getObjectByName('headMesh');
-    const clavicle = body.root.getObjectByName('clavicleMesh');
-    const torso = body.root.getObjectByName('torsoMesh');
-    const pelvis = body.root.getObjectByName('pelvisMesh');
-    assert.equal(head.geometry.parameters.detail, 1);
-    assert.equal(clavicle.geometry.parameters.radialSegments, 8);
-    assert.equal(clavicle.geometry.parameters.openEnded, true);
-    assert.equal(torso.userData.role, 'box');
-    assert.equal(pelvis.userData.role, 'trapezoid');
-    assert.notEqual(pelvis.geometry.userData.topWidth, pelvis.geometry.userData.bottomWidth);
+    const elbow = findMesh(body.root, 'elbowLMesh');
+    const upper = findMesh(body.root, 'upperArmLMesh');
+    const forearm = findMesh(body.root, 'forearmLMesh');
+    const shoulder = findMesh(body.root, 'shoulderLMesh');
+    const wrist = findMesh(body.root, 'wristLMesh');
+    const hip = findMesh(body.root, 'hipLMesh');
+    const thigh = findMesh(body.root, 'thighLMesh');
+    const knee = findMesh(body.root, 'kneeLMesh');
+    const shin = findMesh(body.root, 'shinLMesh');
+    const ankle = findMesh(body.root, 'ankleLMesh');
+    const neck = findMesh(body.root, 'neckMesh');
+    const tube = findMesh(body.root, 'neckTube');
+    const waist = findMesh(body.root, 'waistMesh');
+    const chest = findMesh(body.root, 'chestMesh');
+    const pelvis = findMesh(body.root, 'pelvisMesh');
+    const head = findMesh(body.root, 'headMesh');
+    const foot = findMesh(body.root, 'footLMesh');
+    const hand = findMesh(body.root, 'handLMesh');
 
-    for (const [joint, cover] of Object.entries(resolved.cover)) {
-      const circum = joint === 'neck' ? resolved.headRadius : resolved.radii[joint];
-      const inscribed = circum * resolved.inradiusRatio;
-      assert.ok(inscribed > cover * 1.02, `${joint} ball covers its limb`);
+    assert.equal(elbow.geometry.type, 'SphereGeometry');
+    assert.equal(elbow.geometry.parameters.widthSegments, 24);
+    assert.equal(elbow.geometry.parameters.heightSegments, 16);
+    assert.equal(elbow.material.flatShading, false);
+    assert.equal(upper.material.flatShading, true);
+    assert.equal(chest.material.flatShading, true);
+    assert.equal(head.material, elbow.material);
+    assert.equal(foot.material, elbow.material);
+    assert.equal(upper.material, chest.material);
+
+    assert.equal(upper.geometry.parameters.radiusTop, shoulder.geometry.parameters.radius);
+    assert.equal(upper.geometry.parameters.radiusBottom, elbow.geometry.parameters.radius);
+    assert.equal(forearm.geometry.parameters.radiusTop, elbow.geometry.parameters.radius);
+    assert.equal(forearm.geometry.parameters.radiusBottom, wrist.geometry.parameters.radius);
+    assert.equal(thigh.geometry.parameters.radiusTop, hip.geometry.parameters.radius);
+    assert.equal(thigh.geometry.parameters.radiusBottom, knee.geometry.parameters.radius);
+    assert.equal(shin.geometry.parameters.radiusTop, knee.geometry.parameters.radius);
+    assert.equal(shin.geometry.parameters.radiusBottom, ankle.geometry.parameters.radius);
+    assert.equal(tube.geometry.parameters.radiusTop, neck.geometry.parameters.radius);
+    assert.equal(tube.geometry.parameters.radiusBottom, neck.geometry.parameters.radius);
+    assert.equal(tube.geometry.parameters.openEnded, true);
+    assert.equal(tube.geometry.parameters.radialSegments, 8);
+    assert.ok(upper.geometry.parameters.radiusTop > upper.geometry.parameters.radiusBottom);
+
+    const waistD = waist.geometry.parameters.radius * 2;
+    assert.ok(Math.abs(chest.geometry.userData.bottomWidth - waistD) < 1e-6);
+    assert.ok(Math.abs(chest.geometry.userData.bottomDepth - waistD) < 1e-6);
+    assert.ok(Math.abs(pelvis.geometry.userData.topWidth - waistD) < 1e-6);
+    assert.ok(Math.abs(pelvis.geometry.userData.topDepth - waistD) < 1e-6);
+    assert.ok(chest.geometry.userData.topWidth > chest.geometry.userData.bottomWidth * 1.6);
+    assert.ok(pelvis.geometry.userData.bottomWidth > pelvis.geometry.userData.topWidth * 1.15);
+    assert.ok(chest.geometry.userData.topDepth > chest.geometry.userData.bottomDepth);
+
+    const headPos = head.geometry.attributes.position;
+    let maxH = 0;
+    let yAtMax = 0;
+    let minY = Infinity;
+    let socketR = 0;
+    for (let i = 0; i < headPos.count; i += 1) {
+      const x = headPos.getX(i);
+      const y = headPos.getY(i);
+      const z = headPos.getZ(i);
+      const h = Math.hypot(x, z);
+      if (h > maxH) {
+        maxH = h;
+        yAtMax = y;
+      }
+      if (y < minY) {
+        minY = y;
+        socketR = h;
+      }
     }
+    assert.ok(yAtMax > 0, 'egg is wider in the upper half');
+    assert.ok(maxH > spec.headRx * 0.9);
+    assert.ok(spec.headRy > spec.headRx * 1.2);
+    assert.ok(minY > -spec.headRy * 0.9, 'the point of the egg is cut for the neck');
+    assert.ok(Math.abs(socketR - neck.geometry.parameters.radius) < 1e-3);
 
-    const wristIn = resolved.radii.wrist * resolved.inradiusRatio;
-    const hand = body.root.getObjectByName('handLMesh');
-    const hw = hand.geometry.parameters.width / 2;
-    const hh = hand.geometry.parameters.height / 2;
-    const hd = hand.geometry.parameters.depth / 2;
-    const topY = hand.position.y + hh;
-    assert.ok(Math.hypot(hw, topY, hd) < wristIn);
+    assert.equal(hand.userData.role, 'paddle');
+    assert.equal(foot.geometry.type, 'SphereGeometry');
+    assert.ok(foot.scale.z > foot.scale.x && foot.scale.x > foot.scale.y);
+    const handPos = hand.geometry.attributes.position;
+    for (let i = 0; i < 6; i += 1) {
+      const d = Math.hypot(handPos.getX(i), handPos.getY(i), handPos.getZ(i));
+      assert.ok(d < spec.radii.wrist, 'paddle base sits inside the wrist ball');
+    }
+    assert.ok(hand.rotation.z > 0.1, 'left paddle turns inward');
+    assert.ok(findMesh(body.root, 'handRMesh').rotation.z < -0.1);
+
+    assert.equal(stats.vertices, 6595);
+    assert.equal(stats.triangles, 10984);
   });
 
-  it('plants the feet, fits the height, and puts the ankle over the heel', () => {
+  it('plants the feet, fits the crown to the height, and keeps the neck short', () => {
     const body = createBody();
+    const spec = body.getResolved();
+    assert.ok(Math.abs(spec.layout.crownY - spec.height) < 1e-6);
+    assert.ok(spec.visibleNeck > 0.035 && spec.visibleNeck < 0.07);
+
     body.update(0, { mode: 'idle', time: 0, freeze: true });
     body.root.updateMatrixWorld(true);
 
-    const resolved = body.getResolved();
-    assert.ok(Math.abs(resolved.layout.crownY - resolved.height) < 1e-6);
+    const head = findMesh(body.root, 'headMesh');
+    const headWorld = new Vector3();
+    head.getWorldPosition(headWorld);
+    assert.ok(Math.abs(headWorld.y + spec.headRy - spec.height) < 1e-3);
 
-    const head = new Vector3();
-    body.joints.head.getWorldPosition(head);
-    assert.ok(Math.abs(head.y + resolved.headRadius - resolved.height) < 1e-3);
+    const neck = new Vector3();
+    body.joints.neck.getWorldPosition(neck);
+    const socketY = headWorld.y + spec.headCut * spec.headRy;
+    assert.ok(socketY - neck.y > 0.03 && socketY - neck.y < 0.07);
 
     for (const name of ['footLHeel', 'footLToe', 'footRHeel', 'footRToe']) {
-      const y = body.root.getObjectByName(name).getWorldPosition(new Vector3()).y;
+      const y = findMesh(body.root, name).getWorldPosition(new Vector3()).y;
       assert.ok(y >= -1e-4, `${name} is not below the ground`);
     }
-    const heel = body.root.getObjectByName('footLHeel').getWorldPosition(new Vector3());
-    const toe = body.root.getObjectByName('footLToe').getWorldPosition(new Vector3());
+    const heel = findMesh(body.root, 'footLHeel').getWorldPosition(new Vector3());
+    const toe = findMesh(body.root, 'footLToe').getWorldPosition(new Vector3());
     assert.ok(Math.abs(Math.min(heel.y, toe.y)) < 1e-3);
     assert.ok(toe.z > heel.z);
-    assert.ok(resolved.footCenterZ > resolved.footLength * 0.15);
+    assert.ok(Math.abs(spec.footHeel) < spec.footToe - spec.footLength * 0.15);
+
+    const shorter = createBody({ height: 1.5 });
+    assert.ok(Math.abs(shorter.getResolved().layout.crownY - 1.5) < 1e-6);
   });
 
-  it('treats shoulder width as the clavicle length and keeps joint objects stable', () => {
+  it('keeps joint objects stable and treats shoulder width as ball-centre distance', () => {
     const body = createBody();
     const elbow = body.joints.elbowL;
     const shoulder = body.joints.shoulderL;
     body.root.updateMatrixWorld(true);
-    const before = worldDistance(body.joints.shoulderL, body.joints.shoulderR);
-    assert.ok(Math.abs(before - body.getResolved().shoulderWidth) < 1e-4);
 
-    body.setParams({ shoulderWidth: 0.62, hipWidth: 0.36, skinColor: '#112233' });
+    const left = new Vector3();
+    const right = new Vector3();
+    body.joints.shoulderL.getWorldPosition(left);
+    body.joints.shoulderR.getWorldPosition(right);
+    assert.ok(Math.abs(left.distanceTo(right) - body.getResolved().shoulderWidth) < 1e-4);
+    assert.ok(left.y > body.joints.waist.getWorldPosition(new Vector3()).y);
+
+    const headGeo = findMesh(body.root, 'headMesh').geometry.uuid;
+    body.setParams({ skinColor: '#112233' });
+    assert.equal(findMesh(body.root, 'headMesh').geometry.uuid, headGeo);
+    assert.equal(findMesh(body.root, 'headMesh').material.color.getHexString(), '112233');
+    assert.equal(findMesh(body.root, 'chestMesh').material.color.getHexString(), '112233');
+
+    body.setParams({ shoulderWidth: 0.55, hipWidth: 0.24 });
     assert.equal(body.joints.elbowL, elbow);
     assert.equal(body.joints.shoulderL, shoulder);
-    assert.equal(body.joints.shoulderL.parent, body.joints.clavicle);
-
-    const clavicle = body.root.getObjectByName('clavicleMesh');
-    assert.ok(Math.abs(clavicle.geometry.parameters.height - 0.62) < 1e-6);
+    assert.equal(body.joints.shoulderL.parent, body.joints.waist);
     body.root.updateMatrixWorld(true);
-    assert.ok(Math.abs(worldDistance(body.joints.shoulderL, body.joints.shoulderR) - 0.62) < 1e-4);
-    assert.ok(Math.abs(worldDistance(body.joints.hipL, body.joints.hipR) - 0.36) < 1e-4);
-    assert.equal(body.root.getObjectByName('headMesh').material.color.getHexString(), '112233');
-    assert.equal(body.getStats().meshes, 29);
+    body.joints.shoulderL.getWorldPosition(left);
+    body.joints.shoulderR.getWorldPosition(right);
+    assert.ok(Math.abs(left.distanceTo(right) - 0.55) < 1e-4);
+    body.joints.hipL.getWorldPosition(left);
+    body.joints.hipR.getWorldPosition(right);
+    assert.ok(Math.abs(left.distanceTo(right) - 0.24) < 1e-4);
+    assert.equal(body.getStats().meshes, 30);
+    assert.equal(findMesh(body.root, 'clavicleMesh'), undefined);
   });
 
   it('bends elbows and knees 120 degrees and walks without blowing up', () => {
@@ -178,6 +272,7 @@ describe('createBody', () => {
     assert.ok(body.joints.shoulderL.rotation.z < 0);
     assert.ok(body.joints.shoulderR.rotation.z > 0);
     assert.ok(body.joints.shoulderL.rotation.x < -0.8);
+    assert.equal(body.joints.wristL.rotation.x, 0);
 
     body.update(0, { mode: 'walk', time: 0.4, freeze: true });
     const knees = Math.abs(body.joints.kneeL.rotation.x) + Math.abs(body.joints.kneeR.rotation.x);
@@ -191,30 +286,16 @@ describe('createBody', () => {
       assert.ok(Number.isFinite(obj.position.x + obj.position.y + obj.position.z));
       assert.ok(Number.isFinite(obj.rotation.x + obj.rotation.y + obj.rotation.z));
     });
+    for (const name of ['footLHeel', 'footLToe', 'footRHeel', 'footRToe']) {
+      const y = findMesh(body.root, name).getWorldPosition(new Vector3()).y;
+      assert.ok(y >= -1e-3, `${name} stays on the ground while walking`);
+    }
   });
 
-  it('winds the pelvis so every face points outward', () => {
+  it('winds the chest, pelvis, and paddles outward', () => {
     const body = createBody();
-    const geo = body.root.getObjectByName('pelvisMesh').geometry;
-    const pos = geo.attributes.position;
-    const index = geo.index;
-    const centroid = new Vector3();
-    for (let i = 0; i < pos.count; i += 1) {
-      centroid.x += pos.getX(i);
-      centroid.y += pos.getY(i);
-      centroid.z += pos.getZ(i);
-    }
-    centroid.multiplyScalar(1 / pos.count);
-    const a = new Vector3();
-    const b = new Vector3();
-    const c = new Vector3();
-    for (let i = 0; i < index.count; i += 3) {
-      a.fromBufferAttribute(pos, index.getX(i));
-      b.fromBufferAttribute(pos, index.getX(i + 1));
-      c.fromBufferAttribute(pos, index.getX(i + 2));
-      const normal = b.clone().sub(a).cross(c.clone().sub(a));
-      const mid = a.clone().add(b).add(c).multiplyScalar(1 / 3);
-      assert.ok(normal.dot(mid.sub(centroid)) > 0, `pelvis face ${i / 3} points inward`);
-    }
+    assertOutward(findMesh(body.root, 'chestMesh').geometry, 'chest');
+    assertOutward(findMesh(body.root, 'pelvisMesh').geometry, 'pelvis');
+    assertOutward(findMesh(body.root, 'handLMesh').geometry, 'hand');
   });
 });

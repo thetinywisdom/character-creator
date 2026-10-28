@@ -1,89 +1,35 @@
 import {
-  BoxGeometry,
   BufferGeometry,
   CylinderGeometry,
   Float32BufferAttribute,
-  IcosahedronGeometry,
   Mesh,
+  SphereGeometry,
   Uint16BufferAttribute,
   Vector3,
 } from 'three';
-import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
-/** Detail-1 icosphere: faceted, but even enough to read as a ball. */
-export const SPHERE_DETAIL = 1;
-
-/** Octagonal limbs. Low, and still reads as round next to the joint balls. */
+/** Open 8-sided limbs. Faceted on purpose; the joint spheres carry the roundness. */
 export const CYLINDER_SIDES = 8;
 
+/** Smooth joint spheres. Width is the silhouette, height the poles. */
+export const JOINT_WIDTH = 24;
+export const JOINT_HEIGHT = 16;
+
+/** Egg head. Enough rings to read as smooth next to the neck sphere. */
+export const HEAD_WIDTH = 20;
+export const HEAD_HEIGHT = 14;
+
+/** Small rounded feet. Smooth-shaded, still only a handful of rings. */
+export const FOOT_WIDTH = 8;
+export const FOOT_HEIGHT = 6;
+
 /**
- * Circumradius / connected-limb radius.
- * The icosphere's inscribed sphere still clears the limb, so a bend never opens a gap.
+ * Horizontal flare of the egg: wider toward the crown, narrower toward the socket.
+ * 0 is a sphere. The reference head is wider in its upper half.
  */
-export const BALL_VISUAL = 1.46;
+export const EGG_FLARE = 0.22;
 
-const _a = new Vector3();
-const _b = new Vector3();
-const _c = new Vector3();
-const _ab = new Vector3();
-const _ac = new Vector3();
-const _n = new Vector3();
-
-let ratioCache = null;
-
-function triangleInradius(pos, ia, ib, ic) {
-  _a.fromBufferAttribute(pos, ia);
-  _b.fromBufferAttribute(pos, ib);
-  _c.fromBufferAttribute(pos, ic);
-  _ab.subVectors(_b, _a);
-  _ac.subVectors(_c, _a);
-  _n.crossVectors(_ab, _ac);
-  const len = _n.length();
-  if (len < 1e-8) return Infinity;
-  return Math.abs(_a.dot(_n)) / len;
-}
-
-/** Min distance from the origin to a face, for a unit-circumradius icosphere. */
-export function sphereInradiusRatio(detail = SPHERE_DETAIL) {
-  if (ratioCache && ratioCache.detail === detail) return ratioCache.ratio;
-  const geo = new IcosahedronGeometry(1, detail);
-  const pos = geo.attributes.position;
-  const index = geo.index;
-  let min = Infinity;
-  if (index) {
-    for (let i = 0; i < index.count; i += 3) {
-      min = Math.min(min, triangleInradius(pos, index.getX(i), index.getX(i + 1), index.getX(i + 2)));
-    }
-  } else {
-    for (let i = 0; i < pos.count; i += 3) {
-      min = Math.min(min, triangleInradius(pos, i, i + 1, i + 2));
-    }
-  }
-  geo.dispose();
-  ratioCache = { detail, ratio: min };
-  return min;
-}
-
-/** Weld the duplicated corners Three leaves on a non-indexed icosphere. */
-function weldedSphere(radius, detail) {
-  const geo = new IcosahedronGeometry(radius, detail);
-  geo.deleteAttribute('uv');
-  geo.deleteAttribute('normal');
-  const welded = mergeVertices(geo, 1e-4);
-  geo.dispose();
-  welded.computeVertexNormals();
-  welded.parameters = { radius, detail };
-  return welded;
-}
-
-export function ballCircumradius(coverRadius, ratio = sphereInradiusRatio()) {
-  const circum = coverRadius * BALL_VISUAL;
-  const inscribed = circum * ratio;
-  if (!(inscribed > coverRadius)) {
-    throw new Error('Joint ball does not cover its limb. Increase BALL_VISUAL or sphere detail.');
-  }
-  return circum;
-}
+const _v = new Vector3();
 
 function shade(mesh, role) {
   mesh.castShadow = true;
@@ -91,51 +37,131 @@ function shade(mesh, role) {
   return mesh;
 }
 
-export function createSphereMesh(radius, material) {
-  const mesh = new Mesh(weldedSphere(radius, SPHERE_DETAIL), material);
+/** Unit-sphere egg profile radius at normalized height y in [-1, 1], before rx. */
+export function eggFlareFactor(yNorm, flare = EGG_FLARE) {
+  const span = Math.sqrt(Math.max(0, 1 - yNorm * yNorm));
+  return (1 + flare * yNorm) * span;
+}
+
+/** Widest horizontal radius of an egg with equatorial scale `rx`. */
+export function eggMaxRadius(rx, flare = EGG_FLARE) {
+  let max = 0;
+  for (let i = 0; i <= 64; i += 1) {
+    const y = -1 + (2 * i) / 64;
+    max = Math.max(max, rx * eggFlareFactor(y, flare));
+  }
+  return max;
+}
+
+export function eggMaxFactor(flare = EGG_FLARE) {
+  return eggMaxRadius(1, flare);
+}
+
+/**
+ * Normalized height of the neck socket: the lower y where the egg is exactly
+ * as wide as the neck. Everything below that point is narrower than the neck,
+ * so the mesh stops there and the cylinder meets a matching ring.
+ */
+export function eggCutNorm(rx, neckRadius, flare = EGG_FLARE) {
+  if (!(rx > 0)) return -0.2;
+  const target = neckRadius / rx;
+  if (target >= eggFlareFactor(0, flare) * 0.98) return -0.12;
+  let lo = -0.995;
+  let hi = 0;
+  for (let i = 0; i < 28; i += 1) {
+    const mid = (lo + hi) / 2;
+    if (eggFlareFactor(mid, flare) < target) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+export function eggProfile(yNorm, rx, flare = EGG_FLARE) {
+  return rx * eggFlareFactor(yNorm, flare);
+}
+
+/**
+ * Tall egg, wider above the middle, open at the bottom on the neck socket.
+ * `ry` is the distance from the centre to the crown.
+ */
+export function createEggGeometry(rx, ry, neckRadius, flare = EGG_FLARE) {
+  const cut = eggCutNorm(rx, neckRadius, flare);
+  const thetaLength = Math.acos(Math.min(0.999, Math.max(-0.999, cut)));
+  const geo = new SphereGeometry(1, HEAD_WIDTH, HEAD_HEIGHT, 0, Math.PI * 2, 0, thetaLength);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i += 1) {
+    _v.fromBufferAttribute(pos, i);
+    const flareScale = 1 + flare * _v.y;
+    pos.setXYZ(i, _v.x * rx * flareScale, _v.y * ry, _v.z * rx * flareScale);
+  }
+  pos.needsUpdate = true;
+  geo.computeVertexNormals();
+  const socketR = eggProfile(cut, rx, flare);
+  geo.userData.rx = rx;
+  geo.userData.ry = ry;
+  geo.userData.cutNorm = cut;
+  geo.userData.socketR = socketR;
+  return geo;
+}
+
+export function createJointMesh(radius, material) {
+  const geo = new SphereGeometry(radius, JOINT_WIDTH, JOINT_HEIGHT);
+  const mesh = new Mesh(geo, material);
   return shade(mesh, 'ball');
 }
 
-/** Open cylinder along Y, centered on the origin. Ends are hidden inside joint balls. */
-export function createCylinderMesh(radius, length, material) {
+export function createEggMesh(rx, ry, neckRadius, material) {
+  const mesh = new Mesh(createEggGeometry(rx, ry, neckRadius), material);
+  return shade(mesh, 'head');
+}
+
+export function createFootMesh(width, height, length, material) {
+  const mesh = new Mesh(new SphereGeometry(1, FOOT_WIDTH, FOOT_HEIGHT), material);
+  mesh.scale.set(width / 2, height / 2, length / 2);
+  return shade(mesh, 'foot');
+}
+
+/**
+ * Open tapered cylinder along Y. radiusTop is the +Y end.
+ * Ends stay open so they disappear into the joint spheres.
+ * An 8-gon's faces sit about 7.6% inside the circle the vertices lie on,
+ * so a flush sphere peeks a couple of millimetres past each flat.
+ */
+export function createTaperMesh(radiusTop, radiusBottom, length, material) {
   const mesh = new Mesh(
-    new CylinderGeometry(radius, radius, length, CYLINDER_SIDES, 1, true),
+    new CylinderGeometry(radiusTop, radiusBottom, Math.max(length, 0.001), CYLINDER_SIDES, 1, true),
     material,
   );
   return shade(mesh, 'cylinder');
 }
 
-export function createBoxMesh(width, height, depth, material) {
-  const mesh = new Mesh(new BoxGeometry(width, height, depth), material);
-  return shade(mesh, 'box');
-}
-
 /**
- * Right prism whose front face is a trapezoid (wider top or bottom).
- * Bottom sits on y=0, top on y=height. Depth is centered on z=0.
+ * Block that can taper in both width and depth.
+ * Bottom sits on y=0, top on y=height. +Z is the front.
  */
-export function createTrapezoidGeometry(topWidth, bottomWidth, height, depth) {
+export function createFrustumGeometry(topWidth, bottomWidth, height, topDepth, bottomDepth) {
   const tw = topWidth / 2;
   const bw = bottomWidth / 2;
-  const d = depth / 2;
+  const td = topDepth / 2;
+  const bd = bottomDepth / 2;
   const h = height;
   const positions = new Float32Array([
-    -tw, h, d,
-    tw, h, d,
-    tw, h, -d,
-    -tw, h, -d,
-    -bw, 0, d,
-    bw, 0, d,
-    bw, 0, -d,
-    -bw, 0, -d,
+    -tw, h, td,
+    tw, h, td,
+    tw, h, -td,
+    -tw, h, -td,
+    -bw, 0, bd,
+    bw, 0, bd,
+    bw, 0, -bd,
+    -bw, 0, -bd,
   ]);
   const indices = [
-    0, 1, 2, 0, 2, 3, // top
-    4, 7, 6, 4, 6, 5, // bottom
-    4, 5, 1, 4, 1, 0, // front
-    6, 7, 3, 6, 3, 2, // back
-    1, 5, 6, 1, 6, 2, // right
-    0, 3, 7, 0, 7, 4, // left
+    0, 1, 2, 0, 2, 3,
+    4, 7, 6, 4, 6, 5,
+    4, 5, 1, 4, 1, 0,
+    6, 7, 3, 6, 3, 2,
+    1, 5, 6, 1, 6, 2,
+    0, 3, 7, 0, 7, 4,
   ];
   const geo = new BufferGeometry();
   geo.setAttribute('position', new Float32BufferAttribute(positions, 3));
@@ -143,24 +169,72 @@ export function createTrapezoidGeometry(topWidth, bottomWidth, height, depth) {
   geo.computeVertexNormals();
   geo.userData.topWidth = topWidth;
   geo.userData.bottomWidth = bottomWidth;
+  geo.userData.topDepth = topDepth;
+  geo.userData.bottomDepth = bottomDepth;
   geo.userData.height = height;
-  geo.userData.depth = depth;
   return geo;
 }
 
-export function createTrapezoidMesh(topWidth, bottomWidth, height, depth, material) {
+export function createFrustumMesh(topWidth, bottomWidth, height, topDepth, bottomDepth, material) {
   const mesh = new Mesh(
-    createTrapezoidGeometry(topWidth, bottomWidth, height, depth),
+    createFrustumGeometry(topWidth, bottomWidth, height, topDepth, bottomDepth),
     material,
   );
-  return shade(mesh, 'trapezoid');
+  return shade(mesh, 'frustum');
+}
+
+/**
+ * Tapered paddle along -Y. Six sides, a small base ring, a palm ring, and a point.
+ * The base ring is meant to sit inside the wrist sphere.
+ */
+export function createPaddleGeometry(length, baseRx, baseRz, midRx, midRz) {
+  const sides = 6;
+  const yBase = -Math.min(length * 0.16, baseRx);
+  const yMid = -length * 0.46;
+  const positions = [];
+  const rings = [
+    { y: yBase, rx: baseRx, rz: baseRz },
+    { y: yMid, rx: midRx, rz: midRz },
+  ];
+  for (const ring of rings) {
+    for (let i = 0; i < sides; i += 1) {
+      const a = (i / sides) * Math.PI * 2;
+      positions.push(Math.cos(a) * ring.rx, ring.y, Math.sin(a) * ring.rz);
+    }
+  }
+  positions.push(0, -length, 0);
+  const tip = sides * 2;
+  const indices = [];
+  for (let i = 0; i < sides; i += 1) {
+    const j = (i + 1) % sides;
+    indices.push(i, j, j + sides, i, j + sides, i + sides);
+    indices.push(i + sides, j + sides, tip);
+  }
+  const geo = new BufferGeometry();
+  geo.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geo.setIndex(new Uint16BufferAttribute(indices, 1));
+  geo.computeVertexNormals();
+  geo.userData.length = length;
+  geo.userData.baseRx = baseRx;
+  geo.userData.baseRz = baseRz;
+  geo.userData.midRx = midRx;
+  geo.userData.midRz = midRz;
+  return geo;
+}
+
+export function createPaddleMesh(length, baseRx, baseRz, midRx, midRz, material) {
+  const mesh = new Mesh(
+    createPaddleGeometry(length, baseRx, baseRz, midRx, midRz),
+    material,
+  );
+  return shade(mesh, 'paddle');
 }
 
 export function countStats(root) {
   let vertices = 0;
   let triangles = 0;
   let meshes = 0;
-  const roles = { ball: 0, cylinder: 0, box: 0, trapezoid: 0 };
+  const roles = { ball: 0, cylinder: 0, frustum: 0, paddle: 0, foot: 0, head: 0 };
   root.traverse((obj) => {
     if (!obj.isMesh) return;
     meshes += 1;

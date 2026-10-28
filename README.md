@@ -2,20 +2,32 @@
 
 Naked low-poly base body for a web character creator. Three.js, ES modules, Vite. No clothes, hair, or props.
 
-The body is the parts from the anatomy sketch:
+The default figure follows a wooden artist's mannequin:
 
-- Head ball, neck cylinder
-- Shoulder ball, clavicle cylinder, shoulder ball, across the top of the torso box
-- Upper arm cylinder, elbow ball, forearm cylinder, wrist ball, box hand
-- Trapezoidal pelvis under the torso
-- Hip ball, thigh cylinder, knee ball, shin cylinder, ankle ball
-- Box foot, with the ankle ball sitting on the heel end of the top face
+- Egg-shaped head, wider toward the crown, on a short neck
+- Chest block, wider at the shoulders and tapered to the waist
+- Separate pelvis block under a waist joint
+- Shoulder balls on the upper sides of the chest
+- Tapered upper arm and forearm, paddle hands turned slightly inward
+- Tapered thigh and shin, flush knee, small rounded feet
 
-Joint balls are sized so their flat faces still contain the limb cylinders. A bend does not open a gap. Each limb is parented to its joint:
+There is no clavicle. Fourteen joints: `neck`, `waist`, and on each side `shoulder`, `elbow`, `wrist`, `hip`, `knee`, `ankle`.
 
-`root > hips > spine > neck > head`, with `clavicle > shoulder > elbow > wrist > hand` and `hip > knee > ankle > foot`.
+```
+root > pelvis > waist > neck > head
+              > shoulder > elbow > wrist > hand
+              > hip > knee > ankle > foot
+```
 
-Default body, detail-1 icospheres and open 8-sided cylinders: **854 vertices, 1272 triangles** (13 balls, 10 cylinders, 5 boxes, 1 trapezoid).
+`pelvis` is a rig group used for sway and planting the feet. It is not one of the fourteen joints. The head is a mesh under the neck, so rotating `neck` turns the head.
+
+Each joint is a smooth sphere (`SphereGeometry`, 24×16) whose diameter matches the segment it joins. A straight limb hides the ball. A bend lets the ball fill the outside of the wedge. Shoulder and hip balls use the radius of the limb that hangs from them and sit against the block. The waist ball is the same diameter as the chest bottom and the pelvis top, so those faces meet it flush.
+
+Everything else stays minimal. Limbs are open 8-sided tapers, the chest and pelvis are 8-vertex blocks, each hand is a 13-vertex paddle, each foot is an 8×6 ellipsoid. An 8-sided tube's flat faces sit about 8% of the radius inside the circle, so a straight joint shows a thin sliver of the sphere along each flat. The tubes stay faceted.
+
+Default body: **6595 vertices, 10984 triangles** (14 spheres, 9 tubes, 2 blocks, 2 paddles, 2 feet, 1 head). The smooth spheres are nearly all of that count.
+
+The default colour is the pale wood of the reference (`#e4c29a`). `skinColor` tints the whole figure. Blocks and limbs are flat-shaded. Joints, the head, and the feet are smooth-shaded, in the same colour, so a flush ball does not read as a different material.
 
 ## Scripts
 
@@ -31,15 +43,15 @@ npm run build
 ## API
 
 ```js
-import { createBody } from './src/body/index.js';
+import { createBody, JOINT_NAMES } from './src/body/index.js';
 
 const body = createBody({
   height: 1.8,
-  shoulderWidth: 0.5,
-  hipWidth: 0.27,
+  shoulderWidth: 0.42,
+  hipWidth: 0.15,
   limbThickness: 1,
-  headSize: 0.132,
-  skinColor: '#e0a37c',
+  headSize: null,
+  skinColor: '#e4c29a',
 });
 
 scene.add(body.root);
@@ -47,6 +59,6 @@ body.update(dt, 'idle');   // 'idle' | 'walk' | 'pose'
 body.setParams({ limbThickness: 1.2 });
 ```
 
-`update(dt, state)` also accepts `{ mode, time, freeze }`. Leave a length `null` (the default) and it is derived from `height`. Shoulder width is the distance between the shoulder-ball centers and the length of the clavicle.
+`update(dt, state)` also accepts `{ mode, time, freeze }`. Leave a length `null` (the default) and it is derived from `height`. `headSize` is the crown radius of the egg. Shoulder width and hip width are the distances between those ball centres.
 
-Spheres are detail-1 icospheres. Limbs are open 8-sided cylinders. One flat-shaded skin material.
+`body.joints` has exactly the fourteen names in `JOINT_NAMES`. `body.pelvis` is the rig group. `body.materials` is the flat material and the smooth one.
