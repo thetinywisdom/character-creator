@@ -1160,11 +1160,33 @@ function headOverlap(mesh, point) {
   return Math.max(0, limit - radius);
 }
 
+function blockDataOverlap(parent, data, point) {
+  if (!data?.height) return 0;
+  parent.worldToLocal(_sample.copy(point));
+  const y = _sample.y - (data.offsetY || 0);
+  if (y < 0 || y > data.height) return 0;
+  const u = y / data.height;
+  const halfW = ((data.bottomWidth * (1 - u)) + (data.topWidth * u)) / 2;
+  const halfD = ((data.bottomDepth * (1 - u)) + (data.topDepth * u)) / 2;
+  const ix = halfW - Math.abs(_sample.x);
+  const iz = halfD - Math.abs(_sample.z);
+  if (ix <= 0 || iz <= 0) return 0;
+  return Math.min(ix, iz);
+}
+
 function addOverlap(score, rig, point) {
   const head = rig.neck.getObjectByName('headMesh');
   const chest = rig.waist.getObjectByName('chestMesh');
   const pelvisMesh = rig.pelvis.getObjectByName('pelvisMesh');
-  return score + headOverlap(head, point) * 1.4 + blockOverlap(chest, point) + blockOverlap(pelvisMesh, point);
+  let next = score;
+  if (head) next += headOverlap(head, point) * 1.4;
+  next += chest
+    ? blockOverlap(chest, point)
+    : blockDataOverlap(rig.waist, rig.waist.userData.block, point);
+  next += pelvisMesh
+    ? blockOverlap(pelvisMesh, point)
+    : blockDataOverlap(rig.pelvis, rig.pelvis.userData.block, point);
+  return next;
 }
 
 function limbOverlap(rig, side, spec) {

@@ -105,6 +105,7 @@ Rules, in order:
 6. Pants and shorts skip a peg leg. A skirt stays a cone wide enough for the walk stride (hip span plus thigh radius plus the 1 cm gap).
 7. Hair under a hat or hood is not drawn. Headwear wins over a hoodie hood. Earrings are skipped when the ear id is `antenna`.
 8. No `polygonOffset` as a design. If two surfaces would share a plane, one of them is not built.
+9. Robot and skeleton limbs keep their own meshes. Sleeves and pant tubes are skipped on those sides, and the garment is not rejected. Peg legs skip pant tubes and shoes. A robot leg skips the pant tube and the boot cuff, and still takes a shoe in place of the foot. A robot torso still cannot wear a top or an outer layer.
 
 ### Params flowing into parts
 

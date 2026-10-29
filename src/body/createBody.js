@@ -26,7 +26,8 @@ function makeJoints() {
 
 function disposeTree(obj) {
   obj.traverse((child) => {
-    if (child.isMesh) child.geometry.dispose();
+    if (child.isMesh && child.geometry) child.geometry.dispose();
+    if (child.skeleton?.boneTexture) child.skeleton.boneTexture.dispose();
   });
 }
 

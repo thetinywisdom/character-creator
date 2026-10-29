@@ -27,7 +27,7 @@ function skinMaterial(ctx, flat) {
   return ctx.materials.find((material) => material.userData.skin === kind);
 }
 
-function materialFor(ctx, color, flat) {
+export function materialFor(ctx, color, flat) {
   if (!color) return skinMaterial(ctx, flat);
   const hex = String(color).toLowerCase();
   const key = `${flat ? 'flat' : 'smooth'}:${hex}`;

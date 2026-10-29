@@ -47,6 +47,18 @@ export const LEGS_CONTROLS = [
   { id: 'legRColor', kind: 'color', label: 'Right color', nullable: true },
 ];
 
+export const CLOTHES_CONTROLS = [
+  { id: 'top', kind: 'slot', slot: 'clothing.top', label: 'Top' },
+  { id: 'topColor', kind: 'color', label: 'Top color' },
+  { id: 'outer', kind: 'slot', slot: 'clothing.outer', label: 'Outer' },
+  { id: 'outerColor', kind: 'color', label: 'Outer color' },
+  { id: 'bottom', kind: 'slot', slot: 'clothing.bottom', label: 'Bottom' },
+  { id: 'bottomColor', kind: 'color', label: 'Bottom color' },
+  { id: 'shoes', kind: 'slot', slot: 'clothing.shoes', label: 'Shoes' },
+  { id: 'shoeColor', kind: 'color', label: 'Shoe color' },
+  { id: 'shoeAccent', kind: 'color', label: 'Sole' },
+];
+
 export const MOTION_CONTROLS = [
   { id: 'walkStyle', kind: 'slot', slot: 'animation.walkStyle', label: 'Walk style' },
   { id: 'anim', kind: 'select', label: 'Movement' },

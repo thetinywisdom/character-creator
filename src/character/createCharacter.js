@@ -58,6 +58,7 @@ function attachSockets(body, sockets) {
 }
 
 function runParts(body, doc, sockets) {
+  delete body.root.userData.clothingBuilt;
   if (body.root.userData.layoutFresh) {
     body.root.userData.layoutFresh = false;
     delete body.root.userData.torsoStamp;
@@ -101,12 +102,15 @@ function lookKey(doc) {
     torso: doc.body.torso,
     arms: doc.arms,
     legs: doc.legs,
+    clothing: doc.clothing,
+    headwear: doc.head.headwear.id,
   });
 }
 
 function disposeBody(body) {
   body.root.traverse((obj) => {
     if (obj.isMesh && obj.geometry) obj.geometry.dispose();
+    if (obj.skeleton?.boneTexture) obj.skeleton.boneTexture.dispose();
   });
   for (const material of body.materials) material.dispose();
 }
@@ -149,6 +153,13 @@ export function createCharacter(input) {
     }
     if (current) disposeBody(current);
     current = next;
+  }
+
+  function relayout() {
+    current.setParams({});
+    current.root.userData.layoutFresh = true;
+    attachSockets(current, sockets);
+    runParts(current, doc, sockets);
   }
 
   function syncParams(partial) {
@@ -205,7 +216,7 @@ export function createCharacter(input) {
         mount(createBody(paramsFromDocument(doc)));
       } else {
         if (skin) current.setParams({ skinColor: doc.body.skin });
-        if (look) runParts(current, doc, sockets);
+        if (look) relayout();
       }
       return structuredClone(doc);
     },
