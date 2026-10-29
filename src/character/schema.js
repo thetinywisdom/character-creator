@@ -5,7 +5,6 @@ const HEX = /^#[0-9a-f]{6}$/i;
 const ROOT_KEYS = ['version', 'body', 'head', 'arms', 'legs', 'clothing', 'back', 'held', 'animation'];
 const PRESENTATION = ['man', 'woman'];
 const BODY_TYPE = ['slim', 'average', 'broad', 'heavy'];
-const HANDS = ['open', 'fist', 'claw', 'hook'];
 
 function isObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -188,12 +187,12 @@ function readIdColor(input, path, slot, errors) {
   });
 }
 
-function readArm(input, path, slot, wristSlot, errors) {
+function readArm(input, path, slot, wristSlot, handSlot, errors) {
   const base = arm();
   const next = take(input, base, path, errors, {
     type: (value, typePath) => expectPart(slot, value, typePath, errors),
     color: (value, colorPath) => expectColor(value, colorPath, errors, true),
-    hand: (value, handPath) => expectEnum(value, HANDS, handPath, errors),
+    hand: (value, handPath) => expectPart(handSlot, value, handPath, errors),
   });
   if (isObject(input) && 'wrist' in input) {
     next.wrist = take(input.wrist, base.wrist, `${path}.wrist`, errors, {
@@ -213,8 +212,8 @@ function readArms(input, errors) {
   }
   rejectUnknown(input, ['left', 'right'], 'arms', errors);
   return {
-    left: 'left' in input ? readArm(input.left, 'arms.left', 'arms.left', 'arms.left.wrist', errors) : structuredClone(base.left),
-    right: 'right' in input ? readArm(input.right, 'arms.right', 'arms.right', 'arms.right.wrist', errors) : structuredClone(base.right),
+    left: 'left' in input ? readArm(input.left, 'arms.left', 'arms.left', 'arms.left.wrist', 'arms.left.hand', errors) : structuredClone(base.left),
+    right: 'right' in input ? readArm(input.right, 'arms.right', 'arms.right', 'arms.right.wrist', 'arms.right.hand', errors) : structuredClone(base.right),
   };
 }
 
@@ -346,7 +345,7 @@ export function validateDocument(input) {
   return { ok: true, errors: [], document };
 }
 
-/** Lengths createBody understands. Belly is stored on the document and not applied yet. */
+/** Lengths createBody understands. A null belly keeps the derived waist seam. */
 export function paramsFromDocument(doc) {
   const params = {
     height: doc.body.height,
@@ -354,6 +353,7 @@ export function paramsFromDocument(doc) {
     limbThickness: doc.body.limbThickness,
   };
   if (doc.body.shoulder != null) params.shoulderWidth = doc.body.shoulder;
+  if (doc.body.belly != null) params.bellyWidth = doc.body.belly;
   if (doc.body.hip != null) params.hipWidth = doc.body.hip;
   if (doc.head.size != null) params.headSize = doc.head.size;
   return params;

@@ -223,7 +223,10 @@ function addLeg(joints, spec, flat, smooth, markers, side, sign) {
 }
 
 function paint(materials, color) {
-  for (const material of materials) material.color.set(color);
+  for (const material of materials) {
+    if (material.userData.lockedColor) continue;
+    material.color.set(color);
+  }
 }
 
 /**
@@ -260,6 +263,8 @@ export function createBody(input = {}) {
     metalness: 0,
     flatShading: false,
   });
+  flat.userData.skin = 'flat';
+  smooth.userData.skin = 'smooth';
   const materials = [flat, smooth];
 
   let resolved = resolveParams(params);

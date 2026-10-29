@@ -15,6 +15,7 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { ANIMATIONS, createCharacter, panelSections } from './body/index.js';
+import { applyPreset } from './character/presets.js';
 
 const query = new URLSearchParams(location.search);
 const canvas = document.getElementById('view');
@@ -46,7 +47,7 @@ const wireInput = document.getElementById('wire');
 const turnInput = document.getElementById('turn');
 
 function renderControl(control) {
-  if (control.kind === 'select') {
+  if (control.kind === 'select' || control.kind === 'choice') {
     const label = document.createElement('label');
     label.className = 'field';
     const span = document.createElement('span');
@@ -54,8 +55,37 @@ function renderControl(control) {
     const select = document.createElement('select');
     select.id = control.id;
     select.setAttribute('aria-label', control.label);
+    for (const option of control.options || []) {
+      const node = document.createElement('option');
+      node.value = option.id;
+      node.textContent = option.label;
+      select.append(node);
+    }
     label.append(span, select);
     return label;
+  }
+  if (control.kind === 'color' && control.nullable) {
+    const wrap = document.createElement('div');
+    wrap.className = 'slider skin';
+    const row = document.createElement('span');
+    row.className = 'row';
+    const name = document.createElement('span');
+    name.textContent = control.label;
+    row.append(name);
+    const line = document.createElement('div');
+    line.className = 'color-line';
+    const input = document.createElement('input');
+    input.id = control.id;
+    input.type = 'color';
+    input.setAttribute('aria-label', control.label);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.id = `${control.id}-skin`;
+    button.className = 'skin-clear';
+    button.textContent = 'Skin';
+    line.append(input, button);
+    wrap.append(row, line);
+    return wrap;
   }
   if (control.kind === 'check') {
     const label = document.createElement('label');
@@ -222,15 +252,32 @@ function syncControls() {
   const shoulder = document.getElementById('shoulder');
   const hip = document.getElementById('hip');
   const thick = document.getElementById('thick');
+  const doc = body.getDocument();
   height.value = String(spec.height);
   shoulder.value = String(spec.shoulderWidth);
   hip.value = String(spec.hipWidth);
+  document.getElementById('belly').value = String(spec.bellyWidth);
   thick.value = String(spec.limbThickness);
   document.getElementById('height-val').textContent = `${fmt(spec.height)} m`;
   document.getElementById('shoulder-val').textContent = `${fmt(spec.shoulderWidth)} m`;
+  document.getElementById('belly-val').textContent = `${fmt(spec.bellyWidth)} m`;
   document.getElementById('hip-val').textContent = `${fmt(spec.hipWidth)} m`;
   document.getElementById('thick-val').textContent = fmt(spec.limbThickness);
   document.getElementById('skin').value = spec.skinColor;
+  document.getElementById('presentation').value = doc.body.presentation;
+  document.getElementById('bodyType').value = doc.body.type;
+  document.getElementById('torso').value = doc.body.torso;
+  document.getElementById('armL').value = doc.arms.left.type;
+  document.getElementById('armR').value = doc.arms.right.type;
+  document.getElementById('handL').value = doc.arms.left.hand;
+  document.getElementById('handR').value = doc.arms.right.hand;
+  document.getElementById('legL').value = doc.legs.left.type;
+  document.getElementById('legR').value = doc.legs.right.type;
+  document.getElementById('walkStyle').value = doc.animation.walkStyle;
+  syncNullableColor('armLColor', doc.arms.left.color, spec.skinColor);
+  syncNullableColor('armRColor', doc.arms.right.color, spec.skinColor);
+  syncNullableColor('legLColor', doc.legs.left.color, spec.skinColor);
+  syncNullableColor('legRColor', doc.legs.right.color, spec.skinColor);
   if (document.activeElement !== documentBox) {
     documentBox.value = JSON.stringify(body.getDocument(), null, 2);
   }
@@ -251,6 +298,71 @@ function syncControls() {
     key.target.position.y = spec.height * 0.5;
   }
 }
+
+function syncNullableColor(id, value, skin) {
+  const input = document.getElementById(id);
+  input.value = value || skin;
+  const button = document.getElementById(`${id}-skin`);
+  button.setAttribute('aria-pressed', value ? 'false' : 'true');
+}
+
+function edit(mutate) {
+  body.updateDocument(mutate);
+  syncControls();
+}
+
+function bindChoice(id, apply) {
+  document.getElementById(id).addEventListener('change', (event) => {
+    apply(event.target.value);
+    syncControls();
+  });
+}
+
+function bindArm(side, typeId, colorId, handId) {
+  const key = side === 'L' ? 'left' : 'right';
+  bindChoice(typeId, (value) => edit((doc) => { doc.arms[key].type = value; }));
+  bindChoice(handId, (value) => edit((doc) => { doc.arms[key].hand = value; }));
+  document.getElementById(colorId).addEventListener('input', (event) => {
+    edit((doc) => { doc.arms[key].color = event.target.value; });
+  });
+  document.getElementById(`${colorId}-skin`).addEventListener('click', () => {
+    edit((doc) => { doc.arms[key].color = null; });
+  });
+}
+
+function bindLeg(side, typeId, colorId) {
+  const key = side === 'L' ? 'left' : 'right';
+  bindChoice(typeId, (value) => edit((doc) => { doc.legs[key].type = value; }));
+  document.getElementById(colorId).addEventListener('input', (event) => {
+    edit((doc) => { doc.legs[key].color = event.target.value; });
+  });
+  document.getElementById(`${colorId}-skin`).addEventListener('click', () => {
+    edit((doc) => { doc.legs[key].color = null; });
+  });
+}
+
+bindChoice('presentation', (value) => {
+  const current = body.getDocument();
+  body.setDocument(applyPreset(current, value, current.body.type));
+});
+
+bindChoice('bodyType', (value) => {
+  const current = body.getDocument();
+  body.setDocument(applyPreset(current, current.body.presentation, value));
+});
+
+bindChoice('torso', (value) => {
+  edit((doc) => { doc.body.torso = value; });
+});
+
+bindChoice('walkStyle', (value) => {
+  edit((doc) => { doc.animation.walkStyle = value; });
+});
+
+bindArm('L', 'armL', 'armLColor', 'handL');
+bindArm('R', 'armR', 'armRColor', 'handR');
+bindLeg('L', 'legL', 'legLColor');
+bindLeg('R', 'legR', 'legRColor');
 
 function setAnim(next) {
   anim = byId[next] ? next : 'idle';
@@ -290,6 +402,7 @@ document.getElementById('height').addEventListener('input', (event) => {
   body.setParams({
     height: next,
     shoulderWidth: prev.shoulderWidth * k,
+    bellyWidth: prev.bellyWidth * k,
     hipWidth: prev.hipWidth * k,
     headSize: prev.headRadius * k,
   });
@@ -298,6 +411,11 @@ document.getElementById('height').addEventListener('input', (event) => {
 
 document.getElementById('shoulder').addEventListener('input', (event) => {
   body.setParams({ shoulderWidth: Number(event.target.value) });
+  syncControls();
+});
+
+document.getElementById('belly').addEventListener('input', (event) => {
+  body.setParams({ bellyWidth: Number(event.target.value) });
   syncControls();
 });
 

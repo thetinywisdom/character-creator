@@ -56,6 +56,12 @@ const BLEND = 0.2;
 const WALK_TO_RUN = [3.4, 5.4];
 const WALK = { duty: 0.6, lift: 0.13, bobA: 0.032, lean: 0.07, pelvis: 0.13, shoulder: 0.16, sway: 0.028, roll: 0.05, crouch: 0.03 };
 const RUN = { duty: 0.34, lift: 0.46, bobA: 0.06, lean: 0.23, pelvis: 0.16, shoulder: 0.2, sway: 0.014, roll: 0.035, crouch: 0.07 };
+/** Multipliers on the walk/run blend. `elbow` is a held bend in radians; 0 keeps the clip. */
+const STYLES = {
+  normal: { lift: 1, stride: 1, bob: 1, pelvis: 1, roll: 1, arm: 1, elbow: 0, wrist: 1, abd: 0 },
+  stomp: { lift: 1.5, stride: 0.7, bob: 1.6, pelvis: 0.75, roll: 0.65, arm: 0.45, elbow: 0.6, wrist: 0.1, abd: 0.02 },
+  swagger: { lift: 0.85, stride: 1.08, bob: 1.15, pelvis: 1.65, roll: 1.75, arm: 1.4, elbow: 0, wrist: 1, abd: 0.12 },
+};
 const SRC_LEG = 0.82;
 const SRC_ARM = 0.71;
 const SRC_SHOULDER_X = 0.205;
@@ -161,6 +167,15 @@ export function plantFeet(root, markers, bindPelvisY, pelvis) {
 function liftFeet(root, markers, pelvis) {
   const minY = lowestFoot(root, markers);
   if (minY < 0) pelvis.position.y -= minY;
+}
+
+function lockPegs(rig, legs) {
+  if (!legs) return;
+  for (const side of ['L', 'R']) {
+    if (legs[side] !== 'peg') continue;
+    rig[`knee${side}`].rotation.set(0, 0, 0);
+    rig[`ankle${side}`].rotation.set(0, 0, 0);
+  }
 }
 
 function ikLeg(rig, spec, side, dy, dz, footPitch, lean) {
@@ -789,6 +804,8 @@ export function createMotion() {
     let crouchIn = null;
     let sideIn = null;
     let dirIn = null;
+    let walkStyle = 'normal';
+    let legTypes = null;
     if (typeof state === 'string') requested = state;
     else if (state && typeof state === 'object') {
       if (state.anim) requested = state.anim;
@@ -802,6 +819,8 @@ export function createMotion() {
       if (typeof state.side === 'number') sideIn = state.side;
       if (typeof state.dir === 'number') dirIn = state.dir;
       if (typeof state.crouch === 'number') crouchIn = state.crouch;
+      if (typeof state.walkStyle === 'string') walkStyle = state.walkStyle;
+      if (state.legs && typeof state.legs === 'object') legTypes = state.legs;
     }
     let id = motion.anim;
     if (requested) id = BY_ID[requested] ? requested : 'idle';
@@ -847,6 +866,7 @@ export function createMotion() {
         if (motion.fadeT >= BLEND) motion.fading = false;
       }
       separateLimbs(rig, spec);
+      lockPegs(rig, legTypes);
       plantFeet(root, markers, bindPelvisY, pelvis);
       if (motion.droveRoot) {
         root.position.y = 0;
@@ -913,7 +933,9 @@ export function createMotion() {
     for (const key in WALK) G[key] = lerp(WALK[key], RUN[key], r);
     const leg = spec.thighLength + spec.shinLength;
     const legScale = leg / SRC_LEG;
-    const S = Math.max(0.2, strideLength(Math.max(locoSpeed, 0.6), r, leg));
+    const styled = info.kind === 'move' || info.kind === 'crouch';
+    const style = styled ? (STYLES[walkStyle] || STYLES.normal) : STYLES.normal;
+    const S = Math.max(0.2, strideLength(Math.max(locoSpeed, 0.6), r, leg) * style.stride);
     if (grounded) {
       if (time != null) motion.phase = fract(locoSpeed * motion.t / S);
       else if (!freeze) motion.phase = fract(motion.phase + locoSpeed * dt / S);
@@ -922,7 +944,7 @@ export function createMotion() {
     const ex = 1 + 0.25 * r;
     const bobPh = lerp(0.07, G.duty / 2, r);
     const breathe = Math.sin(motion.t * 1.7);
-    const bob = (-G.bobA * Math.cos(TAU * 2 * (p - bobPh)) * w - G.crouch * w) * legScale;
+    const bob = (-G.bobA * style.bob * Math.cos(TAU * 2 * (p - bobPh)) * w - G.crouch * w) * legScale;
     const squash = clamp(motion.land, -0.2, 1);
     const crouchY = (Math.max(motion.crouch, 0) * 0.26 + squash * 0.17 + motion.settle * 0.05) * legScale;
     const leanGoal = G.lean * w * smooth(0.2, 2.5, locoSpeed) + motion.crouch * 0.3 + squash * 0.25
@@ -937,14 +959,14 @@ export function createMotion() {
     }
 
     const c1 = Math.cos(TAU * p);
-    const pelvisYawTheir = -G.pelvis * c1 * w;
+    const pelvisYawTheir = -G.pelvis * style.pelvis * c1 * w;
     const tYaw = G.shoulder * c1 * w * ex - pelvisYawTheir;
     reset(rig);
     pelvis.rotation.order = 'YXZ';
     pelvis.rotation.set(
       motion.lean,
       -pelvisYawTheir,
-      -G.roll * Math.sin(TAU * p) * w + motion.leanZ,
+      -G.roll * style.roll * Math.sin(TAU * p) * w + motion.leanZ,
     );
     pelvis.position.set(
       -G.sway * Math.sin(TAU * p) * w * legScale,
@@ -958,17 +980,28 @@ export function createMotion() {
     const heel = Math.abs(spec.footHeel);
     const toe = Math.max(0.02, spec.footToe);
     for (const [side, sign, off] of [['L', -1, 0], ['R', 1, 0.5]]) {
+      const peg = Boolean(legTypes && legTypes[side] === 'peg');
       const lp = (p + off) % 1;
-      const ft = footTarget(lp, G.duty, S, G.lift * ex * legScale, r, ankleY, heel, toe);
+      const liftScale = style.lift * (peg ? 0.45 : 1);
+      const ft = footTarget(lp, G.duty, S, G.lift * liftScale * ex * legScale, r, ankleY, heel, toe);
       const tuck = vy > 0 ? 0.42 : clamp(0.42 + vy * 0.05, 0.08, 0.42);
       let z = lerp(0, ft.z, w);
       let y = lerp(ankleY, ft.y, w);
       let pitch = lerp(0, ft.pitch, w);
-      z = lerp(z, sign * -0.06 * motion.walk + 0.05, motion.air);
-      y = lerp(y, ankleY + tuck * legScale, motion.air);
-      pitch = lerp(pitch, 0.35, motion.air);
+      if (!peg) {
+        z = lerp(z, sign * -0.06 * motion.walk + 0.05, motion.air);
+        y = lerp(y, ankleY + tuck * legScale, motion.air);
+        pitch = lerp(pitch, 0.35, motion.air);
+      }
       _v.set(sign * spec.hipWidth / 2, y, z).applyMatrix4(_inv);
-      ikLeg(rig, spec, side, _v.y, _v.z, pitch, motion.lean);
+      if (peg) {
+        const hip = clamp(Math.atan2(-_v.z, -_v.y), -0.85, 0.55);
+        rig[`hip${side}`].rotation.set(hip, 0, 0);
+        rig[`knee${side}`].rotation.set(0, 0, 0);
+        rig[`ankle${side}`].rotation.set(0, 0, 0);
+      } else {
+        ikLeg(rig, spec, side, _v.y, _v.z, pitch, motion.lean);
+      }
     }
 
     rig.waist.rotation.set(breathe * 0.012 * (1 - w), -tYaw, 0);
@@ -978,19 +1011,21 @@ export function createMotion() {
       const bk = Math.max(0, -sw);
       const walkSh = -(fw * 0.55 - bk * 0.42) * ex;
       const runSh = -(fw * 0.85 - bk * 0.75) + 0.1;
-      let shX = lerp(walkSh, runSh, r) * w + breathe * 0.015 * (1 - w);
+      let shX = lerp(walkSh, runSh, r) * w * style.arm + breathe * 0.015 * (1 - w);
       let el = lerp(0.18 + bk * 0.32 + fw * 0.22, 1.45 + fw * 0.2 - bk * 0.15, r) * w;
       let abd = 0.06 + 0.06 * w + r * 0.08 * w + Math.sin(motion.t * 0.9 + -sign) * 0.012 * (1 - w);
+      abd += style.abd;
       shX = shX * (1 - motion.crouch) + motion.crouch * 0.75;
       const up = motion.air * (vy > 0 ? 1 : clamp(0.6 + vy * 0.04, 0.2, 0.6));
       shX = lerp(shX, -2.1, up * 0.8);
       abd = lerp(abd, 0.95, motion.air);
       el = lerp(el, 0.35, motion.air);
+      if (style.elbow) el = style.elbow;
       shX += squash * 0.5;
       // Positive Z on the character's right (+X) is outward. Their left was +X.
       rig[`shoulder${side}`].rotation.set(shX, 0, sign * abd);
       rig[`elbow${side}`].rotation.set(-el, 0, 0);
-      rig[`wrist${side}`].rotation.set(fw * 0.35 * w * (1 - r), 0, sign * 0.1 * w);
+      rig[`wrist${side}`].rotation.set(fw * 0.35 * w * (1 - r) * style.wrist, 0, sign * 0.1 * w);
     }
     const look = Math.sin(motion.t * 0.37) * 0.35 + Math.sin(motion.t * 0.83) * 0.12;
     const idleMix = (1 - motion.walk) * (1 - motion.air);
@@ -1027,6 +1062,7 @@ export function createMotion() {
       if (motion.fadeT >= BLEND) motion.fading = false;
     }
     separateLimbs(rig, spec);
+    lockPegs(rig, legTypes);
     if (plant) plantFeet(root, markers, bindPelvisY, pelvis);
     else liftFeet(root, markers, pelvis);
   }

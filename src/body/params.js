@@ -44,6 +44,7 @@ export const DEFAULT_PARAMS = {
   height: 1.8,
   shoulderWidth: null,
   hipWidth: null,
+  bellyWidth: null,
   limbThickness: 1,
   headSize: null,
   skinColor: '#e4c29a',
@@ -88,7 +89,11 @@ export function resolveParams(input = {}) {
   const hipR = rad(0.06);
   const kneeR = rad(0.046);
   const ankleR = rad(0.038);
-  const waistR = rad(0.076);
+  const baseWaistR = rad(0.076);
+  let waistR = baseWaistR;
+  if (p.bellyWidth != null && Number.isFinite(Number(p.bellyWidth))) {
+    waistR = clamp(Number(p.bellyWidth) / 2, 0.01);
+  }
 
   let headScale = neckTarget / ISO_HEAD_NECK_RADIUS;
   if (p.headSize != null) {
@@ -107,7 +112,7 @@ export function resolveParams(input = {}) {
 
   const chestBottom = waistR * 2;
   let chestTopHalf = shoulderX - shoulderR * 0.2;
-  chestTopHalf = Math.max(chestTopHalf, waistR * 1.55);
+  chestTopHalf = Math.max(chestTopHalf, baseWaistR * 1.55);
   if (p.torsoWidth != null) chestTopHalf = clamp(Number(p.torsoWidth) || chestTopHalf * 2, chestBottom) / 2;
   const chestTopWidth = chestTopHalf * 2;
   const chestTopDepth = p.torsoDepth != null
@@ -188,6 +193,7 @@ export function resolveParams(input = {}) {
     visibleNeck: neckLen - socketDrop,
     shoulderWidth,
     hipWidth,
+    bellyWidth: waistR * 2,
     shoulderT: SHOULDER_T,
     chestHeight: lengths.chest,
     chestTopWidth,
