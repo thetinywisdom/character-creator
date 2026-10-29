@@ -117,6 +117,62 @@ input[type="range"] {
   cursor: pointer;
 }
 
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel-section summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.doc {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doc-actions {
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  flex: 1;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+textarea {
+  width: 100%;
+  min-height: 160px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  padding: 10px 12px;
+  font: 12px/1.45 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+.error {
+  margin: 0;
+  color: #8a3b2c;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
 #view {
   flex: 1;
   display: block;

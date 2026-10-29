@@ -14,17 +14,85 @@ import {
   WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { ANIMATIONS, createBody } from './body/index.js';
+import { ANIMATIONS, createCharacter, panelSections } from './body/index.js';
 
 const query = new URLSearchParams(location.search);
 const canvas = document.getElementById('view');
 const statsEl = document.getElementById('stats');
+const sectionsRoot = document.getElementById('sections');
+const documentBox = document.getElementById('document');
+const documentError = document.getElementById('document-error');
+
+for (const section of panelSections()) {
+  const details = document.createElement('details');
+  details.className = 'panel-section';
+  details.open = true;
+  details.dataset.section = section.id;
+  const summary = document.createElement('summary');
+  summary.textContent = section.label;
+  details.append(summary);
+  const stack = document.createElement('div');
+  stack.className = 'sliders';
+  for (const control of section.controls) stack.append(renderControl(control));
+  details.append(stack);
+  sectionsRoot.append(details);
+}
+
 const animSelect = document.getElementById('anim');
 const speedInput = document.getElementById('speed');
 const speedLabel = document.getElementById('speed-label');
 const speedVal = document.getElementById('speed-val');
 const wireInput = document.getElementById('wire');
 const turnInput = document.getElementById('turn');
+
+function renderControl(control) {
+  if (control.kind === 'select') {
+    const label = document.createElement('label');
+    label.className = 'field';
+    const span = document.createElement('span');
+    span.textContent = control.label;
+    const select = document.createElement('select');
+    select.id = control.id;
+    select.setAttribute('aria-label', control.label);
+    label.append(span, select);
+    return label;
+  }
+  if (control.kind === 'check') {
+    const label = document.createElement('label');
+    label.className = 'check';
+    const input = document.createElement('input');
+    input.id = control.id;
+    input.type = 'checkbox';
+    input.checked = Boolean(control.checked);
+    label.append(input, document.createTextNode(control.label));
+    return label;
+  }
+  const label = document.createElement('label');
+  label.className = control.kind === 'color' ? 'slider skin' : 'slider';
+  const row = document.createElement('span');
+  row.className = 'row';
+  const name = document.createElement('span');
+  if (control.id === 'speed') name.id = 'speed-label';
+  name.textContent = control.label;
+  row.append(name);
+  if (control.kind === 'range') {
+    const output = document.createElement('output');
+    output.id = control.id === 'speed' ? 'speed-val' : `${control.id}-val`;
+    row.append(output);
+  }
+  const input = document.createElement('input');
+  input.id = control.id;
+  if (control.kind === 'color') {
+    input.type = 'color';
+  } else {
+    input.type = 'range';
+    input.min = String(control.min);
+    input.max = String(control.max);
+    input.step = String(control.step);
+  }
+  label.append(row, input);
+  return label;
+}
 
 const byId = Object.fromEntries(ANIMATIONS.map((item) => [item.id, item]));
 const groups = [];
@@ -89,7 +157,7 @@ ground.position.y = -0.001;
 ground.receiveShadow = true;
 scene.add(ground);
 
-const body = createBody();
+const body = createCharacter();
 scene.add(body.root);
 
 const controls = new OrbitControls(camera, canvas);
@@ -163,6 +231,9 @@ function syncControls() {
   document.getElementById('hip-val').textContent = `${fmt(spec.hipWidth)} m`;
   document.getElementById('thick-val').textContent = fmt(spec.limbThickness);
   document.getElementById('skin').value = spec.skinColor;
+  if (document.activeElement !== documentBox) {
+    documentBox.value = JSON.stringify(body.getDocument(), null, 2);
+  }
   animSelect.value = anim;
   const info = byId[anim];
   const rate = info.unit === '×';
@@ -243,6 +314,35 @@ document.getElementById('thick').addEventListener('input', (event) => {
 document.getElementById('skin').addEventListener('input', (event) => {
   body.setParams({ skinColor: event.target.value });
   syncControls();
+});
+
+function showDocumentError(message) {
+  documentError.hidden = !message;
+  documentError.textContent = message || '';
+}
+
+document.getElementById('copy-json').addEventListener('click', () => {
+  const text = JSON.stringify(body.getDocument(), null, 2);
+  documentBox.value = text;
+  showDocumentError('');
+  navigator.clipboard?.writeText(text).catch(() => {});
+});
+
+document.getElementById('paste-json').addEventListener('click', () => {
+  let parsed;
+  try {
+    parsed = JSON.parse(documentBox.value);
+  } catch {
+    showDocumentError('That text is not JSON.');
+    return;
+  }
+  try {
+    body.setDocument(parsed);
+    showDocumentError('');
+    syncControls();
+  } catch (error) {
+    showDocumentError(error.errors?.join('\n') || error.message);
+  }
 });
 
 function resize() {

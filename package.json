@@ -11,7 +11,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test test/body.test.js"
+    "test": "node --test test/*.test.js"
   },
   "peerDependencies": {
     "three": ">=0.160.0"
