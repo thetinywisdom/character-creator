@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { Vector3 } from 'three';
-import { JOINT_NAMES, JOINT_PHI_START, POSE_BEND, createBody } from '../src/body/index.js';
+import { ANIMATIONS, JOINT_NAMES, JOINT_PHI_START, POSE_BEND, createBody } from '../src/body/index.js';
 
 const EXPECTED_JOINTS = [
   'neck',
@@ -444,7 +444,7 @@ describe('createBody', () => {
     assert.ok(body.joints.shoulderL.rotation.x < -0.8);
     assert.equal(body.joints.wristL.rotation.x, 0);
 
-    body.update(0, { mode: 'walk', time: 0.4, freeze: true });
+    body.update(0, { mode: 'walk', time: 0.15, freeze: true });
     const knees = Math.abs(body.joints.kneeL.rotation.x) + Math.abs(body.joints.kneeR.rotation.x);
     const hips = Math.abs(body.joints.hipL.rotation.x) + Math.abs(body.joints.hipR.rotation.x);
     assert.ok(knees > 0.2);
@@ -545,6 +545,107 @@ describe('createBody', () => {
           assert.notEqual(inside, false, `${ballName} stays inside ${tubeName} when straight`);
         }
       }
+    }
+  });
+
+  it('plays every clip with planted feet and limbs outside the body', () => {
+    const body = createBody();
+    const spec = body.getResolved();
+    const joints = JOINT_NAMES.map((name) => [name, body.joints[name].position.clone()]);
+    const head = findMesh(body.root, 'headMesh');
+    const chest = findMesh(body.root, 'chestMesh');
+    const pelvis = findMesh(body.root, 'pelvisMesh');
+    const bands = new Map();
+    const headPos = head.geometry.attributes.position;
+    for (let i = 0; i < headPos.count; i += 1) {
+      const y = headPos.getY(i).toFixed(4);
+      bands.set(y, Math.max(bands.get(y) || 0, Math.hypot(headPos.getX(i), headPos.getZ(i) / 1.08)));
+    }
+    const profile = [...bands.entries()].map(([y, radius]) => ({ y: Number(y), radius }));
+    profile.sort((a, b) => a.y - b.y);
+    const local = new Vector3();
+    const world = new Vector3();
+
+    function headOverlap(point) {
+      head.worldToLocal(local.copy(point));
+      if (local.y < profile[0].y || local.y > profile[profile.length - 1].y) return 0;
+      let limit = profile[profile.length - 1].radius;
+      for (let i = 0; i < profile.length - 1; i += 1) {
+        if (local.y >= profile[i].y && local.y <= profile[i + 1].y) {
+          const u = (local.y - profile[i].y) / Math.max(1e-6, profile[i + 1].y - profile[i].y);
+          limit = profile[i].radius + (profile[i + 1].radius - profile[i].radius) * u;
+          break;
+        }
+      }
+      return limit - Math.hypot(local.x, local.z / 1.08);
+    }
+
+    function blockOverlap(mesh, point) {
+      mesh.worldToLocal(local.copy(point));
+      const data = mesh.geometry.userData;
+      if (local.y < 0 || local.y > data.height) return 0;
+      const u = local.y / data.height;
+      const halfW = (data.bottomWidth * (1 - u) + data.topWidth * u) / 2;
+      const halfD = (data.bottomDepth * (1 - u) + data.topDepth * u) / 2;
+      const ix = halfW - Math.abs(local.x);
+      const iz = halfD - Math.abs(local.z);
+      return ix > 0 && iz > 0 ? Math.min(ix, iz) : 0;
+    }
+
+    for (const anim of ANIMATIONS) {
+      const dur = anim.id === 'mbappe' ? 12
+        : anim.id === 'hula' ? 7.4
+          : anim.id === 'flex' ? 1.7
+            : anim.kind === 'dance' ? 6.6
+              : anim.id === 'knockdown' || anim.id === 'knockback' ? 2.5
+                : 1.2;
+      for (let time = 0; time <= dur; time += 0.2) {
+        body.update(0, { anim: anim.id, time, speed: anim.speed, freeze: true });
+        body.root.updateMatrixWorld(true);
+        body.root.traverse((obj) => {
+          assert.ok(Number.isFinite(obj.position.x + obj.rotation.x), `${anim.id} stays finite`);
+        });
+        for (const name of ['footLHeel', 'footLToe', 'footRHeel', 'footRToe']) {
+          const y = findMesh(body.root, name).getWorldPosition(world).y;
+          assert.ok(y >= -2e-3, `${name} stays above the ground in ${anim.id}`);
+        }
+        for (const side of ['L', 'R']) {
+          const hand = findMesh(body.root, `hand${side}Mesh`);
+          for (const along of [spec.handLength, spec.handLength * 0.5]) {
+            hand.localToWorld(world.set(0, -along, 0));
+            assert.ok(headOverlap(world) < 0.01, `${anim.id} hand stays outside the head`);
+            assert.ok(blockOverlap(chest, world) < 0.01, `${anim.id} hand stays outside the chest`);
+            assert.ok(blockOverlap(pelvis, world) < 0.01, `${anim.id} hand stays outside the pelvis`);
+          }
+        }
+      }
+    }
+
+    const jumper = createBody();
+    let apex = 0;
+    for (let i = 0; i < 160; i += 1) {
+      jumper.update(1 / 60, 'jump');
+      apex = Math.max(apex, jumper.root.position.y);
+      jumper.root.updateMatrixWorld(true);
+      for (const name of ['footLHeel', 'footLToe', 'footRHeel', 'footRToe']) {
+        const y = findMesh(jumper.root, name).getWorldPosition(world).y;
+        assert.ok(y >= -2e-3, 'jump keeps the feet off the floor');
+      }
+    }
+    assert.ok(apex > 0.6, 'jump leaves the ground');
+
+    const cross = createBody();
+    for (const anim of ['idle', 'walk', 'run', 'disco', 'slap', 'knockdown', 'pose']) {
+      for (let i = 0; i < 12; i += 1) cross.update(1 / 60, { anim, speed: anim === 'run' ? 6.5 : 1.4 });
+      cross.root.traverse((obj) => {
+        assert.ok(Number.isFinite(obj.position.y + obj.quaternion.w));
+      });
+    }
+
+    assert.equal(body.getStats().vertices, 1421);
+    assert.equal(body.getStats().triangles, 1868);
+    for (const [name, position] of joints) {
+      assert.ok(body.joints[name].position.distanceTo(position) < 1e-6, `${name} stays on its bind point`);
     }
   });
 

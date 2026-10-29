@@ -14,14 +14,33 @@ import {
   WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createBody } from './body/index.js';
+import { ANIMATIONS, createBody } from './body/index.js';
 
 const query = new URLSearchParams(location.search);
 const canvas = document.getElementById('view');
 const statsEl = document.getElementById('stats');
-const buttons = [...document.querySelectorAll('.modes button')];
+const animSelect = document.getElementById('anim');
+const speedInput = document.getElementById('speed');
+const speedLabel = document.getElementById('speed-label');
+const speedVal = document.getElementById('speed-val');
 const wireInput = document.getElementById('wire');
 const turnInput = document.getElementById('turn');
+
+const byId = Object.fromEntries(ANIMATIONS.map((item) => [item.id, item]));
+const groups = [];
+for (const item of ANIMATIONS) {
+  let group = groups.find((entry) => entry.label === item.group);
+  if (!group) {
+    group = document.createElement('optgroup');
+    group.label = item.group;
+    animSelect.append(group);
+    groups.push(group);
+  }
+  const option = document.createElement('option');
+  option.value = item.id;
+  option.textContent = item.label;
+  group.append(option);
+}
 
 const scene = new Scene();
 scene.background = new Color('#e4dfd6');
@@ -79,8 +98,9 @@ controls.autoRotate = query.get('turn') !== '0';
 controls.autoRotateSpeed = 0.7;
 controls.target.set(0, 0.9, 0);
 
-let mode = query.get('mode') || 'idle';
-if (!['idle', 'walk', 'pose'].includes(mode)) mode = 'idle';
+let anim = query.get('mode') || query.get('anim') || 'idle';
+if (!byId[anim]) anim = 'idle';
+let speed = byId[anim].speed;
 let freezeTime = query.has('freeze') ? Number(query.get('freeze')) : null;
 let currentCam = query.get('cam') || 'three';
 let framedByUser = false;
@@ -143,9 +163,16 @@ function syncControls() {
   document.getElementById('hip-val').textContent = `${fmt(spec.hipWidth)} m`;
   document.getElementById('thick-val').textContent = fmt(spec.limbThickness);
   document.getElementById('skin').value = spec.skinColor;
-  for (const button of buttons) {
-    button.classList.toggle('active', button.dataset.mode === mode);
-  }
+  animSelect.value = anim;
+  const info = byId[anim];
+  const rate = info.unit === '×';
+  speedLabel.textContent = rate ? 'Playback' : 'Speed';
+  speedInput.min = rate ? '0' : '0';
+  speedInput.max = rate ? '2' : '8';
+  speedInput.step = rate ? '0.05' : '0.05';
+  speedInput.disabled = info.kind === 'pose';
+  speedInput.value = String(speed);
+  speedVal.textContent = rate ? `${Number(speed).toFixed(2)}×` : `${Number(speed).toFixed(1)} m/s`;
   resizeGround();
   applyWireframe(wireInput.checked);
   if (!framedByUser) {
@@ -154,15 +181,22 @@ function syncControls() {
   }
 }
 
-function setMode(next) {
-  mode = next;
+function setAnim(next) {
+  anim = byId[next] ? next : 'idle';
+  speed = byId[anim].speed;
   freezeTime = null;
   syncControls();
 }
 
-for (const button of buttons) {
-  button.addEventListener('click', () => setMode(button.dataset.mode));
-}
+animSelect.addEventListener('change', () => setAnim(animSelect.value));
+
+speedInput.addEventListener('input', () => {
+  speed = Number(speedInput.value);
+  const info = byId[anim];
+  speedVal.textContent = info.unit === '×'
+    ? `${speed.toFixed(2)}×`
+    : `${speed.toFixed(1)} m/s`;
+});
 
 wireInput.addEventListener('change', () => {
   applyWireframe(wireInput.checked);
@@ -231,8 +265,8 @@ let last = performance.now();
 function tick(now) {
   const dt = Math.min((now - last) / 1000, 0.05);
   last = now;
-  if (freezeTime != null) body.update(0, { mode, time: freezeTime, freeze: true });
-  else body.update(dt, mode);
+  if (freezeTime != null) body.update(0, { anim, speed, time: freezeTime, freeze: true });
+  else body.update(dt, { anim, speed });
   controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(tick);

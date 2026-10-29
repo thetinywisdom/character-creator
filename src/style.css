@@ -59,28 +59,24 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 
-.modes {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+.field {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
+  font-size: 13px;
 }
 
-button {
+select {
   appearance: none;
+  width: 100%;
   border: 1px solid var(--line);
-  background: transparent;
+  background: var(--panel);
   color: var(--ink);
   border-radius: 999px;
-  padding: 8px 6px;
+  padding: 8px 14px;
   font: inherit;
   font-size: 13px;
   cursor: pointer;
-}
-
-button.active {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--panel);
 }
 
 .check {

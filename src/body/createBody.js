@@ -1,5 +1,5 @@
 import { Group, MeshStandardMaterial, Object3D } from 'three';
-import { JOINT_NAMES, plantFeet, poseBody } from './animate.js';
+import { JOINT_NAMES, createMotion } from './animate.js';
 import {
   countStats,
   createHeadMesh,
@@ -222,20 +222,6 @@ function addLeg(joints, spec, flat, smooth, markers, side, sign) {
   markers[`foot${side}Toe`] = toe;
 }
 
-function readState(state, previousMode) {
-  let mode = previousMode;
-  let freeze = false;
-  let time = null;
-  if (typeof state === 'string') mode = state;
-  else if (state && typeof state === 'object') {
-    if (state.mode) mode = state.mode;
-    if (state.freeze) freeze = true;
-    if (typeof state.time === 'number') time = state.time;
-  }
-  if (mode !== 'idle' && mode !== 'walk' && mode !== 'pose') mode = 'idle';
-  return { mode, freeze, time };
-}
-
 function paint(materials, color) {
   for (const material of materials) material.color.set(color);
 }
@@ -247,7 +233,10 @@ function paint(materials, color) {
  *   pelvis: Object3D,
  *   joints: Record<string, Object3D>,
  *   materials: MeshStandardMaterial[],
- *   update: (dt: number, state?: string | { mode?: string, time?: number, freeze?: boolean }) => void,
+ *   update: (dt: number, state?: string | {
+ *     anim?: string, mode?: string, speed?: number, time?: number, freeze?: boolean,
+ *     turn?: number, grounded?: boolean, vy?: number, crouch?: number, side?: number, dir?: number,
+ *   }) => void,
  *   setParams: (partial: object) => void,
  * }}
  */
@@ -275,9 +264,8 @@ export function createBody(input = {}) {
 
   let resolved = resolveParams(params);
   let bindPelvisY = resolved.layout.hipY;
-  let time = 0;
-  let mode = 'idle';
   const rig = { pelvis, ...joints };
+  const motion = createMotion();
 
   function rebuild() {
     resolved = resolveParams(params);
@@ -296,12 +284,14 @@ export function createBody(input = {}) {
     joints,
     materials,
     update(dt, state) {
-      const next = readState(state, mode);
-      mode = next.mode;
-      if (next.time != null) time = next.time;
-      if (!next.freeze) time += Math.min(Math.max(Number(dt) || 0, 0), 0.05);
-      poseBody(rig, mode, time);
-      plantFeet(root, markers, bindPelvisY, pelvis);
+      const step = Math.min(Math.max(Number(dt) || 0, 0), 0.05);
+      motion.step({
+        rig,
+        root,
+        markers,
+        bindPelvisY,
+        spec: resolved,
+      }, step, state);
     },
     setParams(partial) {
       if (!partial || typeof partial !== 'object') return;

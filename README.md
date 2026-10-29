@@ -43,7 +43,7 @@ npm run build
 ## API
 
 ```js
-import { createBody, JOINT_NAMES } from './src/body/index.js';
+import { ANIMATIONS, createBody, JOINT_NAMES } from './src/body/index.js';
 
 const body = createBody({
   height: 1.8,
@@ -55,10 +55,14 @@ const body = createBody({
 });
 
 scene.add(body.root);
-body.update(dt, 'idle');   // 'idle' | 'walk' | 'pose'
+body.update(dt, { anim: 'walk', speed: 1.6 });
 body.setParams({ limbThickness: 1.2 });
 ```
 
-`update(dt, state)` also accepts `{ mode, time, freeze }`. Leave a length `null` (the default) and it is derived from `height`. `headSize` is the distance from the lathe origin to the crown. Shoulder width and hip width are the distances between those ball centres.
+`update(dt, state)` takes an animation name or `{ anim, speed, time, freeze, turn, grounded, vy, crouch, side, dir }`. `mode` is still accepted as an alias of `anim`. Locomotion speed is metres per second (`idle` 0, `walk` 1.6, `run` 6.5); walk blends into run between 3.4 and 5.4. Dances and one-shots use `speed` as a playback rate. A clip change crossfades in about a fifth of a second. Passing `time` with `freeze` holds that frame, which is how the 120° `pose` check stays exact. Head pitch, yaw, and roll ride the neck joint.
+
+Clips, in picker order: Idle, Walk, Run, Jump, Crouch, Slap, Hit, Hit (other side), Knockdown, Fall back, Pose test, Robot, Chicken, Disco, Sprinkler, Flail, Hula, Flex, and Bad. `ANIMATIONS` lists the same ids. Jump plays in place (anticipation, tuck, landing). Knockdown tumbles forward; Fall back lands on the back. Feet stay on the ground for the standing clips.
+
+Leave a length `null` (the default) and it is derived from `height`. `headSize` is the distance from the lathe origin to the crown. Shoulder width and hip width are the distances between those ball centres.
 
 `body.joints` has exactly the fourteen names in `JOINT_NAMES`. `body.pelvis` is the rig group. `body.materials` is the flat material and the smooth one.
