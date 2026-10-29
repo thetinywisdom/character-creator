@@ -98,11 +98,11 @@ Limb and torso parts still replace the meshes `createBody` adds today (`chestMes
 Rules, in order:
 
 1. Garments are worn over the body. The naked meshes stay. Overlap is acceptable.
-2. Every garment is a closed low-poly loft, or double-sided where a face is intentionally open (a hood, a vest front, a neck hole). No open planes. A tank, tee, shirt, or hoodie is a tapered torso with a shoulder yoke: the yoke slopes from a neck-sized hole out over each shoulder ball and into the sleeve. From above, skin shows only at the neck and the head. Sleeves and pant legs are tapered tubes parented to the limb joint they follow.
-3. Shells are faceted and a little loose. They are not shrink-wrapped, and they are not a single box.
-4. A vest or jacket is a slightly larger shell over the top, open at the front, with its own shoulder yoke and a visible edge. The top stays underneath. A vest has no sleeves. A cape hangs from the shoulders with a collar, a few folds, and thickness, parented to `waist`. There is no dress part. A dress look is a top plus a skirt. When `body.torso` is `robot`, top and outer are `none`.
-5. Shoes are closed shells over the feet. The feet stay. Heel and toe markers stay on the ankle, at the sole, so planting does not change.
-6. Pants and shorts skip a peg leg. A skirt is one closed loft from a waistband that meets the waist to an even pleated hem, wide enough for the walk stride (hip span plus thigh radius plus the gap). Winding and normals stay consistent.
+2. Every garment is a closed block or a straight tube, double-sided where a face is open (a hood, a vest front, a neck hole). A tank, tee, shirt, or hoodie is one straight roomy block from the shoulder line to just below the hips, the same width at the hem as at the shoulders, with a flat top and a small neck hole. It does not follow the body taper. Sleeves and pant legs are straight wide tubes parented to the limb joint they follow. A sleeve cap covers the shoulder ball.
+3. Shells hang off the body. They are not shrink-wrapped to the waist, chest, or limbs. Corners are lightly beveled.
+4. A vest or jacket is a slightly larger block over the top. The front may be open if the edge stays closed geometry. The top stays underneath. A vest has no sleeves. A cape is a slab hanging from the shoulders, parented to `waist`. There is no dress part. A dress look is a top plus a skirt. When `body.torso` is `robot`, top and outer are `none`.
+5. Shoes are chunky blocks over the feet, with a sole. The feet stay. Heel and toe markers stay on the ankle, at the sole, so planting does not change.
+6. Pants and shorts skip a peg leg. They are a straight waist block plus straight wide leg tubes. A skirt is a simple flared cone from the waist, wide enough for the walk stride (hip span plus thigh radius plus the gap).
 7. Hair under a hat or hood is not drawn. Headwear wins over a hoodie hood. Earrings are skipped when the ear id is `antenna`.
 8. No `polygonOffset`.
 9. Robot and skeleton limbs keep their own meshes. Sleeves and pant tubes are skipped on those sides, and the garment is not rejected. Peg legs skip pant tubes and shoes. A robot leg skips the pant tube and the boot cuff, and still takes a shoe in place of the foot. A robot torso still cannot wear a top or an outer layer.
