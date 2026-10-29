@@ -93,18 +93,18 @@ Limb and torso parts still replace the meshes `createBody` adds today (`chestMes
 
 `createCharacter(doc)` resolves params, builds the rig, runs parts in the order above, then returns the same object as `createBody` plus `getDocument()`, `setDocument(doc)`, and `getRegistry()`. `update(dt, state)` is unchanged. `setParams` remains for live slider drags. A color-only change rewrites material colors. Any change to a length, a part id, or a cover set disposes generated meshes and rebuilds. Joint objects stay put, so the clip player keeps its bind pose.
 
-### Clothing without layered shells
+### Clothing shells
 
 Rules, in order:
 
-1. A garment replaces the body it covers. Those role meshes are never created. Hidden vertices still cost, so skip them. Joint balls stay. They are the seam.
-2. Each visible garment is one `BufferGeometry` and one mesh. A tee is a box shell around the chest plus two short sleeve tubes, welded into one mesh. A skirt is one 8-plane cone.
-3. Shells sit about 1 cm outside the skin (scaled by height / 1.8) and stop at a joint ball. The sleeve opening is a little wider than the ball, so a straight arm hides the ball and a bend shows it. Same rule as the skin tubes.
-4. The compositor decides the torso once. A jacket or hoodie emits the torso shell and the tee does not. A vest emits the torso shell and keeps the tee sleeves if the top has sleeves. A cape is two quads behind the back face, offset past the back plane, parented to `waist`. There is no dress part. A dress look is a top plus a skirt. When `body.torso` is `robot`, top and outer are `none`. Those ids are disabled, and `validateDocument` rejects any other value.
-5. Shoes replace the foot mesh. Heel and toe markers stay on the ankle, at the new sole, so planting does not change.
-6. Pants and shorts skip a peg leg. A skirt stays a cone wide enough for the walk stride (hip span plus thigh radius plus the 1 cm gap).
+1. Garments are worn over the body. The naked meshes stay. Overlap is acceptable.
+2. Every shell is closed, or double-sided if a face is intentionally open (a hood). No open planes and no single-sided quads. A tank, tee, or shirt is one box from the neck to the hips, slightly wider than the chest and pelvis, covering the waist joint. Sleeves and pant legs are closed tubes parented to the limb joint they follow.
+3. Shells are simple and a little loose. They are not shrink-wrapped to the body silhouette.
+4. A vest or jacket is a larger box over the top. The top stays underneath. A vest has no sleeves. A cape is a closed slab behind the back, parented to `waist`. There is no dress part. A dress look is a top plus a skirt. When `body.torso` is `robot`, top and outer are `none`.
+5. Shoes are closed shells over the feet. The feet stay. Heel and toe markers stay on the ankle, at the sole, so planting does not change.
+6. Pants and shorts skip a peg leg. A skirt is a closed cone wide enough for the walk stride (hip span plus thigh radius plus the gap).
 7. Hair under a hat or hood is not drawn. Headwear wins over a hoodie hood. Earrings are skipped when the ear id is `antenna`.
-8. No `polygonOffset` as a design. If two surfaces would share a plane, one of them is not built.
+8. No `polygonOffset`.
 9. Robot and skeleton limbs keep their own meshes. Sleeves and pant tubes are skipped on those sides, and the garment is not rejected. Peg legs skip pant tubes and shoes. A robot leg skips the pant tube and the boot cuff, and still takes a shoe in place of the foot. A robot torso still cannot wear a top or an outer layer.
 
 ### Params flowing into parts

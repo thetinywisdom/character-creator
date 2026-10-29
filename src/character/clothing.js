@@ -1,69 +1,44 @@
 import {
+  BoxGeometry,
   BufferGeometry,
+  CylinderGeometry,
   DoubleSide,
   Float32BufferAttribute,
-  Matrix4,
-  Skeleton,
-  SkinnedMesh,
+  Mesh,
+  MeshStandardMaterial,
   Uint16BufferAttribute,
-  Vector3,
 } from 'three';
-import { createTaperMesh } from '../body/geometry.js';
-import { MUSCULAR_SCALE, materialFor } from './limbs.js';
+import { MUSCULAR_SCALE } from './limbs.js';
 
 /**
- * One compositor for top, outer, bottom, and shoes.
- * A jacket replaces the top, including a hoodie hood. A vest replaces the
- * torso shell and keeps the top's sleeves. A cape covers nothing.
+ * Clothes are closed shells worn over the naked body. Body meshes are never
+ * removed. Each piece is parented to the joint that should carry it, so a
+ * bend takes the sleeve or the pant leg with it.
  *
- * Robot and skeleton limbs keep their meshes: sleeves and pant tubes are
- * skipped on those sides, and the garment id is not rejected. Peg legs skip
- * pant tubes and shoes. Robot legs skip pant tubes and boot cuffs, and they
- * still take a shoe in place of the foot. A robot torso still cannot wear a
- * top or outer layer.
+ * Robot and skeleton limbs keep their meshes and get no sleeve or pant tube.
+ * The garment id is not rejected. Peg legs skip pant tubes and shoes. A robot
+ * leg skips the pant tube and the boot cuff, and still takes a shoe. A robot
+ * torso still cannot wear a top or an outer layer.
  *
- * A tee sleeve replaces the whole upper-arm mesh and stops at the elbow ball.
- * Stopping mid-bicep would open a hole once that mesh is gone. A shirt or
- * jacket continues to the wrist ball. Shorts stop at the knee ball.
+ * A tee sleeve is a short closed tube on the upper arm. A shirt, hoodie, or
+ * jacket continues with a closed tube on the forearm.
  */
-const GARMENTS = ['clothingTop', 'clothingOuter', 'clothingBottom', 'clothingShoes'];
+const SIDES = 8;
 
-const _mat = new Matrix4();
-const _point = new Vector3();
-
-export function shellGap(height) {
-  return 0.01 * ((Number(height) || 1.8) / 1.8);
+/** Extra ease outside the skin, scaled by height. About 3 cm at 1.8 m. */
+export function clothPad(height) {
+  return 0.03 * ((Number(height) || 1.8) / 1.8);
 }
 
 function removeGarments(root) {
-  for (const name of GARMENTS) {
-    const mesh = root.getObjectByName(name);
-    if (!mesh) continue;
-    mesh.geometry.dispose();
-    if (mesh.skeleton?.boneTexture) mesh.skeleton.boneTexture.dispose();
+  const doomed = [];
+  root.traverse((obj) => {
+    if (obj.userData?.garment) doomed.push(obj);
+  });
+  for (const mesh of doomed) {
+    mesh.geometry?.dispose();
     mesh.removeFromParent();
   }
-}
-
-function dropMesh(root, name) {
-  const mesh = root.getObjectByName(name);
-  if (!mesh) return;
-  mesh.geometry.dispose();
-  mesh.removeFromParent();
-}
-
-function blockOf(root, name) {
-  const mesh = root.getObjectByName(name);
-  const data = mesh?.geometry?.userData;
-  if (!data?.height) return null;
-  return {
-    height: data.height,
-    bottomWidth: data.bottomWidth,
-    topWidth: data.topWidth,
-    bottomDepth: data.bottomDepth,
-    topDepth: data.topDepth,
-    offsetY: mesh.position.y,
-  };
 }
 
 function clothArm(type) {
@@ -72,6 +47,78 @@ function clothArm(type) {
 
 function clothLeg(type) {
   return type === 'normal';
+}
+
+function garmentMaterial(ctx, color) {
+  const hex = String(color || '#888888').toLowerCase();
+  const key = `garment:${hex}`;
+  let material = ctx.materials.find((entry) => entry.userData.poolKey === key);
+  if (!material) {
+    material = new MeshStandardMaterial({
+      color: hex,
+      roughness: 0.85,
+      metalness: 0,
+      flatShading: true,
+      side: DoubleSide,
+    });
+    material.userData.poolKey = key;
+    material.userData.lockedColor = true;
+    material.polygonOffset = false;
+    ctx.materials.push(material);
+  }
+  return material;
+}
+
+function addMesh(parent, geometry, material, name, garment) {
+  const mesh = new Mesh(geometry, material);
+  mesh.name = name;
+  mesh.userData.garment = garment;
+  mesh.userData.role = 'garment';
+  mesh.castShadow = true;
+  parent.add(mesh);
+  return mesh;
+}
+
+function hangTube(parent, radius, length, material, name, garment) {
+  const geo = new CylinderGeometry(radius, radius, Math.max(length, 0.02), SIDES, 1, false);
+  const mesh = addMesh(parent, geo, material, name, garment);
+  mesh.position.y = -length / 2;
+  return mesh;
+}
+
+function placeBox(parent, width, height, depth, y, material, name, garment) {
+  const geo = new BoxGeometry(Math.max(width, 0.02), Math.max(height, 0.02), Math.max(depth, 0.02));
+  const mesh = addMesh(parent, geo, material, name, garment);
+  mesh.position.y = y;
+  return mesh;
+}
+
+function torsoBox(spec, pad, reach) {
+  const width = Math.max(
+    spec.chestTopWidth,
+    spec.chestBottomWidth,
+    spec.pelvisTopWidth,
+    spec.pelvisBottomWidth,
+  ) + pad * 2;
+  const depth = Math.max(
+    spec.chestTopDepth,
+    spec.chestBottomDepth,
+    spec.pelvisTopDepth,
+    spec.pelvisBottomDepth,
+  ) + pad * 2;
+  const y1 = reach === 'vest'
+    ? spec.chestHeight * spec.shoulderT
+    : spec.chestHeight - spec.radii.neck * 0.25;
+  const y0 = -spec.pelvisHeight * 0.78;
+  return { width, depth, y0, y1 };
+}
+
+function addTorsoBox(parent, spec, pad, reach, material, name, garment) {
+  const box = torsoBox(spec, pad, reach);
+  const height = box.y1 - box.y0;
+  const mesh = placeBox(parent, box.width, height, box.depth, (box.y0 + box.y1) / 2, material, name, garment);
+  mesh.userData.hem = box;
+  return mesh;
 }
 
 function armRadii(spec, type) {
@@ -83,343 +130,201 @@ function armRadii(spec, type) {
   };
 }
 
-function chestAt(spec, y) {
-  const y0 = spec.chestMeshY;
-  const span = Math.max(spec.chestMeshHeight, 1e-4);
-  const u = Math.min(1, Math.max(0, (y - y0) / span));
-  return {
-    width: spec.chestBottomWidth + (spec.chestTopWidth - spec.chestBottomWidth) * u,
-    depth: spec.chestBottomDepth + (spec.chestTopDepth - spec.chestBottomDepth) * u,
-  };
-}
-
-function pelvisAt(spec, y) {
-  const y0 = spec.pelvisMeshY;
-  const span = Math.max(spec.pelvisMeshHeight, 1e-4);
-  const u = Math.min(1, Math.max(0, (y - y0) / span));
-  return {
-    width: spec.pelvisBottomWidth + (spec.pelvisTopWidth - spec.pelvisBottomWidth) * u,
-    depth: spec.pelvisBottomDepth + (spec.pelvisTopDepth - spec.pelvisBottomDepth) * u,
-  };
-}
-
-/** Open 4-corner tube. y0 is the first ring, y1 the second. Eight vertices. */
-function rectTube(y0, y1, hx0, hx1, hz0, hz1) {
-  const positions = [
-    hx0, y0, hz0, -hx0, y0, hz0, -hx0, y0, -hz0, hx0, y0, -hz0,
-    hx1, y1, hz1, -hx1, y1, hz1, -hx1, y1, -hz1, hx1, y1, -hz1,
-  ];
-  const indices = [];
-  for (let i = 0; i < 4; i += 1) {
-    const j = (i + 1) % 4;
-    indices.push(i, j + 4, j, i, i + 4, j + 4);
-  }
-  return { positions, indices };
-}
-
-/** Open cone, 8 sides, 16 vertices. The lower ring is stored first so the walls face out. */
-export function skirtCone(y0, y1, r0, r1) {
-  const lowFirst = y0 <= y1;
-  return openTubeRings(
-    lowFirst ? y0 : y1,
-    lowFirst ? y1 : y0,
-    lowFirst ? r0 : r1,
-    lowFirst ? r1 : r0,
-    8,
-  );
-}
-
-/**
- * Open tube. `sign` -1 runs from the joint toward -Y (a limb).
- * `sign` +1 runs toward +Y (a boot cuff up the shin).
- * The lower ring is first so the walls face outward.
- */
-function openTube(radiusNear, radiusFar, length, sides = 6, sign = -1) {
-  const end = sign * length;
-  const yLow = Math.min(0, end);
-  const yHigh = Math.max(0, end);
-  const rLow = yLow === 0 ? radiusNear : radiusFar;
-  const rHigh = yHigh === 0 ? radiusNear : radiusFar;
-  return openTubeRings(yLow, yHigh, rLow, rHigh, sides);
-}
-
-function openTubeRings(y0, y1, r0, r1, sides) {
-  const positions = [];
-  const indices = [];
-  for (let ring = 0; ring < 2; ring += 1) {
-    const y = ring === 0 ? y0 : y1;
-    const radius = ring === 0 ? r0 : r1;
-    for (let i = 0; i < sides; i += 1) {
-      const a = (i / sides) * Math.PI * 2;
-      positions.push(Math.cos(a) * radius, y, Math.sin(a) * radius);
+function addSleeves(ctx, kind, pad, material, prefix, garment) {
+  const spec = ctx.spec;
+  const doc = ctx.document;
+  for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
+    if (!clothArm(doc.arms[key].type)) continue;
+    const radii = armRadii(spec, doc.arms[key].type);
+    const upperLen = kind === 'half' ? spec.upperArmLength * 0.7 : spec.upperArmLength;
+    hangTube(
+      ctx.joints[`shoulder${side}`],
+      Math.max(radii.shoulder, radii.elbow) + pad,
+      upperLen,
+      material,
+      `${prefix}Upper${side}`,
+      garment,
+    );
+    if (kind === 'full') {
+      hangTube(
+        ctx.joints[`elbow${side}`],
+        Math.max(radii.elbow, radii.wrist) + pad,
+        spec.forearmLength,
+        material,
+        `${prefix}Forearm${side}`,
+        garment,
+      );
     }
   }
-  for (let i = 0; i < sides; i += 1) {
-    const j = (i + 1) % sides;
-    indices.push(i, j + sides, j, i, i + sides, j + sides);
-  }
-  return { positions, indices };
 }
 
-const BOX_FACES = {
-  pz: [0, 5, 1, 0, 4, 5],
-  nx: [1, 6, 2, 1, 5, 6],
-  nz: [2, 7, 3, 2, 6, 7],
-  px: [3, 4, 0, 3, 7, 4],
-  ny: [0, 1, 2, 0, 2, 3],
-  py: [4, 6, 5, 4, 7, 6],
-};
-
-function boxCorners(cx, cy, cz, width, height, depth) {
-  const hx = width / 2;
-  const hy = height / 2;
-  const hz = depth / 2;
-  return [
-    cx + hx, cy - hy, cz + hz,
-    cx - hx, cy - hy, cz + hz,
-    cx - hx, cy - hy, cz - hz,
-    cx + hx, cy - hy, cz - hz,
-    cx + hx, cy + hy, cz + hz,
-    cx - hx, cy + hy, cz + hz,
-    cx - hx, cy + hy, cz - hz,
-    cx + hx, cy + hy, cz - hz,
-  ];
-}
-
-function boxIndices(include) {
-  const indices = [];
-  for (const face of include) indices.push(...BOX_FACES[face]);
-  return indices;
-}
-
-function weld() {
-  return {
-    positions: [],
-    indices: [],
-    skinIndex: [],
-    skinWeight: [],
-    bones: [],
-    boneOf: new Map(),
-    ranges: [],
-  };
-}
-
-function boneIndex(sheet, joint) {
-  const key = joint.uuid;
-  if (!sheet.boneOf.has(key)) {
-    sheet.boneOf.set(key, sheet.bones.length);
-    sheet.bones.push(joint);
-  }
-  return sheet.boneOf.get(key);
-}
-
-function addPiece(sheet, parent, joint, piece, materialIndex) {
-  const start = sheet.indices.length;
-  const base = sheet.positions.length / 3;
-  const index = boneIndex(sheet, joint);
-  _mat.copy(parent.matrixWorld).invert().multiply(joint.matrixWorld);
-  for (let i = 0; i < piece.positions.length; i += 3) {
-    _point.set(piece.positions[i], piece.positions[i + 1], piece.positions[i + 2]).applyMatrix4(_mat);
-    sheet.positions.push(_point.x, _point.y, _point.z);
-    sheet.skinIndex.push(index, 0, 0, 0);
-    sheet.skinWeight.push(1, 0, 0, 0);
-  }
-  for (const idx of piece.indices) sheet.indices.push(idx + base);
-  sheet.ranges.push({ start, count: sheet.indices.length - start, materialIndex });
-}
-
-function finish(sheet, parent, materials, name) {
-  if (!sheet.positions.length) return null;
-  const geo = new BufferGeometry();
-  geo.setAttribute('position', new Float32BufferAttribute(sheet.positions, 3));
-  geo.setAttribute('skinIndex', new Uint16BufferAttribute(sheet.skinIndex, 4));
-  geo.setAttribute('skinWeight', new Float32BufferAttribute(sheet.skinWeight, 4));
-  geo.setIndex(sheet.indices);
-  geo.computeVertexNormals();
-  const list = Array.isArray(materials) ? materials : [materials];
-  if (list.length > 1) {
-    for (const range of sheet.ranges) geo.addGroup(range.start, range.count, range.materialIndex);
-  }
-  const mesh = new SkinnedMesh(geo, list.length > 1 ? list : list[0]);
-  mesh.name = name;
-  mesh.castShadow = true;
-  mesh.frustumCulled = false;
-  mesh.userData.role = 'garment';
-  parent.add(mesh);
-  parent.updateMatrixWorld(true);
-  mesh.bind(new Skeleton(sheet.bones));
+function addHood(ctx, pad, material) {
+  const spec = ctx.spec;
+  const y0 = spec.neckLength + spec.headNeckY - pad * 0.4;
+  const y1 = spec.neckLength + spec.headRy + pad;
+  const rx = spec.headRy * 0.78 + pad;
+  const rz = rx * 1.08;
+  const geometry = openFrontBox(rx * 2, y1 - y0, rz * 2);
+  const mesh = addMesh(ctx.joints.neck, geometry, material, 'clothingTopHood', 'top');
+  mesh.position.y = (y0 + y1) / 2;
   return mesh;
 }
 
-function addTorso(sheet, parent, spec, y0, y1, gap) {
-  const a = chestAt(spec, y0);
-  const b = chestAt(spec, y1);
-  addPiece(sheet, parent, parent, rectTube(
-    y0, y1,
-    a.width / 2 + gap, b.width / 2 + gap,
-    a.depth / 2 + gap, b.depth / 2 + gap,
-  ), 0);
-}
-
-function addSleeve(sheet, parent, ctx, side, kind, gap, radii) {
-  const spec = ctx.spec;
-  const shoulder = ctx.joints[`shoulder${side}`];
-  addPiece(sheet, parent, shoulder, openTube(
-    radii.shoulder + gap,
-    radii.elbow + gap,
-    spec.upperArmLength,
-  ), 0);
-  if (kind === 'full') {
-    const elbow = ctx.joints[`elbow${side}`];
-    addPiece(sheet, parent, elbow, openTube(radii.elbow + gap, radii.wrist + gap, spec.forearmLength), 0);
-  }
-}
-
-function addHood(sheet, parent, ctx, gap) {
-  const spec = ctx.spec;
-  const neck = ctx.joints.neck;
-  const y0 = spec.neckLength + spec.headNeckY - gap * 0.4;
-  const y1 = spec.neckLength + spec.headRy + gap;
-  const rx = spec.headRy * 0.72 + gap;
-  const rz = rx * 1.08;
-  const faces = ['nx', 'nz', 'px', 'py'];
-  addPiece(sheet, parent, neck, {
-    positions: boxCorners(0, (y0 + y1) / 2, 0, rx * 2, y1 - y0, rz * 2),
-    indices: boxIndices(faces),
-  }, 0);
-}
-
-function addCape(sheet, parent, spec, gap) {
-  const y0 = spec.chestHeight * spec.shoulderT;
-  const y1 = -spec.pelvisHeight;
-  const z = -(Math.max(spec.chestTopDepth, spec.chestBottomDepth) / 2 + gap * 2.2);
-  const x = spec.shoulderWidth * 0.42;
+/** Closed on the back, sides, top, and bottom. The face stays open. DoubleSide keeps every wall visible. */
+function openFrontBox(width, height, depth) {
+  const hx = width / 2;
+  const hy = height / 2;
+  const hz = depth / 2;
   const positions = [
-    -x, y0, z,
-    0, y0, z,
-    0, y1, z,
-    -x, y1, z,
-    x, y0, z,
-    x, y1, z,
+    hx, -hy, hz,
+    -hx, -hy, hz,
+    -hx, -hy, -hz,
+    hx, -hy, -hz,
+    hx, hy, hz,
+    -hx, hy, hz,
+    -hx, hy, -hz,
+    hx, hy, -hz,
   ];
-  const indices = [
-    0, 3, 2, 0, 2, 1,
-    1, 2, 5, 1, 5, 4,
+  const faces = [
+    [1, 6, 2, 1, 5, 6],
+    [2, 7, 3, 2, 6, 7],
+    [3, 4, 0, 3, 7, 4],
+    [0, 1, 2, 0, 2, 3],
+    [4, 6, 5, 4, 7, 6],
   ];
-  addPiece(sheet, parent, parent, { positions, indices }, 0);
+  const indices = [];
+  for (const face of faces) indices.push(...face);
+  const geo = new BufferGeometry();
+  geo.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geo.setIndex(new Uint16BufferAttribute(indices, 1));
+  geo.computeVertexNormals();
+  return geo;
 }
 
-function capeMaterial(ctx, color) {
-  const hex = String(color).toLowerCase();
-  const key = `flat:double:${hex}`;
-  let material = ctx.materials.find((entry) => entry.userData.poolKey === key);
-  if (!material) {
-    material = materialFor(ctx, hex, true).clone();
-    material.side = DoubleSide;
-    material.userData = { poolKey: key, lockedColor: true };
-    ctx.materials.push(material);
-  }
-  return material;
-}
-
-function addPelvis(sheet, parent, spec, gap) {
-  const y0 = spec.pelvisMeshY;
-  const y1 = spec.pelvisHeight - spec.radii.waist * 0.55;
-  const a = pelvisAt(spec, y0);
-  const b = pelvisAt(spec, y1);
-  addPiece(sheet, parent, parent, rectTube(
-    y0, y1,
-    a.width / 2 + gap, b.width / 2 + gap,
-    a.depth / 2 + gap, b.depth / 2 + gap,
-  ), 0);
-}
-
-function addLegTube(sheet, parent, ctx, side, part, gap, cuff) {
+function addCape(ctx, pad, material) {
   const spec = ctx.spec;
-  const hip = ctx.joints[`hip${side}`];
-  const radii = spec.radii;
-  addPiece(sheet, parent, hip, openTube(radii.hip + gap, radii.knee + gap, spec.thighLength), 0);
-  if (part === 'both') {
-    const knee = ctx.joints[`knee${side}`];
-    const len = Math.max(spec.shinLength - cuff, spec.shinLength * 0.45);
-    const u = len / spec.shinLength;
-    const ankle = radii.knee + (radii.ankle - radii.knee) * u;
-    addPiece(sheet, parent, knee, openTube(radii.knee + gap, ankle + gap, len), 0);
-  }
+  const y0 = -spec.pelvisHeight * 0.95;
+  const y1 = spec.chestHeight * spec.shoulderT;
+  const thickness = Math.max(pad * 0.8, 0.018);
+  const width = Math.max(spec.shoulderWidth * 0.92, spec.chestTopWidth + pad);
+  const z = -(Math.max(spec.chestTopDepth, spec.chestBottomDepth) / 2 + pad + thickness);
+  const mesh = placeBox(ctx.joints.waist, width, y1 - y0, thickness, (y0 + y1) / 2, material, 'clothingCape', 'outer');
+  mesh.position.z = z;
+  return mesh;
 }
 
-function skirtSize(spec, gap) {
+function skirtSize(spec, pad) {
   const leg = spec.thighLength + spec.shinLength;
   const scale = leg / 0.82;
   const stride = Math.min(1.5, Math.max(0.8, 0.55 + 0.32 * 1.6)) * scale;
   const footForward = stride * 0.6 * 0.5;
   const kneeForward = footForward * (spec.thighLength / leg);
-  const lateral = spec.hipWidth / 2 + spec.radii.knee + gap;
+  const lateral = spec.hipWidth / 2 + spec.radii.knee + pad;
   return {
-    y0: spec.pelvisHeight - spec.radii.waist * 0.35,
-    y1: -spec.thighLength + spec.radii.knee,
-    r0: spec.radii.waist + gap,
-    r1: Math.hypot(lateral, kneeForward) + gap,
+    yTop: spec.pelvisHeight * 0.42,
+    yBottom: -spec.thighLength + spec.radii.knee,
+    rTop: spec.radii.waist + pad,
+    rHem: Math.hypot(lateral, kneeForward) + pad,
   };
 }
 
-function shortenShin(ctx, side, cuff) {
-  const spec = ctx.spec;
-  const old = ctx.root.getObjectByName(`shin${side}Mesh`);
-  if (!old) return;
-  const length = Math.max(spec.shinLength - cuff, spec.shinLength * 0.45);
-  const u = length / spec.shinLength;
-  const bottom = spec.radii.knee + (spec.radii.ankle - spec.radii.knee) * u;
-  const mesh = createTaperMesh(spec.radii.knee, bottom, length, old.material);
-  mesh.name = old.name;
-  mesh.position.y = -length / 2;
-  old.geometry.dispose();
-  old.parent.add(mesh);
-  old.removeFromParent();
+function addSkirt(ctx, pad, material) {
+  const hem = skirtSize(ctx.spec, pad);
+  const height = Math.max(hem.yTop - hem.yBottom, 0.04);
+  const geo = new CylinderGeometry(hem.rTop, hem.rHem, height, SIDES, 1, false);
+  const mesh = addMesh(ctx.pelvis, geo, material, 'clothingBottom', 'bottom');
+  mesh.position.y = (hem.yTop + hem.yBottom) / 2;
+  mesh.userData.hemRadius = hem.rHem;
+  return mesh;
 }
 
-function addShoe(sheet, ctx, side, kind, gap, cuff) {
+function addPelvisBox(ctx, pad, material) {
   const spec = ctx.spec;
-  const ankle = ctx.joints[`ankle${side}`];
-  const scale = spec.height / 1.8;
-  const soleH = (kind === 'flats' ? 0.012 : 0.02) * scale;
-  const soleY = spec.footCenterY - spec.footHeight / 2;
-  const width = spec.footWidth + gap;
-  const length = spec.footLength + gap;
-  const z = spec.footCenterZ;
-  const soleCenter = soleY + soleH / 2;
-  if (kind === 'flats') {
-    addPiece(sheet, ctx.pelvis, ankle, {
-      positions: boxCorners(0, soleCenter, z, width, soleH, length),
-      indices: boxIndices(['pz', 'nx', 'nz', 'px', 'ny', 'py']),
-    }, 0);
-    return;
-  }
-  addPiece(sheet, ctx.pelvis, ankle, {
-    positions: boxCorners(0, soleCenter, z, width, soleH, length),
-    indices: boxIndices(['pz', 'nx', 'nz', 'px', 'ny']),
-  }, 0);
-  const collar = kind === 'boots' ? 0 : spec.footCenterY + spec.footHeight / 2;
-  const upperBottom = soleY + soleH;
-  const upperH = Math.max(collar - upperBottom, soleH);
-  const upperCenter = upperBottom + upperH / 2;
-  addPiece(sheet, ctx.pelvis, ankle, {
-    positions: boxCorners(0, upperCenter, z, width * 0.92, upperH, length * 0.9),
-    indices: boxIndices(['pz', 'nx', 'nz', 'px', 'py']),
-  }, 1);
-  if (kind === 'boots' && cuff > 0) {
-    addPiece(
-      sheet,
-      ctx.pelvis,
-      ankle,
-      openTube(spec.radii.ankle + gap, spec.radii.ankle + gap * 1.4, cuff, 6, 1),
-      1,
+  const y0 = spec.pelvisMeshY - pad * 0.25;
+  const y1 = spec.pelvisHeight * 0.42;
+  const width = Math.max(spec.pelvisTopWidth, spec.pelvisBottomWidth) + pad * 2;
+  const depth = Math.max(spec.pelvisTopDepth, spec.pelvisBottomDepth) + pad * 2;
+  return placeBox(ctx.pelvis, width, y1 - y0, depth, (y0 + y1) / 2, material, 'clothingBottom', 'bottom');
+}
+
+function addLegTubes(ctx, part, pad, material) {
+  const spec = ctx.spec;
+  const doc = ctx.document;
+  for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
+    if (!clothLeg(doc.legs[key].type)) continue;
+    const thighLen = part === 'shorts' ? spec.thighLength * 0.62 : spec.thighLength;
+    hangTube(
+      ctx.joints[`hip${side}`],
+      Math.max(spec.radii.hip, spec.radii.knee) + pad,
+      thighLen,
+      material,
+      `clothingBottomThigh${side}`,
+      'bottom',
     );
+    if (part === 'pants') {
+      hangTube(
+        ctx.joints[`knee${side}`],
+        Math.max(spec.radii.knee, spec.radii.ankle) + pad,
+        spec.shinLength,
+        material,
+        `clothingBottomShin${side}`,
+        'bottom',
+      );
+    }
   }
 }
 
-function cuffLength(spec, gap) {
-  return Math.max(gap * 7, spec.radii.ankle * 1.7);
+function mergeParts(parts) {
+  const positions = [];
+  const indices = [];
+  const groups = [];
+  for (const part of parts) {
+    const pos = part.geometry.attributes.position;
+    const index = part.geometry.index;
+    const base = positions.length / 3;
+    const start = indices.length;
+    for (let i = 0; i < pos.count; i += 1) {
+      positions.push(pos.getX(i), pos.getY(i), pos.getZ(i));
+    }
+    for (let i = 0; i < index.count; i += 1) indices.push(index.getX(i) + base);
+    groups.push({ start, count: index.count, materialIndex: part.materialIndex });
+    part.geometry.dispose();
+  }
+  const geo = new BufferGeometry();
+  geo.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geo.setIndex(indices);
+  for (const group of groups) geo.addGroup(group.start, group.count, group.materialIndex);
+  geo.computeVertexNormals();
+  return geo;
+}
+
+function addShoe(ctx, side, kind, pad, cuff, materials) {
+  const spec = ctx.spec;
+  const soleH = (kind === 'flats' ? 0.014 : 0.024) * (spec.height / 1.8);
+  const soleY = spec.footCenterY - spec.footHeight / 2;
+  const width = spec.footWidth + pad * 2;
+  const length = spec.footLength + pad * 2;
+  const z = spec.footCenterZ;
+  const parts = [];
+  const sole = new BoxGeometry(width, soleH, length);
+  sole.translate(0, soleY + soleH / 2, z);
+  parts.push({ geometry: sole, materialIndex: 0 });
+  const footTop = spec.footCenterY + spec.footHeight / 2;
+  const upperBottom = soleY + soleH * 0.35;
+  const upperTop = kind === 'boots' && cuff ? pad * 0.35 : footTop + pad * 0.2;
+  const upperH = Math.max(upperTop - upperBottom, soleH);
+  const upper = new BoxGeometry(width * 0.94, upperH, length * 0.94);
+  upper.translate(0, upperBottom + upperH / 2, z);
+  parts.push({ geometry: upper, materialIndex: 1 });
+  if (kind === 'boots' && cuff) {
+    const cuffLen = Math.max(pad * 4.5, spec.radii.ankle * 2.4);
+    const tube = new CylinderGeometry(spec.radii.ankle + pad, spec.radii.ankle + pad, cuffLen, SIDES, 1, false);
+    tube.translate(0, cuffLen / 2, 0);
+    parts.push({ geometry: tube, materialIndex: 1 });
+  }
+  const mesh = addMesh(ctx.joints[`ankle${side}`], mergeParts(parts), materials, `clothingShoe${side}`, 'shoes');
+  mesh.userData.soleY = soleY;
+  return mesh;
 }
 
 export function buildClothing(ctx) {
@@ -429,138 +334,45 @@ export function buildClothing(ctx) {
 
   const doc = ctx.document;
   const spec = ctx.spec;
-  const gap = shellGap(spec.height);
+  const pad = clothPad(spec.height);
   const robotTorso = doc.body.torso === 'robot';
   const topId = robotTorso ? 'none' : doc.clothing.top.id;
   const outerId = robotTorso ? 'none' : doc.clothing.outer.id;
   const bottomId = doc.clothing.bottom.id;
   const shoeId = doc.clothing.shoes.id;
-  const jacket = outerId === 'jacket';
-  const vest = outerId === 'vest';
-  const sleeveKind = jacket
-    ? 'full'
-    : (topId === 'tee' ? 'half' : (topId === 'shirt' || topId === 'hoodie' ? 'full' : null));
-  const topSleeves = jacket ? null : sleeveKind;
-  const topTorso = !jacket && !vest && topId !== 'none';
-  const hood = topId === 'hoodie' && !jacket && doc.head.headwear.id === 'none';
-  const cuff = shoeId === 'boots' ? cuffLength(spec, gap) : 0;
 
-  delete ctx.joints.waist.userData.block;
-  delete ctx.pelvis.userData.block;
-  if (topTorso || jacket || vest) {
-    const block = blockOf(ctx.root, 'chestMesh');
-    if (block) ctx.joints.waist.userData.block = block;
-    dropMesh(ctx.root, 'chestMesh');
-  }
-  for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
-    if (!clothArm(doc.arms[key].type)) continue;
-    if (topSleeves || jacket) dropMesh(ctx.root, `upperArm${side}Mesh`);
-    if ((topSleeves === 'full') || jacket) dropMesh(ctx.root, `forearm${side}Mesh`);
-  }
-  if (bottomId === 'pants' || bottomId === 'shorts' || bottomId === 'skirt') {
-    const block = blockOf(ctx.root, 'pelvisMesh');
-    if (block) ctx.pelvis.userData.block = block;
-    dropMesh(ctx.root, 'pelvisMesh');
-  }
-  for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
-    const type = doc.legs[key].type;
-    if (type === 'peg') continue;
-    if (clothLeg(type) && (bottomId === 'pants' || bottomId === 'shorts')) {
-      dropMesh(ctx.root, `thigh${side}Mesh`);
-    }
-    if (clothLeg(type) && bottomId === 'pants') dropMesh(ctx.root, `shin${side}Mesh`);
-    if (shoeId !== 'barefoot') dropMesh(ctx.root, `foot${side}Mesh`);
-    if (shoeId === 'boots' && clothLeg(type) && bottomId !== 'pants') shortenShin(ctx, side, cuff);
+  if (topId !== 'none') {
+    const material = garmentMaterial(ctx, doc.clothing.top.color);
+    addTorsoBox(ctx.joints.waist, spec, pad, 'full', material, 'clothingTop', 'top');
+    const sleeves = topId === 'tee' ? 'half' : (topId === 'shirt' || topId === 'hoodie' ? 'full' : null);
+    if (sleeves) addSleeves(ctx, sleeves, pad, material, 'clothingTop', 'top');
+    if (topId === 'hoodie' && doc.head.headwear.id === 'none') addHood(ctx, pad, material);
   }
 
-  ctx.root.updateMatrixWorld(true);
-  const waist = ctx.joints.waist;
-  const pelvis = ctx.pelvis;
-
-  if (topTorso || topSleeves || hood) {
-    const sheet = weld();
-    const pad = gap;
-    if (topTorso) {
-      const y0 = spec.radii.waist * 0.55;
-      const y1 = topId === 'tank'
-        ? spec.chestHeight * spec.shoulderT
-        : spec.chestHeight - spec.radii.neck * 0.45;
-      addTorso(sheet, waist, spec, y0, y1, pad);
-    }
-    if (topSleeves) {
-      for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
-        if (!clothArm(doc.arms[key].type)) continue;
-        addSleeve(sheet, waist, ctx, side, topSleeves, pad, armRadii(spec, doc.arms[key].type));
-      }
-    }
-    if (hood) addHood(sheet, waist, ctx, pad);
-    finish(sheet, waist, materialFor(ctx, doc.clothing.top.color, true), 'clothingTop');
+  if (outerId === 'vest' || outerId === 'jacket') {
+    const material = garmentMaterial(ctx, doc.clothing.outer.color);
+    const reach = outerId === 'vest' ? 'vest' : 'full';
+    const extra = outerId === 'vest' ? pad * 0.85 : pad * 1.5;
+    addTorsoBox(ctx.joints.waist, spec, pad + extra, reach, material, 'clothingOuter', 'outer');
+    if (outerId === 'jacket') addSleeves(ctx, 'full', pad + extra, material, 'clothingOuter', 'outer');
   }
-
-  if (jacket || vest || outerId === 'cape') {
-    const sheet = weld();
-    const pad = gap * (jacket ? 1.7 : vest ? 1.35 : 1);
-    if (jacket || vest) {
-      const y0 = spec.radii.waist * 0.55;
-      const y1 = vest
-        ? spec.chestHeight * spec.shoulderT
-        : spec.chestHeight - spec.radii.neck * 0.35;
-      addTorso(sheet, waist, spec, y0, y1, pad);
-    }
-    if (jacket) {
-      for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
-        if (!clothArm(doc.arms[key].type)) continue;
-        addSleeve(sheet, waist, ctx, side, 'full', pad, armRadii(spec, doc.arms[key].type));
-      }
-    }
-    if (outerId === 'cape') addCape(sheet, waist, spec, gap);
-    const outerMaterial = outerId === 'cape' && !jacket && !vest
-      ? capeMaterial(ctx, doc.clothing.outer.color)
-      : materialFor(ctx, doc.clothing.outer.color, true);
-    finish(sheet, waist, outerMaterial, 'clothingOuter');
-  }
+  if (outerId === 'cape') addCape(ctx, pad, garmentMaterial(ctx, doc.clothing.outer.color));
 
   if (bottomId === 'skirt') {
-    const sheet = weld();
-    const hem = skirtSize(spec, gap);
-    addPiece(sheet, pelvis, pelvis, skirtCone(hem.y0, hem.y1, hem.r0, hem.r1), 0);
-    const mesh = finish(sheet, pelvis, materialFor(ctx, doc.clothing.bottom.color, true), 'clothingBottom');
-    if (mesh) mesh.userData.hemRadius = hem.r1;
+    addSkirt(ctx, pad, garmentMaterial(ctx, doc.clothing.bottom.color));
   } else if (bottomId === 'pants' || bottomId === 'shorts') {
-    const sheet = weld();
-    addPelvis(sheet, pelvis, spec, gap);
-    for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
-      if (!clothLeg(doc.legs[key].type)) continue;
-      addLegTube(sheet, pelvis, ctx, side, bottomId === 'shorts' ? 'thigh' : 'both', gap, cuff);
-    }
-    finish(sheet, pelvis, materialFor(ctx, doc.clothing.bottom.color, true), 'clothingBottom');
+    const material = garmentMaterial(ctx, doc.clothing.bottom.color);
+    addPelvisBox(ctx, pad, material);
+    addLegTubes(ctx, bottomId, pad, material);
   }
 
   if (shoeId !== 'barefoot') {
-    const sheet = weld();
-    let any = false;
+    const upper = garmentMaterial(ctx, doc.clothing.shoes.color);
+    const sole = garmentMaterial(ctx, doc.clothing.shoes.accent);
     for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
-      const type = doc.legs[key].type;
-      if (type === 'peg') continue;
-      any = true;
-      addShoe(sheet, ctx, side, shoeId, gap, type === 'normal' ? cuff : 0);
-    }
-    if (any) {
-      const upper = materialFor(ctx, doc.clothing.shoes.color, true);
-      const sole = materialFor(ctx, doc.clothing.shoes.accent, true);
-      if (shoeId === 'flats') tagFlatSoles(sheet);
-      finish(sheet, pelvis, [sole, upper], 'clothingShoes');
+      if (doc.legs[key].type === 'peg') continue;
+      const cuff = shoeId === 'boots' && doc.legs[key].type === 'normal';
+      addShoe(ctx, side, shoeId, pad, cuff, [sole, upper]);
     }
   }
-}
-
-/** A flats box is 36 indices. The bottom face (ny) is the accent; the other faces are the shoe color. */
-function tagFlatSoles(sheet) {
-  const next = [];
-  for (const range of sheet.ranges) {
-    next.push({ start: range.start, count: 24, materialIndex: 1 });
-    next.push({ start: range.start + 24, count: 6, materialIndex: 0 });
-    next.push({ start: range.start + 30, count: 6, materialIndex: 1 });
-  }
-  sheet.ranges = next;
 }
