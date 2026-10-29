@@ -1,10 +1,10 @@
 import {
   CYLINDER_SIDES,
+  ISO_HEAD_CROWN,
+  ISO_HEAD_NECK_RADIUS,
+  ISO_HEAD_NECK_Y,
   JOINT_HEIGHT,
   JOINT_WIDTH,
-  eggCutNorm,
-  eggMaxFactor,
-  eggProfile,
 } from './geometry.js';
 
 export const REFERENCE_HEIGHT = 1.8;
@@ -14,8 +14,6 @@ export const REFERENCE_HEIGHT = 1.8;
  * (crown y=2 to sole y=1076, 1074px on a 581×1229 plate).
  */
 const PHOTO = {
-  headWidth: 113 / 1074,
-  headHeight: 172 / 1074,
   visibleNeck: 32 / 1074,
   shoulderSpan: 248 / 1074,
   waistWidth: 93 / 1074,
@@ -39,7 +37,7 @@ const WAIST_GAP = 0.0012;
 
 /**
  * Pass a number to pin a measurement. Leave it null to derive it from `height`.
- * Lengths are metres. `headSize` is the crown radius (centre to top of the egg).
+ * Lengths are metres. `headSize` is the lathe origin to the crown.
  * `limbThickness` scales joint and limb radii.
  */
 export const DEFAULT_PARAMS = {
@@ -92,20 +90,15 @@ export function resolveParams(input = {}) {
   const ankleR = rad(0.038);
   const waistR = rad(0.076);
 
-  const halfWidth = (PHOTO.headWidth * REFERENCE_HEIGHT * s) / 2;
-  let rx = halfWidth / eggMaxFactor();
-  let cut = eggCutNorm(rx, neckTarget);
-  let ry = (PHOTO.headHeight * REFERENCE_HEIGHT * s) / (1 - cut);
+  let headScale = neckTarget / ISO_HEAD_NECK_RADIUS;
   if (p.headSize != null) {
-    const pinned = clamp(Number(p.headSize) || ry, 0.04);
-    const k = pinned / ry;
-    rx *= k;
-    ry = pinned;
-    cut = eggCutNorm(rx, neckTarget * k);
+    const pinned = clamp(Number(p.headSize) || ISO_HEAD_CROWN * headScale, 0.04);
+    headScale = pinned / ISO_HEAD_CROWN;
   }
-  const socketR = eggProfile(cut, rx);
-  const neckR = socketR;
-  const socketDrop = -cut * ry;
+  const ry = ISO_HEAD_CROWN * headScale;
+  const neckR = ISO_HEAD_NECK_RADIUS * headScale;
+  const socketDrop = -ISO_HEAD_NECK_Y * headScale;
+  const headNeckY = ISO_HEAD_NECK_Y * headScale;
 
   const shoulderWidth = clamp(auto(p.shoulderWidth, Math.max(PHOTO.shoulderSpan * REFERENCE_HEIGHT * s, shoulderR * 3.2)), 0.08);
   const hipWidth = clamp(auto(p.hipWidth, Math.max(PHOTO.hipSpan * REFERENCE_HEIGHT * s, hipR * 2.2 + 0.012)), 0.06);
@@ -187,10 +180,10 @@ export function resolveParams(input = {}) {
     height,
     skinColor: p.skinColor || DEFAULT_PARAMS.skinColor,
     limbThickness: thick,
-    headRx: rx,
+    headScale,
     headRy: ry,
     headRadius: ry,
-    headCut: cut,
+    headNeckY,
     socketDrop,
     visibleNeck: neckLen - socketDrop,
     shoulderWidth,

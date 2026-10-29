@@ -2,7 +2,7 @@ import { Group, MeshStandardMaterial, Object3D } from 'three';
 import { JOINT_NAMES, plantFeet, poseBody } from './animate.js';
 import {
   countStats,
-  createEggMesh,
+  createHeadMesh,
   createFootMesh,
   createFrustumMesh,
   createJointMesh,
@@ -52,7 +52,7 @@ function clearGenerated(nodes) {
  *       hip > thigh > knee > shin > ankle > foot
  *       waist ball
  *         chest block, shoulder balls on its upper sides
- *         neck ball > neck > egg head
+ *         neck ball > neck > lathe head
  *
  * A joint sphere uses the radius of the segment it joins, so a straight limb
  * hides it and a bend lets it fill the wedge. Shoulder and hip balls are the
@@ -117,7 +117,7 @@ function layoutBody(root, pelvis, joints, spec, flat, smooth, markers) {
   neck.position.y = neckLength / 2;
   j.neck.add(neck);
 
-  const head = createEggMesh(spec.headRx, spec.headRy, R.neck, smooth);
+  const head = createHeadMesh(spec.headScale, flat);
   head.name = 'headMesh';
   head.position.y = spec.neckLength;
   j.neck.add(head);

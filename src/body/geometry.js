@@ -2,10 +2,11 @@ import {
   BufferGeometry,
   CylinderGeometry,
   Float32BufferAttribute,
+  LatheGeometry,
   Mesh,
   SphereGeometry,
   Uint16BufferAttribute,
-  Vector3,
+  Vector2,
 } from 'three';
 
 /** Open 8-sided limbs. Faceted on purpose; the joint spheres carry the roundness. */
@@ -15,21 +16,32 @@ export const CYLINDER_SIDES = 8;
 export const JOINT_WIDTH = 24;
 export const JOINT_HEIGHT = 16;
 
-/** Egg head. Enough rings to read as smooth next to the neck sphere. */
-export const HEAD_WIDTH = 20;
-export const HEAD_HEIGHT = 14;
-
 /** Small rounded feet. Smooth-shaded, still only a handful of rings. */
 export const FOOT_WIDTH = 8;
 export const FOOT_HEIGHT = 6;
 
 /**
- * Horizontal flare of the egg: wider toward the crown, narrower toward the socket.
- * 0 is a sphere. The reference head is wider in its upper half.
+ * Bald head from iso-city `characters/characters.js` (`HEAD`, `HEAD_Z`).
+ * Faceless: the lathe only. Ears, the nose, and the ink lines stay out.
+ * Points are [radius, y]. The chin ring is radius 0.06 at y -0.145.
+ * The crown is y 0.163. Sections are 1.08× deeper than they are wide.
  */
-export const EGG_FLARE = 0.22;
-
-const _v = new Vector3();
+export const ISO_HEAD_PROFILE = [
+  [0, -0.15],
+  [0.06, -0.145],
+  [0.093, -0.108],
+  [0.106, -0.045],
+  [0.11, 0.03],
+  [0.103, 0.09],
+  [0.08, 0.135],
+  [0.042, 0.158],
+  [0, 0.163],
+];
+export const ISO_HEAD_SEGMENTS = 8;
+export const ISO_HEAD_DEPTH = 1.08;
+export const ISO_HEAD_CROWN = 0.163;
+export const ISO_HEAD_NECK_RADIUS = 0.06;
+export const ISO_HEAD_NECK_Y = -0.145;
 
 function shade(mesh, role) {
   mesh.castShadow = true;
@@ -37,82 +49,33 @@ function shade(mesh, role) {
   return mesh;
 }
 
-/** Unit-sphere egg profile radius at normalized height y in [-1, 1], before rx. */
-export function eggFlareFactor(yNorm, flare = EGG_FLARE) {
-  const span = Math.sqrt(Math.max(0, 1 - yNorm * yNorm));
-  return (1 + flare * yNorm) * span;
-}
-
-/** Widest horizontal radius of an egg with equatorial scale `rx`. */
-export function eggMaxRadius(rx, flare = EGG_FLARE) {
-  let max = 0;
-  for (let i = 0; i <= 64; i += 1) {
-    const y = -1 + (2 * i) / 64;
-    max = Math.max(max, rx * eggFlareFactor(y, flare));
-  }
-  return max;
-}
-
-export function eggMaxFactor(flare = EGG_FLARE) {
-  return eggMaxRadius(1, flare);
-}
-
 /**
- * Normalized height of the neck socket: the lower y where the egg is exactly
- * as wide as the neck. Everything below that point is narrower than the neck,
- * so the mesh stops there and the cylinder meets a matching ring.
+ * Faceted lathe of the iso-city bald head, uniformly scaled.
+ * `scale` multiplies the profile. Depth stays 1.08× the width, as in iso-city.
+ * The chin ring (radius 0.06 in profile units) is the neck socket.
  */
-export function eggCutNorm(rx, neckRadius, flare = EGG_FLARE) {
-  if (!(rx > 0)) return -0.2;
-  const target = neckRadius / rx;
-  if (target >= eggFlareFactor(0, flare) * 0.98) return -0.12;
-  let lo = -0.995;
-  let hi = 0;
-  for (let i = 0; i < 28; i += 1) {
-    const mid = (lo + hi) / 2;
-    if (eggFlareFactor(mid, flare) < target) lo = mid;
-    else hi = mid;
-  }
-  return (lo + hi) / 2;
-}
-
-export function eggProfile(yNorm, rx, flare = EGG_FLARE) {
-  return rx * eggFlareFactor(yNorm, flare);
-}
-
-/**
- * Tall egg, wider above the middle, open at the bottom on the neck socket.
- * `ry` is the distance from the centre to the crown.
- */
-export function createEggGeometry(rx, ry, neckRadius, flare = EGG_FLARE) {
-  const cut = eggCutNorm(rx, neckRadius, flare);
-  const thetaLength = Math.acos(Math.min(0.999, Math.max(-0.999, cut)));
-  const geo = new SphereGeometry(1, HEAD_WIDTH, HEAD_HEIGHT, 0, Math.PI * 2, 0, thetaLength);
-  const pos = geo.attributes.position;
-  for (let i = 0; i < pos.count; i += 1) {
-    _v.fromBufferAttribute(pos, i);
-    const flareScale = 1 + flare * _v.y;
-    pos.setXYZ(i, _v.x * rx * flareScale, _v.y * ry, _v.z * rx * flareScale);
-  }
-  pos.needsUpdate = true;
-  geo.computeVertexNormals();
-  const socketR = eggProfile(cut, rx, flare);
-  geo.userData.rx = rx;
-  geo.userData.ry = ry;
-  geo.userData.cutNorm = cut;
-  geo.userData.socketR = socketR;
+export function createHeadGeometry(scale) {
+  const k = scale;
+  const points = ISO_HEAD_PROFILE.map(([r, y]) => new Vector2(Math.max(r, 0.0001) * k, y * k));
+  const geo = new LatheGeometry(points, ISO_HEAD_SEGMENTS);
+  geo.scale(1, 1, ISO_HEAD_DEPTH);
+  geo.userData.scale = k;
+  geo.userData.crown = ISO_HEAD_CROWN * k;
+  geo.userData.neckY = ISO_HEAD_NECK_Y * k;
+  geo.userData.neckRadius = ISO_HEAD_NECK_RADIUS * k;
+  geo.userData.depthScale = ISO_HEAD_DEPTH;
   return geo;
+}
+
+export function createHeadMesh(scale, material) {
+  const mesh = new Mesh(createHeadGeometry(scale), material);
+  return shade(mesh, 'head');
 }
 
 export function createJointMesh(radius, material) {
   const geo = new SphereGeometry(radius, JOINT_WIDTH, JOINT_HEIGHT);
   const mesh = new Mesh(geo, material);
   return shade(mesh, 'ball');
-}
-
-export function createEggMesh(rx, ry, neckRadius, material) {
-  const mesh = new Mesh(createEggGeometry(rx, ry, neckRadius), material);
-  return shade(mesh, 'head');
 }
 
 export function createFootMesh(width, height, length, material) {

@@ -126,7 +126,11 @@ describe('createBody', () => {
     assert.equal(upper.material.flatShading, true);
     assert.equal(chest.material.flatShading, false);
     assert.equal(pelvis.material.flatShading, false);
-    assert.equal(head.material, elbow.material);
+    assert.equal(head.material, upper.material);
+    assert.equal(head.material.flatShading, true);
+    assert.equal(head.geometry.type, 'LatheGeometry');
+    assert.equal(head.geometry.parameters.segments, 8);
+    assert.equal(head.geometry.parameters.points.length, 9);
     assert.equal(chest.material, elbow.material);
     assert.equal(foot.material, elbow.material);
     assert.equal(upper.material.flatShading, true);
@@ -171,8 +175,11 @@ describe('createBody', () => {
     const headPos = head.geometry.attributes.position;
     let maxH = 0;
     let yAtMax = 0;
+    let maxY = -Infinity;
     let minY = Infinity;
-    let socketR = 0;
+    let ring = 0;
+    let ringX = 0;
+    let ringZ = 0;
     for (let i = 0; i < headPos.count; i += 1) {
       const x = headPos.getX(i);
       const y = headPos.getY(i);
@@ -182,16 +189,26 @@ describe('createBody', () => {
         maxH = h;
         yAtMax = y;
       }
-      if (y < minY) {
-        minY = y;
-        socketR = h;
+      if (y > maxY) maxY = y;
+      if (y < minY) minY = y;
+      if (Math.abs(y - spec.headNeckY) < 1e-4) {
+        ring += 1;
+        ringX = Math.max(ringX, Math.abs(x));
+        ringZ = Math.max(ringZ, Math.abs(z));
       }
     }
-    assert.ok(yAtMax > 0, 'egg is wider in the upper half');
-    assert.ok(maxH > spec.headRx * 0.9);
-    assert.ok(spec.headRy > spec.headRx * 1.2);
-    assert.ok(minY > -spec.headRy * 0.9, 'the point of the egg is cut for the neck');
-    assert.ok(Math.abs(socketR - neck.geometry.parameters.radius) < 1e-3);
+    assert.ok(yAtMax > 0, 'the lathe is widest above its origin');
+    assert.ok(Math.abs(maxY - spec.headRy) < 1e-4);
+    assert.ok(minY < spec.headNeckY, 'the chin tip tucks below the neck ring');
+    assert.ok(ring >= 8);
+    assert.ok(Math.abs(ringX - spec.radii.neck) < 1e-3, 'chin ring matches the neck in width');
+    assert.ok(Math.abs(ringZ / spec.radii.neck - 1.08) < 1e-3, 'chin ring keeps the iso depth scale');
+    assert.equal(head.userData.role, 'head');
+    let heads = 0;
+    body.root.traverse((obj) => {
+      if (obj.isMesh && obj.userData.role === 'head') heads += 1;
+    });
+    assert.equal(heads, 1, 'the head is a single faceless lathe');
 
     assert.equal(hand.userData.role, 'paddle');
     assert.equal(foot.geometry.type, 'SphereGeometry');
@@ -204,8 +221,8 @@ describe('createBody', () => {
     assert.ok(hand.rotation.z > 0.1, 'left paddle turns inward');
     assert.ok(findMesh(body.root, 'handRMesh').rotation.z < -0.1);
 
-    assert.equal(stats.vertices, 6723);
-    assert.equal(stats.triangles, 11240);
+    assert.equal(stats.vertices, 6489);
+    assert.equal(stats.triangles, 10828);
   });
 
   it('plants the feet, fits the crown to the height, and keeps the neck short', () => {
@@ -224,7 +241,7 @@ describe('createBody', () => {
 
     const neck = new Vector3();
     body.joints.neck.getWorldPosition(neck);
-    const socketY = headWorld.y + spec.headCut * spec.headRy;
+    const socketY = headWorld.y + spec.headNeckY;
     assert.ok(socketY - neck.y > 0.03 && socketY - neck.y < 0.07);
 
     for (const name of ['footLHeel', 'footLToe', 'footRHeel', 'footRToe']) {
