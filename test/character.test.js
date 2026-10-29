@@ -73,6 +73,8 @@ describe('character document', () => {
       'head.eyewear',
       'arms.left',
       'arms.right',
+      'arms.left.hand',
+      'arms.right.hand',
       'arms.left.wrist',
       'arms.right.wrist',
       'legs.left',
@@ -166,16 +168,40 @@ describe('character document', () => {
     assert.equal(result.document.arms.left.hand, 'claw');
   });
 
-  it('exposes only the existing preview controls', () => {
+  it('builds the body, arms, legs, and motion controls from the registry', () => {
     const sections = panelSections();
-    assert.deepEqual(sections.map((section) => section.id), ['body', 'motion']);
+    assert.deepEqual(sections.map((section) => section.id), ['body', 'arms', 'legs', 'motion']);
     assert.deepEqual(
       sections[0].controls.map((control) => control.id),
-      ['height', 'shoulder', 'hip', 'thick', 'skin'],
+      ['presentation', 'bodyType', 'torso', 'height', 'shoulder', 'belly', 'hip', 'thick', 'skin'],
+    );
+    assert.deepEqual(
+      sections[0].controls.find((control) => control.id === 'torso').options.map((option) => option.id),
+      ['normal', 'robot'],
     );
     assert.deepEqual(
       sections[1].controls.map((control) => control.id),
-      ['anim', 'speed', 'wire', 'turn'],
+      ['armL', 'armLColor', 'handL', 'armR', 'armRColor', 'handR'],
+    );
+    assert.deepEqual(
+      sections[1].controls.find((control) => control.id === 'handL').options.map((option) => option.id),
+      ['open', 'fist', 'claw', 'hook'],
+    );
+    assert.deepEqual(
+      sections[2].controls.map((control) => control.id),
+      ['legL', 'legLColor', 'legR', 'legRColor'],
+    );
+    assert.deepEqual(
+      sections[2].controls.find((control) => control.id === 'legL').options.map((option) => option.id),
+      ['normal', 'robot', 'peg'],
+    );
+    assert.deepEqual(
+      sections[3].controls.map((control) => control.id),
+      ['walkStyle', 'anim', 'speed', 'wire', 'turn'],
+    );
+    assert.deepEqual(
+      sections[3].controls.find((control) => control.id === 'walkStyle').options.map((option) => option.id),
+      ['normal', 'stomp', 'swagger'],
     );
   });
 });
@@ -210,11 +236,12 @@ describe('createCharacter', () => {
 
   it('keeps the naked mesh and the clips when the document and sliders change', () => {
     const character = createCharacter();
+    assert.equal(character.getStats().vertices, 1421);
     const saved = character.setDocument(PLAN_EXAMPLE);
     assert.equal(saved.body.shoulder, 0.34);
     assert.equal(saved.arms.right.hand, 'claw');
-    assert.equal(character.getStats().vertices, 1421);
-    assert.equal(character.getStats().triangles, 1868);
+    const variantVerts = character.getStats().vertices;
+    assert.notEqual(variantVerts, 1421);
     assert.ok(Math.abs(character.joints.shoulderL.position.x + 0.17) < 1e-6);
 
     character.setParams({
@@ -233,7 +260,7 @@ describe('createCharacter', () => {
     assert.equal(doc.body.limbThickness, 1.1);
     assert.equal(doc.body.skin, '#e4c29a');
     assert.equal(doc.body.belly, 0.21);
-    assert.equal(character.getStats().vertices, 1421);
+    assert.equal(character.getStats().vertices, variantVerts);
     assert.equal(character.sockets.head.parent, character.joints.neck);
     assert.equal(character.sockets.gripR.parent, character.joints.wristR);
 
@@ -252,7 +279,7 @@ describe('createCharacter', () => {
         }
       }
     }
-    assert.equal(character.getStats().vertices, 1421);
+    assert.equal(character.getStats().vertices, variantVerts);
     for (const [name, position] of before) {
       assert.ok(character.joints[name].position.distanceTo(position) < 1e-6, name);
     }

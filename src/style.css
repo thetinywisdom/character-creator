@@ -117,6 +117,19 @@ input[type="range"] {
   cursor: pointer;
 }
 
+.color-line {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.color-line input[type="color"] { flex: 1; }
+
+.skin-clear {
+  flex: none;
+  padding: 6px 10px;
+}
+
 .panel-section {
   display: flex;
   flex-direction: column;

@@ -98,12 +98,128 @@ export function createFootMesh(width, height, length, material) {
  * An 8-gon's faces sit about 7.6% inside the circle the vertices lie on,
  * so a flush sphere peeks a couple of millimetres past each flat.
  */
-export function createTaperMesh(radiusTop, radiusBottom, length, material) {
+export function createTaperMesh(radiusTop, radiusBottom, length, material, sides = CYLINDER_SIDES) {
   const mesh = new Mesh(
-    new CylinderGeometry(radiusTop, radiusBottom, Math.max(length, 0.001), CYLINDER_SIDES, 1, true),
+    new CylinderGeometry(
+      radiusTop,
+      radiusBottom,
+      Math.max(length, 0.001),
+      sides,
+      1,
+      true,
+    ),
     material,
   );
   return shade(mesh, 'cylinder');
+}
+
+/**
+ * Open 4-corner tube along Y. Eight vertices. Bottom sits on y=0, top on y=height.
+ * Ring order is +X+Z, -X+Z, -X-Z, +X-Z so each wall faces outward.
+ */
+export function createRectTubeGeometry(bottomWidth, topWidth, height, bottomDepth, topDepth) {
+  const h = Math.max(height, 1e-4);
+  const hw0 = bottomWidth / 2;
+  const hw1 = topWidth / 2;
+  const hd0 = bottomDepth / 2;
+  const hd1 = topDepth / 2;
+  const positions = [
+    hw0, 0, hd0,
+    -hw0, 0, hd0,
+    -hw0, 0, -hd0,
+    hw0, 0, -hd0,
+    hw1, h, hd1,
+    -hw1, h, hd1,
+    -hw1, h, -hd1,
+    hw1, h, -hd1,
+  ];
+  const indices = [];
+  for (let i = 0; i < 4; i += 1) {
+    const j = (i + 1) % 4;
+    indices.push(i, j + 4, j, i, i + 4, j + 4);
+  }
+  const geo = new BufferGeometry();
+  geo.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geo.setIndex(new Uint16BufferAttribute(indices, 1));
+  geo.computeVertexNormals();
+  geo.userData.topWidth = topWidth;
+  geo.userData.bottomWidth = bottomWidth;
+  geo.userData.topDepth = topDepth;
+  geo.userData.bottomDepth = bottomDepth;
+  geo.userData.height = height;
+  return geo;
+}
+
+export function createRectTubeMesh(bottomWidth, topWidth, height, bottomDepth, topDepth, material) {
+  const mesh = new Mesh(
+    createRectTubeGeometry(bottomWidth, topWidth, height, bottomDepth, topDepth),
+    material,
+  );
+  return shade(mesh, 'box');
+}
+
+/** Closed box, eight vertices, centered on the origin. */
+export function createBoxGeometry(width, height, depth) {
+  const positions = [];
+  const indices = [];
+  appendBox(positions, indices, 0, 0, 0, width, height, depth);
+  const geo = new BufferGeometry();
+  geo.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geo.setIndex(new Uint16BufferAttribute(indices, 1));
+  geo.computeVertexNormals();
+  return geo;
+}
+
+export function createBoxMesh(width, height, depth, material) {
+  const mesh = new Mesh(createBoxGeometry(width, height, depth), material);
+  return shade(mesh, 'box');
+}
+
+/**
+ * Several boxes welded into one mesh. Each box is
+ * `[cx, cy, cz, width, height, depth]`, centered on that point.
+ */
+export function createMergedBoxMesh(boxes, material) {
+  const positions = [];
+  const indices = [];
+  for (const [cx, cy, cz, width, height, depth] of boxes) {
+    appendBox(positions, indices, cx, cy, cz, width, height, depth);
+  }
+  const geo = new BufferGeometry();
+  geo.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geo.setIndex(new Uint16BufferAttribute(indices, 1));
+  geo.computeVertexNormals();
+  const mesh = new Mesh(geo, material);
+  return shade(mesh, 'box');
+}
+
+function appendBox(positions, indices, cx, cy, cz, width, height, depth) {
+  const hx = width / 2;
+  const hy = height / 2;
+  const hz = depth / 2;
+  const base = positions.length / 3;
+  const corners = [
+    [cx + hx, cy - hy, cz + hz],
+    [cx - hx, cy - hy, cz + hz],
+    [cx - hx, cy - hy, cz - hz],
+    [cx + hx, cy - hy, cz - hz],
+    [cx + hx, cy + hy, cz + hz],
+    [cx - hx, cy + hy, cz + hz],
+    [cx - hx, cy + hy, cz - hz],
+    [cx + hx, cy + hy, cz - hz],
+  ];
+  for (const corner of corners) positions.push(corner[0], corner[1], corner[2]);
+  const faces = [
+    [0, 5, 1], [0, 4, 5],
+    [1, 6, 2], [1, 5, 6],
+    [2, 7, 3], [2, 6, 7],
+    [3, 4, 0], [3, 7, 4],
+    [0, 1, 2], [0, 2, 3],
+    [4, 6, 5], [4, 7, 6],
+  ];
+  for (const face of faces) {
+    indices.push(face[0] + base, face[1] + base, face[2] + base);
+  }
 }
 
 /** Quarter-circle samples on each corner of a chest or pelvis block. */

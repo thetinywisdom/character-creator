@@ -23,6 +23,8 @@ const SLOT_VALUE = {
   'head.eyewear': (doc) => doc.head.eyewear.id,
   'arms.left': (doc) => doc.arms.left.type,
   'arms.right': (doc) => doc.arms.right.type,
+  'arms.left.hand': (doc) => doc.arms.left.hand,
+  'arms.right.hand': (doc) => doc.arms.right.hand,
   'arms.left.wrist': (doc) => doc.arms.left.wrist.id,
   'arms.right.wrist': (doc) => doc.arms.right.wrist.id,
   'legs.left': (doc) => doc.legs.left.type,
@@ -56,10 +58,21 @@ function attachSockets(body, sockets) {
 }
 
 function runParts(body, doc, sockets) {
+  if (body.root.userData.layoutFresh) {
+    body.root.userData.layoutFresh = false;
+    delete body.root.userData.torsoStamp;
+    delete body.root.userData.customTorso;
+    for (const joint of Object.values(body.joints)) {
+      delete joint.userData.partStamp;
+      delete joint.userData.customArm;
+      delete joint.userData.customLeg;
+    }
+  }
   const registry = getRegistry();
   const ctx = {
     spec: body.getResolved(),
     joints: body.joints,
+    pelvis: body.pelvis,
     sockets,
     materials: body.materials,
     root: body.root,
@@ -70,6 +83,25 @@ function runParts(body, doc, sockets) {
     const part = registry.part(slot.id, id);
     if (part) part.build({ ...ctx, slot: slot.id, id, part });
   }
+}
+
+function measureKey(doc) {
+  return [
+    doc.body.height,
+    doc.body.shoulder,
+    doc.body.belly,
+    doc.body.hip,
+    doc.body.limbThickness,
+    doc.head.size,
+  ].join('|');
+}
+
+function lookKey(doc) {
+  return JSON.stringify({
+    torso: doc.body.torso,
+    arms: doc.arms,
+    legs: doc.legs,
+  });
 }
 
 function disposeBody(body) {
@@ -103,6 +135,7 @@ export function createCharacter(input) {
   function mount(next) {
     const parent = current?.root.parent ?? null;
     const index = parent ? parent.children.indexOf(current.root) : -1;
+    next.root.userData.layoutFresh = true;
     attachSockets(next, sockets);
     runParts(next, doc, sockets);
     if (parent) {
@@ -122,6 +155,7 @@ export function createCharacter(input) {
     if (!partial || typeof partial !== 'object') return;
     if (typeof partial.height === 'number') doc.body.height = partial.height;
     if (typeof partial.shoulderWidth === 'number') doc.body.shoulder = partial.shoulderWidth;
+    if (typeof partial.bellyWidth === 'number') doc.body.belly = partial.bellyWidth;
     if (typeof partial.hipWidth === 'number') doc.body.hip = partial.hipWidth;
     if (typeof partial.limbThickness === 'number') doc.body.limbThickness = partial.limbThickness;
     if (typeof partial.skinColor === 'string') doc.body.skin = partial.skinColor.toLowerCase();
@@ -136,12 +170,24 @@ export function createCharacter(input) {
     get pelvis() { return current.pelvis; },
     get joints() { return current.joints; },
     get materials() { return current.materials; },
-    update(dt, state) { current.update(dt, state); },
+    update(dt, state) {
+      const next = typeof state === 'string' ? { anim: state } : { ...(state || {}) };
+      if (next.walkStyle == null) next.walkStyle = doc.animation.walkStyle;
+      if (next.legs == null) {
+        next.legs = { L: doc.legs.left.type, R: doc.legs.right.type };
+      }
+      current.update(dt, next);
+    },
     setParams(partial) {
+      const keys = partial && typeof partial === 'object' ? Object.keys(partial) : [];
+      const skinOnly = keys.length > 0 && keys.every((key) => key === 'skinColor');
       current.setParams(partial);
-      attachSockets(current, sockets);
-      runParts(current, doc, sockets);
       syncParams(partial);
+      if (!skinOnly) {
+        current.root.userData.layoutFresh = true;
+        attachSockets(current, sockets);
+        runParts(current, doc, sockets);
+      }
     },
     getParams() { return current.getParams(); },
     getResolved() { return current.getResolved(); },
@@ -150,9 +196,27 @@ export function createCharacter(input) {
     setDocument(next) {
       const result = validateDocument(next);
       if (!result.ok) throw invalid(result);
+      const prev = doc;
       doc = result.document;
-      mount(createBody(paramsFromDocument(doc)));
+      const measures = measureKey(prev) !== measureKey(doc);
+      const skin = prev.body.skin !== doc.body.skin;
+      const look = lookKey(prev) !== lookKey(doc);
+      if (measures) {
+        mount(createBody(paramsFromDocument(doc)));
+      } else {
+        if (skin) current.setParams({ skinColor: doc.body.skin });
+        if (look) runParts(current, doc, sockets);
+      }
       return structuredClone(doc);
+    },
+    updateDocument(mutate) {
+      const next = structuredClone(doc);
+      mutate(next);
+      if (next.body.torso === 'robot') {
+        next.clothing.top.id = 'none';
+        next.clothing.outer.id = 'none';
+      }
+      return this.setDocument(next);
     },
     getRegistry() { return getRegistry(); },
   };

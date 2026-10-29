@@ -1,5 +1,6 @@
 import { ANIMATIONS } from '../body/animate.js';
-import { BODY_CONTROLS, MOTION_CONTROLS } from './panels.js';
+import { buildArm, buildLeg, buildTorso } from './limbs.js';
+import { ARMS_CONTROLS, BODY_CONTROLS, LEGS_CONTROLS, MOTION_CONTROLS } from './panels.js';
 import { registerPart, registerSection, registerSlot } from './registry.js';
 
 const empty = () => {};
@@ -20,15 +21,15 @@ function mirror(slotIds, entries) {
 
 registerSection('body', { label: 'Body', controls: BODY_CONTROLS });
 registerSection('head', { label: 'Head' });
-registerSection('arms', { label: 'Arms' });
-registerSection('legs', { label: 'Legs' });
+registerSection('arms', { label: 'Arms', controls: ARMS_CONTROLS });
+registerSection('legs', { label: 'Legs', controls: LEGS_CONTROLS });
 registerSection('clothes', { label: 'Clothes' });
 registerSection('gear', { label: 'Gear' });
 registerSection('motion', { label: 'Motion', controls: MOTION_CONTROLS });
 
 slot('body.torso', 'body', 'Torso');
-part('body.torso', 'normal', 'Normal');
-part('body.torso', 'robot', 'Robot');
+part('body.torso', 'normal', 'Normal', { build: buildTorso });
+part('body.torso', 'robot', 'Robot', { build: buildTorso });
 
 slot('head.shape', 'head', 'Head shape');
 part('head.shape', 'classic', 'Classic');
@@ -86,10 +87,19 @@ part('head.eyewear', 'goggles', 'Goggles');
 slot('arms.left', 'arms', 'Left arm');
 slot('arms.right', 'arms', 'Right arm');
 mirror(['arms.left', 'arms.right'], [
-  ['normal', 'Normal'],
-  ['muscular', 'Muscular'],
-  ['robot', 'Robot'],
-  ['skeleton', 'Skeleton'],
+  ['normal', 'Normal', { build: buildArm }],
+  ['muscular', 'Muscular', { build: buildArm }],
+  ['robot', 'Robot', { build: buildArm }],
+  ['skeleton', 'Skeleton', { build: buildArm }],
+]);
+
+slot('arms.left.hand', 'arms', 'Left hand');
+slot('arms.right.hand', 'arms', 'Right hand');
+mirror(['arms.left.hand', 'arms.right.hand'], [
+  ['open', 'Open'],
+  ['fist', 'Fist'],
+  ['claw', 'Claw'],
+  ['hook', 'Hook'],
 ]);
 
 slot('arms.left.wrist', 'arms', 'Left wrist');
@@ -103,9 +113,9 @@ mirror(['arms.left.wrist', 'arms.right.wrist'], [
 slot('legs.left', 'legs', 'Left leg');
 slot('legs.right', 'legs', 'Right leg');
 mirror(['legs.left', 'legs.right'], [
-  ['normal', 'Normal'],
-  ['robot', 'Robot'],
-  ['peg', 'Peg leg'],
+  ['normal', 'Normal', { build: buildLeg }],
+  ['robot', 'Robot', { build: buildLeg }],
+  ['peg', 'Peg leg', { build: buildLeg }],
 ]);
 
 slot('clothing.top', 'clothes', 'Top');

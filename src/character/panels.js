@@ -1,22 +1,80 @@
 import { getRegistry } from './registry.js';
 
-/** Controls that already exist on the mannequin preview. Later slots add their own. */
+/** Body fields plus the torso slot. Presets write the numeric sliders. */
 export const BODY_CONTROLS = [
+  {
+    id: 'presentation',
+    kind: 'choice',
+    label: 'Presentation',
+    options: [
+      { id: 'man', label: 'Man' },
+      { id: 'woman', label: 'Woman' },
+    ],
+  },
+  {
+    id: 'bodyType',
+    kind: 'choice',
+    label: 'Body type',
+    options: [
+      { id: 'slim', label: 'Slim' },
+      { id: 'average', label: 'Average' },
+      { id: 'broad', label: 'Broad' },
+      { id: 'heavy', label: 'Heavy' },
+    ],
+  },
+  { id: 'torso', kind: 'slot', slot: 'body.torso', label: 'Torso' },
   { id: 'height', kind: 'range', label: 'Height', min: 1.35, max: 2.15, step: 0.01, unit: 'm' },
-  { id: 'shoulder', kind: 'range', label: 'Shoulder width', min: 0.28, max: 0.72, step: 0.005, unit: 'm' },
-  { id: 'hip', kind: 'range', label: 'Hip width', min: 0.16, max: 0.46, step: 0.005, unit: 'm' },
+  { id: 'shoulder', kind: 'range', label: 'Shoulder width', min: 0.22, max: 0.72, step: 0.005, unit: 'm' },
+  { id: 'belly', kind: 'range', label: 'Belly', min: 0.08, max: 0.7, step: 0.005, unit: 'm' },
+  { id: 'hip', kind: 'range', label: 'Hip width', min: 0.1, max: 0.46, step: 0.005, unit: 'm' },
   { id: 'thick', kind: 'range', label: 'Limb thickness', min: 0.65, max: 1.7, step: 0.01 },
   { id: 'skin', kind: 'color', label: 'Skin' },
 ];
 
+export const ARMS_CONTROLS = [
+  { id: 'armL', kind: 'slot', slot: 'arms.left', label: 'Left arm' },
+  { id: 'armLColor', kind: 'color', label: 'Left color', nullable: true },
+  { id: 'handL', kind: 'slot', slot: 'arms.left.hand', label: 'Left hand' },
+  { id: 'armR', kind: 'slot', slot: 'arms.right', label: 'Right arm' },
+  { id: 'armRColor', kind: 'color', label: 'Right color', nullable: true },
+  { id: 'handR', kind: 'slot', slot: 'arms.right.hand', label: 'Right hand' },
+];
+
+export const LEGS_CONTROLS = [
+  { id: 'legL', kind: 'slot', slot: 'legs.left', label: 'Left leg' },
+  { id: 'legLColor', kind: 'color', label: 'Left color', nullable: true },
+  { id: 'legR', kind: 'slot', slot: 'legs.right', label: 'Right leg' },
+  { id: 'legRColor', kind: 'color', label: 'Right color', nullable: true },
+];
+
 export const MOTION_CONTROLS = [
+  { id: 'walkStyle', kind: 'slot', slot: 'animation.walkStyle', label: 'Walk style' },
   { id: 'anim', kind: 'select', label: 'Movement' },
   { id: 'speed', kind: 'range', label: 'Speed', min: 0, max: 8, step: 0.05, unit: 'm/s' },
   { id: 'wire', kind: 'check', label: 'Wireframe' },
   { id: 'turn', kind: 'check', label: 'Turntable', checked: true },
 ];
 
+function expandControl(control) {
+  if (control.kind !== 'slot') {
+    return {
+      ...control,
+      options: control.options?.map((option) => ({ ...option })),
+    };
+  }
+  const options = getRegistry().parts(control.slot).map((part) => ({
+    id: part.id,
+    label: part.label,
+  }));
+  return { ...control, kind: 'choice', options };
+}
+
 /** Sections that have controls. Empty catalogue sections stay in the registry. */
 export function panelSections() {
-  return getRegistry().sections().filter((section) => section.controls.length > 0);
+  return getRegistry().sections()
+    .filter((section) => section.controls.length > 0)
+    .map((section) => ({
+      ...section,
+      controls: section.controls.map(expandControl),
+    }));
 }
