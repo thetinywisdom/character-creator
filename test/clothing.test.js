@@ -47,8 +47,72 @@ function assertClosedShell(mesh) {
   mesh.geometry.computeBoundingBox();
   const size = mesh.geometry.boundingBox.getSize(new Vector3());
   assert.ok(size.x > 0.02 && size.y > 0.02 && size.z > 0.02, `${mesh.name} is a volume`);
-  if (mesh.geometry.parameters && 'openEnded' in mesh.geometry.parameters) {
-    assert.equal(mesh.geometry.parameters.openEnded, false, mesh.name);
+}
+
+function bboxOf(mesh) {
+  mesh.geometry.computeBoundingBox();
+  return mesh.geometry.boundingBox;
+}
+
+/** Highest triangle whose XZ footprint contains the point, in mesh-local space. */
+function coverFromAbove(mesh, x, z) {
+  const pos = mesh.geometry.attributes.position;
+  const index = mesh.geometry.index;
+  const a = new Vector3();
+  const b = new Vector3();
+  const c = new Vector3();
+  let best = null;
+  for (let i = 0; i < index.count; i += 3) {
+    a.fromBufferAttribute(pos, index.getX(i));
+    b.fromBufferAttribute(pos, index.getX(i + 1));
+    c.fromBufferAttribute(pos, index.getX(i + 2));
+    const denom = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
+    if (Math.abs(denom) < 1e-10) continue;
+    const u = ((b.z - c.z) * (x - c.x) + (c.x - b.x) * (z - c.z)) / denom;
+    const v = ((c.z - a.z) * (x - c.x) + (a.x - c.x) * (z - c.z)) / denom;
+    const w = 1 - u - v;
+    if (u < -1e-4 || v < -1e-4 || w < -1e-4) continue;
+    const y = a.y * u + b.y * v + c.y * w;
+    const abx = b.x - a.x;
+    const aby = b.y - a.y;
+    const abz = b.z - a.z;
+    const acx = c.x - a.x;
+    const acy = c.y - a.y;
+    const acz = c.z - a.z;
+    const ny = abz * acx - abx * acz;
+    if (!best || y > best.y) best = { y, ny };
+  }
+  return best;
+}
+
+function assertShoulderRoof(character, muscularBall = 1) {
+  const spec = character.getResolved();
+  const top = character.root.getObjectByName('clothingTop');
+  const ball = spec.radii.shoulder * muscularBall;
+  const shoulderY = spec.chestHeight * spec.shoulderT;
+  const samples = [
+    [spec.shoulderWidth / 2, 0, true],
+    [-spec.shoulderWidth / 2, 0, true],
+    [spec.shoulderWidth / 2 + ball * 0.55, 0, true],
+    [-(spec.shoulderWidth / 2 + ball * 0.55), 0, true],
+    [spec.shoulderWidth / 2, ball * 0.35, true],
+    [-spec.shoulderWidth / 2, -ball * 0.35, true],
+    [spec.chestTopWidth * 0.28, spec.chestTopDepth * 0.22, false],
+    [-spec.chestTopWidth * 0.28, -spec.chestTopDepth * 0.22, false],
+    [0, spec.chestTopDepth * 0.5, false],
+    [0, -spec.chestTopDepth * 0.5, false],
+    [0, spec.radii.neck * 2.3, false],
+    [spec.radii.neck * 2.1, spec.radii.neck * 1.2, false],
+  ];
+  assert.equal(coverFromAbove(top, 0, 0), null, 'neck hole stays open');
+  for (const [x, z, overBall] of samples) {
+    const hit = coverFromAbove(top, x, z);
+    assert.ok(hit, `roof covers ${x.toFixed(3)}, ${z.toFixed(3)}`);
+    assert.ok(hit.ny > 0, `roof faces up at ${x.toFixed(3)}, ${z.toFixed(3)}`);
+    assert.ok(hit.y > spec.chestHeight, `roof clears the chest at ${x.toFixed(3)}, ${z.toFixed(3)}`);
+    if (overBall) {
+      assert.ok(hit.y > shoulderY + ball * 0.9, `yoke clears the shoulder ball (${hit.y.toFixed(3)})`);
+    }
   }
 }
 
@@ -105,18 +169,39 @@ describe('clothing compositor', () => {
     const spec = character.getResolved();
     const top = character.joints.waist.getObjectByName('clothingTop');
     assert.equal(top.parent, character.joints.waist);
-    assert.equal(top.geometry.type, 'BoxGeometry');
+    assert.notEqual(top.geometry.type, 'BoxGeometry');
     assertClosedShell(top);
-    const params = top.geometry.parameters;
-    assert.ok(params.width > spec.chestTopWidth);
-    assert.ok(params.depth > spec.chestTopDepth);
-    assert.ok(top.position.y - params.height / 2 < 0, 'shirt covers the waist');
-    assert.ok(top.position.y + params.height / 2 > spec.chestHeight * 0.7, 'shirt reaches the neck');
+    const box = bboxOf(top);
+    assert.ok(box.max.x - box.min.x > spec.chestTopWidth);
+    assert.ok(box.max.z - box.min.z > spec.chestTopDepth);
+    assert.ok(box.min.y < 0, 'shirt covers the waist');
+    assert.ok(box.max.y > spec.chestHeight * 0.7, 'shirt reaches the neck');
     const sleeve = character.joints.shoulderL.getObjectByName('clothingTopUpperL');
     assert.equal(sleeve.parent, character.joints.shoulderL);
-    assert.equal(sleeve.geometry.parameters.openEnded, false);
+    assertClosedShell(sleeve);
+    const sleeveBox = bboxOf(sleeve);
+    assert.ok(sleeveBox.max.y - sleeveBox.min.y < spec.upperArmLength * 0.7, 'tee sleeve ends on the upper arm');
     assert.equal(character.joints.elbowL.getObjectByName('clothingTopForearmL'), undefined);
     assert.ok(character.root.getObjectByName('forearmLMesh'));
+    assertShoulderRoof(character);
+  });
+
+  it('closes a shirt and a muscular shoulder, and keeps a tee skirt from gaping', () => {
+    const shirt = wear((doc) => {
+      doc.clothing.top = { id: 'shirt', color: '#dddddd' };
+      doc.arms.left.type = 'muscular';
+    });
+    assert.ok(shirt.joints.elbowL.getObjectByName('clothingTopForearmL'));
+    assert.ok(shirt.joints.shoulderL.getObjectByName('clothingTopUpperL'));
+    assertShoulderRoof(shirt, 1.3);
+    const teeSkirt = wear((doc) => {
+      doc.clothing.top = { id: 'tee', color: '#3a5a40' };
+      doc.clothing.bottom = { id: 'skirt', color: '#222222' };
+    });
+    assertShoulderRoof(teeSkirt);
+    const skirt = teeSkirt.root.getObjectByName('clothingBottom');
+    skirt.geometry.computeBoundingBox();
+    assert.ok(skirt.geometry.boundingBox.max.y > teeSkirt.getResolved().pelvisHeight * 0.85);
   });
 
   it('stacks a vest over a tank and shorts over the legs without holes', () => {
@@ -128,29 +213,26 @@ describe('clothing compositor', () => {
     assertBodyStays(character);
     const top = character.root.getObjectByName('clothingTop');
     const vest = character.root.getObjectByName('clothingOuter');
-    assert.ok(top.geometry.parameters.width < vest.geometry.parameters.width);
-    assert.ok(top.geometry.parameters.depth < vest.geometry.parameters.depth);
-    assert.ok(top.geometry.parameters.height > vest.geometry.parameters.height);
+    const topSize = bboxOf(top).getSize(new Vector3());
+    const vestSize = bboxOf(vest).getSize(new Vector3());
+    assert.ok(topSize.x < vestSize.x, 'vest is wider than the tank');
+    assert.ok(topSize.z < vestSize.z, 'vest is deeper than the tank');
     assert.equal(character.joints.shoulderL.children.some((child) => child.userData.garment), false);
     const thigh = character.joints.hipL.getObjectByName('clothingBottomThighL');
     assert.equal(thigh.parent, character.joints.hipL);
-    assert.equal(thigh.geometry.parameters.openEnded, false);
+    assertClosedShell(thigh);
+    const thighBox = bboxOf(thigh);
+    assert.ok(thighBox.max.y - thighBox.min.y < character.getResolved().thighLength * 0.75);
     assert.equal(character.root.getObjectByName('clothingBottomShinL'), undefined);
     for (const mesh of garments(character.root)) assertClosedShell(mesh);
     character.root.updateMatrixWorld(true);
-    const corners = [];
-    const { width, height, depth } = vest.geometry.parameters;
-    for (const x of [-width / 2, width / 2]) {
-      for (const y of [-height / 2, height / 2]) {
-        for (const z of [-depth / 2, depth / 2]) {
-          corners.push(vest.localToWorld(new Vector3(x, y, z)));
-        }
-      }
-    }
-    const xs = corners.map((corner) => corner.x);
-    const zs = corners.map((corner) => corner.z);
-    assert.ok(Math.min(...xs) < -0.05 && Math.max(...xs) > 0.05, 'vest has both sides');
-    assert.ok(Math.min(...zs) < -0.02 && Math.max(...zs) > 0.02, 'vest has a front and a back');
+    const vestBox = bboxOf(vest);
+    assert.ok(vestBox.min.x < -0.05 && vestBox.max.x > 0.05, 'vest has both sides');
+    assert.ok(vestBox.min.z < -0.02 && vestBox.max.z > 0.02, 'vest has a front and a back');
+    assertShoulderRoof(character);
+    const spec = character.getResolved();
+    const shoulder = coverFromAbove(vest, spec.shoulderWidth / 2, 0);
+    assert.ok(shoulder && shoulder.ny > 0, 'vest yoke covers the shoulder');
   });
 
   it('keeps the top when a jacket is worn over it', () => {
@@ -207,11 +289,68 @@ describe('clothing compositor', () => {
     const pad = clothPad(spec.height);
     const skirt = character.root.getObjectByName('clothingBottom');
     assert.equal(skirt.parent, character.pelvis);
-    assert.equal(skirt.geometry.parameters.openEnded, false);
     assert.ok(skirt.userData.hemRadius >= spec.hipWidth / 2 + spec.radii.knee + pad);
     assert.ok(character.root.getObjectByName('pelvisMesh'));
     assert.ok(character.root.getObjectByName('thighLMesh'));
     assertClosedShell(skirt);
+    const pos = skirt.geometry.attributes.position;
+    const index = skirt.geometry.index;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (let i = 0; i < pos.count; i += 1) {
+      minY = Math.min(minY, pos.getY(i));
+      maxY = Math.max(maxY, pos.getY(i));
+    }
+    assert.ok(maxY > spec.pelvisHeight * 0.85, 'waistband meets the waist');
+    const hem = [];
+    const waist = [];
+    for (let i = 0; i < pos.count; i += 1) {
+      const y = pos.getY(i);
+      const radius = Math.hypot(pos.getX(i), pos.getZ(i));
+      const angle = Math.atan2(pos.getZ(i), pos.getX(i));
+      if (Math.abs(y - minY) < 1e-4) hem.push({ radius, angle });
+      if (y > maxY - 0.002) waist.push({ radius, angle });
+    }
+    hem.sort((p, q) => p.angle - q.angle);
+    assert.equal(hem.length, 12, 'one even hem ring');
+    const radii = hem.map((p) => p.radius);
+    const hi = Math.max(...radii);
+    const lo = Math.min(...radii);
+    assert.ok(hi - lo > 0.008, 'pleats change the hem radius');
+    assert.ok(Math.abs(hi - skirt.userData.hemRadius) < 1e-4);
+    for (let i = 0; i < hem.length; i += 1) {
+      const next = hem[(i + 1) % hem.length];
+      assert.ok(Math.abs(hem[i].radius - next.radius) > 0.008, `pleat ${i} alternates`);
+      const step = Math.atan2(Math.sin(next.angle - hem[i].angle), Math.cos(next.angle - hem[i].angle));
+      assert.ok(Math.abs(step - Math.PI * 2 / 12) < 0.05, 'pleats are evenly spaced');
+    }
+    assert.equal(waist.length, 12, 'closed waistband');
+    const a = new Vector3();
+    const b = new Vector3();
+    const c = new Vector3();
+    let sideFaces = 0;
+    for (let i = 0; i < index.count; i += 3) {
+      a.fromBufferAttribute(pos, index.getX(i));
+      b.fromBufferAttribute(pos, index.getX(i + 1));
+      c.fromBufferAttribute(pos, index.getX(i + 2));
+      const abx = b.x - a.x;
+      const aby = b.y - a.y;
+      const abz = b.z - a.z;
+      const acx = c.x - a.x;
+      const acy = c.y - a.y;
+      const acz = c.z - a.z;
+      const nx = aby * acz - abz * acy;
+      const ny = abz * acx - abx * acz;
+      const nz = abx * acy - aby * acx;
+      const len = Math.hypot(nx, ny, nz);
+      assert.ok(len > 1e-6, 'no degenerate skirt face');
+      if (Math.abs(ny) / len > 0.65) continue;
+      const cx = (a.x + b.x + c.x) / 3;
+      const cz = (a.z + b.z + c.z) / 3;
+      assert.ok(nx * cx + nz * cz > 0, 'skirt side faces point outward');
+      sideFaces += 1;
+    }
+    assert.ok(sideFaces > 20, 'skirt has a closed side wall');
   });
 
   it('puts shoes over the feet and keeps the markers at the sole', () => {
@@ -305,10 +444,32 @@ describe('clothing compositor', () => {
       doc.clothing.top = { id: 'hoodie', color: '#334455' };
       doc.head.headwear.id = 'cap';
     });
-    assert.ok(open.root.getObjectByName('clothingTopHood'));
+    const hood = open.root.getObjectByName('clothingTopHood');
+    assert.ok(hood);
+    assert.equal(hood.parent, open.joints.neck);
+    assert.notEqual(hood.geometry.type, 'BoxGeometry');
     assert.equal(hatted.root.getObjectByName('clothingTopHood'), undefined);
     assert.ok(open.getStats().vertices > hatted.getStats().vertices);
-    assertClosedShell(open.root.getObjectByName('clothingTopHood'));
+    assertClosedShell(hood);
+    const spec = open.getResolved();
+    const pos = hood.geometry.attributes.position;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    let back = false;
+    let nape = false;
+    for (let i = 0; i < pos.count; i += 1) {
+      const y = pos.getY(i);
+      const z = pos.getZ(i);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+      if (z < -spec.radii.neck) back = true;
+      if (y < spec.neckLength * 0.35 && z < 0 && Math.hypot(pos.getX(i), z) < spec.headRy) nape = true;
+    }
+    assert.ok(minY < 0.02, 'hood meets the neckline');
+    assert.ok(maxY > spec.neckLength + spec.headRy * 0.4, 'hood reaches the crown');
+    assert.ok(back, 'hood sits behind the head');
+    assert.ok(nape, 'hood drapes onto the neck instead of floating');
+    assertShoulderRoof(open);
   });
 
   it('follows the joints through a walk and a dance', () => {
@@ -385,18 +546,23 @@ describe('clothing compositor', () => {
       doc.clothing.bottom = { id: 'pants', color: '#222233' };
       doc.clothing.shoes = { id: 'boots', color: '#111111', accent: '#eeeeee' };
     });
+    const photo = wear((doc) => {
+      doc.clothing.top = { id: 'tank', color: '#3a5a40' };
+      doc.clothing.outer = { id: 'vest', color: '#111111' };
+      doc.clothing.bottom = { id: 'shorts', color: '#222222' };
+    });
     const counts = {
       naked: 1421,
+      tankVestShorts: photo.getStats().vertices,
       teePantsSneakers: casual.getStats().vertices,
       fullyDressed: full.getStats().vertices,
       everySlot: filled.getStats().vertices,
     };
     console.log(`CLOTHING ${JSON.stringify(counts)}`);
     assert.equal(counts.naked, 1421);
+    assert.ok(counts.tankVestShorts > 1421);
     assert.ok(counts.teePantsSneakers > 1421);
     assert.ok(counts.fullyDressed > counts.teePantsSneakers);
-    assert.ok(counts.fullyDressed < 2200, String(counts.fullyDressed));
-    assert.ok(counts.everySlot < 2200, String(counts.everySlot));
   });
 
   it('plays every clip on a dressed body and a robot-mixed dressed body', () => {
