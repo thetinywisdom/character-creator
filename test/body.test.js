@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { Vector3 } from 'three';
-import { JOINT_NAMES, POSE_BEND, createBody } from '../src/body/index.js';
+import { JOINT_NAMES, JOINT_PHI_START, POSE_BEND, createBody } from '../src/body/index.js';
 
 const EXPECTED_JOINTS = [
   'neck',
@@ -22,6 +22,131 @@ const EXPECTED_JOINTS = [
 
 function findMesh(root, name) {
   return root.getObjectByName(name);
+}
+
+const CHILD_LINKS = [
+  ['neckMesh', 'neckTube', 'bottom'],
+  ['shoulderLMesh', 'upperArmLMesh', 'top'],
+  ['shoulderRMesh', 'upperArmRMesh', 'top'],
+  ['elbowLMesh', 'forearmLMesh', 'top'],
+  ['elbowRMesh', 'forearmRMesh', 'top'],
+  ['hipLMesh', 'thighLMesh', 'top'],
+  ['hipRMesh', 'thighRMesh', 'top'],
+  ['kneeLMesh', 'shinLMesh', 'top'],
+  ['kneeRMesh', 'shinRMesh', 'top'],
+];
+
+const PARENT_LINKS = [
+  ['elbowLMesh', 'upperArmLMesh'],
+  ['elbowRMesh', 'upperArmRMesh'],
+  ['wristLMesh', 'forearmLMesh'],
+  ['wristRMesh', 'forearmRMesh'],
+  ['kneeLMesh', 'thighLMesh'],
+  ['kneeRMesh', 'thighRMesh'],
+  ['ankleLMesh', 'shinLMesh'],
+  ['ankleRMesh', 'shinRMesh'],
+];
+
+function tubeRing(mesh, end) {
+  const geo = mesh.geometry;
+  const segs = geo.parameters.radialSegments;
+  const cols = segs + 1;
+  const row = end === 'top' ? 0 : geo.parameters.heightSegments;
+  const pos = geo.attributes.position;
+  const pts = [];
+  for (let i = 0; i < segs; i += 1) {
+    const p = new Vector3().fromBufferAttribute(pos, row * cols + i);
+    mesh.localToWorld(p);
+    pts.push(p);
+  }
+  return pts;
+}
+
+function pointInside(mesh, worldPoint, slack) {
+  const p = mesh.worldToLocal(worldPoint.clone());
+  const pos = mesh.geometry.attributes.position;
+  const index = mesh.geometry.index;
+  const a = new Vector3();
+  const b = new Vector3();
+  const c = new Vector3();
+  const n = new Vector3();
+  for (let i = 0; i < index.count; i += 3) {
+    a.fromBufferAttribute(pos, index.getX(i));
+    b.fromBufferAttribute(pos, index.getX(i + 1));
+    c.fromBufferAttribute(pos, index.getX(i + 2));
+    n.subVectors(b, a).cross(c.clone().sub(a));
+    if (n.lengthSq() < 1e-18) continue;
+    if (n.dot(p) - n.dot(a) > slack) return false;
+  }
+  return true;
+}
+
+function radialSurface(mesh, worldDir) {
+  const origin = new Vector3();
+  mesh.getWorldPosition(origin);
+  const localOrigin = mesh.worldToLocal(origin.clone());
+  const localEnd = mesh.worldToLocal(origin.clone().add(worldDir));
+  const dir = localEnd.sub(localOrigin);
+  const len = dir.length();
+  if (len < 1e-8) return 0;
+  dir.multiplyScalar(1 / len);
+  const pos = mesh.geometry.attributes.position;
+  const index = mesh.geometry.index;
+  const a = new Vector3();
+  const b = new Vector3();
+  const c = new Vector3();
+  const ab = new Vector3();
+  const ac = new Vector3();
+  const n = new Vector3();
+  const hit = new Vector3();
+  let best = Infinity;
+  for (let i = 0; i < index.count; i += 3) {
+    a.fromBufferAttribute(pos, index.getX(i));
+    b.fromBufferAttribute(pos, index.getX(i + 1));
+    c.fromBufferAttribute(pos, index.getX(i + 2));
+    ab.subVectors(b, a);
+    ac.subVectors(c, a);
+    n.crossVectors(ab, ac);
+    const denom = n.dot(dir);
+    if (denom <= 1e-10) continue;
+    const t = (n.dot(a) - n.dot(localOrigin)) / denom;
+    if (t <= 1e-6) continue;
+    hit.copy(localOrigin).addScaledVector(dir, t);
+    const rel = hit.sub(a);
+    const d00 = ab.dot(ab);
+    const d01 = ab.dot(ac);
+    const d11 = ac.dot(ac);
+    const d20 = rel.dot(ab);
+    const d21 = rel.dot(ac);
+    const inv = 1 / (d00 * d11 - d01 * d01);
+    const u = (d11 * d20 - d01 * d21) * inv;
+    const v = (d00 * d21 - d01 * d20) * inv;
+    if (u >= -1e-3 && v >= -1e-3 && u + v <= 1 + 1e-3) best = Math.min(best, t);
+  }
+  return best;
+}
+
+function alongsideOctagon(tube, worldPoint) {
+  const local = tube.worldToLocal(worldPoint.clone());
+  const { radiusTop, radiusBottom, height } = tube.geometry.parameters;
+  const half = height / 2;
+  if (local.y > half + 1e-4 || local.y < -half - 1e-4) return null;
+  const span = (half - local.y) / height;
+  const radius = radiusTop + span * (radiusBottom - radiusTop);
+  const limit = radius * Math.cos(Math.PI / 8) + 1e-4;
+  for (let i = 0; i < 8; i += 1) {
+    const a = (i + 0.5) * Math.PI / 4;
+    if (local.x * Math.sin(a) + local.z * Math.cos(a) > limit) return false;
+  }
+  return true;
+}
+
+function axisY(mesh) {
+  const origin = new Vector3();
+  const tip = new Vector3(0, 1, 0);
+  mesh.localToWorld(origin);
+  mesh.localToWorld(tip);
+  return tip.sub(origin).normalize();
 }
 
 function assertOutward(geo, label) {
@@ -97,8 +222,8 @@ describe('createBody', () => {
     assert.equal(stats.roles.head, 1);
     assert.equal(stats.meshes, 30);
     assert.equal(stats.cylinderSides, 8);
-    assert.equal(stats.jointWidth, 24);
-    assert.equal(stats.jointHeight, 16);
+    assert.equal(stats.jointWidth, 8);
+    assert.equal(stats.jointHeight, 6);
 
     const elbow = findMesh(body.root, 'elbowLMesh');
     const upper = findMesh(body.root, 'upperArmLMesh');
@@ -120,9 +245,21 @@ describe('createBody', () => {
     const hand = findMesh(body.root, 'handLMesh');
 
     assert.equal(elbow.geometry.type, 'SphereGeometry');
-    assert.equal(elbow.geometry.parameters.widthSegments, 24);
-    assert.equal(elbow.geometry.parameters.heightSegments, 16);
+    assert.equal(elbow.geometry.parameters.widthSegments, 8);
+    assert.equal(elbow.geometry.parameters.heightSegments, 6);
+    assert.equal(elbow.geometry.parameters.phiStart, JOINT_PHI_START);
     assert.equal(elbow.material.flatShading, false);
+    const elbowPos = elbow.geometry.attributes.position;
+    const elbowN = elbow.geometry.attributes.normal;
+    for (let i = 0; i < elbowPos.count; i += 1) {
+      const px = elbowPos.getX(i);
+      const py = elbowPos.getY(i);
+      const pz = elbowPos.getZ(i);
+      const len = Math.hypot(px, py, pz);
+      if (len < 1e-8) continue;
+      const nd = (elbowN.getX(i) * px + elbowN.getY(i) * py + elbowN.getZ(i) * pz) / len;
+      assert.ok(nd > 0.999, 'joint normals stay smooth');
+    }
     assert.equal(upper.material.flatShading, true);
     assert.equal(chest.material.flatShading, false);
     assert.equal(pelvis.material.flatShading, false);
@@ -221,8 +358,8 @@ describe('createBody', () => {
     assert.ok(hand.rotation.z > 0.1, 'left paddle turns inward');
     assert.ok(findMesh(body.root, 'handRMesh').rotation.z < -0.1);
 
-    assert.equal(stats.vertices, 6489);
-    assert.equal(stats.triangles, 10828);
+    assert.equal(stats.vertices, 1421);
+    assert.equal(stats.triangles, 1868);
   });
 
   it('plants the feet, fits the crown to the height, and keeps the neck short', () => {
@@ -322,6 +459,92 @@ describe('createBody', () => {
     for (const name of ['footLHeel', 'footLToe', 'footRHeel', 'footRToe']) {
       const y = findMesh(body.root, name).getWorldPosition(new Vector3()).y;
       assert.ok(y >= -1e-3, `${name} stays on the ground while walking`);
+    }
+  });
+
+  it('keeps low-poly joints flush when straight and closed when bent', () => {
+    const body = createBody();
+    const samples = [
+      { mode: 'idle', time: 0 },
+      { mode: 'idle', time: 0.8 },
+      { mode: 'pose', time: 0 },
+    ];
+    for (let i = 0; i < 12; i += 1) samples.push({ mode: 'walk', time: i * 0.11 });
+
+    for (const sample of samples) {
+      body.update(0, { ...sample, freeze: true });
+      body.root.updateMatrixWorld(true);
+
+      for (const [ballName, tubeName, end] of CHILD_LINKS) {
+        const ball = findMesh(body.root, ballName);
+        const tube = findMesh(body.root, tubeName);
+        const ring = tubeRing(tube, end);
+        const pos = ball.geometry.attributes.position;
+        const equator = [];
+        for (let i = 0; i < pos.count; i += 1) {
+          const y = pos.getY(i);
+          const radial = Math.hypot(pos.getX(i), y, pos.getZ(i));
+          if (Math.abs(y) > radial * 1e-4) continue;
+          equator.push(ball.localToWorld(new Vector3().fromBufferAttribute(pos, i)));
+        }
+        for (const p of ring) {
+          let best = Infinity;
+          for (const q of equator) best = Math.min(best, q.distanceTo(p));
+          assert.ok(best < 1e-4, `${tubeName} shares the ${ballName} equator`);
+        }
+      }
+
+      for (const [ballName, tubeName] of PARENT_LINKS) {
+        const ball = findMesh(body.root, ballName);
+        const tube = findMesh(body.root, tubeName);
+        const center = new Vector3();
+        ball.getWorldPosition(center);
+        const radius = ball.geometry.parameters.radius;
+        const ring = tubeRing(tube, 'bottom');
+        for (let i = 0; i < ring.length; i += 1) {
+          const mid = ring[i].clone().add(ring[(i + 1) % ring.length]).multiplyScalar(0.5);
+          const inset = center.clone().lerp(mid, 0.94);
+          assert.ok(
+            pointInside(ball, inset, radius * 1e-4),
+            `${tubeName} opening stays covered by ${ballName} during ${sample.mode}`,
+          );
+        }
+
+        const awayParent = axisY(tube);
+        const childName = CHILD_LINKS.find(([name]) => name === ballName);
+        if (!childName) continue;
+        const awayChild = axisY(findMesh(body.root, childName[1]));
+        if (childName[2] === 'top') awayChild.multiplyScalar(-1);
+        const angle = awayParent.angleTo(awayChild);
+        if (angle < 0.45 || angle > Math.PI - 0.25) continue;
+        for (const bis of [
+          awayParent.clone().add(awayChild),
+          awayParent.clone().negate().add(awayChild.clone().negate()),
+        ]) {
+          if (bis.lengthSq() < 0.04) continue;
+          const reach = radialSurface(ball, bis.normalize());
+          assert.ok(reach > radius * 0.9 && reach < radius * 1.01, `${ballName} fills the ${sample.mode} bend`);
+        }
+      }
+    }
+
+    body.update(0, { mode: 'idle', time: 0, freeze: true });
+    body.root.updateMatrixWorld(true);
+    const adjacent = new Map();
+    for (const [ballName, tubeName] of [...CHILD_LINKS, ...PARENT_LINKS]) {
+      if (!adjacent.has(ballName)) adjacent.set(ballName, []);
+      adjacent.get(ballName).push(tubeName);
+    }
+    for (const [ballName, tubeNames] of adjacent) {
+      const ball = findMesh(body.root, ballName);
+      const pos = ball.geometry.attributes.position;
+      for (let i = 0; i < pos.count; i += 1) {
+        const world = ball.localToWorld(new Vector3().fromBufferAttribute(pos, i));
+        for (const tubeName of tubeNames) {
+          const inside = alongsideOctagon(findMesh(body.root, tubeName), world);
+          assert.notEqual(inside, false, `${ballName} stays inside ${tubeName} when straight`);
+        }
+      }
     }
   });
 

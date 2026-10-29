@@ -21,11 +21,11 @@ root > pelvis > waist > neck > head
 
 `pelvis` is a rig group used for sway and planting the feet. It is not one of the fourteen joints. The head is a mesh under the neck, so rotating `neck` turns the head.
 
-Each joint is a smooth sphere (`SphereGeometry`, 24×16) whose diameter matches the segment it joins. A straight limb hides the ball. A bend lets the ball fill the outside of the wedge. Shoulder and hip balls use the radius of the limb that hangs from them and sit against the block. The waist ball is the same diameter as the chest bottom and the pelvis top, so those faces meet it flush.
+Each joint is a low-poly ball (`SphereGeometry`, 8×6) whose diameter matches the segment it joins. The 8 longitudes are lined up with the tube vertices, so the equator is the same octagon as the limb and a straight limb hides the ball. Smooth normals keep it reading as round when a bend shows it. Shoulder and hip balls use the radius of the limb that hangs from them and sit against the block. The waist ball is the same diameter as the chest bottom and the pelvis top, so those faces meet it flush.
 
-Everything else stays minimal. Limbs are open 8-sided tapers, each hand is a 13-vertex paddle, each foot is an 8×6 ellipsoid. The chest and pelvis keep the tapered block shape, with a two-segment quarter-circle bevel on every edge and smooth normals, so the corners read as rounded wood instead of razor edges. Each block is 72 vertices. An 8-sided tube's flat faces sit about 8% of the radius inside the circle, so a straight joint shows a thin sliver of the sphere along each flat. The tubes stay faceted.
+Everything else stays minimal. Limbs are open 8-sided tapers, each hand is a 13-vertex paddle, each foot is an 8×6 ellipsoid. The chest and pelvis keep the tapered block shape, with a two-segment quarter-circle bevel on every edge and smooth normals, so the corners read as rounded wood instead of razor edges. Each block is 72 vertices. The tubes stay faceted.
 
-Default body: **6489 vertices, 10828 triangles** (14 spheres, 9 tubes, 2 beveled blocks, 2 paddles, 2 feet, 1 head). The smooth spheres are nearly all of that count.
+Default body: **1421 vertices, 1868 triangles** (14 balls, 9 tubes, 2 beveled blocks, 2 paddles, 2 feet, 1 head).
 
 The default colour is the pale wood of the reference (`#e4c29a`). `skinColor` tints the whole figure. Limbs, hands, and the head are flat-shaded. Joints, the feet, and the two blocks are smooth-shaded, in the same colour, so a flush ball does not read as a different material. The head is an 8-segment lathe of the iso-city bald profile, scaled so the chin ring matches the neck, and 1.08× deeper than it is wide. It has no ears, nose, or lines.
 

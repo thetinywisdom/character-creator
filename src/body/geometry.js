@@ -12,9 +12,17 @@ import {
 /** Open 8-sided limbs. Faceted on purpose; the joint spheres carry the roundness. */
 export const CYLINDER_SIDES = 8;
 
-/** Smooth joint spheres. Width is the silhouette, height the poles. */
-export const JOINT_WIDTH = 24;
-export const JOINT_HEIGHT = 16;
+/**
+ * Low joint balls. Width matches the 8-sided tubes. Height is even so a
+ * vertex ring sits on the equator. Normals stay smooth.
+ */
+export const JOINT_WIDTH = 8;
+export const JOINT_HEIGHT = 6;
+/**
+ * Cylinder theta 0 lies on +Z. Sphere phi 0 lies on -X, so the ball starts
+ * a quarter turn around and its longitudes land on the tube vertices.
+ */
+export const JOINT_PHI_START = Math.PI / 2;
 
 /** Small rounded feet. Smooth-shaded, still only a handful of rings. */
 export const FOOT_WIDTH = 8;
@@ -73,7 +81,7 @@ export function createHeadMesh(scale, material) {
 }
 
 export function createJointMesh(radius, material) {
-  const geo = new SphereGeometry(radius, JOINT_WIDTH, JOINT_HEIGHT);
+  const geo = new SphereGeometry(radius, JOINT_WIDTH, JOINT_HEIGHT, JOINT_PHI_START);
   const mesh = new Mesh(geo, material);
   return shade(mesh, 'ball');
 }
