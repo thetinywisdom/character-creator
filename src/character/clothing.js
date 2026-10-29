@@ -10,12 +10,13 @@ import {
 import { MUSCULAR_SCALE } from './limbs.js';
 
 /**
- * Clothes are loose straight blocks hung over the naked body. They do not
- * follow the waist, chest, or limb taper. Body meshes stay. Overlap is fine.
+ * Clothes are straight blocks hung off the body, in a regular everyday fit.
+ * They do not follow the waist, chest, or limb taper. Body meshes stay.
  *
- * A top is one roomy block from the shoulder line to just below the hips,
- * flat across the top, with a small neck hole. Sleeves are straight wide
- * tubes parented to the arm joints. A sleeve cap covers the shoulder ball.
+ * A top takes its width from the shoulder span and its depth from the chest,
+ * plus about 2 cm of ease. The shoulder line drops a little from the neck to
+ * the shoulder ball. The block then hangs straight to just below the hips.
+ * Sleeves are straight tubes a bit wider than the arm, overlapping the ball.
  *
  * Robot and skeleton limbs keep their meshes and get no sleeve or pant tube.
  * Peg legs skip pant tubes and shoes. A robot leg skips the pant tube and the
@@ -25,6 +26,11 @@ const N = 12;
 
 export function clothPad(height) {
   return 0.03 * ((Number(height) || 1.8) / 1.8);
+}
+
+/** Regular-fit ease, about 2 cm at 1.8 m, inside the 1.5–3 cm band. */
+function fitEase(height) {
+  return 0.02 * ((Number(height) || 1.8) / 1.8);
 }
 
 function removeGarments(root) {
@@ -191,16 +197,43 @@ function shoulderBall(spec, doc) {
   return r;
 }
 
-function blockSize(spec, ball, pad, extra) {
-  const hx = Math.max(
-    spec.shoulderWidth / 2 + ball + pad,
-    spec.chestTopWidth / 2 + pad * 1.5,
-    spec.pelvisBottomWidth / 2 + pad,
-  ) + extra;
-  const hz = Math.max(spec.chestTopDepth, spec.pelvisBottomDepth, spec.chestBottomDepth) / 2 + pad * 1.6 + extra;
-  const y1 = Math.max(spec.chestHeight, spec.chestHeight * spec.shoulderT + ball) + pad * 0.5;
-  const y0 = -spec.pelvisHeight * 1.05;
-  return { hx, hz, y0, y1, neckR: spec.radii.neck * 1.2 };
+/**
+ * Straight torso block. Width is the shoulder span plus the ball and the ease.
+ * Depth is the chest. The hem may widen a centimetre. The shoulder drops from
+ * the neck toward the ball, by less than 2 cm so the side still reads straight.
+ */
+function torsoFit(spec, ball, ease, extra) {
+  const hx = spec.shoulderWidth / 2 + ball + ease + extra;
+  const hz = Math.max(spec.chestTopDepth, spec.pelvisBottomDepth) / 2 + ease + extra;
+  const shoulderY = spec.chestHeight * spec.shoulderT;
+  const ySide = Math.max(
+    spec.chestHeight + ease * 0.25,
+    shoulderY + ball * 0.95 + ease * 0.2,
+  );
+  const yNeck = ySide + Math.min(ease * 0.7, 0.014);
+  const y0 = -spec.pelvisHeight - ease * 0.45;
+  const flare = Math.min(ease * 0.45, 0.01);
+  return {
+    hx,
+    hz,
+    y0,
+    ySide,
+    yNeck,
+    flare,
+    neckR: spec.radii.neck * 1.12,
+    ease,
+    extra,
+  };
+}
+
+/** Shoulder line: high at the neck, a little lower over the shoulder ball. */
+function slopedRect(yNeck, ySide, hx, hz, p) {
+  return loop(N, (c, s) => {
+    const d = (Math.abs(c) ** p + Math.abs(s) ** p) ** (1 / p) || 1;
+    const along = Math.abs(c) ** 1.4;
+    const y = yNeck + (ySide - yNeck) * along;
+    return [(c / d) * hx, y, (s / d) * hz];
+  });
 }
 
 function cutLip(loom, rings, ids, pred, depth) {
@@ -223,16 +256,18 @@ function cutLip(loom, rings, ids, pred, depth) {
 }
 
 /**
- * Straight roomy block. Same width at the shoulder and the hem.
- * The top is a flat lid with a neck hole. `power` bevels the corners.
+ * Straight block. The hem is only slightly wider than the shoulders.
+ * The lid slopes from the neck out to the shoulder ball and keeps a neck hole.
  */
 function buildBlock(size, power, frontLimit) {
-  const { hx, hz, y0, y1, neckR } = size;
+  const { hx, hz, y0, yNeck, ySide, flare, neckR } = size;
   const loom = new Loom();
-  const hem = roundRect(y0, hx, hz, power);
-  const lip = roundRect(y0 + 0.012, hx * 0.9, hz * 0.9, power);
-  const top = roundRect(y1, hx, hz, power);
-  const neck = circle(y1, neckR);
+  const hemW = hx + flare;
+  const hemD = hz + flare * 0.45;
+  const hem = roundRect(y0, hemW, hemD, power);
+  const lip = roundRect(y0 + 0.012, hemW * 0.9, hemD * 0.9, power);
+  const top = slopedRect(yNeck, ySide, hx, hz, power);
+  const neck = circle(yNeck, neckR);
   const ids = [hem, lip, top, neck].map((pts) => loom.add(pts));
   const skip = frontLimit == null ? null : skipFront(frontLimit);
   loom.wall(ids[0], ids[1]);
@@ -243,13 +278,13 @@ function buildBlock(size, power, frontLimit) {
 }
 
 function collarBlock(size, power) {
-  const { hx, hz, y0, y1, neckR } = size;
+  const { hx, hz, y0, yNeck, ySide, flare, neckR } = size;
   const loom = new Loom();
   const collarR = neckR * 1.65;
-  const hem = roundRect(y0, hx, hz, power);
-  const top = roundRect(y1, hx, hz, power);
-  const collar = circle(y1, collarR);
-  const neck = circle(y1 + 0.02, neckR);
+  const hem = roundRect(y0, hx + flare, hz + flare * 0.45, power);
+  const top = slopedRect(yNeck, ySide, hx, hz, power);
+  const collar = circle(yNeck, collarR);
+  const neck = circle(yNeck + 0.016, neckR);
   const ids = [hem, top, collar, neck].map((pts) => loom.add(pts));
   loom.wall(ids[0], ids[1]);
   loom.cap(ids[1], ids[2]);
@@ -265,23 +300,26 @@ function hangCylinder(parent, radius, yTop, yBottom, material, name, garment) {
   return mesh;
 }
 
-function addSleeves(ctx, kind, pad, material, prefix, garment) {
+function addSleeves(ctx, kind, fit, material, prefix, garment) {
   const spec = ctx.spec;
   const doc = ctx.document;
+  const ease = fit.ease;
+  const shoulderY = spec.chestHeight * spec.shoulderT;
+  const radius = (fit.hx - spec.shoulderWidth / 2) + Math.min(ease * 0.35, 0.008);
   for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
     if (!clothArm(doc.arms[key].type)) continue;
     const scale = doc.arms[key].type === 'muscular' ? MUSCULAR_SCALE : 1;
     const shoulder = spec.radii.shoulder * scale;
-    const elbow = spec.radii.elbow * scale;
-    const wrist = spec.radii.wrist * scale;
-    const wide = pad * 2.1;
-    const cap = shoulder + pad * 0.35;
+    const yTop = Math.max(shoulder + ease * 0.12, fit.ySide - shoulderY + ease * 0.12);
     if (kind === 'half') {
+      let yBottom = -spec.upperArmLength * 0.42;
+      const limit = spec.upperArmLength * 0.66;
+      if (yTop - yBottom > limit) yBottom = yTop - limit;
       hangCylinder(
         ctx.joints[`shoulder${side}`],
-        shoulder + wide,
-        cap,
-        -spec.upperArmLength * 0.45,
+        radius,
+        yTop,
+        yBottom,
         material,
         `${prefix}Upper${side}`,
         garment,
@@ -289,8 +327,8 @@ function addSleeves(ctx, kind, pad, material, prefix, garment) {
     } else {
       hangCylinder(
         ctx.joints[`shoulder${side}`],
-        Math.max(shoulder, elbow) + wide,
-        cap,
+        radius,
+        yTop,
         -spec.upperArmLength,
         material,
         `${prefix}Upper${side}`,
@@ -298,8 +336,8 @@ function addSleeves(ctx, kind, pad, material, prefix, garment) {
       );
       hangCylinder(
         ctx.joints[`elbow${side}`],
-        Math.max(elbow, wrist) + wide * 0.85,
-        pad * 0.4,
+        radius,
+        ease * 0.3,
         -spec.forearmLength,
         material,
         `${prefix}Forearm${side}`,
@@ -371,23 +409,24 @@ function buildCape(spec, pad) {
   return geo;
 }
 
-function skirtSize(spec, pad) {
+function skirtSize(spec, pad, ease) {
   const leg = spec.thighLength + spec.shinLength;
   const scale = leg / 0.82;
   const stride = Math.min(1.5, Math.max(0.8, 0.55 + 0.32 * 1.6)) * scale;
   const footForward = stride * 0.6 * 0.5;
   const kneeForward = footForward * (spec.thighLength / leg);
   const lateral = spec.hipWidth / 2 + spec.radii.knee + pad;
+  const rTop = spec.radii.waist + ease;
   return {
     yTop: spec.pelvisHeight * 0.92,
     yBottom: -spec.thighLength + spec.radii.knee,
-    rTop: spec.radii.waist + pad * 1.4,
-    rHem: Math.hypot(lateral, kneeForward) + pad,
+    rTop,
+    rHem: Math.max(Math.hypot(lateral, kneeForward), rTop + ease * 2),
   };
 }
 
-function buildSkirt(spec, pad) {
-  const hem = skirtSize(spec, pad);
+function buildSkirt(spec, pad, ease) {
+  const hem = skirtSize(spec, pad, ease);
   const height = Math.max(hem.yTop - hem.yBottom, 0.04);
   const geo = new CylinderGeometry(hem.rTop, hem.rHem, height, 8, 1, false);
   geo.translate(0, (hem.yTop + hem.yBottom) / 2, 0);
@@ -396,38 +435,47 @@ function buildSkirt(spec, pad) {
   return geo;
 }
 
-function addWaistBlock(ctx, pad, material) {
+function addWaistBlock(ctx, ease, material) {
   const spec = ctx.spec;
-  const y1 = spec.pelvisHeight * 0.94;
-  const y0 = -pad * 0.4;
-  const hx = Math.max(spec.pelvisBottomWidth, spec.hipWidth + spec.radii.hip * 2) / 2 + pad * 1.3;
-  const hz = spec.pelvisBottomDepth / 2 + pad * 1.3;
-  const geo = buildBlock({ hx, hz, y0, y1, neckR: spec.radii.waist * 0.55 }, 8, null);
+  const y1 = spec.pelvisHeight * 0.9;
+  const y0 = -ease * 0.35;
+  const hx = spec.hipWidth / 2 + spec.radii.hip + ease;
+  const hz = Math.max(spec.pelvisBottomDepth, spec.pelvisTopDepth) / 2 + ease;
+  const geo = buildBlock({
+    hx,
+    hz,
+    y0,
+    yNeck: y1,
+    ySide: y1,
+    flare: ease * 0.15,
+    neckR: spec.radii.waist * 0.45,
+    ease,
+    extra: 0,
+  }, 8, null);
   return addMesh(ctx.pelvis, geo, material, 'clothingBottom', 'bottom');
 }
 
-function addLegTubes(ctx, part, pad, material) {
+function addLegTubes(ctx, part, ease, material) {
   const spec = ctx.spec;
   const doc = ctx.document;
+  const legR = spec.radii.hip + ease;
   for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
     if (!clothLeg(doc.legs[key].type)) continue;
-    const thighR = Math.max(spec.radii.hip, spec.radii.knee) + pad * 2;
     const thighLen = part === 'shorts' ? spec.thighLength * 0.5 : spec.thighLength;
     hangCylinder(
       ctx.joints[`hip${side}`],
-      thighR,
-      pad * 0.2,
+      legR,
+      ease * 0.15,
       -thighLen,
       material,
       `clothingBottomThigh${side}`,
       'bottom',
     );
     if (part === 'pants') {
-      const shinR = Math.max(spec.radii.knee, spec.radii.ankle) + pad * 1.7;
       hangCylinder(
         ctx.joints[`knee${side}`],
-        shinR,
-        pad * 0.25,
+        legR,
+        ease * 0.25,
         -spec.shinLength,
         material,
         `clothingBottomShin${side}`,
@@ -459,24 +507,25 @@ function mergeParts(parts) {
   return geo;
 }
 
-function addShoe(ctx, side, kind, pad, cuff, materials) {
+function addShoe(ctx, side, kind, ease, cuff, materials) {
   const spec = ctx.spec;
-  const soleH = (kind === 'flats' ? 0.014 : kind === 'boots' ? 0.026 : 0.02) * (spec.height / 1.8);
+  const soleH = (kind === 'flats' ? 0.012 : kind === 'boots' ? 0.022 : 0.016) * (spec.height / 1.8);
   const soleY = spec.footCenterY - spec.footHeight / 2;
-  const width = spec.footWidth + pad * 2.2;
-  const length = spec.footLength + pad * 1.6;
+  const width = spec.footWidth + ease;
+  const length = spec.footLength + ease * 0.55;
   const z = spec.footCenterZ;
   const parts = [];
   const sole = new BoxGeometry(width, soleH, length);
   sole.translate(0, soleY + soleH / 2, z);
   parts.push({ geometry: sole, materialIndex: 0 });
-  const upperH = kind === 'flats' ? spec.footHeight * 0.55 : spec.footHeight * 0.95;
-  const upper = new BoxGeometry(width * 0.88, upperH, length * 0.9);
-  upper.translate(0, soleY + soleH * 0.45 + upperH / 2, z + length * 0.02);
+  const upperH = kind === 'flats' ? spec.footHeight * 0.55 : spec.footHeight * 0.92;
+  const upper = new BoxGeometry(width * 0.9, upperH, length * 0.92);
+  upper.translate(0, soleY + soleH * 0.45 + upperH / 2, z + length * 0.015);
   parts.push({ geometry: upper, materialIndex: 1 });
   if (kind === 'boots' && cuff) {
     const cuffLen = Math.max(spec.shinLength * 0.38, spec.radii.ankle * 2.6);
-    const tube = new CylinderGeometry(spec.radii.ankle + pad, spec.radii.ankle + pad, cuffLen, 8, 1, false);
+    const tubeR = spec.radii.ankle + ease * 0.75;
+    const tube = new CylinderGeometry(tubeR, tubeR, cuffLen, 8, 1, false);
     tube.translate(0, cuffLen / 2, 0);
     parts.push({ geometry: tube, materialIndex: 1 });
   }
@@ -493,20 +542,22 @@ export function buildClothing(ctx) {
   const doc = ctx.document;
   const spec = ctx.spec;
   const pad = clothPad(spec.height);
+  const ease = fitEase(spec.height);
   const ball = shoulderBall(spec, doc);
+  const room = 0.01 * (spec.height / 1.8);
   const robotTorso = doc.body.torso === 'robot';
   const topId = robotTorso ? 'none' : doc.clothing.top.id;
   const outerId = robotTorso ? 'none' : doc.clothing.outer.id;
 
   if (topId !== 'none') {
     const material = garmentMaterial(ctx, doc.clothing.top.color);
-    const extra = topId === 'hoodie' ? pad * 0.55 : 0;
+    const extra = topId === 'hoodie' ? room : 0;
     const power = topId === 'tank' ? 4 : 8;
-    const size = blockSize(spec, ball, pad, extra);
+    const size = torsoFit(spec, ball, ease, extra);
     const geo = topId === 'shirt' ? collarBlock(size, power) : buildBlock(size, power, null);
     addMesh(ctx.joints.waist, geo, material, 'clothingTop', 'top');
     const sleeves = topId === 'tee' ? 'half' : (topId === 'shirt' || topId === 'hoodie' ? 'full' : null);
-    if (sleeves) addSleeves(ctx, sleeves, pad, material, 'clothingTop', 'top');
+    if (sleeves) addSleeves(ctx, sleeves, size, material, 'clothingTop', 'top');
     if (topId === 'hoodie' && doc.head.headwear.id === 'none') {
       addMesh(ctx.joints.neck, buildHood(spec, pad), material, 'clothingTopHood', 'top');
     }
@@ -514,10 +565,10 @@ export function buildClothing(ctx) {
 
   if (outerId === 'vest' || outerId === 'jacket') {
     const material = garmentMaterial(ctx, doc.clothing.outer.color);
-    const extra = outerId === 'vest' ? pad * 0.85 : pad * 1.15;
-    const size = blockSize(spec, ball, pad, extra);
+    const extra = outerId === 'vest' ? room * 0.5 : room;
+    const size = torsoFit(spec, ball, ease, extra);
     addMesh(ctx.joints.waist, buildBlock(size, 8, outerId === 'vest' ? 0.45 : 0.72), material, 'clothingOuter', 'outer');
-    if (outerId === 'jacket') addSleeves(ctx, 'full', pad + extra * 0.35, material, 'clothingOuter', 'outer');
+    if (outerId === 'jacket') addSleeves(ctx, 'full', size, material, 'clothingOuter', 'outer');
   }
   if (outerId === 'cape') {
     addMesh(ctx.joints.waist, buildCape(spec, pad), garmentMaterial(ctx, doc.clothing.outer.color), 'clothingCape', 'outer');
@@ -525,14 +576,14 @@ export function buildClothing(ctx) {
 
   const bottomId = doc.clothing.bottom.id;
   if (bottomId === 'skirt') {
-    const geo = buildSkirt(spec, pad);
+    const geo = buildSkirt(spec, pad, ease);
     const mesh = addMesh(ctx.pelvis, geo, garmentMaterial(ctx, doc.clothing.bottom.color), 'clothingBottom', 'bottom');
     mesh.userData.hemRadius = geo.userData.hemRadius;
     mesh.userData.waistRadius = geo.userData.waistRadius;
   } else if (bottomId === 'pants' || bottomId === 'shorts') {
     const material = garmentMaterial(ctx, doc.clothing.bottom.color);
-    addWaistBlock(ctx, pad, material);
-    addLegTubes(ctx, bottomId, pad, material);
+    addWaistBlock(ctx, ease, material);
+    addLegTubes(ctx, bottomId, ease, material);
   }
 
   const shoeId = doc.clothing.shoes.id;
@@ -542,7 +593,7 @@ export function buildClothing(ctx) {
     for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
       if (doc.legs[key].type === 'peg') continue;
       const cuff = shoeId === 'boots' && doc.legs[key].type === 'normal';
-      addShoe(ctx, side, shoeId, pad, cuff, [sole, upper]);
+      addShoe(ctx, side, shoeId, ease, cuff, [sole, upper]);
     }
   }
 }
