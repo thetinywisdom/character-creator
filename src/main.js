@@ -226,6 +226,7 @@ function frameCamera(name) {
   const spots = {
     front: new Vector3(0, lookY, dist),
     side: new Vector3(dist, lookY, 0),
+    back: new Vector3(0, lookY, -dist),
     three: new Vector3(dist * 0.62, lookY + h * 0.06, dist * 0.78),
   };
   camera.position.copy(spots[name] || spots.three);

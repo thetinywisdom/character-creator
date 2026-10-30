@@ -113,7 +113,7 @@ function assertTorsoShell(character, meshName = 'clothingTop') {
     assert.ok(hit.y > spec.chestHeight * spec.shoulderT, `${meshName} roof clears the shoulder joint`);
   }
   assert.ok(shell.yNeck - shell.ySide > 0.025, `${meshName} shoulder line slopes`);
-  const neck = coverFromAbove(mesh, spec.radii.neck * 1.8, 0);
+  const neck = coverFromAbove(mesh, 0, -Math.min(shell.neckR * 1.7, shell.hz * 0.7));
   const side = coverFromAbove(mesh, shell.hx * 0.82, 0);
   assert.ok(neck && side && neck.y > side.y + 0.015, `${meshName} is higher at the neck than at the shoulder`);
   assert.equal(coverFromAbove(mesh, sx + ball * 0.85, 0), null, 'outer shoulder ball is not in the torso');
@@ -376,6 +376,54 @@ describe('clothing compositor', () => {
     assert.deepEqual(character.getStats().roles, naked.getStats().roles);
     assert.equal(garments(character.root).length, 0);
     assertBodyStays(character);
+  });
+
+  it('hides the skin a garment covers and keeps the default shoulder at 0.30 m', () => {
+    assert.ok(Math.abs(createBody().getResolved().shoulderWidth - 0.3) < 1e-9);
+    const shown = (character, name) => character.root.getObjectByName(name).visible;
+    const tee = wear((doc) => { doc.clothing.top = { id: 'tee', color: '#3a5a40' }; });
+    assert.equal(shown(tee, 'chestMesh'), false);
+    assert.equal(shown(tee, 'shoulderLMesh'), false);
+    assert.equal(shown(tee, 'upperArmLMesh'), true);
+    assert.equal(shown(tee, 'forearmLMesh'), true);
+    const sleeve = tee.root.getObjectByName('clothingTopUpperL');
+    const arm = tee.root.getObjectByName('upperArmLMesh');
+    const info = sleeve.userData.sleeve;
+    const armPos = arm.geometry.attributes.position;
+    const point = new Vector3();
+    for (let i = 0; i < armPos.count; i += 1) {
+      point.fromBufferAttribute(armPos, i);
+      arm.localToWorld(point);
+      sleeve.worldToLocal(point);
+      if (point.y < info.yBottom + 0.02 || point.y > info.yTop) continue;
+      assert.ok(Math.hypot(point.x, point.z) < info.inscribed - 0.004, 'upper arm stays inside the sleeve');
+    }
+    const shirt = wear((doc) => { doc.clothing.top = { id: 'shirt', color: '#dddddd' }; });
+    assert.equal(shown(shirt, 'upperArmLMesh'), false);
+    assert.equal(shown(shirt, 'forearmLMesh'), false);
+    assert.equal(shown(shirt, 'wristLMesh'), false);
+    const tank = wear((doc) => { doc.clothing.top = { id: 'tank', color: '#3a5a40' }; });
+    assert.equal(shown(tank, 'chestMesh'), false);
+    assert.equal(shown(tank, 'shoulderLMesh'), true);
+    const pants = wear((doc) => { doc.clothing.bottom = { id: 'pants', color: '#222222' }; });
+    assert.equal(shown(pants, 'pelvisMesh'), false);
+    assert.equal(shown(pants, 'thighLMesh'), false);
+    assert.equal(shown(pants, 'shinLMesh'), false);
+    assert.equal(shown(pants, 'chestMesh'), true);
+    const shorts = wear((doc) => { doc.clothing.bottom = { id: 'shorts', color: '#222222' }; });
+    assert.equal(shown(shorts, 'thighLMesh'), true);
+    assert.equal(shown(shorts, 'shinLMesh'), true);
+    const shoes = wear((doc) => {
+      doc.clothing.shoes = { id: 'sneakers', color: '#111111', accent: '#f2f2f2' };
+    });
+    assert.equal(shown(shoes, 'footLMesh'), false);
+    const mixed = wear((doc) => {
+      doc.clothing.top = { id: 'shirt', color: '#3a5a40' };
+      doc.arms.right.type = 'robot';
+    });
+    assert.equal(shown(mixed, 'shoulderLMesh'), false);
+    assert.equal(shown(mixed, 'shoulderRMesh'), true);
+    assert.equal(shown(mixed, 'upperArmRMesh'), true);
   });
 
   it('wears a tee over the body, with sleeves on the shoulders', () => {

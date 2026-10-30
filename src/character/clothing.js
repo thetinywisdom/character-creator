@@ -205,7 +205,9 @@ function skipFront(limit) {
  */
 function torsoFit(spec, ease, extra) {
   const hx = spec.chestTopWidth / 2 + ease + extra;
-  const hz = Math.max(spec.chestTopDepth, spec.pelvisBottomDepth) / 2 + ease + extra;
+  // Depth ease is a little larger than the side ease so a top stays outside
+  // the pants when the waist leans.
+  const hz = Math.max(spec.chestTopDepth, spec.pelvisBottomDepth) / 2 + ease * 1.75 + extra;
   const drop = spec.chestShoulderDrop || 0.03;
   const yNeck = spec.chestHeight + ease + extra * 0.35;
   const ySide = Math.min(
@@ -475,7 +477,9 @@ function addWaistBlock(ctx, ease, material) {
   const y1 = spec.pelvisHeight * 0.9;
   const y0 = -ease * 0.35;
   const hx = spec.hipWidth / 2 + spec.radii.hip + ease;
-  const hz = Math.max(spec.pelvisBottomDepth, spec.pelvisTopDepth) / 2 + ease;
+  // Sit inside a top. The top uses the full ease on the same torso depth,
+  // so a full ease here puts the waistband on the shirt and it shows through.
+  const hz = Math.max(spec.pelvisBottomDepth, spec.pelvisTopDepth) / 2 + ease * 0.35;
   const geo = buildBlock({
     hx,
     hz,
@@ -500,7 +504,7 @@ function addLegTubes(ctx, part, ease, material) {
     hangCylinder(
       ctx.joints[`hip${side}`],
       legR,
-      ease * 0.15,
+      -0.012,
       -thighLen,
       material,
       `clothingBottomThigh${side}`,
@@ -639,5 +643,43 @@ export function buildClothing(ctx) {
       const cuff = shoeId === 'boots' && doc.legs[key].type === 'normal';
       addShoe(ctx, side, shoeId, ease, cuff, [sole, upper]);
     }
+  }
+
+  concealCovered(ctx, topId, outerId, bottomId, shoeId);
+}
+
+/**
+ * Covered skin stays in the rig but is not drawn. The shells are a close
+ * regular fit, and the chest box and limb tubes would otherwise cut the cloth.
+ */
+function concealCovered(ctx, topId, outerId, bottomId, shoeId) {
+  const doc = ctx.document;
+  const conceal = (name) => {
+    const mesh = ctx.root.getObjectByName(name);
+    if (mesh) mesh.visible = false;
+  };
+  if (topId !== 'none' || outerId === 'vest' || outerId === 'jacket') conceal('chestMesh');
+  const longSleeve = topId === 'shirt' || topId === 'hoodie' || outerId === 'jacket';
+  const anySleeve = longSleeve || topId === 'tee';
+  for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
+    if (!anySleeve || !clothArm(doc.arms[key].type)) continue;
+    conceal(`shoulder${side}Mesh`);
+    if (!longSleeve) continue;
+    conceal(`upperArm${side}Mesh`);
+    conceal(`forearm${side}Mesh`);
+    conceal(`elbow${side}Mesh`);
+    conceal(`wrist${side}Mesh`);
+  }
+  if (bottomId === 'pants' || bottomId === 'shorts' || bottomId === 'skirt') conceal('pelvisMesh');
+  for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
+    if (!clothLeg(doc.legs[key].type)) continue;
+    if (bottomId === 'pants' || bottomId === 'shorts' || bottomId === 'skirt') conceal(`hip${side}Mesh`);
+    if (bottomId === 'pants' || bottomId === 'skirt') conceal(`thigh${side}Mesh`);
+    if (bottomId === 'pants') {
+      conceal(`knee${side}Mesh`);
+      conceal(`shin${side}Mesh`);
+    }
+    if (shoeId !== 'barefoot') conceal(`foot${side}Mesh`);
+    if (shoeId === 'boots') conceal(`ankle${side}Mesh`);
   }
 }

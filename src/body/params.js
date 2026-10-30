@@ -15,11 +15,13 @@ export const REFERENCE_HEIGHT = 1.8;
  */
 const PHOTO = {
   visibleNeck: 32 / 1074,
-  shoulderSpan: 248 / 1074,
   waistWidth: 93 / 1074,
   pelvisWidth: 145 / 1074,
   hipSpan: 90 / 1074,
 };
+
+/** Shoulder span of the default 1.8 m figure. Presets scale from this. */
+const DEFAULT_SHOULDER = 0.3;
 
 /** How the flexible torso and legs share whatever height is left after the head and feet. */
 const SHARE = {
@@ -105,7 +107,7 @@ export function resolveParams(input = {}) {
   const socketDrop = -ISO_HEAD_NECK_Y * headScale;
   const headNeckY = ISO_HEAD_NECK_Y * headScale;
 
-  const shoulderWidth = clamp(auto(p.shoulderWidth, Math.max(PHOTO.shoulderSpan * REFERENCE_HEIGHT * s, shoulderR * 3.2)), 0.08);
+  const shoulderWidth = clamp(auto(p.shoulderWidth, Math.max(DEFAULT_SHOULDER * s, shoulderR * 3.2)), 0.08);
   const hipWidth = clamp(auto(p.hipWidth, Math.max(PHOTO.hipSpan * REFERENCE_HEIGHT * s, hipR * 2.2 + 0.012)), 0.06);
   const hipX = hipWidth / 2;
 

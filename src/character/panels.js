@@ -1,7 +1,7 @@
 import { getRegistry } from './registry.js';
 
 /** Body fields plus the torso slot. Presets write the numeric sliders. */
-export const SHOULDER_WIDTH = { min: 0.26, max: 0.58, step: 0.005 };
+export const SHOULDER_WIDTH = { min: 0.18, max: 0.44, step: 0.005 };
 
 export const BODY_CONTROLS = [
   {
