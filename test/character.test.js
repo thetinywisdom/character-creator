@@ -114,7 +114,7 @@ describe('character document', () => {
     const partial = validateDocument({ version: 1, body: { height: 1.6 } });
     assert.equal(partial.ok, true);
     assert.equal(partial.document.body.height, 1.6);
-    assert.equal(partial.document.body.skin, '#e4c29a');
+    assert.equal(partial.document.body.skin, '#f1cdc3');
     assert.equal(partial.document.animation.walkStyle, 'normal');
     assert.equal(partial.document.body.limbThickness, 1);
   });
@@ -222,8 +222,8 @@ describe('createCharacter', () => {
   it('wraps the naked mannequin and leaves the sockets empty', () => {
     const naked = createBody();
     const character = createCharacter();
-    assert.equal(character.getStats().vertices, 1421);
-    assert.equal(character.getStats().triangles, 1868);
+    assert.equal(character.getStats().vertices, 1445);
+    assert.equal(character.getStats().triangles, 1916);
     assert.deepEqual(character.getStats().roles, naked.getStats().roles);
     assert.deepEqual(Object.keys(character.joints), JOINT_NAMES);
     for (const name of JOINT_NAMES) {
@@ -248,12 +248,12 @@ describe('createCharacter', () => {
 
   it('keeps the naked mesh and the clips when the document and sliders change', () => {
     const character = createCharacter();
-    assert.equal(character.getStats().vertices, 1421);
+    assert.equal(character.getStats().vertices, 1445);
     const saved = character.setDocument(PLAN_EXAMPLE);
     assert.equal(saved.body.shoulder, 0.34);
     assert.equal(saved.arms.right.hand, 'claw');
     const variantVerts = character.getStats().vertices;
-    assert.notEqual(variantVerts, 1421);
+    assert.notEqual(variantVerts, 1445);
     assert.ok(Math.abs(character.joints.shoulderL.position.x + 0.17) < 1e-6);
 
     character.setParams({

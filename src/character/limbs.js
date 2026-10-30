@@ -1,4 +1,4 @@
-import { MeshStandardMaterial } from 'three';
+import { MeshBasicMaterial, MeshLambertMaterial } from 'three';
 import {
   createBoxMesh,
   createChestMesh,
@@ -34,12 +34,10 @@ export function materialFor(ctx, color, flat) {
   const key = `${flat ? 'flat' : 'smooth'}:${hex}`;
   let material = ctx.materials.find((entry) => entry.userData.poolKey === key);
   if (!material) {
-    material = new MeshStandardMaterial({
-      color: hex,
-      roughness: 0.8,
-      metalness: 0,
-      flatShading: flat,
-    });
+    material = flat
+      ? new MeshLambertMaterial({ color: hex, flatShading: true })
+      : new MeshBasicMaterial({ color: hex });
+    if (!flat) material.flatShading = false;
     material.userData.poolKey = key;
     material.userData.lockedColor = true;
     ctx.materials.push(material);
@@ -196,18 +194,19 @@ function replaceArm(ctx, side, sign, arm) {
   const robot = arm.type === 'robot';
   const sides = arm.type === 'skeleton' ? 4 : undefined;
   addBall(shoulder, `shoulder${side}Mesh`, radii.shoulder, smooth, `upperArm${side}`);
+  const tube = robot ? flat : smooth;
   const upper = robot
     ? hangRect(shoulder, `upperArm${side}Mesh`, radii.shoulder, radii.elbow, spec.upperArmLength, flat)
-    : hangTaper(shoulder, `upperArm${side}Mesh`, radii.shoulder, radii.elbow, spec.upperArmLength, flat, sides);
+    : hangTaper(shoulder, `upperArm${side}Mesh`, radii.shoulder, radii.elbow, spec.upperArmLength, tube, sides);
   upper.userData.segment = `upperArm${side}`;
   addBall(elbow, `elbow${side}Mesh`, radii.elbow, smooth);
   if (robot) {
     hangRect(elbow, `forearm${side}Mesh`, radii.elbow, radii.wrist, spec.forearmLength, flat);
   } else {
-    hangTaper(elbow, `forearm${side}Mesh`, radii.elbow, radii.wrist, spec.forearmLength, flat, sides);
+    hangTaper(elbow, `forearm${side}Mesh`, radii.elbow, radii.wrist, spec.forearmLength, tube, sides);
   }
   addBall(wrist, `wrist${side}Mesh`, radii.wrist, smooth);
-  addHand(wrist, spec, side, sign, arm.hand, flat);
+  addHand(wrist, spec, side, sign, arm.hand, robot ? flat : smooth);
 }
 
 export function buildArm(ctx) {
@@ -248,7 +247,7 @@ function replaceLeg(ctx, side, leg) {
 
   if (leg.type === 'peg') {
     const length = spec.thighLength + spec.shinLength;
-    hangTaper(hip, `peg${side}Mesh`, radii.hip * 0.85, radii.ankle * 0.7, length, flat);
+    hangTaper(hip, `peg${side}Mesh`, radii.hip * 0.85, radii.ankle * 0.7, length, smooth);
     const ySole = soleY(spec);
     const nubH = Math.max(-ySole, 0.012);
     const nubW = Math.max(radii.ankle * 1.15, 0.012);
@@ -264,13 +263,13 @@ function replaceLeg(ctx, side, leg) {
   if (robot) {
     hangRect(hip, `thigh${side}Mesh`, radii.hip, radii.knee, spec.thighLength, flat);
   } else {
-    hangTaper(hip, `thigh${side}Mesh`, radii.hip, radii.knee, spec.thighLength, flat);
+    hangTaper(hip, `thigh${side}Mesh`, radii.hip, radii.knee, spec.thighLength, smooth);
   }
   addBall(knee, `knee${side}Mesh`, radii.knee, smooth);
   if (robot) {
     hangRect(knee, `shin${side}Mesh`, radii.knee, radii.ankle, spec.shinLength, flat);
   } else {
-    hangTaper(knee, `shin${side}Mesh`, radii.knee, radii.ankle, spec.shinLength, flat);
+    hangTaper(knee, `shin${side}Mesh`, radii.knee, radii.ankle, spec.shinLength, smooth);
   }
   addBall(ankle, `ankle${side}Mesh`, radii.ankle, smooth);
   const foot = createFootMesh(spec.footWidth, spec.footHeight, spec.footLength, smooth);

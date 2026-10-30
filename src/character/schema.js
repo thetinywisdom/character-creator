@@ -1,4 +1,5 @@
 import './parts.js';
+import { COLORS } from './palette.js';
 import { getRegistry } from './registry.js';
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -27,7 +28,7 @@ export function defaultDocument() {
       presentation: 'man',
       type: 'average',
       height: 1.8,
-      skin: '#e4c29a',
+      skin: COLORS.skin,
       shoulder: null,
       belly: null,
       hip: null,
@@ -37,9 +38,9 @@ export function defaultDocument() {
     head: {
       shape: 'classic',
       size: null,
-      hair: { style: 'none', color: '#2a2118' },
+      hair: { style: 'none', color: COLORS.hair },
       facialHair: 'none',
-      headwear: { id: 'none', color: '#1d2a3a' },
+      headwear: { id: 'none', color: COLORS.headwear },
     },
     arms: { left: arm(), right: arm() },
     legs: {
@@ -47,10 +48,10 @@ export function defaultDocument() {
       right: { type: 'normal', color: null },
     },
     clothing: {
-      top: { id: 'none', color: '#3a5a40' },
-      outer: { id: 'none', color: '#1c1c1c' },
-      bottom: { id: 'none', color: '#222222' },
-      shoes: { id: 'barefoot', color: '#111111', accent: '#f2f2f2' },
+      top: { id: 'none', color: COLORS.top },
+      outer: { id: 'none', color: COLORS.outer },
+      bottom: { id: 'none', color: COLORS.bottom },
+      shoes: { id: 'barefoot', color: COLORS.shoe, accent: COLORS.shoeAccent },
     },
     back: { id: 'none', color: '#4a3728' },
     held: {

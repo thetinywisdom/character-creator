@@ -29,20 +29,19 @@ export const FOOT_WIDTH = 8;
 export const FOOT_HEIGHT = 6;
 
 /**
- * Bald head from iso-city `characters/characters.js` (`HEAD`, `HEAD_Z`).
- * Faceless: the lathe only. Ears, the nose, and the ink lines stay out.
- * Points are [radius, y]. The chin ring is radius 0.06 at y -0.145.
- * The crown is y 0.163. Sections are 1.08× deeper than they are wide.
+ * Faceless egg. Points are [radius, y]. The chin ring is radius 0.06 at
+ * y -0.145 and stays the neck socket. The crown is y 0.163. Sections are
+ * 1.08× deeper than they are wide. No ears, nose, or ink lines.
  */
 export const ISO_HEAD_PROFILE = [
   [0, -0.15],
   [0.06, -0.145],
-  [0.093, -0.108],
-  [0.106, -0.045],
+  [0.092, -0.1],
+  [0.106, -0.035],
   [0.11, 0.03],
-  [0.103, 0.09],
-  [0.08, 0.135],
-  [0.042, 0.158],
+  [0.104, 0.09],
+  [0.078, 0.132],
+  [0.04, 0.156],
   [0, 0.163],
 ];
 export const ISO_HEAD_SEGMENTS = 8;
@@ -58,8 +57,8 @@ function shade(mesh, role) {
 }
 
 /**
- * Faceted lathe of the iso-city bald head, uniformly scaled.
- * `scale` multiplies the profile. Depth stays 1.08× the width, as in iso-city.
+ * Smooth lathe of the egg head, uniformly scaled.
+ * `scale` multiplies the profile. Depth stays 1.08× the width.
  * The chin ring (radius 0.06 in profile units) is the neck socket.
  */
 export function createHeadGeometry(scale) {
@@ -460,17 +459,18 @@ export function createChestMesh(spec, material) {
 }
 
 /**
- * Tapered paddle along -Y. Six sides, a small base ring, a palm ring, and a point.
- * The base ring is meant to sit inside the wrist sphere.
+ * Rounded mitt along -Y. Six sides, a small base ring inside the wrist,
+ * a wide palm, a blunt fingertip ring, and a short center.
  */
 export function createPaddleGeometry(length, baseRx, baseRz, midRx, midRz) {
   const sides = 6;
-  const yBase = -Math.min(length * 0.16, baseRx);
-  const yMid = -length * 0.46;
+  const yBase = -Math.min(length * 0.12, baseRx);
   const positions = [];
   const rings = [
     { y: yBase, rx: baseRx, rz: baseRz },
-    { y: yMid, rx: midRx, rz: midRz },
+    { y: -length * 0.4, rx: midRx, rz: midRz },
+    { y: -length * 0.72, rx: midRx * 0.82, rz: midRz * 0.92 },
+    { y: -length * 0.92, rx: midRx * 0.45, rz: midRz * 0.55 },
   ];
   for (const ring of rings) {
     for (let i = 0; i < sides; i += 1) {
@@ -479,12 +479,22 @@ export function createPaddleGeometry(length, baseRx, baseRz, midRx, midRz) {
     }
   }
   positions.push(0, -length, 0);
-  const tip = sides * 2;
+  const tip = sides * rings.length;
   const indices = [];
+  for (let r = 0; r < rings.length - 1; r += 1) {
+    for (let i = 0; i < sides; i += 1) {
+      const j = (i + 1) % sides;
+      const a = r * sides + i;
+      const b = r * sides + j;
+      const c = (r + 1) * sides + j;
+      const d = (r + 1) * sides + i;
+      indices.push(a, b, c, a, c, d);
+    }
+  }
+  const last = (rings.length - 1) * sides;
   for (let i = 0; i < sides; i += 1) {
     const j = (i + 1) % sides;
-    indices.push(i, j, j + sides, i, j + sides, i + sides);
-    indices.push(i + sides, j + sides, tip);
+    indices.push(last + i, last + j, tip);
   }
   const geo = new BufferGeometry();
   geo.setAttribute('position', new Float32BufferAttribute(positions, 3));

@@ -265,18 +265,17 @@ describe('createBody', () => {
       const nd = (elbowN.getX(i) * px + elbowN.getY(i) * py + elbowN.getZ(i) * pz) / len;
       assert.ok(nd > 0.999, 'joint normals stay smooth');
     }
-    assert.equal(upper.material.flatShading, true);
+    assert.equal(upper.material.flatShading, false);
     assert.equal(chest.material.flatShading, false);
     assert.equal(pelvis.material.flatShading, false);
     assert.equal(head.material, upper.material);
-    assert.equal(head.material.flatShading, true);
+    assert.equal(head.material.flatShading, false);
     assert.equal(head.geometry.type, 'LatheGeometry');
     assert.equal(head.geometry.parameters.segments, 8);
     assert.equal(head.geometry.parameters.points.length, 9);
     assert.equal(chest.material, elbow.material);
     assert.equal(foot.material, elbow.material);
-    assert.equal(upper.material.flatShading, true);
-    assert.notEqual(upper.material, chest.material);
+    assert.equal(upper.material, chest.material);
     assert.equal(chest.geometry.userData.bevelSegments, 2);
     assert.ok(chest.geometry.userData.bevelRadius > 0.008 && chest.geometry.userData.bevelRadius < 0.04);
     assert.ok(chest.geometry.getAttribute('position').count < 120);
@@ -387,8 +386,8 @@ describe('createBody', () => {
     assert.ok(hand.rotation.z > 0.1, 'left paddle turns inward');
     assert.ok(findMesh(body.root, 'handRMesh').rotation.z < -0.1);
 
-    assert.equal(stats.vertices, 1421);
-    assert.equal(stats.triangles, 1868);
+    assert.equal(stats.vertices, 1445);
+    assert.equal(stats.triangles, 1916);
   });
 
   it('plants the feet, fits the crown to the height, and keeps the neck short', () => {
@@ -671,8 +670,8 @@ describe('createBody', () => {
       });
     }
 
-    assert.equal(body.getStats().vertices, 1421);
-    assert.equal(body.getStats().triangles, 1868);
+    assert.equal(body.getStats().vertices, 1445);
+    assert.equal(body.getStats().triangles, 1916);
     for (const [name, position] of joints) {
       assert.ok(body.joints[name].position.distanceTo(position) < 1e-6, `${name} stays on its bind point`);
     }
