@@ -2,6 +2,7 @@ import { Group, MeshStandardMaterial, Object3D } from 'three';
 import { JOINT_NAMES, createMotion } from './animate.js';
 import {
   countStats,
+  createChestMesh,
   createHeadMesh,
   createFootMesh,
   createFrustumMesh,
@@ -52,7 +53,7 @@ function clearGenerated(nodes) {
  *       pelvis block
  *       hip > thigh > knee > shin > ankle > foot
  *       waist ball
- *         chest block
+ *         chest, narrow at the neck and wider at the shoulders
  *         shoulder > shoulder ball and upper arm (the ball belongs to the arm)
  *         neck ball > neck > lathe head
  *
@@ -93,14 +94,7 @@ function layoutBody(root, pelvis, joints, spec, flat, smooth, markers) {
   waistBall.name = 'waistMesh';
   j.waist.add(waistBall);
 
-  const chest = createFrustumMesh(
-    spec.chestTopWidth,
-    spec.chestBottomWidth,
-    spec.chestMeshHeight,
-    spec.chestTopDepth,
-    spec.chestBottomDepth,
-    smooth,
-  );
+  const chest = createChestMesh(spec, smooth);
   chest.name = 'chestMesh';
   chest.position.y = spec.chestMeshY;
   j.waist.add(chest);

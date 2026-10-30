@@ -1,6 +1,7 @@
 import { MeshStandardMaterial } from 'three';
 import {
   createBoxMesh,
+  createChestMesh,
   createFrustumMesh,
   createJointMesh,
   createMergedBoxMesh,
@@ -321,17 +322,10 @@ function restoreTorso(ctx) {
   removeNamed(ctx.root, 'chestMesh');
   removeNamed(ctx.root, 'pelvisMesh');
   removeNamed(ctx.root, 'yokeMesh');
-  addBlock(
-    ctx.joints.waist,
-    'chestMesh',
-    spec.chestTopWidth,
-    spec.chestBottomWidth,
-    spec.chestMeshHeight,
-    spec.chestTopDepth,
-    spec.chestBottomDepth,
-    spec.chestMeshY,
-    smooth,
-  );
+  const chest = createChestMesh(spec, smooth);
+  chest.name = 'chestMesh';
+  chest.position.y = spec.chestMeshY;
+  ctx.joints.waist.add(chest);
   addBlock(
     ctx.pelvis,
     'pelvisMesh',

@@ -346,6 +346,130 @@ export function createFrustumMesh(topWidth, bottomWidth, height, topDepth, botto
 }
 
 /**
+ * Upper torso. The waist stays the narrow end. The shoulder line is wider,
+ * so the front reads as an inverted trapezoid. Above that line the form
+ * narrows into the neck and the outer corner is a two-segment roundover,
+ * so the top is sloped rather than a flat box.
+ */
+export function createChestGeometry({
+  waistWidth,
+  shoulderWidth,
+  waistDepth,
+  shoulderDepth,
+  neckWidth,
+  neckDepth,
+  height,
+  drop,
+}) {
+  const S = BLOCK_BEVEL_SEGMENTS;
+  const H = Math.max(height, 1e-4);
+  const hw0 = waistWidth / 2;
+  const hd0 = waistDepth / 2;
+  const hwS = Math.max(shoulderWidth / 2, 0.02);
+  const hdS = Math.max(shoulderDepth / 2, 0.02);
+  const hwN = Math.min(Math.max(neckWidth / 2, 0.012), hwS * 0.78);
+  const hdN = Math.min(Math.max(neckDepth / 2, 0.012), hdS * 0.8);
+  const minSpan = Math.min(waistWidth, waistDepth);
+  const r = bevelRadius(minSpan, H);
+  const yS = Math.max(H - Math.max(drop, 0.012), r * 2.4);
+  const fall = H - yS;
+
+  const positions = [];
+  const normals = [];
+
+  function addRing(hx, hz, y, ny, nh) {
+    const corner = Math.min(r, hx * 0.42, hz * 0.42);
+    for (const p of roundedRectLoop(Math.max(hx, corner + 0.001), Math.max(hz, corner + 0.001), corner, S)) {
+      positions.push(p.x, y, p.z);
+      const len = Math.hypot(p.nx * nh, ny, p.nz * nh) || 1;
+      normals.push((p.nx * nh) / len, ny / len, (p.nz * nh) / len);
+    }
+  }
+
+  for (let i = 0; i <= S; i += 1) {
+    const theta = (i / S) * (Math.PI / 2);
+    const y = r * (1 - Math.cos(theta));
+    const inset = r * (1 - Math.sin(theta));
+    const u = Math.min(y / yS, 1);
+    const wN = hw0 + (hwS - hw0) * u;
+    const dN = hd0 + (hdS - hd0) * u;
+    addRing(
+      Math.max(wN - inset, r * 0.35),
+      Math.max(dN - inset, r * 0.35),
+      y,
+      -Math.cos(theta),
+      Math.sin(theta),
+    );
+  }
+
+  for (let i = 0; i <= S; i += 1) {
+    const theta = (i / S) * (Math.PI / 2);
+    const c = Math.cos(theta);
+    const s = Math.sin(theta);
+    const rise = fall * c;
+    const out = (hwS - hwN) * s;
+    const len = Math.hypot(rise, out) || 1;
+    addRing(
+      hwN + (hwS - hwN) * c,
+      hdN + (hdS - hdN) * c,
+      yS + fall * s,
+      out / len,
+      rise / len,
+    );
+  }
+
+  const P = 4 * (S + 1);
+  const rings = positions.length / 3 / P;
+  const indices = [];
+  for (let ring = 0; ring < rings - 1; ring += 1) {
+    const base = ring * P;
+    for (let k = 0; k < P; k += 1) {
+      const i = base + k;
+      const j = base + ((k + 1) % P);
+      const iu = i + P;
+      const ju = j + P;
+      indices.push(iu, ju, j, iu, j, i);
+    }
+  }
+  const top = (rings - 1) * P;
+  for (let k = 1; k < P - 1; k += 1) {
+    indices.push(0, k, k + 1);
+    indices.push(top, top + k + 1, top + k);
+  }
+
+  const geo = new BufferGeometry();
+  geo.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geo.setAttribute('normal', new Float32BufferAttribute(normals, 3));
+  geo.setIndex(new Uint16BufferAttribute(indices, 1));
+  geo.userData.topWidth = hwS * 2;
+  geo.userData.bottomWidth = waistWidth;
+  geo.userData.topDepth = hdS * 2;
+  geo.userData.bottomDepth = waistDepth;
+  geo.userData.height = H;
+  geo.userData.bevelSegments = S;
+  geo.userData.bevelRadius = r;
+  geo.userData.neckWidth = hwN * 2;
+  geo.userData.neckDepth = hdN * 2;
+  geo.userData.shoulderDrop = fall;
+  geo.userData.shoulderY = yS;
+  return geo;
+}
+
+export function createChestMesh(spec, material) {
+  const mesh = new Mesh(createChestGeometry({
+    waistWidth: spec.chestBottomWidth,
+    shoulderWidth: spec.chestTopWidth,
+    waistDepth: spec.chestBottomDepth,
+    shoulderDepth: spec.chestTopDepth,
+    neckWidth: spec.chestNeckWidth,
+    neckDepth: spec.chestNeckDepth,
+    height: spec.chestMeshHeight,
+    drop: spec.chestShoulderDrop,
+  }), material);
+  return shade(mesh, 'frustum');
+}
+
+/**
  * Tapered paddle along -Y. Six sides, a small base ring, a palm ring, and a point.
  * The base ring is meant to sit inside the wrist sphere.
  */

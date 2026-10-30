@@ -109,8 +109,12 @@ function assertTorsoShell(character, meshName = 'clothingTop') {
     const hit = coverFromAbove(mesh, x, z);
     assert.ok(hit, `${meshName} roof covers ${x.toFixed(3)}, ${z.toFixed(3)}`);
     assert.ok(hit.ny > 0, `${meshName} roof faces up at ${x.toFixed(3)}, ${z.toFixed(3)}`);
-    assert.ok(hit.y > spec.chestHeight * 0.9, `${meshName} roof clears the chest`);
+    assert.ok(hit.y > spec.chestHeight * spec.shoulderT, `${meshName} roof clears the shoulder joint`);
   }
+  assert.ok(shell.yNeck - shell.ySide > 0.025, `${meshName} shoulder line slopes`);
+  const neck = coverFromAbove(mesh, spec.radii.neck * 1.8, 0);
+  const side = coverFromAbove(mesh, shell.hx * 0.82, 0);
+  assert.ok(neck && side && neck.y > side.y + 0.015, `${meshName} is higher at the neck than at the shoulder`);
   assert.equal(coverFromAbove(mesh, sx + ball * 0.85, 0), null, 'outer shoulder ball is not in the torso');
   assert.equal(coverFromAbove(mesh, -(sx + ball * 0.85), 0), null, 'outer shoulder ball is not in the torso');
 }
@@ -223,6 +227,23 @@ function sleevesOn(character, side) {
  * shell that contains the joint and a sleeve that contains the ball cannot
  * open a skin gap when the arm rotates. Sampling still runs every clip.
  */
+function chestUnderTop(character) {
+  const chest = character.root.getObjectByName('chestMesh');
+  const top = character.root.getObjectByName('clothingTop');
+  if (!chest || !top?.userData.shell) return true;
+  const pos = chest.geometry.attributes.position;
+  const local = new Vector3();
+  const shell = top.userData.shell;
+  for (let i = 0; i < pos.count; i += 1) {
+    local.fromBufferAttribute(pos, i);
+    chest.localToWorld(local);
+    top.worldToLocal(local);
+    if (Math.hypot(local.x, local.z) < shell.neckR * 1.15 && local.y > shell.ySide) continue;
+    if (!pointInsideShell(shell, local.x, local.y, local.z, 0)) return false;
+  }
+  return true;
+}
+
 function assertSleevesSealed(character, label) {
   character.root.updateMatrixWorld(true);
   const shells = shellsOf(character);
@@ -261,6 +282,7 @@ function assertSleevesSealed(character, label) {
     assert.ok(ballLeavesShell(shells[0], ball), `${label} torso does not swallow the ${side} ball`);
   }
   assert.ok(sleeves > 0, `${label} has a sleeve`);
+  assert.ok(chestUnderTop(character), `${label} chest sits inside the top`);
   for (const shell of shells) {
     for (const side of ['L', 'R']) {
       if (sleevesOn(character, side).length === 0) continue;
@@ -299,6 +321,9 @@ function assertSleevesSealed(character, label) {
               originInsideShell(shell, joint, 0.003),
               `${label} ${item.id} ${shell.name} ${side}`,
             );
+          }
+          if (frame % 4 === 0) {
+            assert.ok(chestUnderTop(character), `${label} ${item.id} chest stays covered`);
           }
         }
       }
@@ -361,17 +386,18 @@ describe('clothing compositor', () => {
     const top = character.joints.waist.getObjectByName('clothingTop');
     assert.equal(top.parent, character.joints.waist);
     assertClosedShell(top);
-    const straight = (limit) => {
+    const edgeAt = (y) => {
       const pos = top.geometry.attributes.position;
       let edge = 0;
       for (let i = 0; i < pos.count; i += 1) {
-        if (Math.abs(pos.getY(i) - limit) > 0.02) continue;
+        if (Math.abs(pos.getY(i) - y) > 0.02) continue;
         edge = Math.max(edge, Math.abs(pos.getX(i)));
       }
       return edge;
     };
+    const shell = top.userData.shell;
+    assert.ok(Math.abs(edgeAt(shell.ySide) - edgeAt(shell.y0)) < 0.025, 'tee hangs straight below the shoulders');
     const box = bboxOf(top);
-    assert.ok(Math.abs(straight(box.max.y) - straight(box.min.y)) < 0.025, 'tee sides stay straight');
     assert.ok(box.max.x - box.min.x > spec.chestTopWidth);
     assert.ok(box.max.z - box.min.z > spec.chestTopDepth);
     assert.ok(box.min.y < 0, 'shirt covers the waist');

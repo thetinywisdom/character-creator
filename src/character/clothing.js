@@ -11,13 +11,15 @@ import { MUSCULAR_SCALE } from './limbs.js';
 
 /**
  * Clothes are straight blocks hung off the body, in a regular everyday fit.
- * They do not follow the waist, chest, or limb taper. Body meshes stay.
+ * They do not follow the waist or the limb taper. The shoulder line follows
+ * the chest; below that they hang straight. Body meshes stay.
  *
- * A top takes its width from the torso box at the shoulder line, not from the
- * shoulder balls, plus about 2 cm of ease. The shoulder line drops a little
- * from the neck out to the side of the chest. The block then hangs straight
- * to just below the hips. The shoulder balls belong to the arms: a sleeve is
- * a straight tube a bit wider than the ball, and it overlaps the torso shell.
+ * A top takes its width from the chest at the shoulder line, not from the
+ * shoulder balls, plus about 2 cm of ease. The shoulder line follows the
+ * chest: high and narrow at the neck, lower at the outer shoulder. Below
+ * that the cloth hangs straight to just under the hips. The shoulder balls
+ * belong to the arms: a sleeve is a straight tube a bit wider than the ball,
+ * and it overlaps the torso shell.
  *
  * Robot and skeleton limbs keep their meshes and get no sleeve or pant tube.
  * Peg legs skip pant tubes and shoes. A robot leg skips the pant tube and the
@@ -196,15 +198,20 @@ function skipFront(limit) {
 /**
  * Straight torso block. Width is the chest at the shoulder line, plus ease.
  * The shoulder balls are not included; sleeves cover those. Depth is the
- * chest. The hem may widen a centimetre. The shoulder drops from the neck
- * toward the side of the chest, by less than 2 cm, so the side still reads
- * straight. `extra` lifts a vest or jacket a hair off the layer under it.
+ * chest. The hem may widen a centimetre. The neckline sits just above the
+ * chest and the outer shoulder sits just above the chest's shoulder corner,
+ * so the cloth follows that slope and then hangs straight. `extra` lifts a
+ * vest or jacket a hair off the layer under it.
  */
 function torsoFit(spec, ease, extra) {
   const hx = spec.chestTopWidth / 2 + ease + extra;
   const hz = Math.max(spec.chestTopDepth, spec.pelvisBottomDepth) / 2 + ease + extra;
-  const ySide = spec.chestHeight + ease * 0.35 + extra * 0.35;
-  const yNeck = ySide + Math.min(ease * 0.7, 0.014);
+  const drop = spec.chestShoulderDrop || 0.03;
+  const yNeck = spec.chestHeight + ease + extra * 0.35;
+  const ySide = Math.min(
+    spec.chestHeight - drop + ease * 0.65 + extra * 0.15,
+    yNeck - 0.02,
+  );
   const y0 = -spec.pelvisHeight - ease * 0.45;
   const flare = Math.min(ease * 0.45, 0.01);
   return {
@@ -235,17 +242,16 @@ export function pointInsideShell(shell, x, y, z, margin = 0) {
   const nx = Math.abs(x) / hx;
   const nz = Math.abs(z) / hz;
   if (nx ** p + nz ** p > 1) return false;
-  const along = Math.abs(Math.cos(Math.atan2(z / hz, x / hx))) ** 1.4;
-  const yLid = shell.yNeck + (shell.ySide - shell.yNeck) * along;
+  const ang = Math.atan2(z / hz, x / hx);
+  const yLid = shell.ySide + (shell.yNeck - shell.ySide) * Math.abs(Math.sin(ang));
   return y <= yLid - margin;
 }
 
-/** Shoulder line: high at the neck, a little lower at the side of the chest. */
+/** Shoulder line: high at the neck, lower at the outer shoulder. Width stays put. */
 function slopedRect(yNeck, ySide, hx, hz, p) {
   return loop(N, (c, s) => {
     const d = (Math.abs(c) ** p + Math.abs(s) ** p) ** (1 / p) || 1;
-    const along = Math.abs(c) ** 1.4;
-    const y = yNeck + (ySide - yNeck) * along;
+    const y = ySide + (yNeck - ySide) * Math.abs(s);
     return [(c / d) * hx, y, (s / d) * hz];
   });
 }
@@ -270,8 +276,8 @@ function cutLip(loom, rings, ids, pred, depth) {
 }
 
 /**
- * Straight block. The hem is only slightly wider than the chest.
- * The lid slopes from the neck out to the side of the chest and keeps a neck hole.
+ * Straight block. The hem is only slightly wider than the shoulders.
+ * The lid slopes from the neck down to the outer shoulder and keeps a neck hole.
  */
 function buildBlock(size, power, frontLimit) {
   const { hx, hz, y0, yNeck, ySide, flare, neckR } = size;

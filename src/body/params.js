@@ -181,6 +181,12 @@ export function resolveParams(input = {}) {
   const upperArmLength = clamp(auto(p.upperArmLength, 0.3 * s), 0.05);
   const forearmLength = clamp(auto(p.forearmLength, 0.27 * s), 0.05);
 
+  const chestNeckWidth = Math.min(chestTopWidth * 0.5, Math.max(neckR * 3.15, chestBottom * 0.92));
+  const chestNeckDepth = Math.min(chestTopDepth * 0.62, Math.max(neckR * 2.55, chestBottom * 0.85));
+  const shoulderRun = Math.max((chestTopWidth - chestNeckWidth) / 2, 0.01);
+  const dropMax = Math.min(chestMeshHeight * 0.14, lengths.chest * SHOULDER_T * 0.55);
+  const chestShoulderDrop = Math.min(Math.max(shoulderRun * 0.36, Math.min(0.018 * s, dropMax)), dropMax);
+
   return {
     height,
     skinColor: p.skinColor || DEFAULT_PARAMS.skinColor,
@@ -200,6 +206,9 @@ export function resolveParams(input = {}) {
     chestBottomWidth: chestBottom,
     chestTopDepth,
     chestBottomDepth: chestBottom,
+    chestNeckWidth,
+    chestNeckDepth,
+    chestShoulderDrop,
     chestMeshY: WAIST_GAP,
     chestMeshHeight,
     pelvisHeight: lengths.hipToWaist,
