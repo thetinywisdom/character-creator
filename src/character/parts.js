@@ -1,7 +1,16 @@
 import { ANIMATIONS } from '../body/animate.js';
 import { buildClothing } from './clothing.js';
+import {
+  buildEars,
+  buildEarrings,
+  buildEyewear,
+  buildFacialHair,
+  buildHair,
+  buildHeadShape,
+  buildHeadwear,
+} from './head.js';
 import { buildArm, buildLeg, buildTorso } from './limbs.js';
-import { ARMS_CONTROLS, BODY_CONTROLS, CLOTHES_CONTROLS, LEGS_CONTROLS, MOTION_CONTROLS } from './panels.js';
+import { ARMS_CONTROLS, BODY_CONTROLS, CLOTHES_CONTROLS, HEAD_CONTROLS, LEGS_CONTROLS, MOTION_CONTROLS } from './panels.js';
 import { registerPart, registerSection, registerSlot } from './registry.js';
 
 const empty = () => {};
@@ -25,7 +34,7 @@ function mirror(slotIds, entries) {
 }
 
 registerSection('body', { label: 'Body', controls: BODY_CONTROLS });
-registerSection('head', { label: 'Head' });
+registerSection('head', { label: 'Head', controls: HEAD_CONTROLS });
 registerSection('arms', { label: 'Arms', controls: ARMS_CONTROLS });
 registerSection('legs', { label: 'Legs', controls: LEGS_CONTROLS });
 registerSection('clothes', { label: 'Clothing', controls: CLOTHES_CONTROLS });
@@ -37,10 +46,10 @@ part('body.torso', 'normal', 'Normal', { build: buildTorso });
 part('body.torso', 'robot', 'Robot', { build: buildTorso });
 
 slot('head.shape', 'head', 'Head shape');
-part('head.shape', 'classic', 'Classic');
-part('head.shape', 'round', 'Round');
-part('head.shape', 'long', 'Long');
-part('head.shape', 'box', 'Box');
+part('head.shape', 'classic', 'Classic', { build: buildHeadShape });
+part('head.shape', 'round', 'Round', { build: buildHeadShape });
+part('head.shape', 'long', 'Long', { build: buildHeadShape });
+part('head.shape', 'box', 'Box', { build: buildHeadShape });
 
 slot('head.hair', 'head', 'Hair');
 for (const [id, label] of [
@@ -52,23 +61,23 @@ for (const [id, label] of [
   ['long', 'Long'],
   ['mohawk', 'Mohawk'],
   ['afro', 'Afro'],
-]) part('head.hair', id, label);
+]) part('head.hair', id, label, { build: buildHair });
 
 slot('head.facialHair', 'head', 'Facial hair');
-part('head.facialHair', 'none', 'None');
-part('head.facialHair', 'moustache', 'Moustache');
-part('head.facialHair', 'beard', 'Beard');
+part('head.facialHair', 'none', 'None', { build: buildFacialHair });
+part('head.facialHair', 'moustache', 'Moustache', { build: buildFacialHair });
+part('head.facialHair', 'beard', 'Beard', { build: buildFacialHair });
 
 slot('head.ears', 'head', 'Ears');
-part('head.ears', 'normal', 'Normal');
-part('head.ears', 'elf', 'Elf');
-part('head.ears', 'cat', 'Cat');
-part('head.ears', 'antenna', 'Robot antenna');
+part('head.ears', 'normal', 'Normal', { build: buildEars });
+part('head.ears', 'elf', 'Elf', { build: buildEars });
+part('head.ears', 'cat', 'Cat', { build: buildEars });
+part('head.ears', 'antenna', 'Robot antenna', { build: buildEars });
 
 slot('head.earrings', 'head', 'Earrings');
-part('head.earrings', 'none', 'None');
-part('head.earrings', 'stud', 'Stud');
-part('head.earrings', 'hoop', 'Hoop');
+part('head.earrings', 'none', 'None', { build: buildEarrings });
+part('head.earrings', 'stud', 'Stud', { build: buildEarrings });
+part('head.earrings', 'hoop', 'Hoop', { build: buildEarrings });
 
 slot('head.headwear', 'head', 'Headwear');
 for (const [id, label] of [
@@ -80,14 +89,14 @@ for (const [id, label] of [
   ['crown', 'Crown'],
   ['headband', 'Headband'],
   ['horns', 'Horns'],
-]) part('head.headwear', id, label);
+]) part('head.headwear', id, label, { build: buildHeadwear });
 
 slot('head.eyewear', 'head', 'Eyewear');
-part('head.eyewear', 'none', 'None');
-part('head.eyewear', 'glasses', 'Glasses');
-part('head.eyewear', 'sunglasses', 'Sunglasses');
-part('head.eyewear', 'visor', 'Visor');
-part('head.eyewear', 'goggles', 'Goggles');
+part('head.eyewear', 'none', 'None', { build: buildEyewear });
+part('head.eyewear', 'glasses', 'Glasses', { build: buildEyewear });
+part('head.eyewear', 'sunglasses', 'Sunglasses', { build: buildEyewear });
+part('head.eyewear', 'visor', 'Visor', { build: buildEyewear });
+part('head.eyewear', 'goggles', 'Goggles', { build: buildEyewear });
 
 slot('arms.left', 'arms', 'Left arm');
 slot('arms.right', 'arms', 'Right arm');

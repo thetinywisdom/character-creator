@@ -170,8 +170,9 @@ describe('character document', () => {
 
   it('builds the body, arms, legs, clothing, and motion controls from the registry', () => {
     const sections = panelSections();
-    assert.deepEqual(sections.map((section) => section.id), ['body', 'arms', 'legs', 'clothes', 'motion']);
-    assert.equal(sections[3].label, 'Clothing');
+    assert.deepEqual(sections.map((section) => section.id), ['body', 'head', 'arms', 'legs', 'clothes', 'motion']);
+    assert.equal(sections[1].label, 'Head');
+    assert.equal(sections[4].label, 'Clothing');
     assert.deepEqual(
       sections[0].controls.map((control) => control.id),
       ['presentation', 'bodyType', 'torso', 'height', 'shoulder', 'belly', 'hip', 'thick', 'skin'],
@@ -182,38 +183,42 @@ describe('character document', () => {
     );
     assert.deepEqual(
       sections[1].controls.map((control) => control.id),
-      ['armL', 'armLColor', 'handL', 'armR', 'armRColor', 'handR'],
-    );
-    assert.deepEqual(
-      sections[1].controls.find((control) => control.id === 'handL').options.map((option) => option.id),
-      ['open', 'fist', 'claw', 'hook'],
+      ['shape', 'headSize', 'hair', 'hairColor', 'hairHighlight', 'facialHair', 'ears', 'earrings', 'earringColor', 'headwear', 'headwearColor', 'eyewear', 'eyewearColor'],
     );
     assert.deepEqual(
       sections[2].controls.map((control) => control.id),
-      ['legL', 'legLColor', 'legR', 'legRColor'],
+      ['armL', 'armLColor', 'handL', 'armR', 'armRColor', 'handR'],
     );
     assert.deepEqual(
-      sections[2].controls.find((control) => control.id === 'legL').options.map((option) => option.id),
-      ['normal', 'robot', 'peg'],
+      sections[2].controls.find((control) => control.id === 'handL').options.map((option) => option.id),
+      ['open', 'fist', 'claw', 'hook'],
     );
     assert.deepEqual(
       sections[3].controls.map((control) => control.id),
-      ['top', 'topColor', 'outer', 'outerColor', 'bottom', 'bottomColor', 'shoes', 'shoeColor', 'shoeAccent'],
+      ['legL', 'legLColor', 'legR', 'legRColor'],
     );
     assert.deepEqual(
-      sections[3].controls.find((control) => control.id === 'top').options.map((option) => option.id),
-      ['none', 'tank', 'tee', 'shirt', 'hoodie'],
-    );
-    assert.deepEqual(
-      sections[3].controls.find((control) => control.id === 'bottom').options.map((option) => option.id),
-      ['none', 'pants', 'shorts', 'skirt'],
+      sections[3].controls.find((control) => control.id === 'legL').options.map((option) => option.id),
+      ['normal', 'robot', 'peg'],
     );
     assert.deepEqual(
       sections[4].controls.map((control) => control.id),
+      ['top', 'topColor', 'outer', 'outerColor', 'bottom', 'bottomColor', 'shoes', 'shoeColor', 'shoeAccent'],
+    );
+    assert.deepEqual(
+      sections[4].controls.find((control) => control.id === 'top').options.map((option) => option.id),
+      ['none', 'tank', 'tee', 'shirt', 'hoodie'],
+    );
+    assert.deepEqual(
+      sections[4].controls.find((control) => control.id === 'bottom').options.map((option) => option.id),
+      ['none', 'pants', 'shorts', 'skirt'],
+    );
+    assert.deepEqual(
+      sections[5].controls.map((control) => control.id),
       ['walkStyle', 'anim', 'speed', 'wire', 'turn'],
     );
     assert.deepEqual(
-      sections[4].controls.find((control) => control.id === 'walkStyle').options.map((option) => option.id),
+      sections[5].controls.find((control) => control.id === 'walkStyle').options.map((option) => option.id),
       ['normal', 'stomp', 'swagger'],
     );
   });
@@ -223,8 +228,8 @@ describe('createCharacter', () => {
   it('wraps the naked mannequin and leaves the sockets empty', () => {
     const naked = createBody();
     const character = createCharacter();
-    assert.equal(character.getStats().vertices, 1421);
-    assert.equal(character.getStats().triangles, 1868);
+    assert.equal(character.getStats().vertices, 1429);
+    assert.equal(character.getStats().triangles, 1872);
     assert.deepEqual(character.getStats().roles, naked.getStats().roles);
     assert.deepEqual(Object.keys(character.joints), JOINT_NAMES);
     for (const name of JOINT_NAMES) {
@@ -240,8 +245,8 @@ describe('createCharacter', () => {
     assert.equal(character.sockets.gripR.parent, character.joints.wristR);
     assert.equal(character.sockets.wristItemL.parent, character.joints.wristL);
     assert.equal(character.sockets.wristItemR.parent, character.joints.wristR);
-    for (const socket of Object.values(character.sockets)) {
-      assert.equal(socket.children.length, 0);
+    for (const [name, socket] of Object.entries(character.sockets)) {
+      assert.equal(socket.children.length, name === 'head' ? 2 : 0, name);
       assert.equal(socket.userData.socket, true);
     }
     assert.equal(character.getRegistry(), getRegistry());
@@ -249,7 +254,7 @@ describe('createCharacter', () => {
 
   it('keeps the naked mesh and the clips when the document and sliders change', () => {
     const character = createCharacter();
-    assert.equal(character.getStats().vertices, 1421);
+    assert.equal(character.getStats().vertices, 1429);
     const saved = character.setDocument(PLAN_EXAMPLE);
     assert.equal(saved.body.shoulder, 0.34);
     assert.equal(saved.arms.right.hand, 'claw');

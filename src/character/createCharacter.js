@@ -103,7 +103,7 @@ function lookKey(doc) {
     arms: doc.arms,
     legs: doc.legs,
     clothing: doc.clothing,
-    headwear: doc.head.headwear.id,
+    head: doc.head,
   });
 }
 
