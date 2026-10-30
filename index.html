@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Base body</title>
-    <script type="module" crossorigin src="./assets/index-B4bHL1qR.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DgjSn78g.css">
+    <script type="module" crossorigin src="./assets/index-lATXhr74.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-C__YqXPX.css">
   </head>
   <body>
     <div id="app">
@@ -25,7 +25,13 @@
           <p id="document-error" class="error" hidden></p>
         </div>
       </aside>
-      <canvas id="view"></canvas>
+      <div id="stage">
+        <canvas id="view"></canvas>
+        <div id="view-toggle" role="group" aria-label="Camera">
+          <button type="button" id="view-orbit">Close-up</button>
+          <button type="button" id="view-city">City</button>
+        </div>
+      </div>
     </div>
   </body>
 </html>
