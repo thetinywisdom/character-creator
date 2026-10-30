@@ -294,15 +294,9 @@ function syncControls() {
   document.getElementById('headSize-val').textContent = `${fmt(spec.headRadius)} m`;
   document.getElementById('hair').value = doc.head.hair.style;
   document.getElementById('hairColor').value = doc.head.hair.color;
-  syncNullableColor('hairHighlight', doc.head.hair.highlight, doc.head.hair.color);
   document.getElementById('facialHair').value = doc.head.facialHair;
-  document.getElementById('ears').value = doc.head.ears;
-  document.getElementById('earrings').value = doc.head.earrings.id;
-  document.getElementById('earringColor').value = doc.head.earrings.color;
   document.getElementById('headwear').value = doc.head.headwear.id;
   document.getElementById('headwearColor').value = doc.head.headwear.color;
-  document.getElementById('eyewear').value = doc.head.eyewear.id;
-  document.getElementById('eyewearColor').value = doc.head.eyewear.color;
   for (const id of ['top', 'topColor', 'outer', 'outerColor']) {
     document.getElementById(id).disabled = robotTorso;
   }
@@ -410,27 +404,12 @@ document.getElementById('shoeAccent').addEventListener('input', (event) => {
 bindChoice('shape', (value) => edit((doc) => { doc.head.shape = value; }));
 bindChoice('hair', (value) => edit((doc) => { doc.head.hair.style = value; }));
 bindChoice('facialHair', (value) => edit((doc) => { doc.head.facialHair = value; }));
-bindChoice('ears', (value) => edit((doc) => { doc.head.ears = value; }));
-bindChoice('earrings', (value) => edit((doc) => { doc.head.earrings.id = value; }));
 bindChoice('headwear', (value) => edit((doc) => { doc.head.headwear.id = value; }));
-bindChoice('eyewear', (value) => edit((doc) => { doc.head.eyewear.id = value; }));
 document.getElementById('hairColor').addEventListener('input', (event) => {
   edit((doc) => { doc.head.hair.color = event.target.value; });
 });
-document.getElementById('hairHighlight').addEventListener('input', (event) => {
-  edit((doc) => { doc.head.hair.highlight = event.target.value; });
-});
-document.getElementById('hairHighlight-skin').addEventListener('click', () => {
-  edit((doc) => { doc.head.hair.highlight = null; });
-});
-document.getElementById('earringColor').addEventListener('input', (event) => {
-  edit((doc) => { doc.head.earrings.color = event.target.value; });
-});
 document.getElementById('headwearColor').addEventListener('input', (event) => {
   edit((doc) => { doc.head.headwear.color = event.target.value; });
-});
-document.getElementById('eyewearColor').addEventListener('input', (event) => {
-  edit((doc) => { doc.head.eyewear.color = event.target.value; });
 });
 document.getElementById('headSize').addEventListener('input', (event) => {
   body.setParams({ headSize: Number(event.target.value) });

@@ -33,8 +33,8 @@ describe('proportions and limb variants', () => {
     const naked = createBody();
     const character = createCharacter();
     assert.equal(character.getDocument().body.belly, null);
-    assert.equal(character.getStats().vertices, 1429);
-    assert.equal(character.getStats().triangles, 1872);
+    assert.equal(character.getStats().vertices, 1421);
+    assert.equal(character.getStats().triangles, 1868);
     assert.deepEqual(character.getStats().roles, naked.getStats().roles);
     for (const name of JOINT_NAMES) {
       assert.ok(character.joints[name].position.distanceTo(naked.joints[name].position) < 1e-6, name);
@@ -81,7 +81,7 @@ describe('proportions and limb variants', () => {
     assert.ok(Math.abs(pelvis.topWidth - 0.4) < 1e-6);
     assert.ok(Math.abs(chest.topWidth - top) < 1e-6);
     assert.ok(Math.abs(chest.bottomWidth - top) < 1e-6);
-    assert.equal(character.getStats().vertices, 1429);
+    assert.equal(character.getStats().vertices, 1421);
   });
 
   it('fits a robot torso inside the waist ball and clears tops', () => {
@@ -126,7 +126,7 @@ describe('proportions and limb variants', () => {
     assert.ok(Math.abs(grown / shoulder - MUSCULAR_SCALE) < 1e-6);
     assert.ok(grown <= shoulder * MUSCULAR_SCALE + 1e-9);
     assert.ok(Math.abs(grownElbow / elbow - MUSCULAR_SCALE) < 1e-6);
-    assert.equal(muscular.getStats().vertices, 1429);
+    assert.equal(muscular.getStats().vertices, 1421);
 
     const skeleton = createCharacter();
     skeleton.updateDocument((doc) => { doc.arms.right.type = 'skeleton'; });
@@ -314,10 +314,10 @@ describe('proportions and limb variants', () => {
     assert.equal(again.getStats().vertices, verts);
 
     const counts = {
-      default: 1429,
+      default: 1421,
       robotTorso: robotCount(),
       peg: pegCount(),
-      muscularArm: 1429,
+      muscularArm: 1421,
       mixed: verts,
     };
     console.log(`VERTS ${JSON.stringify(counts)}`);

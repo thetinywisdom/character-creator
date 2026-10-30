@@ -66,13 +66,13 @@ The owner said: "In the next iteration, shoulder balls should be part of the arm
 - Then give the owner a fresh live preview link (no screenshots) and vertex counts for tank+vest+shorts, tee+pants+sneakers and hoodie+cape+pants+boots, and wait for approval before step D.
 
 ## Remaining plan after C
-- **D: head parts.** 4 head shapes, 8 hair styles, facial hair, ears, earrings, headwear and eyewear. Hair isn't drawn under a hat or hood.
+- **D: head parts.** 4 head shapes, hair (`none`, `buzz`, `bob`, `ponytail`, `long`, `afro`), facial hair, and headwear (`none`, `cap`, `beanie`, `hat`, `helmet`, `headband`). Hair isn't drawn under a covering hat or a hood. No ears, earrings, or eyewear.
 - **E: gear.** One back slot, held items in gripL/R (holding an item turns an open hand into a fist), and wrist items, bands and cuffs.
 - Also deferred: a separate robot-torso metal color and default dance autoplay.
 
 ## Owner decisions
 - One back slot.
-- 4 head shapes and 8 hair styles for v1.
+- 4 head shapes and 6 hair styles for v1. No ears, earrings, or eyewear.
 - A robot torso can't wear tops.
 - No dress part: a dress is a top plus a skirt.
 - Holding an item turns an open hand into a fist.

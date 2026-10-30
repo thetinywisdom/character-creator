@@ -9,8 +9,8 @@ import {
 } from '../src/body/index.js';
 import { COVERING_HEADWEAR } from '../src/character/head.js';
 
-const HAIR = ['buzz', 'bob', 'ponytail', 'spikes', 'long', 'mohawk', 'afro'];
-const HATS = ['cap', 'beanie', 'hat', 'helmet', 'crown', 'headband', 'horns'];
+const HAIR = ['buzz', 'bob', 'ponytail', 'long', 'afro'];
+const HATS = ['cap', 'beanie', 'hat', 'helmet', 'headband'];
 const FACIAL = ['moustache', 'beard'];
 const SHAPES = ['classic', 'round', 'long', 'box'];
 
@@ -58,9 +58,42 @@ describe('head parts', () => {
     assert.equal(result.ok, true);
     assert.equal(result.document.head.shape, 'classic');
     assert.equal(result.document.head.hair.style, 'none');
-    assert.equal(result.document.head.hair.highlight, null);
-    assert.equal(result.document.head.ears, 'normal');
+    assert.equal(result.document.head.hair.color, '#2a2118');
+    assert.equal(result.document.head.facialHair, 'none');
     assert.equal(result.document.head.headwear.id, 'none');
+    assert.equal('ears' in result.document.head, false);
+    assert.equal('highlight' in result.document.head.hair, false);
+  });
+
+  it('ignores removed head fields and maps retired styles to none', () => {
+    const result = validateDocument({
+      version: 1,
+      head: {
+        shape: 'classic',
+        ears: 'elf',
+        earrings: { id: 'hoop', color: '#d4af37' },
+        eyewear: { id: 'glasses', color: '#111111' },
+        hair: { style: 'spikes', color: '#111111', highlight: '#ffffff' },
+        headwear: { id: 'horns', color: '#222222', extra: true },
+        facialHair: 'beard',
+      },
+    });
+    assert.equal(result.ok, true, result.errors.join('; '));
+    assert.equal(result.document.head.hair.style, 'none');
+    assert.equal(result.document.head.hair.color, '#111111');
+    assert.equal('highlight' in result.document.head.hair, false);
+    assert.equal(result.document.head.headwear.id, 'none');
+    assert.equal(result.document.head.facialHair, 'beard');
+    assert.equal('ears' in result.document.head, false);
+    assert.equal('earrings' in result.document.head, false);
+    assert.equal('eyewear' in result.document.head, false);
+    const mohawk = validateDocument({
+      version: 1,
+      head: { hair: { style: 'mohawk', color: '#222222' }, headwear: { id: 'crown', color: '#d4af37' } },
+    });
+    assert.equal(mohawk.ok, true, mohawk.errors.join('; '));
+    assert.equal(mohawk.document.head.hair.style, 'none');
+    assert.equal(mohawk.document.head.headwear.id, 'none');
   });
 
   it('keeps every hair, hat, and beard outside the skull on every shape', () => {
@@ -101,12 +134,12 @@ describe('head parts', () => {
       assert.equal(covered.root.getObjectByName('hairMesh'), undefined, hat);
       assert.ok(covered.root.getObjectByName('headwearMesh'), hat);
     }
-    const horns = wear((doc) => {
-      doc.head.hair.style = 'mohawk';
-      doc.head.headwear.id = 'horns';
+    const band = wear((doc) => {
+      doc.head.hair.style = 'bob';
+      doc.head.headwear.id = 'headband';
     });
-    assert.ok(horns.root.getObjectByName('hairMesh'));
-    assert.ok(horns.root.getObjectByName('headwearMesh'));
+    assert.ok(band.root.getObjectByName('hairMesh'));
+    assert.ok(band.root.getObjectByName('headwearMesh'));
 
     const hood = wear((doc) => {
       doc.head.hair.style = 'long';
@@ -125,29 +158,17 @@ describe('head parts', () => {
     assert.ok(cap.root.getObjectByName('headwearMesh'));
   });
 
-  it('skips earrings on antenna ears and keeps fourteen joints', () => {
-    const studs = wear((doc) => {
-      doc.head.ears = 'elf';
-      doc.head.earrings.id = 'stud';
+  it('keeps fourteen joints and every clip with a bearded head', () => {
+    const character = wear((doc) => {
+      doc.head.shape = 'round';
+      doc.head.hair.style = 'afro';
+      doc.head.facialHair = 'beard';
     });
-    assert.ok(studs.root.getObjectByName('earringLMesh'));
-    assert.ok(studs.root.getObjectByName('earringRMesh'));
-    const hoops = wear((doc) => {
-      doc.head.ears = 'normal';
-      doc.head.earrings.id = 'hoop';
-    });
-    assert.ok(hoops.root.getObjectByName('earringLMesh'));
-    const antenna = wear((doc) => {
-      doc.head.ears = 'antenna';
-      doc.head.earrings.id = 'hoop';
-    });
-    assert.equal(antenna.root.getObjectByName('earringLMesh'), undefined);
-    assert.equal(antenna.root.getObjectByName('earringRMesh'), undefined);
-    assert.ok(antenna.root.getObjectByName('earLMesh'));
-    assert.equal(Object.keys(antenna.joints).length, 14);
+    assert.ok(character.root.getObjectByName('facialHairMesh'));
+    assert.equal(character.root.getObjectByName('facialHairMesh').parent, character.sockets.head);
+    assert.equal(Object.keys(character.joints).length, 14);
     assert.equal(ANIMATIONS.length, 19);
-    const glasses = wear((doc) => { doc.head.eyewear.id = 'glasses'; });
-    assert.ok(glasses.root.getObjectByName('eyewearMesh'));
-    assert.equal(glasses.root.getObjectByName('eyewearMesh').parent, glasses.sockets.head);
+    character.update(0.1, { anim: 'walk', speed: 1.6 });
+    assert.equal(Object.keys(character.joints).length, 14);
   });
 });

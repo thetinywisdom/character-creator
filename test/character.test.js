@@ -29,12 +29,9 @@ const PLAN_EXAMPLE = {
   head: {
     shape: 'round',
     size: 0.24,
-    hair: { style: 'bob', color: '#2a2118', highlight: '#8a6a4a' },
+    hair: { style: 'bob', color: '#2a2118' },
     facialHair: 'none',
     headwear: { id: 'beanie', color: '#1d2a3a' },
-    eyewear: { id: 'glasses', color: '#111111' },
-    ears: 'elf',
-    earrings: { id: 'stud', color: '#d4af37' },
   },
   arms: {
     left: { type: 'normal', color: null, hand: 'open', wrist: { id: 'band', color: '#222222' } },
@@ -67,10 +64,7 @@ describe('character document', () => {
       'head.shape',
       'head.hair',
       'head.facialHair',
-      'head.ears',
-      'head.earrings',
       'head.headwear',
-      'head.eyewear',
       'arms.left',
       'arms.right',
       'arms.left.hand',
@@ -93,7 +87,7 @@ describe('character document', () => {
       registry.parts('head.shape').map((part) => part.id),
       ['classic', 'round', 'long', 'box'],
     );
-    assert.equal(registry.parts('head.hair').length, 8);
+    assert.equal(registry.parts('head.hair').length, 6);
     assert.deepEqual(
       registry.parts('clothing.bottom').map((part) => part.id),
       ['none', 'pants', 'shorts', 'skirt'],
@@ -183,7 +177,7 @@ describe('character document', () => {
     );
     assert.deepEqual(
       sections[1].controls.map((control) => control.id),
-      ['shape', 'headSize', 'hair', 'hairColor', 'hairHighlight', 'facialHair', 'ears', 'earrings', 'earringColor', 'headwear', 'headwearColor', 'eyewear', 'eyewearColor'],
+      ['shape', 'headSize', 'hair', 'hairColor', 'facialHair', 'headwear', 'headwearColor'],
     );
     assert.deepEqual(
       sections[2].controls.map((control) => control.id),
@@ -228,8 +222,8 @@ describe('createCharacter', () => {
   it('wraps the naked mannequin and leaves the sockets empty', () => {
     const naked = createBody();
     const character = createCharacter();
-    assert.equal(character.getStats().vertices, 1429);
-    assert.equal(character.getStats().triangles, 1872);
+    assert.equal(character.getStats().vertices, 1421);
+    assert.equal(character.getStats().triangles, 1868);
     assert.deepEqual(character.getStats().roles, naked.getStats().roles);
     assert.deepEqual(Object.keys(character.joints), JOINT_NAMES);
     for (const name of JOINT_NAMES) {
@@ -246,7 +240,7 @@ describe('createCharacter', () => {
     assert.equal(character.sockets.wristItemL.parent, character.joints.wristL);
     assert.equal(character.sockets.wristItemR.parent, character.joints.wristR);
     for (const [name, socket] of Object.entries(character.sockets)) {
-      assert.equal(socket.children.length, name === 'head' ? 2 : 0, name);
+      assert.equal(socket.children.length, 0, name);
       assert.equal(socket.userData.socket, true);
     }
     assert.equal(character.getRegistry(), getRegistry());
@@ -254,7 +248,7 @@ describe('createCharacter', () => {
 
   it('keeps the naked mesh and the clips when the document and sliders change', () => {
     const character = createCharacter();
-    assert.equal(character.getStats().vertices, 1429);
+    assert.equal(character.getStats().vertices, 1421);
     const saved = character.setDocument(PLAN_EXAMPLE);
     assert.equal(saved.body.shoulder, 0.34);
     assert.equal(saved.arms.right.hand, 'claw');

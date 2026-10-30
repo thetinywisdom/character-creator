@@ -1,9 +1,6 @@
 import { ANIMATIONS } from '../body/animate.js';
 import { buildClothing } from './clothing.js';
 import {
-  buildEars,
-  buildEarrings,
-  buildEyewear,
   buildFacialHair,
   buildHair,
   buildHeadShape,
@@ -57,9 +54,7 @@ for (const [id, label] of [
   ['buzz', 'Buzz'],
   ['bob', 'Bob'],
   ['ponytail', 'Ponytail'],
-  ['spikes', 'Spikes'],
   ['long', 'Long'],
-  ['mohawk', 'Mohawk'],
   ['afro', 'Afro'],
 ]) part('head.hair', id, label, { build: buildHair });
 
@@ -68,17 +63,6 @@ part('head.facialHair', 'none', 'None', { build: buildFacialHair });
 part('head.facialHair', 'moustache', 'Moustache', { build: buildFacialHair });
 part('head.facialHair', 'beard', 'Beard', { build: buildFacialHair });
 
-slot('head.ears', 'head', 'Ears');
-part('head.ears', 'normal', 'Normal', { build: buildEars });
-part('head.ears', 'elf', 'Elf', { build: buildEars });
-part('head.ears', 'cat', 'Cat', { build: buildEars });
-part('head.ears', 'antenna', 'Robot antenna', { build: buildEars });
-
-slot('head.earrings', 'head', 'Earrings');
-part('head.earrings', 'none', 'None', { build: buildEarrings });
-part('head.earrings', 'stud', 'Stud', { build: buildEarrings });
-part('head.earrings', 'hoop', 'Hoop', { build: buildEarrings });
-
 slot('head.headwear', 'head', 'Headwear');
 for (const [id, label] of [
   ['none', 'None'],
@@ -86,17 +70,8 @@ for (const [id, label] of [
   ['beanie', 'Beanie'],
   ['hat', 'Hat'],
   ['helmet', 'Helmet'],
-  ['crown', 'Crown'],
   ['headband', 'Headband'],
-  ['horns', 'Horns'],
 ]) part('head.headwear', id, label, { build: buildHeadwear });
-
-slot('head.eyewear', 'head', 'Eyewear');
-part('head.eyewear', 'none', 'None', { build: buildEyewear });
-part('head.eyewear', 'glasses', 'Glasses', { build: buildEyewear });
-part('head.eyewear', 'sunglasses', 'Sunglasses', { build: buildEyewear });
-part('head.eyewear', 'visor', 'Visor', { build: buildEyewear });
-part('head.eyewear', 'goggles', 'Goggles', { build: buildEyewear });
 
 slot('arms.left', 'arms', 'Left arm');
 slot('arms.right', 'arms', 'Right arm');
