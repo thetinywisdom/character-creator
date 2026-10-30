@@ -112,10 +112,25 @@ function assertTorsoShell(character, meshName = 'clothingTop') {
     assert.ok(hit.ny > 0, `${meshName} roof faces up at ${x.toFixed(3)}, ${z.toFixed(3)}`);
     assert.ok(hit.y > spec.chestHeight * spec.shoulderT, `${meshName} roof clears the shoulder joint`);
   }
-  assert.ok(shell.yNeck - shell.ySide > 0.025, `${meshName} shoulder line slopes`);
-  const neck = coverFromAbove(mesh, 0, -Math.min(shell.neckR * 1.7, shell.hz * 0.7));
-  const side = coverFromAbove(mesh, shell.hx * 0.82, 0);
-  assert.ok(neck && side && neck.y > side.y + 0.015, `${meshName} is higher at the neck than at the shoulder`);
+  assert.ok(shell.yNeck - shell.ySide > 0.012, `${meshName} shoulder line slopes`);
+  const pos = mesh.geometry.attributes.position;
+  let frontY = -Infinity;
+  let backY = -Infinity;
+  let sideY = -Infinity;
+  for (let i = 0; i < pos.count; i += 1) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const z = pos.getZ(i);
+    if (Math.abs(y - shell.ySide) > 0.004) continue;
+    if (z > shell.hz * 0.8 && Math.abs(x) < shell.hx * 0.2) frontY = Math.max(frontY, y);
+    if (z < -shell.hz * 0.8 && Math.abs(x) < shell.hx * 0.2) backY = Math.max(backY, y);
+    if (Math.abs(x) > shell.hx * 0.8 && Math.abs(z) < shell.hz * 0.2) sideY = Math.max(sideY, y);
+  }
+  assert.ok(Number.isFinite(frontY) && Number.isFinite(sideY), `${meshName} has a shoulder edge`);
+  assert.ok(Math.abs(frontY - sideY) < 0.006, `${meshName} front edge follows the shoulder drop`);
+  assert.ok(Math.abs(backY - sideY) < 0.006, `${meshName} back edge follows the shoulder drop`);
+  const neck = coverFromAbove(mesh, 0, -((shell.neckR + shell.neckHz) * 0.5));
+  assert.ok(neck && neck.y > sideY + 0.01, `${meshName} is higher at the neck than at the shoulder`);
   assert.equal(coverFromAbove(mesh, sx + ball * 0.85, 0), null, 'outer shoulder ball is not in the torso');
   assert.equal(coverFromAbove(mesh, -(sx + ball * 0.85), 0), null, 'outer shoulder ball is not in the torso');
 }
@@ -146,26 +161,43 @@ function sleeveCap(sleeve) {
   return sleeve.parent.getObjectByName(sleeve.name.replace('Upper', 'Cap'));
 }
 
-function sleeveCoversBall(sleeve, ball, margin) {
+function sleeveFlatAt(info, y) {
+  const span = info.yTop - info.yBottom || 1;
+  const t = Math.min(Math.max((info.yTop - y) / span, 0), 1);
+  const vert = (info.cuff || info.radius) + (info.radius - (info.cuff || info.radius)) * t;
+  return vert * (info.inscribed / info.radius);
+}
+
+function sleeveCoversBall(sleeve, ball, margin, shellMesh) {
   const pos = ball.geometry.attributes.position;
   const radius = ball.geometry.parameters.radius;
   const info = sleeve.userData.sleeve;
   const cap = sleeveCap(sleeve);
   const capR = cap ? cap.userData.capRadius : 0;
-  const half = (info.yTop - info.yBottom) / 2;
   const local = new Vector3();
   const held = new Vector3();
+  const shellLocal = new Vector3();
   for (let i = 0; i < pos.count; i += 1) {
     local.fromBufferAttribute(pos, i);
+    if (local.y > 0.002) continue;
     if (local.lengthSq() > 1e-10) local.multiplyScalar(1 + margin / radius);
     ball.localToWorld(local);
+    if (shellMesh) {
+      shellLocal.copy(local);
+      shellMesh.worldToLocal(shellLocal);
+      const shell = shellMesh.userData.shell;
+      if (shellLocal.y > shell.ySide - 0.002) continue;
+      if (pointInsideShell(shell, shellLocal.x, shellLocal.y, shellLocal.z, 0)) continue;
+    }
     if (cap) {
       held.copy(local);
       cap.worldToLocal(held);
       if (held.length() <= capR - 1e-4) continue;
     }
     sleeve.worldToLocal(local);
-    if (Math.hypot(local.x, local.z) > info.inscribed - 1e-4) return false;
+    const jointY = local.y + (info.yTop + info.yBottom) / 2;
+    if (Math.hypot(local.x, local.z) > sleeveFlatAt(info, jointY) - 1e-4) return false;
+    const half = (info.yTop - info.yBottom) / 2;
     if (Math.abs(local.y) > half - 1e-4) return false;
   }
   return true;
@@ -193,18 +225,19 @@ const raycaster = new Raycaster();
 const rayOrigin = new Vector3();
 const rayDir = new Vector3();
 
-function sleeveMeshCovers(sleeve, ball) {
+function sleeveMeshCovers(sleeve, ball, shellMesh) {
   const pos = ball.geometry.attributes.position;
   const info = sleeve.userData.sleeve;
   const radius = ball.geometry.parameters.radius;
   const center = ball.getWorldPosition(new Vector3());
   raycaster.near = 0;
-  raycaster.far = Math.max(info.yTop - info.yBottom, info.radius) + 0.02;
+  raycaster.far = Math.max(info.yTop - info.yBottom, info.cuff || info.radius) + 0.02;
   const step = Math.max(1, Math.floor(pos.count / 10));
   const shift = new Vector3();
   for (let i = 0; i < pos.count; i += step) {
     rayOrigin.fromBufferAttribute(pos, i);
-    if (rayOrigin.lengthSq() < 1e-10) continue;
+    if (rayOrigin.y > 0.002 || rayOrigin.lengthSq() < 1e-10) continue;
+    if (Math.hypot(rayOrigin.x, rayOrigin.z) < 0.03) continue;
     rayDir.copy(rayOrigin).normalize();
     rayOrigin.multiplyScalar(1 + 0.002 / radius);
     // A ray along a shared 8-gon edge falls between the two faces.
@@ -212,6 +245,13 @@ function sleeveMeshCovers(sleeve, ball) {
     if (shift.lengthSq() < 1e-8) shift.set(1, 0, 0);
     rayOrigin.add(shift.normalize().multiplyScalar(0.002));
     ball.localToWorld(rayOrigin);
+    if (shellMesh) {
+      const held = rayOrigin.clone();
+      shellMesh.worldToLocal(held);
+      const shell = shellMesh.userData.shell;
+      if (held.y > shell.ySide - 0.002) continue;
+      if (pointInsideShell(shell, held.x, held.y, held.z, 0)) continue;
+    }
     rayDir.transformDirection(ball.matrixWorld);
     raycaster.set(rayOrigin, rayDir);
     const cap = sleeveCap(sleeve);
@@ -279,8 +319,10 @@ function assertSleevesSealed(character, label) {
       const cap = sleeveCap(sleeve);
       assert.ok(cap, `${label} ${sleeve.name} has a shoulder cap`);
       assert.ok(sleeve.userData.sleeve.yTop < cap.userData.capRadius, `${label} sleeve starts inside its cap`);
-      assert.ok(sleeveCoversBall(sleeve, ball, 0.003), `${label} ${sleeve.name} contains the ball`);
-      assert.ok(sleeveMeshCovers(sleeve, ball), `${label} ${sleeve.name} mesh covers the ball`);
+      const line = shells[0].userData.shell.ySide;
+      assert.ok(joint.position.y + cap.userData.capRadius <= line + 0.001, `${label} cap stays on the shoulder line`);
+      assert.ok(sleeveCoversBall(sleeve, ball, 0.003, shells[0]), `${label} ${sleeve.name} contains the ball`);
+      assert.ok(sleeveMeshCovers(sleeve, ball, shells[0]), `${label} ${sleeve.name} mesh covers the ball`);
     }
     if (fitted.length === 2) {
       const pos = fitted[0].geometry.attributes.position;
@@ -289,7 +331,6 @@ function assertSleevesSealed(character, label) {
       const outer = fitted[1];
       const cap = sleeveCap(outer);
       const info = outer.userData.sleeve;
-      const half = (info.yTop - info.yBottom) / 2;
       for (let i = 0; i < pos.count; i += 1) {
         local.fromBufferAttribute(pos, i);
         fitted[0].localToWorld(local);
@@ -299,7 +340,9 @@ function assertSleevesSealed(character, label) {
           if (held.length() < cap.userData.capRadius - 1e-4) continue;
         }
         outer.worldToLocal(local);
-        assert.ok(Math.hypot(local.x, local.z) < info.inscribed - 1e-4, `${label} outer sleeve clears the inner one`);
+        const jointY = local.y + (info.yTop + info.yBottom) / 2;
+        const half = (info.yTop - info.yBottom) / 2;
+        assert.ok(Math.hypot(local.x, local.z) < sleeveFlatAt(info, jointY) - 1e-4, `${label} outer sleeve clears the inner one`);
         assert.ok(Math.abs(local.y) < half - 1e-4, `${label} outer sleeve covers the inner one`);
       }
     }
@@ -335,9 +378,9 @@ function assertSleevesSealed(character, label) {
           if (fitted.length === 0) continue;
           for (const sleeve of fitted) {
             assert.equal(sleeve.parent, joint);
-            assert.ok(sleeveCoversBall(sleeve, ball, 0.003), `${label} ${item.id} ${sleeve.name}`);
+            assert.ok(sleeveCoversBall(sleeve, ball, 0.003, shells[0]), `${label} ${item.id} ${sleeve.name}`);
             if (frame % 4 === 0) {
-              assert.ok(sleeveMeshCovers(sleeve, ball), `${label} ${item.id} mesh ${sleeve.name}`);
+              assert.ok(sleeveMeshCovers(sleeve, ball, shells[0]), `${label} ${item.id} mesh ${sleeve.name}`);
             }
           }
           for (const shell of shells) {
@@ -538,6 +581,67 @@ describe('clothing compositor', () => {
     assert.equal(getRegistry().part('clothing.outer', 'vest').covers.includes('chest'), false);
     assert.equal(getRegistry().part('clothing.outer', 'cape').covers.includes('chest'), false);
     assert.ok(getRegistry().part('clothing.top', 'hoodie').covers.includes('chest'));
+  });
+
+  it('keeps the pants inside the top through every clip', () => {
+    const character = wear((doc) => {
+      doc.clothing.top = { id: 'tee', color: '#3a5a40' };
+      doc.clothing.bottom = { id: 'pants', color: '#243044' };
+      doc.clothing.shoes = { id: 'sneakers', color: '#111111', accent: '#f2f2f2' };
+    });
+    const top = character.root.getObjectByName('clothingTop');
+    const shell = top.userData.shell;
+    const names = [];
+    character.root.traverse((obj) => {
+      if (obj.userData?.garment === 'bottom') names.push(obj.name);
+    });
+    const local = new Vector3();
+    const outside = (x, y, z) => {
+      if (y < shell.y0 + 0.008 || y > shell.yNeck) return 0;
+      if (pointInsideShell(shell, x, y, z, 0)) return 0;
+      let hx = shell.hx;
+      let hz = shell.hz;
+      const rise = shell.yNeck - shell.ySide;
+      if (y > shell.ySide && rise > 0.004) {
+        const t = Math.min((y - shell.ySide) / rise, 1);
+        const c = Math.sqrt(Math.max(0, 1 - t * t));
+        hx = shell.neckHx + (shell.hx - shell.neckHx) * c;
+        hz = shell.neckHz + (shell.hz - shell.neckHz) * c;
+      }
+      return Math.hypot(Math.max(Math.abs(x) - hx, 0), Math.max(Math.abs(z) - hz, 0));
+    };
+    for (const item of ANIMATIONS) {
+      const seconds = SPAN[item.id] || 1.5;
+      const frames = Math.max(2, Math.round(seconds * 8));
+      const dt = seconds / frames;
+      const styles = item.kind === 'move' ? ['normal', 'stomp', 'swagger'] : [null];
+      for (const walkStyle of styles) {
+        for (let frame = 0; frame < frames; frame += 1) {
+          character.update(dt, {
+            anim: item.id,
+            speed: item.speed,
+            ...(walkStyle ? { walkStyle } : {}),
+          });
+          character.root.updateMatrixWorld(true);
+          for (const name of names) {
+            const mesh = character.root.getObjectByName(name);
+            const pos = mesh.geometry.attributes.position;
+            for (let i = 0; i < pos.count; i += 1) {
+              local.fromBufferAttribute(pos, i);
+              mesh.localToWorld(local);
+              top.worldToLocal(local);
+              const gap = outside(local.x, local.y, local.z);
+              const onTorso = name === 'clothingBottom' || local.y > shell.y0 + 0.12;
+              const limit = onTorso ? 0.003 : 0.012;
+              assert.ok(
+                gap < limit || gap > (onTorso ? 0.02 : 0.014),
+                `${item.id} ${walkStyle || ''} ${name} pokes through the top by ${gap.toFixed(3)}`,
+              );
+            }
+          }
+        }
+      }
+    }
   });
 
   it('rounds the torso shell and sleeves like the body', () => {

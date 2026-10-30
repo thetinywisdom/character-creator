@@ -252,25 +252,21 @@ function wallNormal(p) {
   return [p.nx / len, 0, p.nz / len];
 }
 
-function lidNormal(p) {
-  const nx = p.nx * 0.4;
-  const nz = p.nz * 0.4;
-  const len = Math.hypot(nx, 1, nz) || 1;
-  return [nx / len, 1 / len, nz / len];
-}
-
-function shoulderY(size, p, hx, hz) {
-  const ang = Math.atan2(p.z / hz, p.x / hx);
-  return size.ySide + (size.yNeck - size.ySide) * Math.abs(Math.sin(ang));
-}
-
-function radialRing(pts, radius) {
-  return pts.map((p) => {
-    const len = Math.hypot(p.x, p.z) || 1;
-    const nx = p.x / len;
-    const nz = p.z / len;
-    return { x: nx * radius, z: nz * radius, nx, nz };
-  });
+/** Chest fillet in waist space. Matches createChestGeometry's shoulder drop. */
+function chestProfile(spec) {
+  const H = Math.max(spec.chestMeshHeight, 1e-4);
+  const drop = Math.max(spec.chestShoulderDrop || 0.012, 0.012);
+  const r = clothBevelRadius(Math.min(spec.chestTopWidth, spec.chestTopDepth), H);
+  const yS = Math.max(H - drop, r * 2.4);
+  return {
+    ySide: spec.chestMeshY + yS,
+    yNeck: spec.chestMeshY + H,
+    hwS: spec.chestTopWidth / 2,
+    hdS: spec.chestTopDepth / 2,
+    hwN: spec.chestNeckWidth / 2,
+    hdN: spec.chestNeckDepth / 2,
+    corner: r,
+  };
 }
 
 function skipFront(limit) {
@@ -290,32 +286,30 @@ function skipFront(limit) {
  * vest or jacket a hair off the layer under it.
  */
 function torsoFit(spec, ease, extra) {
-  const hx = spec.chestTopWidth / 2 + ease + extra;
-  // Depth ease is a little larger than the side ease so a top stays outside
-  // the pants when the waist leans.
-  const hz = Math.max(spec.chestTopDepth, spec.pelvisBottomDepth) / 2 + ease * 1.75 + extra;
-  const drop = spec.chestShoulderDrop || 0.03;
-  const yNeck = spec.chestHeight + ease + extra * 0.35;
-  const ySide = Math.min(
-    spec.chestHeight - drop + ease * 0.65 + extra * 0.15,
-    yNeck - 0.02,
-  );
-  const y0 = -spec.pelvisHeight - ease * 0.45;
-  const flare = Math.min(ease * 0.45, 0.01);
+  const profile = chestProfile(spec);
+  const pad = ease + extra;
+  // The upper surface is the chest fillet moved out by the ease. The outer
+  // edge stays at the body's shoulder height all the way around, and only
+  // the cloth nearer the neck rises. Depth ease stays a little larger so a
+  // twist cannot push the pants through the back.
+  const lift = ease * 0.25 + extra * 0.15;
+  const hx = profile.hwS + pad;
+  const hz = profile.hdS + ease * 1.75 + extra + 0.01;
+  const ySide = profile.ySide + lift;
+  const yNeck = profile.yNeck + lift;
   return {
     hx,
     hz,
-    y0,
+    neckHx: Math.min(profile.hwN + pad * 0.55, hx * 0.78),
+    neckHz: Math.min(profile.hdN + pad * 0.55, hz * 0.78),
+    y0: -spec.pelvisHeight - ease * 0.45,
     ySide,
     yNeck,
-    flare,
+    flare: Math.min(ease * 0.45, 0.01),
     neckR: spec.radii.neck * 1.12,
     ease,
     extra,
-    corner: clothBevelRadius(
-      Math.min(spec.chestTopWidth, Math.max(spec.chestTopDepth, spec.pelvisBottomDepth)),
-      spec.chestMeshHeight,
-    ),
+    corner: profile.corner,
   };
 }
 
@@ -331,16 +325,26 @@ export function pointInsideShell(shell, x, y, z, margin = 0) {
   if (y < shell.y0 + margin) return false;
   const ax = Math.abs(x);
   const az = Math.abs(z);
-  if (ax > hx || az > hz) return false;
-  const r = Math.min(shell.corner || 0, hx * 0.999, hz * 0.999);
-  if (r > 0 && ax > hx - r && az > hz - r) {
-    const dx = ax - (hx - r);
-    const dz = az - (hz - r);
+  let hxY = hx;
+  let hzY = hz;
+  const rise = (shell.yNeck || shell.ySide) - shell.ySide;
+  if (y > shell.ySide && rise > 0.004) {
+    const t = (y - shell.ySide) / rise;
+    if (t > 1) return false;
+    const c = Math.sqrt(Math.max(0, 1 - t * t));
+    const neckHx = shell.neckHx ?? hx * 0.5;
+    const neckHz = shell.neckHz ?? hz * 0.5;
+    hxY = neckHx + (hx - neckHx) * c;
+    hzY = neckHz + (hz - neckHz) * c;
+  }
+  if (ax > hxY || az > hzY) return false;
+  const r = Math.min(shell.corner || 0, hxY * 0.999, hzY * 0.999);
+  if (r > 0 && ax > hxY - r && az > hzY - r) {
+    const dx = ax - (hxY - r);
+    const dz = az - (hzY - r);
     if (dx * dx + dz * dz > r * r) return false;
   }
-  const ang = Math.atan2(z / hz, x / hx);
-  const yLid = shell.ySide + (shell.yNeck - shell.ySide) * Math.abs(Math.sin(ang));
-  return y <= yLid - margin;
+  return true;
 }
 
 function cutLip(loom, rings, ids, pred, depth) {
@@ -365,54 +369,90 @@ function cutLip(loom, rings, ids, pred, depth) {
 }
 
 /**
- * Straight block. The hem is only slightly wider than the shoulders.
- * The cross-section is the chest's rounded rectangle. The lid slopes from
- * the neck down to the outer shoulder and keeps a neck hole.
+ * Fillet rings from the shoulder line up to the neck, the same quarter-ellipse
+ * the chest uses. The outer ring is one height all around. Nothing peaks at
+ * the front or the back.
  */
-function buildBlock(size, frontLimit) {
+function filletRings(size) {
+  const S = 2;
+  const fall = Math.max(size.yNeck - size.ySide, 0);
+  const rings = [];
+  for (let i = 0; i <= S; i += 1) {
+    const theta = (i / S) * (Math.PI / 2);
+    const c = Math.cos(theta);
+    const s = Math.sin(theta);
+    const hx = size.neckHx + (size.hx - size.neckHx) * c;
+    const hz = size.neckHz + (size.hz - size.neckHz) * c;
+    const y = size.ySide + fall * s;
+    const corner = Math.min(size.corner, hx * 0.45, hz * 0.45) * (0.55 + 0.45 * c);
+    const out = Math.max(size.hx - size.neckHx, size.hz - size.neckHz, 0.001) * s;
+    const rise = Math.max(fall, 0.001) * c;
+    const len = Math.hypot(rise, out) || 1;
+    const ny = out / len;
+    const nh = rise / len;
+    rings.push(sectionRing(hx, hz, corner).map((p) => {
+      const nx = p.nx * nh;
+      const nz = p.nz * nh;
+      const nlen = Math.hypot(nx, ny, nz) || 1;
+      return { x: p.x, y, z: p.z, nx: nx / nlen, ny: ny / nlen, nz: nz / nlen };
+    }));
+  }
+  return rings;
+}
+
+function holeRing(section, y, neckR) {
+  return section.map((p) => {
+    const len = Math.hypot(p.x, p.z) || 1;
+    return { x: (p.x / len) * neckR, y, z: (p.z / len) * neckR, nx: 0, ny: 1, nz: 0 };
+  });
+}
+
+/**
+ * Straight hang below the shoulder line. Above it, the chest fillet offset
+ * by the ease, with a neck hole. `collar` adds a short band around that hole.
+ */
+function buildBlock(size, frontLimit, collar = false) {
   const { hx, hz, y0, flare, neckR } = size;
-  const corner = size.corner || clothBevelRadius(Math.min(hx, hz) * 2, size.yNeck - y0);
+  const corner = size.corner || clothBevelRadius(Math.min(hx, hz) * 2, Math.max(size.yNeck - y0, 0.05));
   const loom = new Loom();
-  const hemW = hx + flare;
-  const hemD = hz + flare * 0.45;
-  const hem = withY(sectionRing(hemW, hemD, corner), y0, wallNormal);
-  const lip = withY(sectionRing(hemW * 0.9, hemD * 0.9, corner * 0.9), y0 + 0.012, wallNormal);
-  const topPts = sectionRing(hx, hz, corner);
-  const yAt = (p) => shoulderY(size, p, hx, hz);
-  const topWall = withY(topPts, yAt, wallNormal);
-  const topLid = withY(topPts, yAt, lidNormal);
-  const neck = withY(radialRing(topPts, neckR), size.yNeck, () => [0, 1, 0]);
-  const ids = [hem, lip, topWall, topLid, neck].map((pts) => loom.add(pts));
+  const hem = withY(sectionRing(hx + flare, hz + flare * 0.45, corner), y0, wallNormal);
+  const lip = withY(sectionRing((hx + flare) * 0.9, (hz + flare * 0.45) * 0.9, corner * 0.9), y0 + 0.012, wallNormal);
+  const flat = !(size.yNeck - size.ySide > 0.004) || size.neckHx == null;
+  const fillet = flat ? null : filletRings(size);
+  const shoulder = fillet
+    ? fillet[0]
+    : withY(sectionRing(hx, hz, corner), size.ySide, wallNormal);
+  const crown = fillet ? fillet[fillet.length - 1] : shoulder;
+  const hole = holeRing(crown, crown[0].y, neckR);
+  const ids = [hem, lip, shoulder, ...((fillet || []).slice(1)), hole].map((pts) => loom.add(pts));
   const skip = frontLimit == null ? null : skipFront(frontLimit);
   loom.wall(ids[0], ids[1]);
   loom.wall(ids[0], ids[2], skip);
-  loom.cap(ids[3], ids[4], skip);
-  if (skip) cutLip(loom, [hem, topWall, neck], [ids[0], ids[2], ids[4]], skip, 0.014);
+  for (let i = 2; i < ids.length - 2; i += 1) loom.wall(ids[i], ids[i + 1], skip);
+  loom.cap(ids[ids.length - 2], ids[ids.length - 1], skip);
+  if (collar) {
+    const brim = Math.min(neckR * 1.28, Math.min(size.neckHx, size.neckHz) * 0.96);
+    const band = holeRing(crown, crown[0].y + 0.012, Math.max(brim, neckR * 1.05));
+    const neck = holeRing(crown, crown[0].y + 0.02, neckR);
+    const bandIds = loom.add(band.map((p) => ({ ...p, nx: p.x, ny: 0, nz: p.z })));
+    const neckIds = loom.add(neck.map((p) => {
+      const len = Math.hypot(p.x, p.z) || 1;
+      return { ...p, nx: p.x / len, ny: 0, nz: p.z / len };
+    }));
+    loom.wall(ids[ids.length - 1], bandIds);
+    loom.wall(bandIds, neckIds);
+  }
+  if (skip) cutLip(loom, [hem, shoulder, hole], [ids[0], ids[2], ids[ids.length - 1]], skip, 0.014);
   return loom.geometry();
 }
 
 function collarBlock(size) {
-  const { hx, hz, y0, flare, neckR } = size;
-  const corner = size.corner || clothBevelRadius(Math.min(hx, hz) * 2, size.yNeck - y0);
-  const loom = new Loom();
-  const collarR = neckR * 1.65;
-  const hem = withY(sectionRing(hx + flare, hz + flare * 0.45, corner), y0, wallNormal);
-  const topPts = sectionRing(hx, hz, corner);
-  const yAt = (p) => shoulderY(size, p, hx, hz);
-  const topWall = withY(topPts, yAt, wallNormal);
-  const topLid = withY(topPts, yAt, lidNormal);
-  const collar = withY(radialRing(topPts, collarR), size.yNeck, wallNormal);
-  const neck = withY(radialRing(topPts, neckR), size.yNeck + 0.016, wallNormal);
-  const ids = [hem, topWall, topLid, collar, neck].map((pts) => loom.add(pts));
-  loom.wall(ids[0], ids[1]);
-  loom.cap(ids[2], ids[3]);
-  loom.wall(ids[3], ids[4]);
-  return loom.geometry();
+  return buildBlock(size, null, true);
 }
 
-function hangCylinder(parent, radius, yTop, yBottom, material, name, garment, sleeve, open = false) {
+function hangCylinder(parent, radiusTop, yTop, yBottom, material, name, garment, sleeve, open = false, radiusBottom = radiusTop) {
   const height = Math.max(yTop - yBottom, 0.02);
-  const geo = new CylinderGeometry(radius, radius, height, SLEEVE_SIDES, 1, open);
+  const geo = new CylinderGeometry(radiusTop, radiusBottom, height, SLEEVE_SIDES, 1, open);
   const mesh = addMesh(parent, geo, material, name, garment);
   mesh.position.y = (yTop + yBottom) / 2;
   if (sleeve) mesh.userData.sleeve = sleeve;
@@ -432,13 +472,17 @@ function hangCap(parent, radius, material, name, garment) {
  * at the flats of the 8-gon. The tube is open at the shoulder and starts
  * inside a round cap, so a swing cannot flip a closed top up into a spike.
  */
-function sleeveShape(ball, ease, extra, yBottom) {
+function sleeveShape(ball, ease, extra, yBottom, headroom) {
   const inscribed = ball + ease + extra;
   const radius = inscribed / SLEEVE_FLAT;
-  const capRadius = radius + Math.min(ease * 0.2, 0.005) + extra * 0.15;
-  const yTop = Math.min(capRadius * 0.22, ball * 0.35);
+  // The cap is a sphere on the joint, so a swing cannot grow a spike.
+  // Its top stays on the shoulder line instead of bulging above the shirt.
+  const room = Math.max(headroom - 0.002, 0.008);
+  const capRadius = Math.min(radius, room);
+  const yTop = Math.min(capRadius * 0.18, 0.006);
   return {
     radius,
+    cuff: radius,
     inscribed,
     capRadius,
     yTop,
@@ -457,7 +501,8 @@ function addSleeves(ctx, kind, fit, material, prefix, garment) {
     const scale = doc.arms[key].type === 'muscular' ? MUSCULAR_SCALE : 1;
     const ball = spec.radii.shoulder * scale;
     let yBottom = kind === 'half' ? -spec.upperArmLength * 0.42 : -spec.upperArmLength;
-    const sleeve = sleeveShape(ball, ease, extra, yBottom);
+    const headroom = fit.ySide - spec.chestHeight * spec.shoulderT;
+    const sleeve = sleeveShape(ball, ease, extra, yBottom, headroom);
     if (kind === 'half') {
       const limit = spec.upperArmLength * 0.66;
       if (sleeve.yTop - yBottom > limit) yBottom = sleeve.yTop - limit;
@@ -476,15 +521,16 @@ function addSleeves(ctx, kind, fit, material, prefix, garment) {
       garment,
       sleeve,
       true,
+      sleeve.cuff,
     );
     if (kind === 'full') {
       const elbow = ctx.joints[`elbow${side}`];
-      const elbowR = sleeve.radius + Math.min(ease * 0.15, 0.004);
+      const elbowR = sleeve.cuff * 1.012;
       hangCap(elbow, elbowR, material, `${prefix}Elbow${side}`, garment);
       hangCylinder(
         elbow,
-        sleeve.radius,
-        Math.min(elbowR * 0.22, 0.012 + extra),
+        sleeve.cuff,
+        elbowR * 0.12,
         -spec.forearmLength,
         material,
         `${prefix}Forearm${side}`,
@@ -602,14 +648,19 @@ function addWaistBlock(ctx, ease, material) {
     neckR: spec.radii.waist * 0.45,
     corner: clothBevelRadius(Math.min(hx, hz) * 2, y1 - y0),
   }, null);
-  return addMesh(ctx.pelvis, geo, material, 'clothingBottom', 'bottom');
+  // On the waist, so a twist carries the band with the shirt instead of
+  // letting a corner cut through the back.
+  const mesh = addMesh(ctx.joints.waist, geo, material, 'clothingBottom', 'bottom');
+  mesh.position.y = -ctx.joints.waist.position.y;
+  return mesh;
 }
 
 function addLegTubes(ctx, part, ease, material) {
   const spec = ctx.spec;
   const doc = ctx.document;
   const legR = spec.radii.hip + ease;
-  const kneeR = legR + Math.min(ease * 0.2, 0.005);
+  const kneeR = legR * 1.012;
+  const tuck = kneeR * 0.12;
   for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
     if (!clothLeg(doc.legs[key].type)) continue;
     const thighLen = part === 'shorts' ? spec.thighLength * 0.5 : spec.thighLength;
@@ -617,7 +668,7 @@ function addLegTubes(ctx, part, ease, material) {
       ctx.joints[`hip${side}`],
       legR,
       0.008,
-      part === 'shorts' ? -thighLen : -spec.thighLength + kneeR * 0.2,
+      part === 'shorts' ? -thighLen : -spec.thighLength + tuck,
       material,
       `clothingBottomThigh${side}`,
       'bottom',
@@ -629,7 +680,7 @@ function addLegTubes(ctx, part, ease, material) {
       hangCylinder(
         ctx.joints[`knee${side}`],
         legR,
-        kneeR * 0.2,
+        tuck,
         -spec.shinLength,
         material,
         `clothingBottomShin${side}`,
