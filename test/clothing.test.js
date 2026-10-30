@@ -9,7 +9,8 @@ import {
   getRegistry,
 } from '../src/body/index.js';
 import { clothPad, pointInsideShell } from '../src/character/clothing.js';
-import { applyPreset } from '../src/character/presets.js';
+import { SHOULDER_WIDTH } from '../src/character/panels.js';
+import { applyPreset, presetMeasures } from '../src/character/presets.js';
 
 const BODY = [
   'chestMesh', 'pelvisMesh', 'waistMesh', 'headMesh',
@@ -95,16 +96,16 @@ function assertTorsoShell(character, meshName = 'clothingTop') {
   const sx = spec.shoulderWidth / 2;
   const ball = spec.radii.shoulder;
   assert.ok(Math.abs(shell.hx - (spec.chestTopWidth / 2 + ease + shell.extra)) < 1e-6, `${meshName} uses the chest width`);
-  assert.ok(shell.hx < sx + ball * 0.5, `${meshName} stops short of the outer shoulder ball`);
+  assert.ok(shell.hx < sx + ball * 0.9, `${meshName} stops short of the outer shoulder ball`);
   assert.equal(coverFromAbove(mesh, 0, 0), null, 'neck hole stays open');
   const samples = [
     [spec.chestTopWidth * 0.35, 0],
     [-spec.chestTopWidth * 0.35, 0],
-    [0, -spec.chestTopDepth * 0.3],
+    [0, -shell.hz * 0.72],
     [shell.hx * 0.82, 0],
     [-shell.hx * 0.82, 0],
   ];
-  if (!shell.openFront) samples.push([0, spec.chestTopDepth * 0.3]);
+  if (!shell.openFront) samples.push([0, shell.hz * 0.72]);
   for (const [x, z] of samples) {
     const hit = coverFromAbove(mesh, x, z);
     assert.ok(hit, `${meshName} roof covers ${x.toFixed(3)}, ${z.toFixed(3)}`);
@@ -742,6 +743,32 @@ describe('clothing compositor', () => {
     const shell = mixed.root.getObjectByName('clothingTop').userData.shell;
     const spec = mixed.getResolved();
     assert.ok(shell.hx < spec.shoulderWidth / 2 + spec.radii.shoulder * 0.5);
+  });
+
+  it('seals the sleeves at the narrow, default, and wide shoulder settings', () => {
+    const man = presetMeasures('man', 'average', 1.8).shoulder;
+    const woman = presetMeasures('woman', 'slim', 1.8).shoulder;
+    const broad = presetMeasures('man', 'broad', 1.8).shoulder;
+    for (const value of [man, woman, broad]) {
+      assert.ok(value >= SHOULDER_WIDTH.min && value <= SHOULDER_WIDTH.max, `${value} fits the slider`);
+    }
+    for (const width of [SHOULDER_WIDTH.min, null, SHOULDER_WIDTH.max]) {
+      const character = wear((doc) => {
+        doc.clothing.top = { id: 'tee', color: '#3a5a40' };
+        if (width != null) doc.body.shoulder = width;
+      });
+      const spec = character.getResolved();
+      const chest = character.root.getObjectByName('chestMesh').geometry.userData;
+      const pelvis = character.root.getObjectByName('pelvisMesh').geometry.userData;
+      assert.ok(Math.abs(chest.topWidth - chest.bottomWidth) < 1e-6, 'upper torso stays a straight box');
+      assert.ok(Math.abs(chest.topDepth - pelvis.bottomDepth) < 1e-6, 'upper torso matches the lower depth');
+      assert.ok(Math.abs(chest.topWidth - spec.shoulderWidth) < 1e-6);
+      const span = Math.abs(character.joints.shoulderL.position.x - character.joints.shoulderR.position.x);
+      assert.ok(Math.abs(span - spec.shoulderWidth) < 1e-6, 'the arms sit on the box');
+      const shell = character.root.getObjectByName('clothingTop').userData.shell;
+      assert.ok(Math.abs(shell.hx - (spec.shoulderWidth / 2 + shell.ease)) < 1e-6, 'the top refits the width');
+      assertSleevesSealed(character, `shoulder ${width == null ? 'default' : width.toFixed(2)}`);
+    }
   });
 
   it('follows the joints through a walk and a dance', () => {

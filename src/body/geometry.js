@@ -346,15 +346,12 @@ export function createFrustumMesh(topWidth, bottomWidth, height, topDepth, botto
 }
 
 /**
- * Upper torso. The waist stays the narrow end. The shoulder line is wider,
- * so the front reads as an inverted trapezoid. Above that line the form
- * narrows into the neck and the outer corner is a two-segment roundover,
- * so the top is sloped rather than a flat box.
+ * Upper torso. Below the shoulder line it is a straight box: one width and
+ * one depth, with a small roundover on the bottom edge. Above that line the
+ * form narrows into the neck and the outer corner is a two-segment roundover.
  */
 export function createChestGeometry({
-  waistWidth,
   shoulderWidth,
-  waistDepth,
   shoulderDepth,
   neckWidth,
   neckDepth,
@@ -363,13 +360,11 @@ export function createChestGeometry({
 }) {
   const S = BLOCK_BEVEL_SEGMENTS;
   const H = Math.max(height, 1e-4);
-  const hw0 = waistWidth / 2;
-  const hd0 = waistDepth / 2;
   const hwS = Math.max(shoulderWidth / 2, 0.02);
   const hdS = Math.max(shoulderDepth / 2, 0.02);
   const hwN = Math.min(Math.max(neckWidth / 2, 0.012), hwS * 0.78);
   const hdN = Math.min(Math.max(neckDepth / 2, 0.012), hdS * 0.8);
-  const minSpan = Math.min(waistWidth, waistDepth);
+  const minSpan = Math.min(shoulderWidth, shoulderDepth);
   const r = bevelRadius(minSpan, H);
   const yS = Math.max(H - Math.max(drop, 0.012), r * 2.4);
   const fall = H - yS;
@@ -390,12 +385,9 @@ export function createChestGeometry({
     const theta = (i / S) * (Math.PI / 2);
     const y = r * (1 - Math.cos(theta));
     const inset = r * (1 - Math.sin(theta));
-    const u = Math.min(y / yS, 1);
-    const wN = hw0 + (hwS - hw0) * u;
-    const dN = hd0 + (hdS - hd0) * u;
     addRing(
-      Math.max(wN - inset, r * 0.35),
-      Math.max(dN - inset, r * 0.35),
+      Math.max(hwS - inset, r * 0.35),
+      Math.max(hdS - inset, r * 0.35),
       y,
       -Math.cos(theta),
       Math.sin(theta),
@@ -442,9 +434,9 @@ export function createChestGeometry({
   geo.setAttribute('normal', new Float32BufferAttribute(normals, 3));
   geo.setIndex(new Uint16BufferAttribute(indices, 1));
   geo.userData.topWidth = hwS * 2;
-  geo.userData.bottomWidth = waistWidth;
+  geo.userData.bottomWidth = hwS * 2;
   geo.userData.topDepth = hdS * 2;
-  geo.userData.bottomDepth = waistDepth;
+  geo.userData.bottomDepth = hdS * 2;
   geo.userData.height = H;
   geo.userData.bevelSegments = S;
   geo.userData.bevelRadius = r;
@@ -457,9 +449,7 @@ export function createChestGeometry({
 
 export function createChestMesh(spec, material) {
   const mesh = new Mesh(createChestGeometry({
-    waistWidth: spec.chestBottomWidth,
     shoulderWidth: spec.chestTopWidth,
-    waistDepth: spec.chestBottomDepth,
     shoulderDepth: spec.chestTopDepth,
     neckWidth: spec.chestNeckWidth,
     neckDepth: spec.chestNeckDepth,

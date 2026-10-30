@@ -53,7 +53,7 @@ function clearGenerated(nodes) {
  *       pelvis block
  *       hip > thigh > knee > shin > ankle > foot
  *       waist ball
- *         chest, narrow at the neck and wider at the shoulders
+ *         chest box, straight sides, sloped into the neck
  *         shoulder > shoulder ball and upper arm (the ball belongs to the arm)
  *         neck ball > neck > lathe head
  *

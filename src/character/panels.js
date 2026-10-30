@@ -1,6 +1,8 @@
 import { getRegistry } from './registry.js';
 
 /** Body fields plus the torso slot. Presets write the numeric sliders. */
+export const SHOULDER_WIDTH = { min: 0.26, max: 0.58, step: 0.005 };
+
 export const BODY_CONTROLS = [
   {
     id: 'presentation',
@@ -24,7 +26,7 @@ export const BODY_CONTROLS = [
   },
   { id: 'torso', kind: 'slot', slot: 'body.torso', label: 'Torso' },
   { id: 'height', kind: 'range', label: 'Height', min: 1.35, max: 2.15, step: 0.01, unit: 'm' },
-  { id: 'shoulder', kind: 'range', label: 'Shoulder width', min: 0.22, max: 0.72, step: 0.005, unit: 'm' },
+  { id: 'shoulder', kind: 'range', label: 'Shoulder width', min: SHOULDER_WIDTH.min, max: SHOULDER_WIDTH.max, step: SHOULDER_WIDTH.step, unit: 'm' },
   { id: 'belly', kind: 'range', label: 'Belly', min: 0.08, max: 0.7, step: 0.005, unit: 'm' },
   { id: 'hip', kind: 'range', label: 'Hip width', min: 0.1, max: 0.46, step: 0.005, unit: 'm' },
   { id: 'thick', kind: 'range', label: 'Limb thickness', min: 0.65, max: 1.7, step: 0.01 },
