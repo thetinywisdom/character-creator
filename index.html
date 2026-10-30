@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Base body</title>
+    <script type="module" crossorigin src="./assets/index-B4bHL1qR.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DgjSn78g.css">
+  </head>
+  <body>
+    <div id="app">
+      <aside id="panel">
+        <header>
+          <p class="eyebrow">Character creator</p>
+          <h1>Base body</h1>
+          <p id="stats" class="stats">Measuring…</p>
+        </header>
+        <div id="sections"></div>
+        <div class="doc">
+          <div class="doc-actions">
+            <button type="button" id="copy-json">Copy JSON</button>
+            <button type="button" id="paste-json">Paste JSON</button>
+          </div>
+          <textarea id="document" spellcheck="false" aria-label="Character JSON"></textarea>
+          <p id="document-error" class="error" hidden></p>
+        </div>
+      </aside>
+      <canvas id="view"></canvas>
+    </div>
+  </body>
+</html>
