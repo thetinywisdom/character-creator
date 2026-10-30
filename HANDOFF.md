@@ -4,7 +4,7 @@ Reference images: docs/handoff/refs/ (anatomy.jpg = owner's hand-drawn mannequin
 Work was stopped at 93% weekly usage. This document records where the project stands so another agent can continue.
 
 ## Project
-- Repo: https://github.com/thetinywisdom/character-creator (public, GitHub Pages deploys from `main` only)
+- Repo: https://github.com/thetinywisdom/character-creator (public). The permanent preview is GitHub Pages from the orphan `gh-pages` branch, not from `main`.
 - Goal: a reusable, modular low-poly three.js character creator for future web games. It ships as a JS package with three.js as a peer dependency, uses code-driven animation, and has no glTF export.
 - Plan: `docs/PLAN.md` (committed on the PR #3 branch and above).
 
@@ -79,7 +79,7 @@ The owner said: "In the next iteration, shoulder balls should be part of the arm
 
 ## Owner rules (important)
 - Review the plan with the owner before building. Go step by step and wait for "go" before each new step.
-- **Never take screenshots.** Always give a live preview link instead. The previous one ran on a cloudflared tunnel from the cloud agent's VM, which dies when the VM sleeps.
+- **Never take screenshots.** Always give the GitHub Pages preview instead. Do not start a cloudflared tunnel; it dies when the VM sleeps.
 - **Never reference or use iso-city** unless asked. Reuse earlier character-creator work (such as PR #1) instead.
 - Don't merge PRs unless asked.
 - Style: low-poly, simple primitives, no faces, smooth-reading joints.
@@ -88,8 +88,19 @@ The owner said: "In the next iteration, shoulder balls should be part of the arm
   - Not plain crates, not open planes, not slim-fit.
   - The vertex cap for clothing was dropped. Appearance comes first.
 
+## GitHub Pages preview
+The shareable preview is https://thetinywisdom.github.io/character-creator/ . Root is always the newest stack step. Each stack PR is also published under `/prN/` (PR #6 is https://thetinywisdom.github.io/character-creator/pr6/). Publishing does not merge anything.
+
+After every push to a stack PR branch, rebuild and update the orphan `gh-pages` branch. Do not commit the built files, or a Vite `base` change, onto the PR branch.
+
+1. From that PR commit, run `npx vite build --base ./`. The relative base makes the JS, CSS, and the bundled three.js module load under both `/character-creator/` and `/character-creator/prN/`.
+2. On `gh-pages`, replace the root with that `dist/` and copy the same files into `/prN/`. Keep a `.nojekyll` file at the root of `gh-pages`.
+3. Commit and push `gh-pages` only.
+
+Pages must use the `gh-pages` branch and the `/ (root)` folder. The cloud agent token cannot change that setting: `PUT /repos/thetinywisdom/character-creator/pages` returns 403 `Resource not accessible by integration`. Until an owner saves it, https://thetinywisdom.github.io/character-creator/ is GitHub's "Site not found" page. Set it at Settings → Pages → Build and deployment → Deploy from a branch → Branch `gh-pages`, folder `/ (root)` → Save.
+
 ## Running the preview locally
-Check out the top branch (`cursor/clothing-compositor-6ee7`), install dependencies if `package.json` lists any, and serve the repo root with a static server. For example, `npx serve .` or `python3 -m http.server`, then open the preview page; see the README on the branch for the exact entry. For a shareable link, run `cloudflared tunnel --url http://localhost:<port>`.
+Check out the top branch, install dependencies, and run `npm run dev` (http://localhost:5173). The shareable link is the GitHub Pages URL above.
 
 ## Known issues and open questions
 - The clothing fit is still being tuned. Previous attempts were rejected for open planes, shrink-wrapped tapering, boxes that were open on top and a floating hood.
