@@ -132,8 +132,8 @@ cloth('clothing.top', 'hoodie', 'Hoodie', { covers: ['chest', 'shoulderL', 'shou
 
 slot('clothing.outer', 'clothes', 'Outer');
 cloth('clothing.outer', 'none', 'None');
-cloth('clothing.outer', 'jacket', 'Jacket', { covers: ['chest', 'shoulderL', 'shoulderR', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR'] });
-cloth('clothing.outer', 'vest', 'Vest', { covers: ['chest'] });
+cloth('clothing.outer', 'jacket', 'Jacket', { covers: ['shoulderL', 'shoulderR', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR'] });
+cloth('clothing.outer', 'vest', 'Vest');
 cloth('clothing.outer', 'cape', 'Cape');
 
 slot('clothing.bottom', 'clothes', 'Bottom');

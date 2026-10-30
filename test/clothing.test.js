@@ -142,16 +142,28 @@ const SPAN = {
   mbappe: 12,
 };
 
+function sleeveCap(sleeve) {
+  return sleeve.parent.getObjectByName(sleeve.name.replace('Upper', 'Cap'));
+}
+
 function sleeveCoversBall(sleeve, ball, margin) {
   const pos = ball.geometry.attributes.position;
   const radius = ball.geometry.parameters.radius;
   const info = sleeve.userData.sleeve;
+  const cap = sleeveCap(sleeve);
+  const capR = cap ? cap.userData.capRadius : 0;
   const half = (info.yTop - info.yBottom) / 2;
   const local = new Vector3();
+  const held = new Vector3();
   for (let i = 0; i < pos.count; i += 1) {
     local.fromBufferAttribute(pos, i);
     if (local.lengthSq() > 1e-10) local.multiplyScalar(1 + margin / radius);
     ball.localToWorld(local);
+    if (cap) {
+      held.copy(local);
+      cap.worldToLocal(held);
+      if (held.length() <= capR - 1e-4) continue;
+    }
     sleeve.worldToLocal(local);
     if (Math.hypot(local.x, local.z) > info.inscribed - 1e-4) return false;
     if (Math.abs(local.y) > half - 1e-4) return false;
@@ -202,7 +214,8 @@ function sleeveMeshCovers(sleeve, ball) {
     ball.localToWorld(rayOrigin);
     rayDir.transformDirection(ball.matrixWorld);
     raycaster.set(rayOrigin, rayDir);
-    const hits = raycaster.intersectObject(sleeve, false);
+    const cap = sleeveCap(sleeve);
+    const hits = raycaster.intersectObjects(cap ? [sleeve, cap] : [sleeve], false);
     if (hits.length === 0) return false;
     const outward = rayOrigin.clone().sub(center);
     if (hits[0].point.clone().sub(center).dot(outward) <= 0) return false;
@@ -261,23 +274,33 @@ function assertSleevesSealed(character, label) {
     sleeves += fitted.length;
     for (const sleeve of fitted) {
       assert.equal(sleeve.parent, joint, `${label} ${sleeve.name}`);
-      assert.equal(sleeve.geometry.parameters.openEnded, false);
+      assert.equal(sleeve.geometry.parameters.openEnded, true);
       assert.equal(sleeve.geometry.parameters.radiusTop, sleeve.userData.sleeve.radius);
+      const cap = sleeveCap(sleeve);
+      assert.ok(cap, `${label} ${sleeve.name} has a shoulder cap`);
+      assert.ok(sleeve.userData.sleeve.yTop < cap.userData.capRadius, `${label} sleeve starts inside its cap`);
       assert.ok(sleeveCoversBall(sleeve, ball, 0.003), `${label} ${sleeve.name} contains the ball`);
       assert.ok(sleeveMeshCovers(sleeve, ball), `${label} ${sleeve.name} mesh covers the ball`);
     }
     if (fitted.length === 2) {
       const pos = fitted[0].geometry.attributes.position;
       const local = new Vector3();
+      const held = new Vector3();
       const outer = fitted[1];
+      const cap = sleeveCap(outer);
       const info = outer.userData.sleeve;
       const half = (info.yTop - info.yBottom) / 2;
       for (let i = 0; i < pos.count; i += 1) {
         local.fromBufferAttribute(pos, i);
         fitted[0].localToWorld(local);
+        if (cap) {
+          held.copy(local);
+          cap.worldToLocal(held);
+          if (held.length() < cap.userData.capRadius - 1e-4) continue;
+        }
         outer.worldToLocal(local);
         assert.ok(Math.hypot(local.x, local.z) < info.inscribed - 1e-4, `${label} outer sleeve clears the inner one`);
-        assert.ok(Math.abs(local.y) < half - 1e-4, `${label} outer sleeve caps the inner one`);
+        assert.ok(Math.abs(local.y) < half - 1e-4, `${label} outer sleeve covers the inner one`);
       }
     }
     assert.ok(ballLeavesShell(shells[0], ball), `${label} torso does not swallow the ${side} ball`);
@@ -424,6 +447,132 @@ describe('clothing compositor', () => {
     assert.equal(shown(mixed, 'shoulderLMesh'), false);
     assert.equal(shown(mixed, 'shoulderRMesh'), true);
     assert.equal(shown(mixed, 'upperArmRMesh'), true);
+  });
+
+  it('hides only skin an opaque garment fully covers, including empty slots', () => {
+    const shown = (character, name) => character.root.getObjectByName(name).visible;
+    const dress = (top, outer, bottom, shoes) => wear((doc) => {
+      doc.clothing.top = { id: top, color: '#3a5a40' };
+      doc.clothing.outer = { id: outer, color: '#111111' };
+      doc.clothing.bottom = { id: bottom, color: '#222222' };
+      doc.clothing.shoes = { id: shoes, color: '#111111', accent: '#f2f2f2' };
+    });
+    const seeFront = (character, name, t) => {
+      character.root.updateMatrixWorld(true);
+      const mesh = character.root.getObjectByName(name);
+      mesh.geometry.computeBoundingBox();
+      const box = mesh.geometry.boundingBox;
+      const local = new Vector3(0, box.min.y + (box.max.y - box.min.y) * t, box.max.z);
+      mesh.localToWorld(local);
+      raycaster.near = 0;
+      raycaster.far = 4;
+      raycaster.set(new Vector3(local.x, local.y, local.z + 1.2), new Vector3(0, 0, -1));
+      const hits = raycaster.intersectObject(character.root, true);
+      return hits.find((hit) => hit.object.visible)?.object.name;
+    };
+
+    const jacket = dress('none', 'jacket', 'none', 'barefoot');
+    assert.equal(shown(jacket, 'chestMesh'), true);
+    assert.equal(shown(jacket, 'pelvisMesh'), true);
+    assert.equal(shown(jacket, 'waistMesh'), true);
+    assert.equal(shown(jacket, 'thighLMesh'), true);
+    assert.equal(shown(jacket, 'footLMesh'), true);
+    assert.equal(shown(jacket, 'shoulderLMesh'), false);
+    assert.equal(shown(jacket, 'upperArmLMesh'), false);
+    assert.equal(shown(jacket, 'forearmLMesh'), false);
+    assert.equal(shown(jacket, 'elbowLMesh'), false);
+    assert.equal(shown(jacket, 'wristLMesh'), false);
+    assert.equal(seeFront(jacket, 'chestMesh', 0.55), 'chestMesh');
+    assert.equal(seeFront(jacket, 'pelvisMesh', 0.5), 'pelvisMesh');
+
+    const vest = dress('none', 'vest', 'none', 'barefoot');
+    assert.equal(shown(vest, 'chestMesh'), true);
+    assert.equal(shown(vest, 'pelvisMesh'), true);
+    assert.equal(shown(vest, 'shoulderLMesh'), true);
+    assert.equal(shown(vest, 'upperArmLMesh'), true);
+    assert.equal(seeFront(vest, 'chestMesh', 0.55), 'chestMesh');
+
+    const cape = dress('none', 'cape', 'none', 'barefoot');
+    assert.equal(shown(cape, 'chestMesh'), true);
+    assert.equal(shown(cape, 'pelvisMesh'), true);
+    assert.equal(shown(cape, 'shoulderLMesh'), true);
+    assert.equal(shown(cape, 'thighLMesh'), true);
+    assert.equal(seeFront(cape, 'chestMesh', 0.55), 'chestMesh');
+
+    const teeOnly = dress('tee', 'none', 'none', 'barefoot');
+    assert.equal(shown(teeOnly, 'chestMesh'), false);
+    assert.equal(shown(teeOnly, 'pelvisMesh'), true);
+    assert.equal(shown(teeOnly, 'thighLMesh'), true);
+    assert.equal(shown(teeOnly, 'shoulderLMesh'), false);
+    assert.equal(shown(teeOnly, 'upperArmLMesh'), true);
+    assert.equal(shown(teeOnly, 'footLMesh'), true);
+
+    const shirtOnly = dress('shirt', 'none', 'none', 'barefoot');
+    assert.equal(shown(shirtOnly, 'chestMesh'), false);
+    assert.equal(shown(shirtOnly, 'pelvisMesh'), true);
+    assert.equal(shown(shirtOnly, 'upperArmLMesh'), false);
+    assert.equal(shown(shirtOnly, 'forearmLMesh'), false);
+
+    const sneakers = dress('none', 'none', 'none', 'sneakers');
+    assert.equal(shown(sneakers, 'footLMesh'), false);
+    assert.equal(shown(sneakers, 'footRMesh'), false);
+    assert.equal(shown(sneakers, 'ankleLMesh'), true);
+    assert.equal(shown(sneakers, 'chestMesh'), true);
+    assert.equal(shown(sneakers, 'pelvisMesh'), true);
+    assert.equal(shown(sneakers, 'thighLMesh'), true);
+    assert.equal(shown(sneakers, 'shinLMesh'), true);
+
+    const boots = dress('none', 'none', 'none', 'boots');
+    assert.equal(shown(boots, 'footLMesh'), false);
+    assert.equal(shown(boots, 'ankleLMesh'), false);
+    assert.equal(shown(boots, 'shinLMesh'), true);
+    assert.equal(shown(boots, 'chestMesh'), true);
+    assert.equal(shown(boots, 'pelvisMesh'), true);
+
+    const layered = dress('tee', 'jacket', 'none', 'barefoot');
+    assert.equal(shown(layered, 'chestMesh'), false);
+    assert.equal(shown(layered, 'pelvisMesh'), true);
+    assert.equal(shown(layered, 'upperArmLMesh'), false);
+
+    assert.equal(getRegistry().part('clothing.outer', 'jacket').covers.includes('chest'), false);
+    assert.equal(getRegistry().part('clothing.outer', 'vest').covers.includes('chest'), false);
+    assert.equal(getRegistry().part('clothing.outer', 'cape').covers.includes('chest'), false);
+    assert.ok(getRegistry().part('clothing.top', 'hoodie').covers.includes('chest'));
+  });
+
+  it('rounds the torso shell and sleeves like the body', () => {
+    const tee = wear((doc) => {
+      doc.clothing.top = { id: 'tee', color: '#3a5a40' };
+      doc.clothing.bottom = { id: 'pants', color: '#222222' };
+    });
+    const top = tee.root.getObjectByName('clothingTop');
+    const shell = top.userData.shell;
+    assert.equal(top.material.flatShading, false);
+    assert.ok(shell.corner > 0.01, 'shell keeps a chest-like corner radius');
+    assert.equal(pointInsideShell(shell, shell.hx, shell.ySide, shell.hz, 0), false);
+    assert.equal(pointInsideShell(shell, shell.hx - 0.004, shell.ySide, 0, 0), true);
+    const sleeve = tee.root.getObjectByName('clothingTopUpperL');
+    assert.equal(sleeve.geometry.parameters.radialSegments, 8);
+    assert.equal(sleeve.material.flatShading, false);
+    const cap = tee.root.getObjectByName('clothingTopCapL');
+    assert.equal(cap.geometry.parameters.widthSegments, 8);
+    assert.equal(cap.geometry.parameters.heightSegments, 6);
+    const pos = top.geometry.attributes.position;
+    const normal = top.geometry.attributes.normal;
+    assert.ok(normal, 'shell carries smooth normals');
+    let side = false;
+    let sharp = false;
+    for (let i = 0; i < pos.count; i += 1) {
+      const x = Math.abs(pos.getX(i));
+      const z = Math.abs(pos.getZ(i));
+      if (Math.abs(x - shell.hx) < 0.02 && z < shell.corner * 0.45) side = true;
+      if (x > shell.hx - shell.corner * 0.15 && z > shell.hz - shell.corner * 0.15) sharp = true;
+    }
+    assert.equal(side, true);
+    assert.equal(sharp, false);
+    const knee = tee.root.getObjectByName('clothingBottomKneeL');
+    assert.equal(knee.geometry.parameters.widthSegments, 8);
+    assert.equal(knee.material.flatShading, false);
   });
 
   it('wears a tee over the body, with sleeves on the shoulders', () => {

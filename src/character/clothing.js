@@ -6,7 +6,9 @@ import {
   Float32BufferAttribute,
   Mesh,
   MeshStandardMaterial,
+  SphereGeometry,
 } from 'three';
+import { CYLINDER_SIDES, JOINT_HEIGHT, JOINT_PHI_START, JOINT_WIDTH } from '../body/geometry.js';
 import { MUSCULAR_SCALE } from './limbs.js';
 
 /**
@@ -21,12 +23,17 @@ import { MUSCULAR_SCALE } from './limbs.js';
  * belong to the arms: a sleeve is a straight tube a bit wider than the ball,
  * and it overlaps the torso shell.
  *
+ * The torso shell is the chest's rounded cross-section, grown by the ease,
+ * with smooth normals. Sleeves and pant legs are the limb tubes, a little
+ * wider, closed by smooth joint caps. An open front (jacket, vest, cape)
+ * does not cover the chest.
+ *
  * Robot and skeleton limbs keep their meshes and get no sleeve or pant tube.
  * Peg legs skip pant tubes and shoes. A robot leg skips the pant tube and the
  * boot cuff, and still takes a shoe. A robot torso cannot wear a top or outer.
  */
 const N = 12;
-const SLEEVE_SIDES = 8;
+const SLEEVE_SIDES = CYLINDER_SIDES;
 /** Flats of an 8-gon sit this far inside the vertex radius. */
 const SLEEVE_FLAT = Math.cos(Math.PI / SLEEVE_SIDES);
 
@@ -67,7 +74,7 @@ function garmentMaterial(ctx, color) {
       color: hex,
       roughness: 0.85,
       metalness: 0,
-      flatShading: true,
+      flatShading: false,
       side: DoubleSide,
     });
     material.userData.poolKey = key;
@@ -91,19 +98,28 @@ function addMesh(parent, geometry, material, name, garment) {
 class Loom {
   constructor() {
     this.pos = [];
+    this.nrm = [];
     this.idx = [];
     this.mat = [];
     this.material = 0;
+    this.hasN = false;
   }
 
-  v(x, y, z) {
+  v(x, y, z, nx, ny, nz) {
     const i = this.pos.length / 3;
     this.pos.push(x, y, z);
+    if (nx == null) this.nrm.push(0, 0, 0);
+    else {
+      this.hasN = true;
+      this.nrm.push(nx, ny, nz);
+    }
     return i;
   }
 
   add(points) {
-    return points.map((p) => this.v(p[0], p[1], p[2]));
+    return points.map((p) => (Array.isArray(p)
+      ? this.v(p[0], p[1], p[2])
+      : this.v(p.x, p.y, p.z, p.nx, p.ny, p.nz)));
   }
 
   tri(a, b, c) {
@@ -151,6 +167,7 @@ class Loom {
   geometry() {
     const geo = new BufferGeometry();
     geo.setAttribute('position', new Float32BufferAttribute(this.pos, 3));
+    if (this.hasN) geo.setAttribute('normal', new Float32BufferAttribute(this.nrm, 3));
     geo.setIndex(this.idx);
     if (this.mat.some((m) => m !== 0)) {
       let start = 0;
@@ -161,30 +178,99 @@ class Loom {
         }
       }
     }
-    geo.computeVertexNormals();
+    if (!this.hasN) geo.computeVertexNormals();
     return geo;
   }
 }
 
-function loop(n, fn) {
+/** Same roundover the chest uses, so a shell reads as that block grown by the ease. */
+function clothBevelRadius(minSpan, height) {
+  const h = Math.max(height, 1e-4);
+  let r = Math.min(minSpan * 0.14, h * 0.09);
+  r = Math.min(r, minSpan * 0.22, h * 0.2);
+  if (!(r > 1e-4)) r = Math.min(minSpan, h) * 0.08;
+  return r;
+}
+
+/** Point where a ray from the origin meets a rounded rectangle. */
+function roundedBoundary(cosA, sinA, hx, hz, radius) {
+  const len = Math.hypot(cosA, sinA) || 1;
+  const dx = cosA / len;
+  const dz = sinA / len;
+  const c = Math.min(Math.max(radius, 0), hx * 0.999, hz * 0.999);
+  const ix = hx - c;
+  const iz = hz - c;
+  const ax = Math.abs(dx);
+  const az = Math.abs(dz);
+  let tBox = Infinity;
+  if (ax > 1e-8) tBox = Math.min(tBox, hx / ax);
+  if (az > 1e-8) tBox = Math.min(tBox, hz / az);
+  const xBox = dx * tBox;
+  const zBox = dz * tBox;
+  const onFlat = c < 1e-5 || Math.abs(xBox) <= ix + 1e-4 || Math.abs(zBox) <= iz + 1e-4;
+  if (onFlat) {
+    const onX = ax > 1e-8 && Math.abs(hx / ax - tBox) <= 1e-3;
+    return {
+      x: xBox,
+      z: zBox,
+      nx: onX ? Math.sign(dx) || 1 : 0,
+      nz: onX ? 0 : Math.sign(dz) || 1,
+    };
+  }
+  const cx = Math.sign(dx || 1) * ix;
+  const cz = Math.sign(dz || 1) * iz;
+  const dot = dx * cx + dz * cz;
+  const disc = Math.max(dot * dot - (cx * cx + cz * cz - c * c), 0);
+  const tHit = dot + Math.sqrt(disc);
+  if (!Number.isFinite(tHit) || tHit <= 0) {
+    return { x: xBox, z: zBox, nx: Math.sign(dx) || 1, nz: 0 };
+  }
+  const x = dx * tHit;
+  const z = dz * tHit;
+  return { x, z, nx: (x - cx) / c, nz: (z - cz) / c };
+}
+
+function sectionRing(hx, hz, radius) {
   const pts = [];
-  for (let i = 0; i < n; i += 1) {
-    const a = (i / n) * Math.PI * 2;
-    pts.push(fn(Math.cos(a), Math.sin(a), i));
+  for (let i = 0; i < N; i += 1) {
+    const a = (i / N) * Math.PI * 2;
+    pts.push(roundedBoundary(Math.cos(a), Math.sin(a), hx, hz, radius));
   }
   return pts;
 }
 
-/** Rounded rectangle. Higher p is a sharper box; the corners stay beveled. */
-function roundRect(y, hx, hz, p) {
-  return loop(N, (c, s) => {
-    const d = (Math.abs(c) ** p + Math.abs(s) ** p) ** (1 / p) || 1;
-    return [(c / d) * hx, y, (s / d) * hz];
+function withY(pts, yAt, normalAt) {
+  return pts.map((p) => {
+    const y = typeof yAt === 'function' ? yAt(p) : yAt;
+    const n = normalAt(p, y);
+    return { x: p.x, y, z: p.z, nx: n[0], ny: n[1], nz: n[2] };
   });
 }
 
-function circle(y, r) {
-  return loop(N, (c, s) => [c * r, y, s * r]);
+function wallNormal(p) {
+  const len = Math.hypot(p.nx, p.nz) || 1;
+  return [p.nx / len, 0, p.nz / len];
+}
+
+function lidNormal(p) {
+  const nx = p.nx * 0.4;
+  const nz = p.nz * 0.4;
+  const len = Math.hypot(nx, 1, nz) || 1;
+  return [nx / len, 1 / len, nz / len];
+}
+
+function shoulderY(size, p, hx, hz) {
+  const ang = Math.atan2(p.z / hz, p.x / hx);
+  return size.ySide + (size.yNeck - size.ySide) * Math.abs(Math.sin(ang));
+}
+
+function radialRing(pts, radius) {
+  return pts.map((p) => {
+    const len = Math.hypot(p.x, p.z) || 1;
+    const nx = p.x / len;
+    const nz = p.z / len;
+    return { x: nx * radius, z: nz * radius, nx, nz };
+  });
 }
 
 function skipFront(limit) {
@@ -226,7 +312,10 @@ function torsoFit(spec, ease, extra) {
     neckR: spec.radii.neck * 1.12,
     ease,
     extra,
-    power: 8,
+    corner: clothBevelRadius(
+      Math.min(spec.chestTopWidth, Math.max(spec.chestTopDepth, spec.pelvisBottomDepth)),
+      spec.chestMeshHeight,
+    ),
   };
 }
 
@@ -240,22 +329,18 @@ export function pointInsideShell(shell, x, y, z, margin = 0) {
   const hz = shell.hz - margin;
   if (!(hx > 0) || !(hz > 0)) return false;
   if (y < shell.y0 + margin) return false;
-  const p = shell.power;
-  const nx = Math.abs(x) / hx;
-  const nz = Math.abs(z) / hz;
-  if (nx ** p + nz ** p > 1) return false;
+  const ax = Math.abs(x);
+  const az = Math.abs(z);
+  if (ax > hx || az > hz) return false;
+  const r = Math.min(shell.corner || 0, hx * 0.999, hz * 0.999);
+  if (r > 0 && ax > hx - r && az > hz - r) {
+    const dx = ax - (hx - r);
+    const dz = az - (hz - r);
+    if (dx * dx + dz * dz > r * r) return false;
+  }
   const ang = Math.atan2(z / hz, x / hx);
   const yLid = shell.ySide + (shell.yNeck - shell.ySide) * Math.abs(Math.sin(ang));
   return y <= yLid - margin;
-}
-
-/** Shoulder line: high at the neck, lower at the outer shoulder. Width stays put. */
-function slopedRect(yNeck, ySide, hx, hz, p) {
-  return loop(N, (c, s) => {
-    const d = (Math.abs(c) ** p + Math.abs(s) ** p) ** (1 / p) || 1;
-    const y = ySide + (yNeck - ySide) * Math.abs(s);
-    return [(c / d) * hx, y, (s / d) * hz];
-  });
 }
 
 function cutLip(loom, rings, ids, pred, depth) {
@@ -270,8 +355,10 @@ function cutLip(loom, rings, ids, pred, depth) {
     const shell = ids.map((id) => id[bi]);
     const lip = rings.map((pts) => {
       const p = pts[bi];
-      const len = Math.hypot(p[0], p[2]) || 1;
-      return loom.v(p[0] - (p[0] / len) * depth, p[1], p[2] - (p[2] / len) * depth);
+      const len = Math.hypot(p.x, p.z) || 1;
+      const ix = -p.x / len;
+      const iz = -p.z / len;
+      return loom.v(p.x + ix * depth, p.y, p.z + iz * depth, ix, 0, iz);
     });
     loom.strip(shell, lip);
   }
@@ -279,63 +366,81 @@ function cutLip(loom, rings, ids, pred, depth) {
 
 /**
  * Straight block. The hem is only slightly wider than the shoulders.
- * The lid slopes from the neck down to the outer shoulder and keeps a neck hole.
+ * The cross-section is the chest's rounded rectangle. The lid slopes from
+ * the neck down to the outer shoulder and keeps a neck hole.
  */
-function buildBlock(size, power, frontLimit) {
-  const { hx, hz, y0, yNeck, ySide, flare, neckR } = size;
+function buildBlock(size, frontLimit) {
+  const { hx, hz, y0, flare, neckR } = size;
+  const corner = size.corner || clothBevelRadius(Math.min(hx, hz) * 2, size.yNeck - y0);
   const loom = new Loom();
   const hemW = hx + flare;
   const hemD = hz + flare * 0.45;
-  const hem = roundRect(y0, hemW, hemD, power);
-  const lip = roundRect(y0 + 0.012, hemW * 0.9, hemD * 0.9, power);
-  const top = slopedRect(yNeck, ySide, hx, hz, power);
-  const neck = circle(yNeck, neckR);
-  const ids = [hem, lip, top, neck].map((pts) => loom.add(pts));
+  const hem = withY(sectionRing(hemW, hemD, corner), y0, wallNormal);
+  const lip = withY(sectionRing(hemW * 0.9, hemD * 0.9, corner * 0.9), y0 + 0.012, wallNormal);
+  const topPts = sectionRing(hx, hz, corner);
+  const yAt = (p) => shoulderY(size, p, hx, hz);
+  const topWall = withY(topPts, yAt, wallNormal);
+  const topLid = withY(topPts, yAt, lidNormal);
+  const neck = withY(radialRing(topPts, neckR), size.yNeck, () => [0, 1, 0]);
+  const ids = [hem, lip, topWall, topLid, neck].map((pts) => loom.add(pts));
   const skip = frontLimit == null ? null : skipFront(frontLimit);
   loom.wall(ids[0], ids[1]);
   loom.wall(ids[0], ids[2], skip);
-  loom.cap(ids[2], ids[3], skip);
-  if (skip) cutLip(loom, [hem, top, neck], [ids[0], ids[2], ids[3]], skip, 0.014);
+  loom.cap(ids[3], ids[4], skip);
+  if (skip) cutLip(loom, [hem, topWall, neck], [ids[0], ids[2], ids[4]], skip, 0.014);
   return loom.geometry();
 }
 
-function collarBlock(size, power) {
-  const { hx, hz, y0, yNeck, ySide, flare, neckR } = size;
+function collarBlock(size) {
+  const { hx, hz, y0, flare, neckR } = size;
+  const corner = size.corner || clothBevelRadius(Math.min(hx, hz) * 2, size.yNeck - y0);
   const loom = new Loom();
   const collarR = neckR * 1.65;
-  const hem = roundRect(y0, hx + flare, hz + flare * 0.45, power);
-  const top = slopedRect(yNeck, ySide, hx, hz, power);
-  const collar = circle(yNeck, collarR);
-  const neck = circle(yNeck + 0.016, neckR);
-  const ids = [hem, top, collar, neck].map((pts) => loom.add(pts));
+  const hem = withY(sectionRing(hx + flare, hz + flare * 0.45, corner), y0, wallNormal);
+  const topPts = sectionRing(hx, hz, corner);
+  const yAt = (p) => shoulderY(size, p, hx, hz);
+  const topWall = withY(topPts, yAt, wallNormal);
+  const topLid = withY(topPts, yAt, lidNormal);
+  const collar = withY(radialRing(topPts, collarR), size.yNeck, wallNormal);
+  const neck = withY(radialRing(topPts, neckR), size.yNeck + 0.016, wallNormal);
+  const ids = [hem, topWall, topLid, collar, neck].map((pts) => loom.add(pts));
   loom.wall(ids[0], ids[1]);
-  loom.cap(ids[1], ids[2]);
-  loom.wall(ids[2], ids[3]);
+  loom.cap(ids[2], ids[3]);
+  loom.wall(ids[3], ids[4]);
   return loom.geometry();
 }
 
-function hangCylinder(parent, radius, yTop, yBottom, material, name, garment, sleeve) {
+function hangCylinder(parent, radius, yTop, yBottom, material, name, garment, sleeve, open = false) {
   const height = Math.max(yTop - yBottom, 0.02);
-  const geo = new CylinderGeometry(radius, radius, height, SLEEVE_SIDES, 1, false);
+  const geo = new CylinderGeometry(radius, radius, height, SLEEVE_SIDES, 1, open);
   const mesh = addMesh(parent, geo, material, name, garment);
   mesh.position.y = (yTop + yBottom) / 2;
   if (sleeve) mesh.userData.sleeve = sleeve;
   return mesh;
 }
 
+/** Round cloth joint. A sphere does not grow a spike when the limb turns. */
+function hangCap(parent, radius, material, name, garment) {
+  const geo = new SphereGeometry(radius, JOINT_WIDTH, JOINT_HEIGHT, JOINT_PHI_START);
+  const mesh = addMesh(parent, geo, material, name, garment);
+  mesh.userData.capRadius = radius;
+  return mesh;
+}
+
 /**
  * Sleeve girth is the shoulder ball plus the same ease as the torso, measured
- * at the flats of the 8-gon so the ball cannot poke through a face. The tube
- * is centered on the shoulder joint, which sits inside the torso shell, so
- * the sleeve stays closed against the shell when the arm rotates.
+ * at the flats of the 8-gon. The tube is open at the shoulder and starts
+ * inside a round cap, so a swing cannot flip a closed top up into a spike.
  */
 function sleeveShape(ball, ease, extra, yBottom) {
   const inscribed = ball + ease + extra;
   const radius = inscribed / SLEEVE_FLAT;
-  const yTop = ball + Math.max(ease * 0.5, 0.008) + extra;
+  const capRadius = radius + Math.min(ease * 0.2, 0.005) + extra * 0.15;
+  const yTop = Math.min(capRadius * 0.22, ball * 0.35);
   return {
     radius,
     inscribed,
+    capRadius,
     yTop,
     yBottom,
     ball,
@@ -352,16 +457,17 @@ function addSleeves(ctx, kind, fit, material, prefix, garment) {
     const scale = doc.arms[key].type === 'muscular' ? MUSCULAR_SCALE : 1;
     const ball = spec.radii.shoulder * scale;
     let yBottom = kind === 'half' ? -spec.upperArmLength * 0.42 : -spec.upperArmLength;
-    if (kind === 'half') {
-      const yTop = ball + Math.max(ease * 0.5, 0.008) + extra;
-      const limit = spec.upperArmLength * 0.66;
-      if (yTop - yBottom > limit) yBottom = yTop - limit;
-      // A short sleeve still has to swallow the whole ball.
-      yBottom = Math.min(yBottom, -(ball + ease * 0.15));
-    }
     const sleeve = sleeveShape(ball, ease, extra, yBottom);
+    if (kind === 'half') {
+      const limit = spec.upperArmLength * 0.66;
+      if (sleeve.yTop - yBottom > limit) yBottom = sleeve.yTop - limit;
+      yBottom = Math.min(yBottom, -(ball + ease * 0.15));
+      sleeve.yBottom = yBottom;
+    }
+    const shoulder = ctx.joints[`shoulder${side}`];
+    hangCap(shoulder, sleeve.capRadius, material, `${prefix}Cap${side}`, garment);
     hangCylinder(
-      ctx.joints[`shoulder${side}`],
+      shoulder,
       sleeve.radius,
       sleeve.yTop,
       sleeve.yBottom,
@@ -369,16 +475,22 @@ function addSleeves(ctx, kind, fit, material, prefix, garment) {
       `${prefix}Upper${side}`,
       garment,
       sleeve,
+      true,
     );
     if (kind === 'full') {
+      const elbow = ctx.joints[`elbow${side}`];
+      const elbowR = sleeve.radius + Math.min(ease * 0.15, 0.004);
+      hangCap(elbow, elbowR, material, `${prefix}Elbow${side}`, garment);
       hangCylinder(
-        ctx.joints[`elbow${side}`],
+        elbow,
         sleeve.radius,
-        ease * 0.3 + extra,
+        Math.min(elbowR * 0.22, 0.012 + extra),
         -spec.forearmLength,
         material,
         `${prefix}Forearm${side}`,
         garment,
+        null,
+        true,
       );
     }
   }
@@ -465,7 +577,7 @@ function skirtSize(spec, pad, ease) {
 function buildSkirt(spec, pad, ease) {
   const hem = skirtSize(spec, pad, ease);
   const height = Math.max(hem.yTop - hem.yBottom, 0.04);
-  const geo = new CylinderGeometry(hem.rTop, hem.rHem, height, 8, 1, false);
+  const geo = new CylinderGeometry(hem.rTop, hem.rHem, height, CYLINDER_SIDES, 1, false);
   geo.translate(0, (hem.yTop + hem.yBottom) / 2, 0);
   geo.userData.hemRadius = hem.rHem;
   geo.userData.waistRadius = hem.rTop;
@@ -488,9 +600,8 @@ function addWaistBlock(ctx, ease, material) {
     ySide: y1,
     flare: ease * 0.15,
     neckR: spec.radii.waist * 0.45,
-    ease,
-    extra: 0,
-  }, 8, null);
+    corner: clothBevelRadius(Math.min(hx, hz) * 2, y1 - y0),
+  }, null);
   return addMesh(ctx.pelvis, geo, material, 'clothingBottom', 'bottom');
 }
 
@@ -498,27 +609,33 @@ function addLegTubes(ctx, part, ease, material) {
   const spec = ctx.spec;
   const doc = ctx.document;
   const legR = spec.radii.hip + ease;
+  const kneeR = legR + Math.min(ease * 0.2, 0.005);
   for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
     if (!clothLeg(doc.legs[key].type)) continue;
     const thighLen = part === 'shorts' ? spec.thighLength * 0.5 : spec.thighLength;
     hangCylinder(
       ctx.joints[`hip${side}`],
       legR,
-      -0.012,
-      -thighLen,
+      0.008,
+      part === 'shorts' ? -thighLen : -spec.thighLength + kneeR * 0.2,
       material,
       `clothingBottomThigh${side}`,
       'bottom',
+      null,
+      true,
     );
     if (part === 'pants') {
+      hangCap(ctx.joints[`knee${side}`], kneeR, material, `clothingBottomKnee${side}`, 'bottom');
       hangCylinder(
         ctx.joints[`knee${side}`],
         legR,
-        ease * 0.25,
+        kneeR * 0.2,
         -spec.shinLength,
         material,
         `clothingBottomShin${side}`,
         'bottom',
+        null,
+        true,
       );
     }
   }
@@ -564,7 +681,7 @@ function addShoe(ctx, side, kind, ease, cuff, materials) {
   if (kind === 'boots' && cuff) {
     const cuffLen = Math.max(spec.shinLength * 0.38, spec.radii.ankle * 2.6);
     const tubeR = spec.radii.ankle + ease * 0.75;
-    const tube = new CylinderGeometry(tubeR, tubeR, cuffLen, 8, 1, false);
+    const tube = new CylinderGeometry(tubeR, tubeR, cuffLen, CYLINDER_SIDES, 1, false);
     tube.translate(0, cuffLen / 2, 0);
     parts.push({ geometry: tube, materialIndex: 1 });
   }
@@ -590,10 +707,8 @@ export function buildClothing(ctx) {
   if (topId !== 'none') {
     const material = garmentMaterial(ctx, doc.clothing.top.color);
     const extra = topId === 'hoodie' ? room : 0;
-    const power = topId === 'tank' ? 4 : 8;
     const size = torsoFit(spec, ease, extra);
-    size.power = power;
-    const geo = topId === 'shirt' ? collarBlock(size, power) : buildBlock(size, power, null);
+    const geo = topId === 'shirt' ? collarBlock(size) : buildBlock(size, null);
     const mesh = addMesh(ctx.joints.waist, geo, material, 'clothingTop', 'top');
     mesh.userData.shell = size;
     const sleeves = topId === 'tee' ? 'half' : (topId === 'shirt' || topId === 'hoodie' ? 'full' : null);
@@ -610,7 +725,7 @@ export function buildClothing(ctx) {
     size.openFront = true;
     const mesh = addMesh(
       ctx.joints.waist,
-      buildBlock(size, 8, outerId === 'vest' ? 0.45 : 0.72),
+      buildBlock(size, outerId === 'vest' ? 0.45 : 0.72),
       material,
       'clothingOuter',
       'outer',
@@ -649,37 +764,38 @@ export function buildClothing(ctx) {
 }
 
 /**
- * Covered skin stays in the rig but is not drawn. The shells are a close
- * regular fit, and the chest box and limb tubes would otherwise cut the cloth.
+ * Meshes a garment fully covers. An open front leaves the chest out: a jacket,
+ * vest, or cape does not replace the torso. A short sleeve covers the shoulder
+ * ball and leaves the rest of the arm. None and barefoot cover nothing.
  */
+const FULL_COVER = {
+  tank: ['chest'],
+  tee: ['chest', 'shoulderL', 'shoulderR'],
+  shirt: ['chest', 'shoulderL', 'shoulderR', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR', 'elbowL', 'elbowR', 'wristL', 'wristR'],
+  hoodie: ['chest', 'shoulderL', 'shoulderR', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR', 'elbowL', 'elbowR', 'wristL', 'wristR'],
+  jacket: ['shoulderL', 'shoulderR', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR', 'elbowL', 'elbowR', 'wristL', 'wristR'],
+  pants: ['pelvis', 'hipL', 'hipR', 'thighL', 'thighR', 'kneeL', 'kneeR', 'shinL', 'shinR'],
+  shorts: ['pelvis', 'hipL', 'hipR'],
+  skirt: ['pelvis', 'hipL', 'hipR', 'thighL', 'thighR'],
+  sneakers: ['footL', 'footR'],
+  boots: ['footL', 'footR', 'ankleL', 'ankleR'],
+  flats: ['footL', 'footR'],
+};
+
+const ARM_ROLE = /^(shoulder|upperArm|forearm|elbow|wrist)/;
+const LEG_ROLE = /^(hip|thigh|knee|shin|foot|ankle)/;
+
 function concealCovered(ctx, topId, outerId, bottomId, shoeId) {
   const doc = ctx.document;
-  const conceal = (name) => {
-    const mesh = ctx.root.getObjectByName(name);
-    if (mesh) mesh.visible = false;
-  };
-  if (topId !== 'none' || outerId === 'vest' || outerId === 'jacket') conceal('chestMesh');
-  const longSleeve = topId === 'shirt' || topId === 'hoodie' || outerId === 'jacket';
-  const anySleeve = longSleeve || topId === 'tee';
-  for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
-    if (!anySleeve || !clothArm(doc.arms[key].type)) continue;
-    conceal(`shoulder${side}Mesh`);
-    if (!longSleeve) continue;
-    conceal(`upperArm${side}Mesh`);
-    conceal(`forearm${side}Mesh`);
-    conceal(`elbow${side}Mesh`);
-    conceal(`wrist${side}Mesh`);
+  const roles = new Set();
+  for (const id of [topId, outerId, bottomId, shoeId]) {
+    for (const role of FULL_COVER[id] || []) roles.add(role);
   }
-  if (bottomId === 'pants' || bottomId === 'shorts' || bottomId === 'skirt') conceal('pelvisMesh');
-  for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
-    if (!clothLeg(doc.legs[key].type)) continue;
-    if (bottomId === 'pants' || bottomId === 'shorts' || bottomId === 'skirt') conceal(`hip${side}Mesh`);
-    if (bottomId === 'pants' || bottomId === 'skirt') conceal(`thigh${side}Mesh`);
-    if (bottomId === 'pants') {
-      conceal(`knee${side}Mesh`);
-      conceal(`shin${side}Mesh`);
-    }
-    if (shoeId !== 'barefoot') conceal(`foot${side}Mesh`);
-    if (shoeId === 'boots') conceal(`ankle${side}Mesh`);
+  for (const role of roles) {
+    const side = role.endsWith('L') ? 'left' : role.endsWith('R') ? 'right' : null;
+    if (side && ARM_ROLE.test(role) && !clothArm(doc.arms[side].type)) continue;
+    if (side && LEG_ROLE.test(role) && !clothLeg(doc.legs[side].type)) continue;
+    const mesh = ctx.root.getObjectByName(`${role}Mesh`);
+    if (mesh) mesh.visible = false;
   }
 }
