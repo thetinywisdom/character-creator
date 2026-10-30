@@ -86,9 +86,10 @@ function hangRect(parent, name, radiusTop, radiusBottom, length, material) {
   return mesh;
 }
 
-function addBall(parent, name, radius, material) {
+function addBall(parent, name, radius, material, segment) {
   const mesh = createJointMesh(radius, material);
   mesh.name = name;
+  if (segment) mesh.userData.segment = segment;
   parent.add(mesh);
   return mesh;
 }
@@ -193,12 +194,11 @@ function replaceArm(ctx, side, sign, arm) {
   const smooth = materialFor(ctx, arm.color, false);
   const robot = arm.type === 'robot';
   const sides = arm.type === 'skeleton' ? 4 : undefined;
-  addBall(shoulder, `shoulder${side}Mesh`, radii.shoulder, smooth);
-  if (robot) {
-    hangRect(shoulder, `upperArm${side}Mesh`, radii.shoulder, radii.elbow, spec.upperArmLength, flat);
-  } else {
-    hangTaper(shoulder, `upperArm${side}Mesh`, radii.shoulder, radii.elbow, spec.upperArmLength, flat, sides);
-  }
+  addBall(shoulder, `shoulder${side}Mesh`, radii.shoulder, smooth, `upperArm${side}`);
+  const upper = robot
+    ? hangRect(shoulder, `upperArm${side}Mesh`, radii.shoulder, radii.elbow, spec.upperArmLength, flat)
+    : hangTaper(shoulder, `upperArm${side}Mesh`, radii.shoulder, radii.elbow, spec.upperArmLength, flat, sides);
+  upper.userData.segment = `upperArm${side}`;
   addBall(elbow, `elbow${side}Mesh`, radii.elbow, smooth);
   if (robot) {
     hangRect(elbow, `forearm${side}Mesh`, radii.elbow, radii.wrist, spec.forearmLength, flat);

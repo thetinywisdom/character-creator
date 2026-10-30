@@ -13,16 +13,20 @@ import { MUSCULAR_SCALE } from './limbs.js';
  * Clothes are straight blocks hung off the body, in a regular everyday fit.
  * They do not follow the waist, chest, or limb taper. Body meshes stay.
  *
- * A top takes its width from the shoulder span and its depth from the chest,
- * plus about 2 cm of ease. The shoulder line drops a little from the neck to
- * the shoulder ball. The block then hangs straight to just below the hips.
- * Sleeves are straight tubes a bit wider than the arm, overlapping the ball.
+ * A top takes its width from the torso box at the shoulder line, not from the
+ * shoulder balls, plus about 2 cm of ease. The shoulder line drops a little
+ * from the neck out to the side of the chest. The block then hangs straight
+ * to just below the hips. The shoulder balls belong to the arms: a sleeve is
+ * a straight tube a bit wider than the ball, and it overlaps the torso shell.
  *
  * Robot and skeleton limbs keep their meshes and get no sleeve or pant tube.
  * Peg legs skip pant tubes and shoes. A robot leg skips the pant tube and the
  * boot cuff, and still takes a shoe. A robot torso cannot wear a top or outer.
  */
 const N = 12;
+const SLEEVE_SIDES = 8;
+/** Flats of an 8-gon sit this far inside the vertex radius. */
+const SLEEVE_FLAT = Math.cos(Math.PI / SLEEVE_SIDES);
 
 export function clothPad(height) {
   return 0.03 * ((Number(height) || 1.8) / 1.8);
@@ -189,27 +193,17 @@ function skipFront(limit) {
   };
 }
 
-function shoulderBall(spec, doc) {
-  let r = spec.radii.shoulder;
-  for (const key of ['left', 'right']) {
-    if (doc.arms[key].type === 'muscular') r = Math.max(r, spec.radii.shoulder * MUSCULAR_SCALE);
-  }
-  return r;
-}
-
 /**
- * Straight torso block. Width is the shoulder span plus the ball and the ease.
- * Depth is the chest. The hem may widen a centimetre. The shoulder drops from
- * the neck toward the ball, by less than 2 cm so the side still reads straight.
+ * Straight torso block. Width is the chest at the shoulder line, plus ease.
+ * The shoulder balls are not included; sleeves cover those. Depth is the
+ * chest. The hem may widen a centimetre. The shoulder drops from the neck
+ * toward the side of the chest, by less than 2 cm, so the side still reads
+ * straight. `extra` lifts a vest or jacket a hair off the layer under it.
  */
-function torsoFit(spec, ball, ease, extra) {
-  const hx = spec.shoulderWidth / 2 + ball + ease + extra;
+function torsoFit(spec, ease, extra) {
+  const hx = spec.chestTopWidth / 2 + ease + extra;
   const hz = Math.max(spec.chestTopDepth, spec.pelvisBottomDepth) / 2 + ease + extra;
-  const shoulderY = spec.chestHeight * spec.shoulderT;
-  const ySide = Math.max(
-    spec.chestHeight + ease * 0.25,
-    shoulderY + ball * 0.95 + ease * 0.2,
-  );
+  const ySide = spec.chestHeight + ease * 0.35 + extra * 0.35;
   const yNeck = ySide + Math.min(ease * 0.7, 0.014);
   const y0 = -spec.pelvisHeight - ease * 0.45;
   const flare = Math.min(ease * 0.45, 0.01);
@@ -223,10 +217,30 @@ function torsoFit(spec, ball, ease, extra) {
     neckR: spec.radii.neck * 1.12,
     ease,
     extra,
+    power: 8,
   };
 }
 
-/** Shoulder line: high at the neck, a little lower over the shoulder ball. */
+/**
+ * True when a point in the shell's local space sits inside the torso block.
+ * The test uses the shoulder-line cross-section, which is the narrowest part
+ * of the hanging block. `margin` shrinks that cross-section.
+ */
+export function pointInsideShell(shell, x, y, z, margin = 0) {
+  const hx = shell.hx - margin;
+  const hz = shell.hz - margin;
+  if (!(hx > 0) || !(hz > 0)) return false;
+  if (y < shell.y0 + margin) return false;
+  const p = shell.power;
+  const nx = Math.abs(x) / hx;
+  const nz = Math.abs(z) / hz;
+  if (nx ** p + nz ** p > 1) return false;
+  const along = Math.abs(Math.cos(Math.atan2(z / hz, x / hx))) ** 1.4;
+  const yLid = shell.yNeck + (shell.ySide - shell.yNeck) * along;
+  return y <= yLid - margin;
+}
+
+/** Shoulder line: high at the neck, a little lower at the side of the chest. */
 function slopedRect(yNeck, ySide, hx, hz, p) {
   return loop(N, (c, s) => {
     const d = (Math.abs(c) ** p + Math.abs(s) ** p) ** (1 / p) || 1;
@@ -256,8 +270,8 @@ function cutLip(loom, rings, ids, pred, depth) {
 }
 
 /**
- * Straight block. The hem is only slightly wider than the shoulders.
- * The lid slopes from the neck out to the shoulder ball and keeps a neck hole.
+ * Straight block. The hem is only slightly wider than the chest.
+ * The lid slopes from the neck out to the side of the chest and keeps a neck hole.
  */
 function buildBlock(size, power, frontLimit) {
   const { hx, hz, y0, yNeck, ySide, flare, neckR } = size;
@@ -292,52 +306,67 @@ function collarBlock(size, power) {
   return loom.geometry();
 }
 
-function hangCylinder(parent, radius, yTop, yBottom, material, name, garment) {
+function hangCylinder(parent, radius, yTop, yBottom, material, name, garment, sleeve) {
   const height = Math.max(yTop - yBottom, 0.02);
-  const geo = new CylinderGeometry(radius, radius, height, 8, 1, false);
+  const geo = new CylinderGeometry(radius, radius, height, SLEEVE_SIDES, 1, false);
   const mesh = addMesh(parent, geo, material, name, garment);
   mesh.position.y = (yTop + yBottom) / 2;
+  if (sleeve) mesh.userData.sleeve = sleeve;
   return mesh;
+}
+
+/**
+ * Sleeve girth is the shoulder ball plus the same ease as the torso, measured
+ * at the flats of the 8-gon so the ball cannot poke through a face. The tube
+ * is centered on the shoulder joint, which sits inside the torso shell, so
+ * the sleeve stays closed against the shell when the arm rotates.
+ */
+function sleeveShape(ball, ease, extra, yBottom) {
+  const inscribed = ball + ease + extra;
+  const radius = inscribed / SLEEVE_FLAT;
+  const yTop = ball + Math.max(ease * 0.5, 0.008) + extra;
+  return {
+    radius,
+    inscribed,
+    yTop,
+    yBottom,
+    ball,
+  };
 }
 
 function addSleeves(ctx, kind, fit, material, prefix, garment) {
   const spec = ctx.spec;
   const doc = ctx.document;
   const ease = fit.ease;
-  const shoulderY = spec.chestHeight * spec.shoulderT;
-  const radius = (fit.hx - spec.shoulderWidth / 2) + Math.min(ease * 0.35, 0.008);
+  const extra = fit.extra;
   for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
     if (!clothArm(doc.arms[key].type)) continue;
     const scale = doc.arms[key].type === 'muscular' ? MUSCULAR_SCALE : 1;
-    const shoulder = spec.radii.shoulder * scale;
-    const yTop = Math.max(shoulder + ease * 0.12, fit.ySide - shoulderY + ease * 0.12);
+    const ball = spec.radii.shoulder * scale;
+    let yBottom = kind === 'half' ? -spec.upperArmLength * 0.42 : -spec.upperArmLength;
     if (kind === 'half') {
-      let yBottom = -spec.upperArmLength * 0.42;
+      const yTop = ball + Math.max(ease * 0.5, 0.008) + extra;
       const limit = spec.upperArmLength * 0.66;
       if (yTop - yBottom > limit) yBottom = yTop - limit;
-      hangCylinder(
-        ctx.joints[`shoulder${side}`],
-        radius,
-        yTop,
-        yBottom,
-        material,
-        `${prefix}Upper${side}`,
-        garment,
-      );
-    } else {
-      hangCylinder(
-        ctx.joints[`shoulder${side}`],
-        radius,
-        yTop,
-        -spec.upperArmLength,
-        material,
-        `${prefix}Upper${side}`,
-        garment,
-      );
+      // A short sleeve still has to swallow the whole ball.
+      yBottom = Math.min(yBottom, -(ball + ease * 0.15));
+    }
+    const sleeve = sleeveShape(ball, ease, extra, yBottom);
+    hangCylinder(
+      ctx.joints[`shoulder${side}`],
+      sleeve.radius,
+      sleeve.yTop,
+      sleeve.yBottom,
+      material,
+      `${prefix}Upper${side}`,
+      garment,
+      sleeve,
+    );
+    if (kind === 'full') {
       hangCylinder(
         ctx.joints[`elbow${side}`],
-        radius,
-        ease * 0.3,
+        sleeve.radius,
+        ease * 0.3 + extra,
         -spec.forearmLength,
         material,
         `${prefix}Forearm${side}`,
@@ -543,7 +572,6 @@ export function buildClothing(ctx) {
   const spec = ctx.spec;
   const pad = clothPad(spec.height);
   const ease = fitEase(spec.height);
-  const ball = shoulderBall(spec, doc);
   const room = 0.01 * (spec.height / 1.8);
   const robotTorso = doc.body.torso === 'robot';
   const topId = robotTorso ? 'none' : doc.clothing.top.id;
@@ -553,9 +581,11 @@ export function buildClothing(ctx) {
     const material = garmentMaterial(ctx, doc.clothing.top.color);
     const extra = topId === 'hoodie' ? room : 0;
     const power = topId === 'tank' ? 4 : 8;
-    const size = torsoFit(spec, ball, ease, extra);
+    const size = torsoFit(spec, ease, extra);
+    size.power = power;
     const geo = topId === 'shirt' ? collarBlock(size, power) : buildBlock(size, power, null);
-    addMesh(ctx.joints.waist, geo, material, 'clothingTop', 'top');
+    const mesh = addMesh(ctx.joints.waist, geo, material, 'clothingTop', 'top');
+    mesh.userData.shell = size;
     const sleeves = topId === 'tee' ? 'half' : (topId === 'shirt' || topId === 'hoodie' ? 'full' : null);
     if (sleeves) addSleeves(ctx, sleeves, size, material, 'clothingTop', 'top');
     if (topId === 'hoodie' && doc.head.headwear.id === 'none') {
@@ -566,8 +596,16 @@ export function buildClothing(ctx) {
   if (outerId === 'vest' || outerId === 'jacket') {
     const material = garmentMaterial(ctx, doc.clothing.outer.color);
     const extra = outerId === 'vest' ? room * 0.5 : room;
-    const size = torsoFit(spec, ball, ease, extra);
-    addMesh(ctx.joints.waist, buildBlock(size, 8, outerId === 'vest' ? 0.45 : 0.72), material, 'clothingOuter', 'outer');
+    const size = torsoFit(spec, ease, extra);
+    size.openFront = true;
+    const mesh = addMesh(
+      ctx.joints.waist,
+      buildBlock(size, 8, outerId === 'vest' ? 0.45 : 0.72),
+      material,
+      'clothingOuter',
+      'outer',
+    );
+    mesh.userData.shell = size;
     if (outerId === 'jacket') addSleeves(ctx, 'full', size, material, 'clothingOuter', 'outer');
   }
   if (outerId === 'cape') {

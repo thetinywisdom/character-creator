@@ -1,13 +1,15 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { DoubleSide, Vector3 } from 'three';
+import { DoubleSide, Raycaster, Vector3 } from 'three';
 import {
   ANIMATIONS,
   createBody,
   createCharacter,
   defaultDocument,
+  getRegistry,
 } from '../src/body/index.js';
-import { clothPad } from '../src/character/clothing.js';
+import { clothPad, pointInsideShell } from '../src/character/clothing.js';
+import { applyPreset } from '../src/character/presets.js';
 
 const BODY = [
   'chestMesh', 'pelvisMesh', 'waistMesh', 'headMesh',
@@ -85,35 +87,224 @@ function coverFromAbove(mesh, x, z) {
   return best;
 }
 
-function assertShoulderRoof(character, muscularBall = 1) {
+function assertTorsoShell(character, meshName = 'clothingTop') {
   const spec = character.getResolved();
-  const top = character.root.getObjectByName('clothingTop');
-  const ball = spec.radii.shoulder * muscularBall;
-  const shoulderY = spec.chestHeight * spec.shoulderT;
+  const mesh = character.root.getObjectByName(meshName);
+  const shell = mesh.userData.shell;
+  const ease = shell.ease;
+  const sx = spec.shoulderWidth / 2;
+  const ball = spec.radii.shoulder;
+  assert.ok(Math.abs(shell.hx - (spec.chestTopWidth / 2 + ease + shell.extra)) < 1e-6, `${meshName} uses the chest width`);
+  assert.ok(shell.hx < sx + ball * 0.5, `${meshName} stops short of the outer shoulder ball`);
+  assert.equal(coverFromAbove(mesh, 0, 0), null, 'neck hole stays open');
   const samples = [
-    [spec.shoulderWidth / 2, 0, true],
-    [-spec.shoulderWidth / 2, 0, true],
-    [spec.shoulderWidth / 2 + ball * 0.55, 0, true],
-    [-(spec.shoulderWidth / 2 + ball * 0.55), 0, true],
-    [spec.shoulderWidth / 2, ball * 0.35, true],
-    [-spec.shoulderWidth / 2, -ball * 0.35, true],
-    [spec.chestTopWidth * 0.28, spec.chestTopDepth * 0.22, false],
-    [-spec.chestTopWidth * 0.28, -spec.chestTopDepth * 0.22, false],
-    [0, spec.chestTopDepth * 0.5, false],
-    [0, -spec.chestTopDepth * 0.5, false],
-    [0, spec.radii.neck * 2.3, false],
-    [spec.radii.neck * 2.1, spec.radii.neck * 1.2, false],
+    [spec.chestTopWidth * 0.35, 0],
+    [-spec.chestTopWidth * 0.35, 0],
+    [0, -spec.chestTopDepth * 0.3],
+    [shell.hx * 0.82, 0],
+    [-shell.hx * 0.82, 0],
   ];
-  assert.equal(coverFromAbove(top, 0, 0), null, 'neck hole stays open');
-  for (const [x, z, overBall] of samples) {
-    const hit = coverFromAbove(top, x, z);
-    assert.ok(hit, `roof covers ${x.toFixed(3)}, ${z.toFixed(3)}`);
-    assert.ok(hit.ny > 0, `roof faces up at ${x.toFixed(3)}, ${z.toFixed(3)}`);
-    assert.ok(hit.y > spec.chestHeight, `roof clears the chest at ${x.toFixed(3)}, ${z.toFixed(3)}`);
-    if (overBall) {
-      assert.ok(hit.y > shoulderY + ball * 0.9, `yoke clears the shoulder ball (${hit.y.toFixed(3)})`);
+  if (!shell.openFront) samples.push([0, spec.chestTopDepth * 0.3]);
+  for (const [x, z] of samples) {
+    const hit = coverFromAbove(mesh, x, z);
+    assert.ok(hit, `${meshName} roof covers ${x.toFixed(3)}, ${z.toFixed(3)}`);
+    assert.ok(hit.ny > 0, `${meshName} roof faces up at ${x.toFixed(3)}, ${z.toFixed(3)}`);
+    assert.ok(hit.y > spec.chestHeight * 0.9, `${meshName} roof clears the chest`);
+  }
+  assert.equal(coverFromAbove(mesh, sx + ball * 0.85, 0), null, 'outer shoulder ball is not in the torso');
+  assert.equal(coverFromAbove(mesh, -(sx + ball * 0.85), 0), null, 'outer shoulder ball is not in the torso');
+}
+
+const SPAN = {
+  idle: 1.6,
+  walk: 2.2,
+  run: 1.6,
+  jump: 1.6,
+  crouch: 1.6,
+  slap: 0.7,
+  hit: 0.8,
+  'hit-r': 0.8,
+  knockdown: 2.5,
+  knockback: 2.5,
+  pose: 0.08,
+  robot: 6.6,
+  chicken: 6.6,
+  disco: 6.6,
+  sprinkler: 6.6,
+  flail: 6.6,
+  hula: 7.4,
+  flex: 1.7,
+  mbappe: 12,
+};
+
+function sleeveCoversBall(sleeve, ball, margin) {
+  const pos = ball.geometry.attributes.position;
+  const radius = ball.geometry.parameters.radius;
+  const info = sleeve.userData.sleeve;
+  const half = (info.yTop - info.yBottom) / 2;
+  const local = new Vector3();
+  for (let i = 0; i < pos.count; i += 1) {
+    local.fromBufferAttribute(pos, i);
+    if (local.lengthSq() > 1e-10) local.multiplyScalar(1 + margin / radius);
+    ball.localToWorld(local);
+    sleeve.worldToLocal(local);
+    if (Math.hypot(local.x, local.z) > info.inscribed - 1e-4) return false;
+    if (Math.abs(local.y) > half - 1e-4) return false;
+  }
+  return true;
+}
+
+function ballLeavesShell(shellMesh, ball) {
+  const pos = ball.geometry.attributes.position;
+  const local = new Vector3();
+  for (let i = 0; i < pos.count; i += 1) {
+    local.fromBufferAttribute(pos, i);
+    ball.localToWorld(local);
+    shellMesh.worldToLocal(local);
+    if (!pointInsideShell(shellMesh.userData.shell, local.x, local.y, local.z, 0)) return true;
+  }
+  return false;
+}
+
+function originInsideShell(shellMesh, joint, margin) {
+  const local = joint.getWorldPosition(new Vector3());
+  shellMesh.worldToLocal(local);
+  return pointInsideShell(shellMesh.userData.shell, local.x, local.y, local.z, margin);
+}
+
+const raycaster = new Raycaster();
+const rayOrigin = new Vector3();
+const rayDir = new Vector3();
+
+function sleeveMeshCovers(sleeve, ball) {
+  const pos = ball.geometry.attributes.position;
+  const info = sleeve.userData.sleeve;
+  const radius = ball.geometry.parameters.radius;
+  const center = ball.getWorldPosition(new Vector3());
+  raycaster.near = 0;
+  raycaster.far = Math.max(info.yTop - info.yBottom, info.radius) + 0.02;
+  const step = Math.max(1, Math.floor(pos.count / 10));
+  const shift = new Vector3();
+  for (let i = 0; i < pos.count; i += step) {
+    rayOrigin.fromBufferAttribute(pos, i);
+    if (rayOrigin.lengthSq() < 1e-10) continue;
+    rayDir.copy(rayOrigin).normalize();
+    rayOrigin.multiplyScalar(1 + 0.002 / radius);
+    // A ray along a shared 8-gon edge falls between the two faces.
+    shift.set(-rayDir.z, 0, rayDir.x);
+    if (shift.lengthSq() < 1e-8) shift.set(1, 0, 0);
+    rayOrigin.add(shift.normalize().multiplyScalar(0.002));
+    ball.localToWorld(rayOrigin);
+    rayDir.transformDirection(ball.matrixWorld);
+    raycaster.set(rayOrigin, rayDir);
+    const hits = raycaster.intersectObject(sleeve, false);
+    if (hits.length === 0) return false;
+    const outward = rayOrigin.clone().sub(center);
+    if (hits[0].point.clone().sub(center).dot(outward) <= 0) return false;
+  }
+  return true;
+}
+
+function shellsOf(character) {
+  return ['clothingTop', 'clothingOuter']
+    .map((name) => character.root.getObjectByName(name))
+    .filter((mesh) => mesh?.userData.shell);
+}
+
+function sleevesOn(character, side) {
+  return ['clothingTop', 'clothingOuter']
+    .map((prefix) => character.root.getObjectByName(`${prefix}Upper${side}`))
+    .filter(Boolean);
+}
+
+/**
+ * Shoulder balls stay inside their sleeves, and each sleeve stays shut
+ * against the torso shell. The shoulder joint does not translate, so a
+ * shell that contains the joint and a sleeve that contains the ball cannot
+ * open a skin gap when the arm rotates. Sampling still runs every clip.
+ */
+function assertSleevesSealed(character, label) {
+  character.root.updateMatrixWorld(true);
+  const shells = shellsOf(character);
+  assert.ok(shells.length > 0, `${label} has a torso shell`);
+  let sleeves = 0;
+  let raised = 0;
+  for (const side of ['L', 'R']) {
+    const ball = character.root.getObjectByName(`shoulder${side}Mesh`);
+    const joint = character.joints[`shoulder${side}`];
+    assert.equal(ball.userData.segment, `upperArm${side}`);
+    assert.equal(ball.parent, joint);
+    const fitted = sleevesOn(character, side);
+    if (fitted.length === 0) continue;
+    sleeves += fitted.length;
+    for (const sleeve of fitted) {
+      assert.equal(sleeve.parent, joint, `${label} ${sleeve.name}`);
+      assert.equal(sleeve.geometry.parameters.openEnded, false);
+      assert.equal(sleeve.geometry.parameters.radiusTop, sleeve.userData.sleeve.radius);
+      assert.ok(sleeveCoversBall(sleeve, ball, 0.003), `${label} ${sleeve.name} contains the ball`);
+      assert.ok(sleeveMeshCovers(sleeve, ball), `${label} ${sleeve.name} mesh covers the ball`);
+    }
+    if (fitted.length === 2) {
+      const pos = fitted[0].geometry.attributes.position;
+      const local = new Vector3();
+      const outer = fitted[1];
+      const info = outer.userData.sleeve;
+      const half = (info.yTop - info.yBottom) / 2;
+      for (let i = 0; i < pos.count; i += 1) {
+        local.fromBufferAttribute(pos, i);
+        fitted[0].localToWorld(local);
+        outer.worldToLocal(local);
+        assert.ok(Math.hypot(local.x, local.z) < info.inscribed - 1e-4, `${label} outer sleeve clears the inner one`);
+        assert.ok(Math.abs(local.y) < half - 1e-4, `${label} outer sleeve caps the inner one`);
+      }
+    }
+    assert.ok(ballLeavesShell(shells[0], ball), `${label} torso does not swallow the ${side} ball`);
+  }
+  assert.ok(sleeves > 0, `${label} has a sleeve`);
+  for (const shell of shells) {
+    for (const side of ['L', 'R']) {
+      if (sleevesOn(character, side).length === 0) continue;
+      assert.ok(originInsideShell(shell, character.joints[`shoulder${side}`], 0.003), `${label} ${shell.name} closes on ${side}`);
     }
   }
+
+  for (const item of ANIMATIONS) {
+    const seconds = SPAN[item.id] || 1.5;
+    const frames = Math.max(2, Math.round(seconds * 10));
+    const dt = seconds / frames;
+    const styles = item.kind === 'move' ? ['normal', 'stomp', 'swagger'] : [null];
+    for (const walkStyle of styles) {
+      for (let frame = 0; frame < frames; frame += 1) {
+        character.update(dt, {
+          anim: item.id,
+          speed: item.speed,
+          ...(walkStyle ? { walkStyle } : {}),
+        });
+        character.root.updateMatrixWorld(true);
+        for (const side of ['L', 'R']) {
+          const ball = character.root.getObjectByName(`shoulder${side}Mesh`);
+          const joint = character.joints[`shoulder${side}`];
+          raised = Math.max(raised, Math.abs(joint.rotation.x), Math.abs(joint.rotation.z));
+          const fitted = sleevesOn(character, side);
+          if (fitted.length === 0) continue;
+          for (const sleeve of fitted) {
+            assert.equal(sleeve.parent, joint);
+            assert.ok(sleeveCoversBall(sleeve, ball, 0.003), `${label} ${item.id} ${sleeve.name}`);
+            if (frame % 4 === 0) {
+              assert.ok(sleeveMeshCovers(sleeve, ball), `${label} ${item.id} mesh ${sleeve.name}`);
+            }
+          }
+          for (const shell of shells) {
+            assert.ok(
+              originInsideShell(shell, joint, 0.003),
+              `${label} ${item.id} ${shell.name} ${side}`,
+            );
+          }
+        }
+      }
+    }
+  }
+  assert.ok(raised > 1, `${label} sampled a raised arm (${raised.toFixed(2)})`);
 }
 
 function playAll(character) {
@@ -192,7 +383,12 @@ describe('clothing compositor', () => {
     assert.ok(sleeveBox.max.y - sleeveBox.min.y < spec.upperArmLength * 0.7, 'tee sleeve ends on the upper arm');
     assert.equal(character.joints.elbowL.getObjectByName('clothingTopForearmL'), undefined);
     assert.ok(character.root.getObjectByName('forearmLMesh'));
-    assertShoulderRoof(character);
+    assertTorsoShell(character);
+    const tee = getRegistry().part('clothing.top', 'tee');
+    assert.ok(tee.covers.includes('shoulderL') && tee.covers.includes('upperArmL'));
+    assert.equal(getRegistry().part('clothing.top', 'tank').covers.includes('shoulderL'), false);
+    assert.equal(getRegistry().part('clothing.outer', 'vest').covers.includes('shoulderL'), false);
+    assert.ok(getRegistry().part('clothing.outer', 'jacket').covers.includes('shoulderR'));
   });
 
   it('closes a shirt and a muscular shoulder, and keeps a tee skirt from gaping', () => {
@@ -202,12 +398,17 @@ describe('clothing compositor', () => {
     });
     assert.ok(shirt.joints.elbowL.getObjectByName('clothingTopForearmL'));
     assert.ok(shirt.joints.shoulderL.getObjectByName('clothingTopUpperL'));
-    assertShoulderRoof(shirt, 1.3);
+    assertTorsoShell(shirt);
+    const left = shirt.root.getObjectByName('clothingTopUpperL').userData.sleeve;
+    const right = shirt.root.getObjectByName('clothingTopUpperR').userData.sleeve;
+    assert.ok(left.ball > right.ball, 'the muscular sleeve follows that arm');
+    assert.ok(Math.abs(shirt.root.getObjectByName('clothingTop').userData.shell.hx
+      - (shirt.getResolved().chestTopWidth / 2 + shirt.root.getObjectByName('clothingTop').userData.shell.ease)) < 1e-6);
     const teeSkirt = wear((doc) => {
       doc.clothing.top = { id: 'tee', color: '#3a5a40' };
       doc.clothing.bottom = { id: 'skirt', color: '#222222' };
     });
-    assertShoulderRoof(teeSkirt);
+    assertTorsoShell(teeSkirt);
     const skirt = teeSkirt.root.getObjectByName('clothingBottom');
     skirt.geometry.computeBoundingBox();
     assert.ok(skirt.geometry.boundingBox.max.y > teeSkirt.getResolved().pelvisHeight * 0.85);
@@ -238,10 +439,11 @@ describe('clothing compositor', () => {
     const vestBox = bboxOf(vest);
     assert.ok(vestBox.min.x < -0.05 && vestBox.max.x > 0.05, 'vest has both sides');
     assert.ok(vestBox.min.z < -0.02 && vestBox.max.z > 0.02, 'vest has a front and a back');
-    assertShoulderRoof(character);
+    assertTorsoShell(character);
+    assertTorsoShell(character, 'clothingOuter');
     const spec = character.getResolved();
-    const shoulder = coverFromAbove(vest, spec.shoulderWidth / 2, 0);
-    assert.ok(shoulder && shoulder.ny > 0, 'vest yoke covers the shoulder');
+    const shoulder = coverFromAbove(vest, spec.chestTopWidth * 0.45, 0);
+    assert.ok(shoulder && shoulder.ny > 0, 'vest covers the chest shoulder line');
   });
 
   it('keeps the top when a jacket is worn over it', () => {
@@ -463,7 +665,57 @@ describe('clothing compositor', () => {
     assert.ok(maxY > spec.neckLength + spec.headRy * 0.4, 'hood reaches the crown');
     assert.ok(back, 'hood sits behind the head');
     assert.ok(nape, 'hood drapes onto the neck instead of floating');
-    assertShoulderRoof(open);
+    assertTorsoShell(open);
+  });
+
+  it('keeps sleeves closed over the shoulder balls through every clip', () => {
+    const naked = createBody();
+    const tee = wear((doc) => {
+      doc.clothing.top = { id: 'tee', color: '#3a5a40' };
+    });
+    assert.equal(tee.joints.shoulderL.position.x, naked.joints.shoulderL.position.x);
+    assert.equal(tee.joints.shoulderL.position.y, naked.joints.shoulderL.position.y);
+    assert.equal(Object.keys(tee.joints).length, 14);
+    assertSleevesSealed(tee, 'tee');
+
+    const muscular = wear((doc) => {
+      doc.clothing.top = { id: 'shirt', color: '#dddddd' };
+      doc.arms.left.type = 'muscular';
+      doc.arms.right.type = 'normal';
+    });
+    assertSleevesSealed(muscular, 'muscular shirt');
+
+    const layered = wear((doc) => {
+      doc.clothing.top = { id: 'tee', color: '#3a5a40' };
+      doc.clothing.outer = { id: 'vest', color: '#111111' };
+    });
+    assertSleevesSealed(layered, 'tee and vest');
+
+    const jacket = wear((doc) => {
+      doc.clothing.top = { id: 'tee', color: '#3a5a40' };
+      doc.clothing.outer = { id: 'jacket', color: '#1c1c1c' };
+    });
+    assertSleevesSealed(jacket, 'jacket');
+
+    const heavy = createCharacter(applyPreset(defaultDocument(), 'woman', 'heavy'));
+    heavy.updateDocument((doc) => {
+      doc.clothing.top.id = 'hoodie';
+    });
+    assertSleevesSealed(heavy, 'heavy hoodie');
+
+    const mixed = wear((doc) => {
+      doc.clothing.top = { id: 'shirt', color: '#3a5a40' };
+      doc.arms.right.type = 'robot';
+      doc.arms.left.type = 'skeleton';
+    });
+    assert.equal(mixed.root.getObjectByName('clothingTopUpperL'), undefined);
+    assert.equal(mixed.root.getObjectByName('clothingTopUpperR'), undefined);
+    assert.equal(mixed.root.getObjectByName('shoulderLMesh').userData.segment, 'upperArmL');
+    assert.equal(mixed.root.getObjectByName('shoulderRMesh').userData.segment, 'upperArmR');
+    assertTorsoShell(mixed);
+    const shell = mixed.root.getObjectByName('clothingTop').userData.shell;
+    const spec = mixed.getResolved();
+    assert.ok(shell.hx < spec.shoulderWidth / 2 + spec.radii.shoulder * 0.5);
   });
 
   it('follows the joints through a walk and a dance', () => {

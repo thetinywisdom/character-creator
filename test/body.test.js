@@ -192,6 +192,11 @@ describe('createBody', () => {
 
     assert.equal(joints.shoulderL.parent, joints.waist);
     assert.equal(joints.elbowL.parent, joints.shoulderL);
+    assert.equal(findMesh(body.root, 'shoulderLMesh').parent, joints.shoulderL);
+    assert.equal(findMesh(body.root, 'shoulderLMesh').userData.segment, 'upperArmL');
+    assert.equal(findMesh(body.root, 'upperArmLMesh').userData.segment, 'upperArmL');
+    assert.equal(findMesh(body.root, 'shoulderRMesh').userData.segment, 'upperArmR');
+    assert.equal(findMesh(body.root, 'upperArmRMesh').userData.segment, 'upperArmR');
     assert.equal(joints.wristL.parent, joints.elbowL);
     assert.equal(findMesh(body.root, 'handLMesh').parent, joints.wristL);
 

@@ -126,13 +126,13 @@ mirror(['legs.left', 'legs.right'], [
 slot('clothing.top', 'clothes', 'Top');
 cloth('clothing.top', 'none', 'None');
 cloth('clothing.top', 'tank', 'Tank', { covers: ['chest'] });
-cloth('clothing.top', 'tee', 'T-shirt', { covers: ['chest', 'upperArmL', 'upperArmR'] });
-cloth('clothing.top', 'shirt', 'Shirt', { covers: ['chest', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR'] });
-cloth('clothing.top', 'hoodie', 'Hoodie', { covers: ['chest', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR'] });
+cloth('clothing.top', 'tee', 'T-shirt', { covers: ['chest', 'shoulderL', 'shoulderR', 'upperArmL', 'upperArmR'] });
+cloth('clothing.top', 'shirt', 'Shirt', { covers: ['chest', 'shoulderL', 'shoulderR', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR'] });
+cloth('clothing.top', 'hoodie', 'Hoodie', { covers: ['chest', 'shoulderL', 'shoulderR', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR'] });
 
 slot('clothing.outer', 'clothes', 'Outer');
 cloth('clothing.outer', 'none', 'None');
-cloth('clothing.outer', 'jacket', 'Jacket', { covers: ['chest', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR'] });
+cloth('clothing.outer', 'jacket', 'Jacket', { covers: ['chest', 'shoulderL', 'shoulderR', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR'] });
 cloth('clothing.outer', 'vest', 'Vest', { covers: ['chest'] });
 cloth('clothing.outer', 'cape', 'Cape');
 
