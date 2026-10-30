@@ -1,3 +1,4 @@
+import { COLORS } from '../character/palette.js';
 import {
   CYLINDER_SIDES,
   ISO_HEAD_CROWN,
@@ -49,7 +50,7 @@ export const DEFAULT_PARAMS = {
   bellyWidth: null,
   limbThickness: 1,
   headSize: null,
-  skinColor: '#e4c29a',
+  skinColor: COLORS.skin,
   upperArmLength: null,
   forearmLength: null,
   thighLength: null,
@@ -85,11 +86,12 @@ export function resolveParams(input = {}) {
   const rad = (metres) => metres * s * thick;
 
   const neckTarget = rad(0.054);
-  const shoulderR = rad(0.05);
-  const elbowR = rad(0.043);
-  const wristR = rad(0.034);
-  const hipR = rad(0.06);
-  const kneeR = rad(0.046);
+  // Thick at the root, clearly narrower at the wrist and ankle, as in the turnaround.
+  const shoulderR = rad(0.052);
+  const elbowR = rad(0.04);
+  const wristR = rad(0.028);
+  const hipR = rad(0.066);
+  const kneeR = rad(0.05);
   const ankleR = rad(0.038);
   const baseWaistR = rad(0.076);
   let waistR = baseWaistR;
@@ -108,7 +110,7 @@ export function resolveParams(input = {}) {
   const headNeckY = ISO_HEAD_NECK_Y * headScale;
 
   const shoulderWidth = clamp(auto(p.shoulderWidth, Math.max(DEFAULT_SHOULDER * s, shoulderR * 3.2)), 0.08);
-  const hipWidth = clamp(auto(p.hipWidth, Math.max(PHOTO.hipSpan * REFERENCE_HEIGHT * s, hipR * 2.2 + 0.012)), 0.06);
+  const hipWidth = clamp(auto(p.hipWidth, Math.max(0.18 * s, hipR * 2.15 + 0.02)), 0.06);
   const hipX = hipWidth / 2;
 
   const chestBottom = waistR * 2;
@@ -119,14 +121,15 @@ export function resolveParams(input = {}) {
   let pelvisBottomHalf = hipX + hipR * 0.7;
   pelvisBottomHalf = Math.max(pelvisBottomHalf, waistR * 1.22);
   const pelvisBottomWidth = pelvisBottomHalf * 2;
-  const pelvisBottomDepth = Math.max(pelvisTop * 1.15, pelvisBottomWidth * 0.68);
+  // Side depth stays close to the front width. The sheet's torso is a thick column.
+  const pelvisBottomDepth = Math.max(pelvisTop * 1.15, pelvisBottomWidth * 0.68, chestTopWidth * 0.74);
   const chestTopDepth = p.torsoDepth != null
     ? clamp(Number(p.torsoDepth) || pelvisBottomDepth, 0.04)
     : pelvisBottomDepth;
 
-  const footHeight = clamp(auto(p.footHeight, Math.max(0.044 * s, ankleR * 0.95)), 0.012);
-  const footWidth = clamp(auto(p.footWidth, Math.max(0.078 * s, ankleR * 1.9)), 0.02);
-  const footLength = clamp(auto(p.footLength, Math.max(0.15 * s, footWidth * 1.85)), 0.04);
+  const footHeight = clamp(auto(p.footHeight, Math.max(0.032 * s, ankleR * 0.7)), 0.012);
+  const footWidth = clamp(auto(p.footWidth, Math.max(0.09 * s, ankleR * 1.8)), 0.02);
+  const footLength = clamp(auto(p.footLength, Math.max(0.19 * s, footWidth * 1.7)), 0.04);
   const footCenterZ = footLength * 0.22;
   const footTop = -ankleR * 0.42;
   const footCenterY = footTop - footHeight / 2;
@@ -171,11 +174,11 @@ export function resolveParams(input = {}) {
     ry,
   });
 
-  const handLength = clamp(auto(p.handLength, Math.max(0.125 * s, wristR * 3.5)), 0.03);
-  const handBaseRx = wristR * 0.58;
-  const handBaseRz = wristR * 0.36;
-  const handMidRx = wristR * 0.9;
-  const handMidRz = wristR * 0.4;
+  const handLength = clamp(auto(p.handLength, Math.max(0.112 * s, wristR * 3.4)), 0.03);
+  const handBaseRx = wristR * 0.5;
+  const handBaseRz = wristR * 0.42;
+  const handMidRx = wristR * 1.55;
+  const handMidRz = wristR * 0.95;
 
   const upperArmLength = clamp(auto(p.upperArmLength, 0.3 * s), 0.05);
   const forearmLength = clamp(auto(p.forearmLength, 0.27 * s), 0.05);
@@ -229,8 +232,8 @@ export function resolveParams(input = {}) {
     handBaseRz,
     handMidRx,
     handMidRz,
-    handPitch: -0.22,
-    handYaw: 0.28,
+    handPitch: -0.1,
+    handYaw: 0.16,
     footLength,
     footWidth,
     footHeight,

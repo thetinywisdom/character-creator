@@ -1,12 +1,12 @@
 import {
-  ACESFilmicToneMapping,
   CircleGeometry,
   Color,
   DirectionalLight,
   HemisphereLight,
   Mesh,
-  MeshStandardMaterial,
-  PCFSoftShadowMap,
+  MeshBasicMaterial,
+  NoToneMapping,
+  OrthographicCamera,
   PerspectiveCamera,
   Scene,
   SRGBColorSpace,
@@ -15,7 +15,9 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { ANIMATIONS, createCharacter, panelSections } from './body/index.js';
+import { COLORS } from './character/palette.js';
 import { applyPreset } from './character/presets.js';
+import { frameCityCamera } from './preview/view.js';
 
 const query = new URLSearchParams(location.search);
 const canvas = document.getElementById('view');
@@ -141,46 +143,29 @@ for (const item of ANIMATIONS) {
 }
 
 const scene = new Scene();
-scene.background = new Color('#e4dfd6');
+scene.background = new Color(COLORS.paper);
 
-const camera = new PerspectiveCamera(32, 1, 0.05, 40);
+const orbitCamera = new PerspectiveCamera(32, 1, 0.05, 40);
+const cityCamera = new OrthographicCamera(-1, 1, 1, -1, 0.05, 80);
+let camera = orbitCamera;
+let viewMode = query.get('view') === 'city' ? 'city' : 'orbit';
 const renderer = new WebGLRenderer({ canvas, antialias: true });
 renderer.outputColorSpace = SRGBColorSpace;
-renderer.toneMapping = ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = PCFSoftShadowMap;
+renderer.toneMapping = NoToneMapping;
+renderer.shadowMap.enabled = false;
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
-const hemi = new HemisphereLight(0xf4efe6, 0xb7a898, 0.72);
+const hemi = new HemisphereLight(0xffffff, 0xf1cdc3, 1.15);
 scene.add(hemi);
 
-const key = new DirectionalLight(0xfff6ee, 2.35);
-key.position.set(2.4, 4.2, 2.6);
-key.castShadow = true;
-key.shadow.mapSize.set(2048, 2048);
-key.shadow.bias = -0.00035;
-key.shadow.normalBias = 0.025;
-key.shadow.camera.near = 0.4;
-key.shadow.camera.far = 14;
-key.shadow.camera.left = -2.2;
-key.shadow.camera.right = 2.2;
-key.shadow.camera.top = 2.4;
-key.shadow.camera.bottom = -1.4;
+const key = new DirectionalLight(0xffffff, 0.28);
+key.position.set(2.2, 3.4, 2.4);
 scene.add(key);
 scene.add(key.target);
 
-const fill = new DirectionalLight(0xe7eef8, 0.55);
-fill.position.set(-2.6, 1.6, 1.4);
-scene.add(fill);
-
-const rim = new DirectionalLight(0xfff8f2, 0.45);
-rim.position.set(-1.2, 2.4, -2.6);
-scene.add(rim);
-
 const ground = new Mesh(
-  new CircleGeometry(1, 64),
-  new MeshStandardMaterial({ color: '#b7b0a4', roughness: 1, metalness: 0 }),
+  new CircleGeometry(1, 48),
+  new MeshBasicMaterial({ color: '#f3efe2' }),
 );
 ground.rotation.x = -Math.PI / 2;
 ground.position.y = -0.001;
@@ -190,7 +175,7 @@ scene.add(ground);
 const body = createCharacter();
 scene.add(body.root);
 
-const controls = new OrbitControls(camera, canvas);
+const controls = new OrbitControls(orbitCamera, canvas);
 controls.enableDamping = true;
 controls.autoRotate = query.get('turn') !== '0';
 controls.autoRotateSpeed = 0.7;
@@ -229,11 +214,41 @@ function frameCamera(name) {
     back: new Vector3(0, lookY, -dist),
     three: new Vector3(dist * 0.62, lookY + h * 0.06, dist * 0.78),
   };
-  camera.position.copy(spots[name] || spots.three);
+  orbitCamera.position.copy(spots[name] || spots.three);
   controls.target.set(0, lookY, 0);
   key.target.position.set(0, lookY, 0);
   controls.update();
 }
+
+function applyView() {
+  const city = viewMode === 'city';
+  document.getElementById('view-orbit').setAttribute('aria-pressed', city ? 'false' : 'true');
+  document.getElementById('view-city').setAttribute('aria-pressed', city ? 'true' : 'false');
+  camera = city ? cityCamera : orbitCamera;
+  controls.object = camera;
+  controls.enableRotate = !city;
+  controls.enablePan = !city;
+  controls.autoRotate = !city && turnInput.checked;
+  if (city) {
+    const width = canvas.clientWidth || 1;
+    const height = canvas.clientHeight || 1;
+    const lookY = frameCityCamera(cityCamera, body.getResolved().height, width / height);
+    controls.target.set(0, lookY, 0);
+    key.target.position.set(0, lookY, 0);
+  } else {
+    frameCamera(currentCam);
+  }
+  controls.update();
+}
+
+document.getElementById('view-orbit').addEventListener('click', () => {
+  viewMode = 'orbit';
+  applyView();
+});
+document.getElementById('view-city').addEventListener('click', () => {
+  viewMode = 'city';
+  applyView();
+});
 
 function resizeGround() {
   const spec = body.getResolved();
@@ -438,7 +453,7 @@ wireInput.addEventListener('change', () => {
 });
 
 turnInput.addEventListener('change', () => {
-  controls.autoRotate = turnInput.checked;
+  controls.autoRotate = viewMode === 'orbit' && turnInput.checked;
 });
 
 controls.addEventListener('start', () => {
@@ -520,14 +535,19 @@ function resize() {
   const height = canvas.clientHeight;
   if (!width || !height) return;
   renderer.setSize(width, height, false);
-  camera.aspect = width / height;
-  camera.updateProjectionMatrix();
+  if (viewMode === 'city') {
+    const lookY = frameCityCamera(cityCamera, body.getResolved().height, width / height);
+    controls.target.set(0, lookY, 0);
+  } else {
+    orbitCamera.aspect = width / height;
+    orbitCamera.updateProjectionMatrix();
+  }
 }
 
 const observer = new ResizeObserver(resize);
 observer.observe(canvas);
 
-frameCamera(currentCam);
+applyView();
 syncControls();
 resize();
 

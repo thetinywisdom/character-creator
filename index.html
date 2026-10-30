@@ -24,7 +24,13 @@
           <p id="document-error" class="error" hidden></p>
         </div>
       </aside>
-      <canvas id="view"></canvas>
+      <div id="stage">
+        <canvas id="view"></canvas>
+        <div id="view-toggle" role="group" aria-label="Camera">
+          <button type="button" id="view-orbit">Close-up</button>
+          <button type="button" id="view-city">City</button>
+        </div>
+      </div>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>

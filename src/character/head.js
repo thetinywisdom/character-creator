@@ -223,35 +223,38 @@ function capRings(skull, y0, y1, count) {
 function hairGeometry(style, spec, skull) {
   const crown = spec.headRy;
   const chin = spec.headNeckY;
-  const mid = chin + (crown - chin) * 0.72;
+  const span = crown - chin;
   if (style === 'buzz') {
-    return lathe(capRings(skull, mid, crown * 0.96, 4), 8);
-  }
-  if (style === 'bob') {
-    const jaw = chin + (crown - chin) * 0.34;
-    const cap = lathe(capRings(skull, mid, crown * 0.94, 3), 8);
-    const back = skull.radiusAt(mid) + GAP + 0.018;
-    const slab = new BoxGeometry(spec.radii.neck * 1.6, mid - jaw, 0.016);
-    slab.translate(0, (mid + jaw) / 2, -(back + 0.01));
-    return mergeGeometries([cap, slab]);
+    return lathe(capRings(skull, chin + span * 0.52, crown + 0.012, 5), 8);
   }
   if (style === 'afro') {
-    const bot = chin + 0.01;
-    const top = crown + 0.02;
-    const radius = (top - bot) * 0.55;
-    const cy = (top + bot) * 0.5;
+    const radius = span * 0.42;
     const geo = new SphereGeometry(radius, 8, 5);
-    geo.translate(0, cy, 0);
+    geo.translate(0, crown - radius * 0.2, 0);
     return geo;
   }
-  const cap = lathe(capRings(skull, chin + (crown - chin) * 0.72, crown * 0.9, 3), 8);
-  const back = skull.radiusAt(mid) + GAP + 0.02;
-  const drop = style === 'long'
-    ? spec.neckLength + spec.chestHeight * 0.85
-    : spec.radii.neck * 2.4;
-  const slab = new BoxGeometry(spec.radii.neck * 1.1, drop, 0.02);
-  slab.translate(0, mid - drop * 0.45, -(back + 0.02));
-  return mergeGeometries([cap, slab]);
+  if (style === 'ponytail') {
+    const cap = lathe(capRings(skull, chin + span * 0.55, crown + 0.008, 4), 8);
+    const tailR = Math.max(spec.radii.neck * 0.28, 0.012);
+    const tail = new CylinderGeometry(tailR * 0.72, tailR, span * 0.95, 6, 1, false);
+    const y = chin + span * 0.72;
+    tail.translate(0, y - span * 0.55, -(skull.radiusAt(y) + GAP + tailR));
+    return mergeGeometries([cap, tail]);
+  }
+  const cap = lathe(capRings(skull, chin + span * 0.62, crown + 0.006, 4), 8);
+  const top = chin + span * 0.62;
+  const jaw = style === 'long' ? chin - spec.neckLength * 0.35 : chin + span * 0.18;
+  const count = 5;
+  const pairs = [];
+  for (let i = 0; i < count; i += 1) {
+    const t = i / (count - 1);
+    const y = jaw + (top - jaw) * t;
+    pairs.push([skull.radiusAt(y) + GAP + 0.014, y]);
+  }
+  const points = pairs.map(([r, y]) => new Vector2(Math.max(r, 0.0004), y));
+  // theta 0 is +Z, the face. This arc keeps the face clear and wraps the sides and back.
+  const wrap = new LatheGeometry(points, 8, Math.PI * 0.42, Math.PI * 1.16);
+  return mergeGeometries([cap, wrap]);
 }
 
 function mergeGeometries(geos) {

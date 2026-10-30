@@ -5,7 +5,7 @@ import {
   DoubleSide,
   Float32BufferAttribute,
   Mesh,
-  MeshStandardMaterial,
+  MeshBasicMaterial,
   SphereGeometry,
 } from 'three';
 import { CYLINDER_SIDES, JOINT_HEIGHT, JOINT_PHI_START, JOINT_WIDTH } from '../body/geometry.js';
@@ -70,13 +70,11 @@ function garmentMaterial(ctx, color) {
   const key = `garment:${hex}`;
   let material = ctx.materials.find((entry) => entry.userData.poolKey === key);
   if (!material) {
-    material = new MeshStandardMaterial({
+    material = new MeshBasicMaterial({
       color: hex,
-      roughness: 0.85,
-      metalness: 0,
-      flatShading: false,
       side: DoubleSide,
     });
+    material.flatShading = false;
     material.userData.poolKey = key;
     material.userData.lockedColor = true;
     material.polygonOffset = false;
@@ -634,10 +632,15 @@ function addWaistBlock(ctx, ease, material) {
   const spec = ctx.spec;
   const y1 = spec.pelvisHeight * 0.9;
   const y0 = -ease * 0.35;
-  const hx = spec.hipWidth / 2 + spec.radii.hip + ease;
-  // Sit inside a top. The top uses the full ease on the same torso depth,
-  // so a full ease here puts the waistband on the shirt and it shows through.
-  const hz = Math.max(spec.pelvisBottomDepth, spec.pelvisTopDepth) / 2 + ease * 0.35;
+  // Stay inside the shirt. A wide hip would otherwise push the band through the hem.
+  const hx = Math.min(
+    spec.hipWidth / 2 + spec.radii.hip + ease * 0.35,
+    spec.chestTopWidth / 2 + ease * 0.4,
+  );
+  const hz = Math.min(
+    Math.max(spec.pelvisBottomDepth, spec.pelvisTopDepth) / 2 + ease * 0.2,
+    spec.chestTopDepth / 2 + ease * 0.65,
+  );
   const geo = buildBlock({
     hx,
     hz,
@@ -658,7 +661,7 @@ function addWaistBlock(ctx, ease, material) {
 function addLegTubes(ctx, part, ease, material) {
   const spec = ctx.spec;
   const doc = ctx.document;
-  const legR = spec.radii.hip + ease;
+  const legR = spec.radii.hip * 0.92 + ease;
   const kneeR = legR * 1.012;
   const tuck = kneeR * 0.12;
   for (const [side, key] of [['L', 'left'], ['R', 'right']]) {
@@ -726,8 +729,10 @@ function addShoe(ctx, side, kind, ease, cuff, materials) {
   sole.translate(0, soleY + soleH / 2, z);
   parts.push({ geometry: sole, materialIndex: 0 });
   const upperH = kind === 'flats' ? spec.footHeight * 0.55 : spec.footHeight * 0.92;
-  const upper = new BoxGeometry(width * 0.9, upperH, length * 0.92);
-  upper.translate(0, soleY + soleH * 0.45 + upperH / 2, z + length * 0.015);
+  const sy = Math.max(upperH * 0.55, 0.012);
+  const upper = new SphereGeometry(1, 8, 5);
+  upper.scale(width * 0.46, sy, length * 0.46);
+  upper.translate(0, soleY + soleH + sy, z + length * 0.02);
   parts.push({ geometry: upper, materialIndex: 1 });
   if (kind === 'boots' && cuff) {
     const cuffLen = Math.max(spec.shinLength * 0.38, spec.radii.ankle * 2.6);

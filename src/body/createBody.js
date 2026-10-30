@@ -1,4 +1,4 @@
-import { Group, MeshStandardMaterial, Object3D } from 'three';
+import { Group, MeshBasicMaterial, MeshLambertMaterial, Object3D } from 'three';
 import { JOINT_NAMES, createMotion } from './animate.js';
 import {
   countStats,
@@ -110,12 +110,12 @@ function layoutBody(root, pelvis, joints, spec, flat, smooth, markers) {
   j.neck.add(neckBall);
 
   const neckLength = spec.visibleNeck + spec.neckEmbed;
-  const neck = createTaperMesh(R.neck, R.neck, neckLength, flat);
+  const neck = createTaperMesh(R.neck, R.neck, neckLength, smooth);
   neck.name = 'neckTube';
   neck.position.y = neckLength / 2;
   j.neck.add(neck);
 
-  const head = createHeadMesh(spec.headScale, flat);
+  const head = createHeadMesh(spec.headScale, smooth);
   head.name = 'headMesh';
   head.position.y = spec.neckLength;
   j.neck.add(head);
@@ -132,7 +132,7 @@ function addArm(joints, spec, flat, smooth, side, sign, shoulderY) {
   ball.userData.segment = `upperArm${side}`;
   shoulder.add(ball);
 
-  const upper = createTaperMesh(R.shoulder, R.elbow, spec.upperArmLength, flat);
+  const upper = createTaperMesh(R.shoulder, R.elbow, spec.upperArmLength, smooth);
   upper.name = `upperArm${side}Mesh`;
   upper.userData.segment = `upperArm${side}`;
   upper.position.y = -spec.upperArmLength / 2;
@@ -145,7 +145,7 @@ function addArm(joints, spec, flat, smooth, side, sign, shoulderY) {
   elbowBall.name = `elbow${side}Mesh`;
   elbow.add(elbowBall);
 
-  const forearm = createTaperMesh(R.elbow, R.wrist, spec.forearmLength, flat);
+  const forearm = createTaperMesh(R.elbow, R.wrist, spec.forearmLength, smooth);
   forearm.name = `forearm${side}Mesh`;
   forearm.position.y = -spec.forearmLength / 2;
   elbow.add(forearm);
@@ -163,7 +163,7 @@ function addArm(joints, spec, flat, smooth, side, sign, shoulderY) {
     spec.handBaseRz,
     spec.handMidRx,
     spec.handMidRz,
-    flat,
+    smooth,
   );
   hand.name = `hand${side}Mesh`;
   hand.rotation.x = spec.handPitch;
@@ -180,7 +180,7 @@ function addLeg(joints, spec, flat, smooth, markers, side, sign) {
   ball.name = `hip${side}Mesh`;
   hip.add(ball);
 
-  const thigh = createTaperMesh(R.hip, R.knee, spec.thighLength, flat);
+  const thigh = createTaperMesh(R.hip, R.knee, spec.thighLength, smooth);
   thigh.name = `thigh${side}Mesh`;
   thigh.position.y = -spec.thighLength / 2;
   hip.add(thigh);
@@ -192,7 +192,7 @@ function addLeg(joints, spec, flat, smooth, markers, side, sign) {
   kneeBall.name = `knee${side}Mesh`;
   knee.add(kneeBall);
 
-  const shin = createTaperMesh(R.knee, R.ankle, spec.shinLength, flat);
+  const shin = createTaperMesh(R.knee, R.ankle, spec.shinLength, smooth);
   shin.name = `shin${side}Mesh`;
   shin.position.y = -spec.shinLength / 2;
   knee.add(shin);
@@ -235,7 +235,7 @@ function paint(materials, color) {
  *   root: Group,
  *   pelvis: Object3D,
  *   joints: Record<string, Object3D>,
- *   materials: MeshStandardMaterial[],
+ *   materials: MeshLambertMaterial[],
  *   update: (dt: number, state?: string | {
  *     anim?: string, mode?: string, speed?: number, time?: number, freeze?: boolean,
  *     turn?: number, grounded?: boolean, vy?: number, crouch?: number, side?: number, dir?: number,
@@ -251,18 +251,14 @@ export function createBody(input = {}) {
   pelvis.name = 'pelvis';
   const joints = makeJoints();
   const markers = {};
-  const flat = new MeshStandardMaterial({
+  const flat = new MeshLambertMaterial({
     color: params.skinColor || DEFAULT_PARAMS.skinColor,
-    roughness: 0.8,
-    metalness: 0,
     flatShading: true,
   });
-  const smooth = new MeshStandardMaterial({
+  const smooth = new MeshBasicMaterial({
     color: params.skinColor || DEFAULT_PARAMS.skinColor,
-    roughness: 0.8,
-    metalness: 0,
-    flatShading: false,
   });
+  smooth.flatShading = false;
   flat.userData.skin = 'flat';
   smooth.userData.skin = 'smooth';
   const materials = [flat, smooth];

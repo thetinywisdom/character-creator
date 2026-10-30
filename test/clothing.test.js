@@ -434,11 +434,11 @@ function assertRides(character, meshName, anim, time) {
 }
 
 describe('clothing compositor', () => {
-  it('keeps the naked default at 1421 and adds nothing', () => {
+  it('keeps the naked default at 1445 and adds nothing', () => {
     const naked = createBody();
     const character = createCharacter();
-    assert.equal(character.getStats().vertices, 1421);
-    assert.equal(character.getStats().triangles, 1868);
+    assert.equal(character.getStats().vertices, 1445);
+    assert.equal(character.getStats().triangles, 1916);
     assert.deepEqual(character.getStats().roles, naked.getStats().roles);
     assert.equal(garments(character.root).length, 0);
     assertBodyStays(character);
@@ -951,12 +951,12 @@ describe('clothing compositor', () => {
     assert.ok(dressed.root.getObjectByName('chestMesh'));
     assert.ok(dressed.root.getObjectByName('clothingTop'));
     const dressedVerts = dressed.getStats().vertices;
-    assert.ok(dressedVerts > 1421);
+    assert.ok(dressedVerts > 1445);
     dressed.updateDocument((doc) => { doc.clothing.top.id = 'none'; });
     assert.ok(dressed.root.getObjectByName('chestMesh'));
     assert.ok(dressed.root.getObjectByName('upperArmLMesh'));
     assert.equal(dressed.root.getObjectByName('clothingTop'), undefined);
-    assert.equal(dressed.getStats().vertices, 1421);
+    assert.equal(dressed.getStats().vertices, 1445);
   });
 
   it('suppresses a hoodie hood when headwear is set', () => {
@@ -1149,16 +1149,16 @@ describe('clothing compositor', () => {
       doc.clothing.bottom = { id: 'shorts', color: '#222222' };
     });
     const counts = {
-      naked: 1421,
+      naked: 1445,
       tankVestShorts: photo.getStats().vertices,
       teePantsSneakers: casual.getStats().vertices,
       fullyDressed: full.getStats().vertices,
       everySlot: filled.getStats().vertices,
     };
     console.log(`CLOTHING ${JSON.stringify(counts)}`);
-    assert.equal(counts.naked, 1421);
-    assert.ok(counts.tankVestShorts > 1421);
-    assert.ok(counts.teePantsSneakers > 1421);
+    assert.equal(counts.naked, 1445);
+    assert.ok(counts.tankVestShorts > 1445);
+    assert.ok(counts.teePantsSneakers > 1445);
     assert.ok(counts.fullyDressed > counts.teePantsSneakers);
   });
 

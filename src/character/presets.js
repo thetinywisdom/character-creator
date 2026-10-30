@@ -2,8 +2,8 @@ import { REFERENCE_HEIGHT } from '../body/params.js';
 
 /** Metres at height 1.8, before the body-type multipliers. Thickness is unitless. */
 const PRESENTATION = {
-  man: { shoulder: 0.3, belly: 0.2, hip: 0.16, thickness: 1 },
-  woman: { shoulder: 0.3 * (0.36 / 0.42), belly: 0.22, hip: 0.2, thickness: 0.92 },
+  man: { shoulder: 0.3, belly: 0.2, hip: 0.18, thickness: 1 },
+  woman: { shoulder: 0.28, belly: 0.2, hip: 0.22, thickness: 0.94 },
 };
 
 const BODY_TYPE = {

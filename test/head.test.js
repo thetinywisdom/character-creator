@@ -58,7 +58,7 @@ describe('head parts', () => {
     assert.equal(result.ok, true);
     assert.equal(result.document.head.shape, 'classic');
     assert.equal(result.document.head.hair.style, 'none');
-    assert.equal(result.document.head.hair.color, '#2a2118');
+    assert.equal(result.document.head.hair.color, '#292c2e');
     assert.equal(result.document.head.facialHair, 'none');
     assert.equal(result.document.head.headwear.id, 'none');
     assert.equal('ears' in result.document.head, false);
