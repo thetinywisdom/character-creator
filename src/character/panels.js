@@ -49,6 +49,16 @@ export const LEGS_CONTROLS = [
   { id: 'legRColor', kind: 'color', label: 'Right color', nullable: true },
 ];
 
+export const HEAD_CONTROLS = [
+  { id: 'shape', kind: 'slot', slot: 'head.shape', label: 'Shape' },
+  { id: 'headSize', kind: 'range', label: 'Head size', min: 0.1, max: 0.28, step: 0.005, unit: 'm' },
+  { id: 'hair', kind: 'slot', slot: 'head.hair', label: 'Hair' },
+  { id: 'hairColor', kind: 'color', label: 'Hair color' },
+  { id: 'facialHair', kind: 'slot', slot: 'head.facialHair', label: 'Facial hair' },
+  { id: 'headwear', kind: 'slot', slot: 'head.headwear', label: 'Headwear' },
+  { id: 'headwearColor', kind: 'color', label: 'Headwear color' },
+];
+
 export const CLOTHES_CONTROLS = [
   { id: 'top', kind: 'slot', slot: 'clothing.top', label: 'Top' },
   { id: 'topColor', kind: 'color', label: 'Top color' },

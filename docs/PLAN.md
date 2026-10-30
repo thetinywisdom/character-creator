@@ -72,7 +72,7 @@ registerPart('clothing.top', 'tee', {
 
 Slots, in build order:
 
-`body.torso`, `arms.left`, `arms.right`, `legs.left`, `legs.right`, `clothing`, `head.shape`, `head.hair`, `head.facialHair`, `head.ears`, `head.earrings`, `head.headwear`, `head.eyewear`, `back`, `hands.left`, `hands.right`, `arms.left.wrist`, `arms.right.wrist`, `animation.dance`, `animation.walkStyle`.
+`body.torso`, `arms.left`, `arms.right`, `legs.left`, `legs.right`, `clothing`, `head.shape`, `head.hair`, `head.facialHair`, `head.headwear`, `back`, `hands.left`, `hands.right`, `arms.left.wrist`, `arms.right.wrist`, `animation.dance`, `animation.walkStyle`.
 
 `clothing` is one compositor, not four blind builders. Top, outer, bottom, and shoes are ids inside that pass so a jacket and a tee cannot both emit a torso shell.
 
@@ -84,7 +84,7 @@ Sex, body type, height, skin, head size, shoulder, belly, and hip are character 
 
 | Socket | Parent | What hangs here |
 | --- | --- | --- |
-| `head` | `neck` | head mesh, hair, facial hair, ears, headwear, eyewear |
+| `head` | `neck` | head mesh, hair, facial hair, headwear |
 | `back` | `waist` | bag, backpack, wings |
 | `gripL`, `gripR` | `wristL`, `wristR` | held items |
 | `wristItemL`, `wristItemR` | `wristL`, `wristR` | band, cuff |
@@ -103,7 +103,7 @@ Rules, in order:
 4. A hoodie or jacket is about 1 cm roomier than the tee. A vest sits just over the top. The front may be open if the edge stays closed geometry. The top stays underneath. A vest has no sleeves. A cape is a slab hanging from the shoulders, parented to `waist`. There is no dress part. A dress look is a top plus a skirt. When `body.torso` is `robot`, top and outer are `none`.
 5. Shoes fit the feet with a small margin, and they have a sole. The feet stay. Heel and toe markers stay on the ankle, at the sole, so planting does not change.
 6. Pants and shorts skip a peg leg. The waist block sits at the pelvis with a modest margin. Leg tubes are straight and a bit wider than the thigh, and the shin tube matches the thigh (straight-leg, not tapered). A skirt is a modest A-line from the waist, still wide enough for the walk stride (hip span plus thigh radius plus the gap).
-7. Hair under a hat or hood is not drawn. Headwear wins over a hoodie hood. Earrings are skipped when the ear id is `antenna`.
+7. Hair under a covering hat (cap, beanie, hat, helmet) or a hood is not drawn. A headband leaves the hair. Headwear wins over a hoodie hood.
 8. No `polygonOffset`.
 9. Robot and skeleton limbs keep their own meshes. Sleeves and pant tubes are skipped on those sides, and the garment is not rejected. Peg legs skip pant tubes and shoes. A robot leg skips the pant tube and the boot cuff, and still takes a shoe in place of the foot. A robot torso still cannot wear a top or an outer layer.
 
@@ -130,7 +130,7 @@ Per-limb type may scale that limb’s radii only. Muscular is about ×1.3. Skele
 
 Pool `MeshStandardMaterial` by `${flat|smooth}:${hex}`. Skin is one flat and one smooth. A tee in `#3a5a40` shares that material with a backpack of the same hex.
 
-Hair highlight is a vertex color on the hair mesh, one material, not a second mesh. Shoes are the other two-color part: sole uses `accent`, upper uses `color`, still one mesh (two materials, two groups). Approved: those are the only second colors. Everywhere else is one color.
+Shoes are the two-color part: sole uses `accent`, upper uses `color`, still one mesh (two materials, two groups). Hair is one hex. Everywhere else is one color.
 
 The naked body is already about 30 meshes because the tubes and balls are separate objects sharing two materials. Leave that. Do not introduce `BatchedMesh` in v1. Added parts are one mesh each, so a fully dressed figure is on the order of 40 meshes and a handful of materials (skin plus each distinct hex). That is the draw-call budget.
 
@@ -152,9 +152,7 @@ Budgets are for the new or replacement mesh, not the whole figure. “Replaces�
 | | `buzz` | 4-ring cap lathe just outside the skull. | ~40 |
 | | `bob` | Cap plus an 8-side flare to the jaw. | ~48 |
 | | `ponytail` | Cap plus one box down the back. | ~48 |
-| | `spikes` | Six 4-side pyramids. | 24 |
 | | `long` | Cap plus one open box to the waist. | ~56 |
-| | `mohawk` | One ridge of 4 quads. | ~12 |
 | | `afro` | 8×5 sphere larger than the skull. | 54 |
 | `head.facialHair` | `none` | | 0 |
 | | `moustache` | One box proud of the upper lip by about 6 mm. | 8 |
@@ -164,21 +162,7 @@ Budgets are for the new or replacement mesh, not the whole figure. “Replaces�
 | | `beanie` | Short lathe cap. | ~40 |
 | | `hat` | Crown tube plus an 8-quad brim. | ~32 |
 | | `helmet` | Box over the skull, open at the face. | ~24 |
-| | `crown` | 8-side band plus five tine boxes. | ~36 |
-| | `headband` | 8 quads around the brow. | 16 |
-| | `horns` | Two 4-side cones. | ~16 |
-| `head.eyewear` | `none` | | 0 |
-| | `glasses` | Two square rims and a bar. No lenses required. | ~24 |
-| | `sunglasses` | Same rims plus two quads. | ~32 |
-| | `visor` | One bent band, 6 quads. | ~14 |
-| | `goggles` | Two short 6-side tubes and a strap box. | ~28 |
-| `head.ears` | `normal` | A 4-vert wedge each side. | 8 |
-| | `elf` | Longer wedge. | 8 |
-| | `cat` | Triangle plus a small box. | ~12 |
-| | `antenna` | 4-side rod and a 4-side tip, each side. | ~20 |
-| `head.earrings` | `none` | | 0 |
-| | `stud` | One box on each lobe. | 16 |
-| | `hoop` | 6-side ring, each side. | ~24 |
+| | `headband` | 8 quads around the brow. Hair stays. | 16 |
 
 `head.size` is the existing `headSize` (lathe origin to crown). All head parts parent to `neck` and scale with it. No eyes, nose, mouth, or brows.
 
@@ -290,12 +274,9 @@ Version 1. Unknown part ids fail validation. Missing slots fill from defaults (`
   "head": {
     "shape": "round",
     "size": 0.24,
-    "hair": { "style": "bob", "color": "#2a2118", "highlight": "#8a6a4a" },
+    "hair": { "style": "bob", "color": "#2a2118" },
     "facialHair": "none",
-    "headwear": { "id": "beanie", "color": "#1d2a3a" },
-    "eyewear": { "id": "glasses", "color": "#111111" },
-    "ears": "elf",
-    "earrings": { "id": "stud", "color": "#d4af37" }
+    "headwear": { "id": "beanie", "color": "#1d2a3a" }
   },
   "arms": {
     "left": { "type": "normal", "color": null, "hand": "open", "wrist": { "id": "band", "color": "#222222" } },
@@ -320,7 +301,7 @@ Version 1. Unknown part ids fail validation. Missing slots fill from defaults (`
 }
 ```
 
-`schema.js` exports `validateDocument(doc)` and `defaultDocument()`. The preview copy button writes `JSON.stringify(character.getDocument(), null, 2)`. Paste goes through the validator before `setDocument`. A robot torso with a top or an outer layer is invalid. `dress` is not a bottom id. A held item coerces an `open` hand to `fist` during validation. Shoe `accent` and hair `highlight` are the only second colors.
+`schema.js` exports `validateDocument(doc)` and `defaultDocument()`. The preview copy button writes `JSON.stringify(character.getDocument(), null, 2)`. Paste goes through the validator before `setDocument`. A robot torso with a top or an outer layer is invalid. `dress` is not a bottom id. A held item coerces an `open` hand to `fist` during validation. Shoe `accent` is the only second color. Older head documents that still name ears, earrings, eyewear, or a hair highlight drop those fields. Retired hair styles (`spikes`, `mohawk`) and headwear (`crown`, `horns`) load as `none`.
 
 ## 5. Animation constraints
 
@@ -349,7 +330,7 @@ Keep one page. Replace the loose slider stack with sections generated from the r
 Sections, each a `<details>`:
 
 1. Body. Presentation, type, torso, skin, height, shoulder, belly, hip.
-2. Head. Shape, size, hair style, hair color, highlight, facial hair, ears, earrings, headwear, eyewear, and the color inputs those parts declare.
+2. Head. Shape, size, hair style, hair color, facial hair, headwear, and the color inputs those parts declare.
 3. Arms. Left and right columns: type, color, hand, wrist.
 4. Legs. Left and right: type, color.
 5. Clothes. Top, outer, bottom, shoes, colors.
@@ -390,7 +371,7 @@ Risk: a tight skirt meeting the thigh during a stride. Size the hem from the gai
 
 ### PR D. Head parts
 
-Four shapes, eight hair styles, facial hair, ears, earrings, headwear, eyewear. Hat suppresses hair.
+Four shapes, six hair styles (`none`, `buzz`, `bob`, `ponytail`, `long`, `afro`), facial hair, and headwear (`none`, `cap`, `beanie`, `hat`, `helmet`, `headband`). A covering hat or a hood suppresses hair.
 
 Effort: medium. All parented to `neck`.
 
@@ -407,10 +388,10 @@ Risk: a balloon or stick in the flail clip. The existing clearance pass has to s
 ### Decisions
 
 1. One `back` slot. Wings and a bag are not worn together.
-2. V1 head catalogue is four shapes (`classic`, `round`, `long`, `box`) and eight hair styles (`none`, `buzz`, `bob`, `ponytail`, `spikes`, `long`, `mohawk`, `afro`).
+2. V1 head catalogue is four shapes (`classic`, `round`, `long`, `box`) and six hair styles (`none`, `buzz`, `bob`, `ponytail`, `long`, `afro`). No ears, earrings, or eyewear.
 3. A robot torso cannot wear a top or an outer layer. Those ids disable themselves, and validation rejects anything other than `none`.
 4. No `dress` part. Bottom is `none`, `pants`, `shorts`, or `skirt`. A dress look is a top plus a skirt.
 5. Belly changes mesh width only. Hip joint spacing stays on the hip slider.
 6. The default dance is stored on the character. The preview can still play every clip.
 7. Holding an item turns an `open` hand into a `fist`. `claw` and `hook` stay.
-8. Shoe `accent` and hair `highlight` are the only second colors. Every other part is one hex.
+8. Shoe `accent` is the only second color. Every other part is one hex.

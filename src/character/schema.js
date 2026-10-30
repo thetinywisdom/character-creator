@@ -37,12 +37,9 @@ export function defaultDocument() {
     head: {
       shape: 'classic',
       size: null,
-      hair: { style: 'none', color: '#2a2118', highlight: null },
+      hair: { style: 'none', color: '#2a2118' },
       facialHair: 'none',
       headwear: { id: 'none', color: '#1d2a3a' },
-      eyewear: { id: 'none', color: '#111111' },
-      ears: 'normal',
-      earrings: { id: 'none', color: '#d4af37' },
     },
     arms: { left: arm(), right: arm() },
     legs: {
@@ -108,13 +105,13 @@ function rejectUnknown(input, allowed, path, errors) {
   }
 }
 
-function take(input, base, path, errors, fields) {
+function take(input, base, path, errors, fields, ignoreUnknown = false) {
   if (input === undefined) return structuredClone(base);
   if (!isObject(input)) {
     fail(errors, path, 'must be an object');
     return structuredClone(base);
   }
-  rejectUnknown(input, Object.keys(base), path, errors);
+  if (!ignoreUnknown) rejectUnknown(input, Object.keys(base), path, errors);
   const next = structuredClone(base);
   for (const [key, read] of Object.entries(fields)) {
     if (key in input) next[key] = read(input[key], `${path}.${key}`);
@@ -145,37 +142,55 @@ function readBody(input, errors) {
   });
 }
 
+const REMOVED_HAIR = new Set(['spikes', 'mohawk']);
+const REMOVED_HEADWEAR = new Set(['crown', 'horns']);
+
 function readHead(input, errors) {
   const base = defaultDocument().head;
-  const head = take(input, base, 'head', errors, {
+  const source = isObject(input) ? { ...input } : input;
+  if (isObject(source)) {
+    delete source.ears;
+    delete source.earrings;
+    delete source.eyewear;
+  }
+  const head = take(source, base, 'head', errors, {
     shape: (value, path) => expectPart('head.shape', value, path, errors),
     size: (value, path) => expectNumber(value, path, errors, true),
     facialHair: (value, path) => expectPart('head.facialHair', value, path, errors),
-    ears: (value, path) => expectPart('head.ears', value, path, errors),
-  });
-  if (input === undefined || !isObject(input)) return head;
-  if ('hair' in input) head.hair = readHair(input.hair, errors);
-  if ('headwear' in input) head.headwear = readIdColor(input.headwear, 'head.headwear', 'head.headwear', errors);
-  if ('eyewear' in input) head.eyewear = readIdColor(input.eyewear, 'head.eyewear', 'head.eyewear', errors);
-  if ('earrings' in input) head.earrings = readIdColor(input.earrings, 'head.earrings', 'head.earrings', errors);
+  }, true);
+  if (!isObject(source)) return head;
+  if ('hair' in source) head.hair = readHair(source.hair, errors);
+  if ('headwear' in source) head.headwear = readHeadwear(source.headwear, errors);
   return head;
 }
 
 function readHair(input, errors) {
   const base = defaultDocument().head.hair;
-  return take(input, base, 'head.hair', errors, {
+  const source = isObject(input) ? { ...input } : input;
+  if (isObject(source)) {
+    delete source.highlight;
+    if (REMOVED_HAIR.has(source.style)) source.style = 'none';
+  }
+  return take(source, base, 'head.hair', errors, {
     style: (value, path) => expectPart('head.hair', value, path, errors),
     color: (value, path) => expectColor(value, path, errors),
-    highlight: (value, path) => expectColor(value, path, errors, true),
-  });
+  }, true);
+}
+
+function readHeadwear(input, errors) {
+  const base = defaultDocument().head.headwear;
+  const source = isObject(input) ? { ...input } : input;
+  if (isObject(source) && REMOVED_HEADWEAR.has(source.id)) source.id = 'none';
+  return take(source, base, 'head.headwear', errors, {
+    id: (value, path) => expectPart('head.headwear', value, path, errors),
+    color: (value, path) => expectColor(value, path, errors),
+  }, true);
 }
 
 function readIdColor(input, path, slot, errors) {
   const base = { id: 'none', color: '#000000' };
   const fallback = {
     'head.headwear': defaultDocument().head.headwear,
-    'head.eyewear': defaultDocument().head.eyewear,
-    'head.earrings': defaultDocument().head.earrings,
     'clothing.top': defaultDocument().clothing.top,
     'clothing.outer': defaultDocument().clothing.outer,
     'clothing.bottom': defaultDocument().clothing.bottom,

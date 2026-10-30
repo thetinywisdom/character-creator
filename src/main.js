@@ -82,7 +82,7 @@ function renderControl(control) {
     button.type = 'button';
     button.id = `${control.id}-skin`;
     button.className = 'skin-clear';
-    button.textContent = 'Skin';
+    button.textContent = control.clearLabel || 'Skin';
     line.append(input, button);
     wrap.append(row, line);
     return wrap;
@@ -289,6 +289,14 @@ function syncControls() {
   document.getElementById('bottomColor').value = doc.clothing.bottom.color;
   document.getElementById('shoeColor').value = doc.clothing.shoes.color;
   document.getElementById('shoeAccent').value = doc.clothing.shoes.accent;
+  document.getElementById('shape').value = doc.head.shape;
+  document.getElementById('headSize').value = String(spec.headRadius);
+  document.getElementById('headSize-val').textContent = `${fmt(spec.headRadius)} m`;
+  document.getElementById('hair').value = doc.head.hair.style;
+  document.getElementById('hairColor').value = doc.head.hair.color;
+  document.getElementById('facialHair').value = doc.head.facialHair;
+  document.getElementById('headwear').value = doc.head.headwear.id;
+  document.getElementById('headwearColor').value = doc.head.headwear.color;
   for (const id of ['top', 'topColor', 'outer', 'outerColor']) {
     document.getElementById(id).disabled = robotTorso;
   }
@@ -391,6 +399,21 @@ bindGarment('bottom', 'bottomColor', (doc, value) => { doc.clothing.bottom.id = 
 bindGarment('shoes', 'shoeColor', (doc, value) => { doc.clothing.shoes.id = value; }, (doc, value) => { doc.clothing.shoes.color = value; });
 document.getElementById('shoeAccent').addEventListener('input', (event) => {
   edit((doc) => { doc.clothing.shoes.accent = event.target.value; });
+});
+
+bindChoice('shape', (value) => edit((doc) => { doc.head.shape = value; }));
+bindChoice('hair', (value) => edit((doc) => { doc.head.hair.style = value; }));
+bindChoice('facialHair', (value) => edit((doc) => { doc.head.facialHair = value; }));
+bindChoice('headwear', (value) => edit((doc) => { doc.head.headwear.id = value; }));
+document.getElementById('hairColor').addEventListener('input', (event) => {
+  edit((doc) => { doc.head.hair.color = event.target.value; });
+});
+document.getElementById('headwearColor').addEventListener('input', (event) => {
+  edit((doc) => { doc.head.headwear.color = event.target.value; });
+});
+document.getElementById('headSize').addEventListener('input', (event) => {
+  body.setParams({ headSize: Number(event.target.value) });
+  syncControls();
 });
 
 function setAnim(next) {

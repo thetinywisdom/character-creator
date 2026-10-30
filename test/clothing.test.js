@@ -973,7 +973,7 @@ describe('clothing compositor', () => {
     assert.equal(hood.parent, open.joints.neck);
     assert.notEqual(hood.geometry.type, 'BoxGeometry');
     assert.equal(hatted.root.getObjectByName('clothingTopHood'), undefined);
-    assert.ok(open.getStats().vertices > hatted.getStats().vertices);
+    assert.ok(hatted.root.getObjectByName('headwearMesh'));
     assertClosedShell(hood);
     const spec = open.getResolved();
     const pos = hood.geometry.attributes.position;
@@ -1108,10 +1108,7 @@ describe('clothing compositor', () => {
       doc.head.shape = 'box';
       doc.head.hair.style = 'afro';
       doc.head.facialHair = 'beard';
-      doc.head.ears = 'cat';
-      doc.head.earrings.id = 'hoop';
-      doc.head.headwear.id = 'crown';
-      doc.head.eyewear.id = 'goggles';
+      doc.head.headwear.id = 'headband';
       doc.arms.left.type = 'muscular';
       doc.arms.left.hand = 'claw';
       doc.arms.left.wrist.id = 'band';

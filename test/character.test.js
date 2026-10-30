@@ -29,12 +29,9 @@ const PLAN_EXAMPLE = {
   head: {
     shape: 'round',
     size: 0.24,
-    hair: { style: 'bob', color: '#2a2118', highlight: '#8a6a4a' },
+    hair: { style: 'bob', color: '#2a2118' },
     facialHair: 'none',
     headwear: { id: 'beanie', color: '#1d2a3a' },
-    eyewear: { id: 'glasses', color: '#111111' },
-    ears: 'elf',
-    earrings: { id: 'stud', color: '#d4af37' },
   },
   arms: {
     left: { type: 'normal', color: null, hand: 'open', wrist: { id: 'band', color: '#222222' } },
@@ -67,10 +64,7 @@ describe('character document', () => {
       'head.shape',
       'head.hair',
       'head.facialHair',
-      'head.ears',
-      'head.earrings',
       'head.headwear',
-      'head.eyewear',
       'arms.left',
       'arms.right',
       'arms.left.hand',
@@ -93,7 +87,7 @@ describe('character document', () => {
       registry.parts('head.shape').map((part) => part.id),
       ['classic', 'round', 'long', 'box'],
     );
-    assert.equal(registry.parts('head.hair').length, 8);
+    assert.equal(registry.parts('head.hair').length, 6);
     assert.deepEqual(
       registry.parts('clothing.bottom').map((part) => part.id),
       ['none', 'pants', 'shorts', 'skirt'],
@@ -170,8 +164,9 @@ describe('character document', () => {
 
   it('builds the body, arms, legs, clothing, and motion controls from the registry', () => {
     const sections = panelSections();
-    assert.deepEqual(sections.map((section) => section.id), ['body', 'arms', 'legs', 'clothes', 'motion']);
-    assert.equal(sections[3].label, 'Clothing');
+    assert.deepEqual(sections.map((section) => section.id), ['body', 'head', 'arms', 'legs', 'clothes', 'motion']);
+    assert.equal(sections[1].label, 'Head');
+    assert.equal(sections[4].label, 'Clothing');
     assert.deepEqual(
       sections[0].controls.map((control) => control.id),
       ['presentation', 'bodyType', 'torso', 'height', 'shoulder', 'belly', 'hip', 'thick', 'skin'],
@@ -182,38 +177,42 @@ describe('character document', () => {
     );
     assert.deepEqual(
       sections[1].controls.map((control) => control.id),
-      ['armL', 'armLColor', 'handL', 'armR', 'armRColor', 'handR'],
-    );
-    assert.deepEqual(
-      sections[1].controls.find((control) => control.id === 'handL').options.map((option) => option.id),
-      ['open', 'fist', 'claw', 'hook'],
+      ['shape', 'headSize', 'hair', 'hairColor', 'facialHair', 'headwear', 'headwearColor'],
     );
     assert.deepEqual(
       sections[2].controls.map((control) => control.id),
-      ['legL', 'legLColor', 'legR', 'legRColor'],
+      ['armL', 'armLColor', 'handL', 'armR', 'armRColor', 'handR'],
     );
     assert.deepEqual(
-      sections[2].controls.find((control) => control.id === 'legL').options.map((option) => option.id),
-      ['normal', 'robot', 'peg'],
+      sections[2].controls.find((control) => control.id === 'handL').options.map((option) => option.id),
+      ['open', 'fist', 'claw', 'hook'],
     );
     assert.deepEqual(
       sections[3].controls.map((control) => control.id),
-      ['top', 'topColor', 'outer', 'outerColor', 'bottom', 'bottomColor', 'shoes', 'shoeColor', 'shoeAccent'],
+      ['legL', 'legLColor', 'legR', 'legRColor'],
     );
     assert.deepEqual(
-      sections[3].controls.find((control) => control.id === 'top').options.map((option) => option.id),
-      ['none', 'tank', 'tee', 'shirt', 'hoodie'],
-    );
-    assert.deepEqual(
-      sections[3].controls.find((control) => control.id === 'bottom').options.map((option) => option.id),
-      ['none', 'pants', 'shorts', 'skirt'],
+      sections[3].controls.find((control) => control.id === 'legL').options.map((option) => option.id),
+      ['normal', 'robot', 'peg'],
     );
     assert.deepEqual(
       sections[4].controls.map((control) => control.id),
+      ['top', 'topColor', 'outer', 'outerColor', 'bottom', 'bottomColor', 'shoes', 'shoeColor', 'shoeAccent'],
+    );
+    assert.deepEqual(
+      sections[4].controls.find((control) => control.id === 'top').options.map((option) => option.id),
+      ['none', 'tank', 'tee', 'shirt', 'hoodie'],
+    );
+    assert.deepEqual(
+      sections[4].controls.find((control) => control.id === 'bottom').options.map((option) => option.id),
+      ['none', 'pants', 'shorts', 'skirt'],
+    );
+    assert.deepEqual(
+      sections[5].controls.map((control) => control.id),
       ['walkStyle', 'anim', 'speed', 'wire', 'turn'],
     );
     assert.deepEqual(
-      sections[4].controls.find((control) => control.id === 'walkStyle').options.map((option) => option.id),
+      sections[5].controls.find((control) => control.id === 'walkStyle').options.map((option) => option.id),
       ['normal', 'stomp', 'swagger'],
     );
   });
@@ -240,8 +239,8 @@ describe('createCharacter', () => {
     assert.equal(character.sockets.gripR.parent, character.joints.wristR);
     assert.equal(character.sockets.wristItemL.parent, character.joints.wristL);
     assert.equal(character.sockets.wristItemR.parent, character.joints.wristR);
-    for (const socket of Object.values(character.sockets)) {
-      assert.equal(socket.children.length, 0);
+    for (const [name, socket] of Object.entries(character.sockets)) {
+      assert.equal(socket.children.length, 0, name);
       assert.equal(socket.userData.socket, true);
     }
     assert.equal(character.getRegistry(), getRegistry());
