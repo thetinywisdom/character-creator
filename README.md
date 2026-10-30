@@ -23,7 +23,7 @@ root > pelvis > waist > neck > head
 
 Each joint is a low-poly ball (`SphereGeometry`, 8×6) whose diameter matches the segment it joins. The 8 longitudes are lined up with the tube vertices, so the equator is the same octagon as the limb and a straight limb hides the ball. Smooth normals keep it reading as round when a bend shows it. Shoulder and hip balls use the radius of the limb that hangs from them and sit against the block. The waist ball is the same diameter as the chest bottom and the pelvis top, so those faces meet it flush.
 
-Everything else stays minimal. Limbs are open 8-sided tapers, each hand is a 13-vertex paddle, each foot is an 8×6 ellipsoid. The chest and pelvis keep the tapered block shape, with a two-segment quarter-circle bevel on every edge and smooth normals, so the corners read as rounded wood instead of razor edges. Each block is 72 vertices. The tubes use smooth normals so they read as round at city size.
+Everything else stays minimal. Limbs are open 8-sided tapers, each hand is a 25-vertex rounded mitt, each foot is an 8×6 ellipsoid. The chest and pelvis keep the tapered block shape, with a two-segment quarter-circle bevel on every edge and smooth normals, so the corners read as rounded wood instead of razor edges. Each block is 72 vertices. The tubes use smooth normals so they read as round at city size.
 
 Default body: **1445 vertices, 1916 triangles** (14 balls, 9 tubes, 2 beveled blocks, 2 mitts, 2 feet, 1 head).
 
