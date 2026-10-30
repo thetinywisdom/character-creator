@@ -1,6 +1,8 @@
 import { getRegistry } from './registry.js';
 
 /** Body fields plus the torso slot. Presets write the numeric sliders. */
+export const SHOULDER_WIDTH = { min: 0.18, max: 0.44, step: 0.005 };
+
 export const BODY_CONTROLS = [
   {
     id: 'presentation',
@@ -24,7 +26,7 @@ export const BODY_CONTROLS = [
   },
   { id: 'torso', kind: 'slot', slot: 'body.torso', label: 'Torso' },
   { id: 'height', kind: 'range', label: 'Height', min: 1.35, max: 2.15, step: 0.01, unit: 'm' },
-  { id: 'shoulder', kind: 'range', label: 'Shoulder width', min: 0.22, max: 0.72, step: 0.005, unit: 'm' },
+  { id: 'shoulder', kind: 'range', label: 'Shoulder width', min: SHOULDER_WIDTH.min, max: SHOULDER_WIDTH.max, step: SHOULDER_WIDTH.step, unit: 'm' },
   { id: 'belly', kind: 'range', label: 'Belly', min: 0.08, max: 0.7, step: 0.005, unit: 'm' },
   { id: 'hip', kind: 'range', label: 'Hip width', min: 0.1, max: 0.46, step: 0.005, unit: 'm' },
   { id: 'thick', kind: 'range', label: 'Limb thickness', min: 0.65, max: 1.7, step: 0.01 },
@@ -45,6 +47,18 @@ export const LEGS_CONTROLS = [
   { id: 'legLColor', kind: 'color', label: 'Left color', nullable: true },
   { id: 'legR', kind: 'slot', slot: 'legs.right', label: 'Right leg' },
   { id: 'legRColor', kind: 'color', label: 'Right color', nullable: true },
+];
+
+export const CLOTHES_CONTROLS = [
+  { id: 'top', kind: 'slot', slot: 'clothing.top', label: 'Top' },
+  { id: 'topColor', kind: 'color', label: 'Top color' },
+  { id: 'outer', kind: 'slot', slot: 'clothing.outer', label: 'Outer' },
+  { id: 'outerColor', kind: 'color', label: 'Outer color' },
+  { id: 'bottom', kind: 'slot', slot: 'clothing.bottom', label: 'Bottom' },
+  { id: 'bottomColor', kind: 'color', label: 'Bottom color' },
+  { id: 'shoes', kind: 'slot', slot: 'clothing.shoes', label: 'Shoes' },
+  { id: 'shoeColor', kind: 'color', label: 'Shoe color' },
+  { id: 'shoeAccent', kind: 'color', label: 'Sole' },
 ];
 
 export const MOTION_CONTROLS = [

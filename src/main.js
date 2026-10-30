@@ -226,6 +226,7 @@ function frameCamera(name) {
   const spots = {
     front: new Vector3(0, lookY, dist),
     side: new Vector3(dist, lookY, 0),
+    back: new Vector3(0, lookY, -dist),
     three: new Vector3(dist * 0.62, lookY + h * 0.06, dist * 0.78),
   };
   camera.position.copy(spots[name] || spots.three);
@@ -278,6 +279,19 @@ function syncControls() {
   syncNullableColor('armRColor', doc.arms.right.color, spec.skinColor);
   syncNullableColor('legLColor', doc.legs.left.color, spec.skinColor);
   syncNullableColor('legRColor', doc.legs.right.color, spec.skinColor);
+  const robotTorso = doc.body.torso === 'robot';
+  document.getElementById('top').value = doc.clothing.top.id;
+  document.getElementById('outer').value = doc.clothing.outer.id;
+  document.getElementById('bottom').value = doc.clothing.bottom.id;
+  document.getElementById('shoes').value = doc.clothing.shoes.id;
+  document.getElementById('topColor').value = doc.clothing.top.color;
+  document.getElementById('outerColor').value = doc.clothing.outer.color;
+  document.getElementById('bottomColor').value = doc.clothing.bottom.color;
+  document.getElementById('shoeColor').value = doc.clothing.shoes.color;
+  document.getElementById('shoeAccent').value = doc.clothing.shoes.accent;
+  for (const id of ['top', 'topColor', 'outer', 'outerColor']) {
+    document.getElementById(id).disabled = robotTorso;
+  }
   if (document.activeElement !== documentBox) {
     documentBox.value = JSON.stringify(body.getDocument(), null, 2);
   }
@@ -363,6 +377,21 @@ bindArm('L', 'armL', 'armLColor', 'handL');
 bindArm('R', 'armR', 'armRColor', 'handR');
 bindLeg('L', 'legL', 'legLColor');
 bindLeg('R', 'legR', 'legRColor');
+
+function bindGarment(idId, colorId, applyId, applyColor) {
+  bindChoice(idId, (value) => edit((doc) => { applyId(doc, value); }));
+  document.getElementById(colorId).addEventListener('input', (event) => {
+    edit((doc) => { applyColor(doc, event.target.value); });
+  });
+}
+
+bindGarment('top', 'topColor', (doc, value) => { doc.clothing.top.id = value; }, (doc, value) => { doc.clothing.top.color = value; });
+bindGarment('outer', 'outerColor', (doc, value) => { doc.clothing.outer.id = value; }, (doc, value) => { doc.clothing.outer.color = value; });
+bindGarment('bottom', 'bottomColor', (doc, value) => { doc.clothing.bottom.id = value; }, (doc, value) => { doc.clothing.bottom.color = value; });
+bindGarment('shoes', 'shoeColor', (doc, value) => { doc.clothing.shoes.id = value; }, (doc, value) => { doc.clothing.shoes.color = value; });
+document.getElementById('shoeAccent').addEventListener('input', (event) => {
+  edit((doc) => { doc.clothing.shoes.accent = event.target.value; });
+});
 
 function setAnim(next) {
   anim = byId[next] ? next : 'idle';

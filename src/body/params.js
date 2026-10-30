@@ -15,11 +15,13 @@ export const REFERENCE_HEIGHT = 1.8;
  */
 const PHOTO = {
   visibleNeck: 32 / 1074,
-  shoulderSpan: 248 / 1074,
   waistWidth: 93 / 1074,
   pelvisWidth: 145 / 1074,
   hipSpan: 90 / 1074,
 };
+
+/** Shoulder span of the default 1.8 m figure. Presets scale from this. */
+const DEFAULT_SHOULDER = 0.3;
 
 /** How the flexible torso and legs share whatever height is left after the head and feet. */
 const SHARE = {
@@ -105,25 +107,22 @@ export function resolveParams(input = {}) {
   const socketDrop = -ISO_HEAD_NECK_Y * headScale;
   const headNeckY = ISO_HEAD_NECK_Y * headScale;
 
-  const shoulderWidth = clamp(auto(p.shoulderWidth, Math.max(PHOTO.shoulderSpan * REFERENCE_HEIGHT * s, shoulderR * 3.2)), 0.08);
+  const shoulderWidth = clamp(auto(p.shoulderWidth, Math.max(DEFAULT_SHOULDER * s, shoulderR * 3.2)), 0.08);
   const hipWidth = clamp(auto(p.hipWidth, Math.max(PHOTO.hipSpan * REFERENCE_HEIGHT * s, hipR * 2.2 + 0.012)), 0.06);
-  const shoulderX = shoulderWidth / 2;
   const hipX = hipWidth / 2;
 
   const chestBottom = waistR * 2;
-  let chestTopHalf = shoulderX - shoulderR * 0.2;
-  chestTopHalf = Math.max(chestTopHalf, baseWaistR * 1.55);
-  if (p.torsoWidth != null) chestTopHalf = clamp(Number(p.torsoWidth) || chestTopHalf * 2, chestBottom) / 2;
-  const chestTopWidth = chestTopHalf * 2;
-  const chestTopDepth = p.torsoDepth != null
-    ? clamp(Number(p.torsoDepth) || chestBottom, waistR * 2)
-    : Math.max(chestBottom * 1.45, chestTopWidth * 0.56);
+  // Straight upper-torso box. The shoulder joints sit on its side faces.
+  const chestTopWidth = shoulderWidth;
 
   const pelvisTop = waistR * 2;
   let pelvisBottomHalf = hipX + hipR * 0.7;
   pelvisBottomHalf = Math.max(pelvisBottomHalf, waistR * 1.22);
   const pelvisBottomWidth = pelvisBottomHalf * 2;
   const pelvisBottomDepth = Math.max(pelvisTop * 1.15, pelvisBottomWidth * 0.68);
+  const chestTopDepth = p.torsoDepth != null
+    ? clamp(Number(p.torsoDepth) || pelvisBottomDepth, 0.04)
+    : pelvisBottomDepth;
 
   const footHeight = clamp(auto(p.footHeight, Math.max(0.044 * s, ankleR * 0.95)), 0.012);
   const footWidth = clamp(auto(p.footWidth, Math.max(0.078 * s, ankleR * 1.9)), 0.02);
@@ -181,6 +180,12 @@ export function resolveParams(input = {}) {
   const upperArmLength = clamp(auto(p.upperArmLength, 0.3 * s), 0.05);
   const forearmLength = clamp(auto(p.forearmLength, 0.27 * s), 0.05);
 
+  const chestNeckWidth = Math.min(chestTopWidth * 0.48, Math.max(neckR * 2.8, chestTopWidth * 0.34));
+  const chestNeckDepth = Math.min(chestTopDepth * 0.72, Math.max(neckR * 2.4, chestTopDepth * 0.48));
+  const shoulderRun = Math.max((chestTopWidth - chestNeckWidth) / 2, 0.01);
+  const dropMax = Math.min(chestMeshHeight * 0.14, lengths.chest * SHOULDER_T * 0.55);
+  const chestShoulderDrop = Math.min(Math.max(shoulderRun * 0.36, Math.min(0.018 * s, dropMax)), dropMax);
+
   return {
     height,
     skinColor: p.skinColor || DEFAULT_PARAMS.skinColor,
@@ -199,7 +204,10 @@ export function resolveParams(input = {}) {
     chestTopWidth,
     chestBottomWidth: chestBottom,
     chestTopDepth,
-    chestBottomDepth: chestBottom,
+    chestBottomDepth: chestTopDepth,
+    chestNeckWidth,
+    chestNeckDepth,
+    chestShoulderDrop,
     chestMeshY: WAIST_GAP,
     chestMeshHeight,
     pelvisHeight: lengths.hipToWaist,

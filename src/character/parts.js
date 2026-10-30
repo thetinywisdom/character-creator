@@ -1,6 +1,7 @@
 import { ANIMATIONS } from '../body/animate.js';
+import { buildClothing } from './clothing.js';
 import { buildArm, buildLeg, buildTorso } from './limbs.js';
-import { ARMS_CONTROLS, BODY_CONTROLS, LEGS_CONTROLS, MOTION_CONTROLS } from './panels.js';
+import { ARMS_CONTROLS, BODY_CONTROLS, CLOTHES_CONTROLS, LEGS_CONTROLS, MOTION_CONTROLS } from './panels.js';
 import { registerPart, registerSection, registerSlot } from './registry.js';
 
 const empty = () => {};
@@ -13,6 +14,10 @@ function part(slotId, id, label, extra = {}) {
   registerPart(slotId, id, { label, build: empty, ...extra });
 }
 
+function cloth(slotId, id, label, extra = {}) {
+  part(slotId, id, label, { build: buildClothing, ...extra });
+}
+
 function mirror(slotIds, entries) {
   for (const slotId of slotIds) {
     for (const [id, label, extra] of entries) part(slotId, id, label, extra);
@@ -23,7 +28,7 @@ registerSection('body', { label: 'Body', controls: BODY_CONTROLS });
 registerSection('head', { label: 'Head' });
 registerSection('arms', { label: 'Arms', controls: ARMS_CONTROLS });
 registerSection('legs', { label: 'Legs', controls: LEGS_CONTROLS });
-registerSection('clothes', { label: 'Clothes' });
+registerSection('clothes', { label: 'Clothing', controls: CLOTHES_CONTROLS });
 registerSection('gear', { label: 'Gear' });
 registerSection('motion', { label: 'Motion', controls: MOTION_CONTROLS });
 
@@ -119,29 +124,29 @@ mirror(['legs.left', 'legs.right'], [
 ]);
 
 slot('clothing.top', 'clothes', 'Top');
-part('clothing.top', 'none', 'None');
-part('clothing.top', 'tank', 'Tank', { covers: ['chest'] });
-part('clothing.top', 'tee', 'T-shirt', { covers: ['chest', 'upperArmL', 'upperArmR'] });
-part('clothing.top', 'shirt', 'Shirt', { covers: ['chest', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR'] });
-part('clothing.top', 'hoodie', 'Hoodie', { covers: ['chest', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR'] });
+cloth('clothing.top', 'none', 'None');
+cloth('clothing.top', 'tank', 'Tank', { covers: ['chest'] });
+cloth('clothing.top', 'tee', 'T-shirt', { covers: ['chest', 'shoulderL', 'shoulderR', 'upperArmL', 'upperArmR'] });
+cloth('clothing.top', 'shirt', 'Shirt', { covers: ['chest', 'shoulderL', 'shoulderR', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR'] });
+cloth('clothing.top', 'hoodie', 'Hoodie', { covers: ['chest', 'shoulderL', 'shoulderR', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR'] });
 
 slot('clothing.outer', 'clothes', 'Outer');
-part('clothing.outer', 'none', 'None');
-part('clothing.outer', 'jacket', 'Jacket', { covers: ['chest', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR'] });
-part('clothing.outer', 'vest', 'Vest', { covers: ['chest'] });
-part('clothing.outer', 'cape', 'Cape');
+cloth('clothing.outer', 'none', 'None');
+cloth('clothing.outer', 'jacket', 'Jacket', { covers: ['shoulderL', 'shoulderR', 'upperArmL', 'upperArmR', 'forearmL', 'forearmR'] });
+cloth('clothing.outer', 'vest', 'Vest');
+cloth('clothing.outer', 'cape', 'Cape');
 
 slot('clothing.bottom', 'clothes', 'Bottom');
-part('clothing.bottom', 'none', 'None');
-part('clothing.bottom', 'pants', 'Pants', { covers: ['pelvis', 'thighL', 'thighR', 'shinL', 'shinR'] });
-part('clothing.bottom', 'shorts', 'Shorts', { covers: ['pelvis', 'thighL', 'thighR'] });
-part('clothing.bottom', 'skirt', 'Skirt', { covers: ['pelvis'] });
+cloth('clothing.bottom', 'none', 'None');
+cloth('clothing.bottom', 'pants', 'Pants', { covers: ['pelvis', 'thighL', 'thighR', 'shinL', 'shinR'] });
+cloth('clothing.bottom', 'shorts', 'Shorts', { covers: ['pelvis', 'thighL', 'thighR'] });
+cloth('clothing.bottom', 'skirt', 'Skirt', { covers: ['pelvis'] });
 
 slot('clothing.shoes', 'clothes', 'Shoes');
-part('clothing.shoes', 'barefoot', 'Barefoot');
-part('clothing.shoes', 'sneakers', 'Sneakers', { covers: ['footL', 'footR'] });
-part('clothing.shoes', 'boots', 'Boots', { covers: ['footL', 'footR', 'shinL', 'shinR'] });
-part('clothing.shoes', 'flats', 'Flats', { covers: ['footL', 'footR'] });
+cloth('clothing.shoes', 'barefoot', 'Barefoot');
+cloth('clothing.shoes', 'sneakers', 'Sneakers', { covers: ['footL', 'footR'] });
+cloth('clothing.shoes', 'boots', 'Boots', { covers: ['footL', 'footR', 'shinL', 'shinR'] });
+cloth('clothing.shoes', 'flats', 'Flats', { covers: ['footL', 'footR'] });
 
 slot('back', 'gear', 'Back');
 part('back', 'none', 'None');

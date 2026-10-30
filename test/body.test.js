@@ -192,6 +192,11 @@ describe('createBody', () => {
 
     assert.equal(joints.shoulderL.parent, joints.waist);
     assert.equal(joints.elbowL.parent, joints.shoulderL);
+    assert.equal(findMesh(body.root, 'shoulderLMesh').parent, joints.shoulderL);
+    assert.equal(findMesh(body.root, 'shoulderLMesh').userData.segment, 'upperArmL');
+    assert.equal(findMesh(body.root, 'upperArmLMesh').userData.segment, 'upperArmL');
+    assert.equal(findMesh(body.root, 'shoulderRMesh').userData.segment, 'upperArmR');
+    assert.equal(findMesh(body.root, 'upperArmRMesh').userData.segment, 'upperArmR');
     assert.equal(joints.wristL.parent, joints.elbowL);
     assert.equal(findMesh(body.root, 'handLMesh').parent, joints.wristL);
 
@@ -301,13 +306,37 @@ describe('createBody', () => {
     assert.ok(upper.geometry.parameters.radiusTop > upper.geometry.parameters.radiusBottom);
 
     const waistD = waist.geometry.parameters.radius * 2;
-    assert.ok(Math.abs(chest.geometry.userData.bottomWidth - waistD) < 1e-6);
-    assert.ok(Math.abs(chest.geometry.userData.bottomDepth - waistD) < 1e-6);
     assert.ok(Math.abs(pelvis.geometry.userData.topWidth - waistD) < 1e-6);
     assert.ok(Math.abs(pelvis.geometry.userData.topDepth - waistD) < 1e-6);
-    assert.ok(chest.geometry.userData.topWidth > chest.geometry.userData.bottomWidth * 1.6);
+    assert.ok(Math.abs(chest.geometry.userData.topWidth - chest.geometry.userData.bottomWidth) < 1e-6);
+    assert.ok(Math.abs(chest.geometry.userData.topDepth - chest.geometry.userData.bottomDepth) < 1e-6);
+    assert.ok(Math.abs(chest.geometry.userData.topDepth - pelvis.geometry.userData.bottomDepth) < 1e-6);
+    assert.ok(Math.abs(chest.geometry.userData.topWidth - spec.shoulderWidth) < 1e-6);
+    assert.ok(chest.geometry.userData.neckWidth < chest.geometry.userData.topWidth * 0.7);
+    assert.ok(chest.geometry.userData.shoulderDrop > 0.02);
+    const chestPos = chest.geometry.attributes.position;
+    let neckX = 0;
+    let shoulderX = 0;
+    let midX = 0;
+    const neckY = chest.geometry.userData.height;
+    const shoulderY = chest.geometry.userData.shoulderY;
+    for (let i = 0; i < chestPos.count; i += 1) {
+      const x = Math.abs(chestPos.getX(i));
+      const y = chestPos.getY(i);
+      if (Math.abs(y - neckY) < 0.004) neckX = Math.max(neckX, x);
+      if (Math.abs(y - shoulderY) < 0.004) shoulderX = Math.max(shoulderX, x);
+      if (y > shoulderY + 0.003 && y < neckY - 0.003) midX = Math.max(midX, x);
+    }
+    assert.ok(shoulderX > neckX * 1.45, 'chest narrows from the shoulder into the neck');
+    assert.ok(midX > neckX && midX < shoulderX, 'the upper corner is bevelled');
+    assert.ok(neckY > shoulderY + chest.geometry.userData.shoulderDrop * 0.9);
     assert.ok(pelvis.geometry.userData.bottomWidth > pelvis.geometry.userData.topWidth * 1.15);
-    assert.ok(chest.geometry.userData.topDepth > chest.geometry.userData.bottomDepth);
+    let sideX = 0;
+    for (let i = 0; i < chestPos.count; i += 1) {
+      const y = chestPos.getY(i);
+      if (y > 0.015 && y < shoulderY - 0.01) sideX = Math.max(sideX, Math.abs(chestPos.getX(i)));
+    }
+    assert.ok(Math.abs(sideX - shoulderX) < 0.004, 'the chest sides stay vertical');
 
     const headPos = head.geometry.attributes.position;
     let maxH = 0;

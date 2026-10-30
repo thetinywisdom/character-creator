@@ -78,9 +78,9 @@ describe('proportions and limb variants', () => {
     assert.ok(Math.abs(character.getResolved().radii.waist - 0.2) < 1e-6);
     const chest = character.root.getObjectByName('chestMesh').geometry.userData;
     const pelvis = character.root.getObjectByName('pelvisMesh').geometry.userData;
-    assert.ok(Math.abs(chest.bottomWidth - 0.4) < 1e-6);
     assert.ok(Math.abs(pelvis.topWidth - 0.4) < 1e-6);
     assert.ok(Math.abs(chest.topWidth - top) < 1e-6);
+    assert.ok(Math.abs(chest.bottomWidth - top) < 1e-6);
     assert.equal(character.getStats().vertices, 1421);
   });
 

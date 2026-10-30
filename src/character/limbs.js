@@ -1,6 +1,7 @@
 import { MeshStandardMaterial } from 'three';
 import {
   createBoxMesh,
+  createChestMesh,
   createFrustumMesh,
   createJointMesh,
   createMergedBoxMesh,
@@ -27,7 +28,7 @@ function skinMaterial(ctx, flat) {
   return ctx.materials.find((material) => material.userData.skin === kind);
 }
 
-function materialFor(ctx, color, flat) {
+export function materialFor(ctx, color, flat) {
   if (!color) return skinMaterial(ctx, flat);
   const hex = String(color).toLowerCase();
   const key = `${flat ? 'flat' : 'smooth'}:${hex}`;
@@ -86,9 +87,10 @@ function hangRect(parent, name, radiusTop, radiusBottom, length, material) {
   return mesh;
 }
 
-function addBall(parent, name, radius, material) {
+function addBall(parent, name, radius, material, segment) {
   const mesh = createJointMesh(radius, material);
   mesh.name = name;
+  if (segment) mesh.userData.segment = segment;
   parent.add(mesh);
   return mesh;
 }
@@ -193,12 +195,11 @@ function replaceArm(ctx, side, sign, arm) {
   const smooth = materialFor(ctx, arm.color, false);
   const robot = arm.type === 'robot';
   const sides = arm.type === 'skeleton' ? 4 : undefined;
-  addBall(shoulder, `shoulder${side}Mesh`, radii.shoulder, smooth);
-  if (robot) {
-    hangRect(shoulder, `upperArm${side}Mesh`, radii.shoulder, radii.elbow, spec.upperArmLength, flat);
-  } else {
-    hangTaper(shoulder, `upperArm${side}Mesh`, radii.shoulder, radii.elbow, spec.upperArmLength, flat, sides);
-  }
+  addBall(shoulder, `shoulder${side}Mesh`, radii.shoulder, smooth, `upperArm${side}`);
+  const upper = robot
+    ? hangRect(shoulder, `upperArm${side}Mesh`, radii.shoulder, radii.elbow, spec.upperArmLength, flat)
+    : hangTaper(shoulder, `upperArm${side}Mesh`, radii.shoulder, radii.elbow, spec.upperArmLength, flat, sides);
+  upper.userData.segment = `upperArm${side}`;
   addBall(elbow, `elbow${side}Mesh`, radii.elbow, smooth);
   if (robot) {
     hangRect(elbow, `forearm${side}Mesh`, radii.elbow, radii.wrist, spec.forearmLength, flat);
@@ -321,17 +322,10 @@ function restoreTorso(ctx) {
   removeNamed(ctx.root, 'chestMesh');
   removeNamed(ctx.root, 'pelvisMesh');
   removeNamed(ctx.root, 'yokeMesh');
-  addBlock(
-    ctx.joints.waist,
-    'chestMesh',
-    spec.chestTopWidth,
-    spec.chestBottomWidth,
-    spec.chestMeshHeight,
-    spec.chestTopDepth,
-    spec.chestBottomDepth,
-    spec.chestMeshY,
-    smooth,
-  );
+  const chest = createChestMesh(spec, smooth);
+  chest.name = 'chestMesh';
+  chest.position.y = spec.chestMeshY;
+  ctx.joints.waist.add(chest);
   addBlock(
     ctx.pelvis,
     'pelvisMesh',

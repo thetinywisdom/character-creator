@@ -2,6 +2,7 @@ import { Group, MeshStandardMaterial, Object3D } from 'three';
 import { JOINT_NAMES, createMotion } from './animate.js';
 import {
   countStats,
+  createChestMesh,
   createHeadMesh,
   createFootMesh,
   createFrustumMesh,
@@ -26,7 +27,8 @@ function makeJoints() {
 
 function disposeTree(obj) {
   obj.traverse((child) => {
-    if (child.isMesh) child.geometry.dispose();
+    if (child.isMesh && child.geometry) child.geometry.dispose();
+    if (child.skeleton?.boneTexture) child.skeleton.boneTexture.dispose();
   });
 }
 
@@ -51,12 +53,15 @@ function clearGenerated(nodes) {
  *       pelvis block
  *       hip > thigh > knee > shin > ankle > foot
  *       waist ball
- *         chest block, shoulder balls on its upper sides
+ *         chest box, straight sides, sloped into the neck
+ *         shoulder > shoulder ball and upper arm (the ball belongs to the arm)
  *         neck ball > neck > lathe head
  *
  * A joint sphere uses the radius of the segment it joins, so a straight limb
- * hides it and a bend lets it fill the wedge. Shoulder and hip balls are the
- * same radius as the limb that hangs from them, tucked into the block.
+ * hides it and a bend lets it fill the wedge. The shoulder ball is part of
+ * the upper arm, the same radius as that limb, and sits at the shoulder
+ * joint beside the chest. The hip ball matches the thigh and sits against
+ * the pelvis.
  */
 function layoutBody(root, pelvis, joints, spec, flat, smooth, markers) {
   const j = joints;
@@ -89,14 +94,7 @@ function layoutBody(root, pelvis, joints, spec, flat, smooth, markers) {
   waistBall.name = 'waistMesh';
   j.waist.add(waistBall);
 
-  const chest = createFrustumMesh(
-    spec.chestTopWidth,
-    spec.chestBottomWidth,
-    spec.chestMeshHeight,
-    spec.chestTopDepth,
-    spec.chestBottomDepth,
-    smooth,
-  );
+  const chest = createChestMesh(spec, smooth);
   chest.name = 'chestMesh';
   chest.position.y = spec.chestMeshY;
   j.waist.add(chest);
@@ -131,10 +129,12 @@ function addArm(joints, spec, flat, smooth, side, sign, shoulderY) {
 
   const ball = createJointMesh(R.shoulder, smooth);
   ball.name = `shoulder${side}Mesh`;
+  ball.userData.segment = `upperArm${side}`;
   shoulder.add(ball);
 
   const upper = createTaperMesh(R.shoulder, R.elbow, spec.upperArmLength, flat);
   upper.name = `upperArm${side}Mesh`;
+  upper.userData.segment = `upperArm${side}`;
   upper.position.y = -spec.upperArmLength / 2;
   shoulder.add(upper);
 

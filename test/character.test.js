@@ -168,9 +168,10 @@ describe('character document', () => {
     assert.equal(result.document.arms.left.hand, 'claw');
   });
 
-  it('builds the body, arms, legs, and motion controls from the registry', () => {
+  it('builds the body, arms, legs, clothing, and motion controls from the registry', () => {
     const sections = panelSections();
-    assert.deepEqual(sections.map((section) => section.id), ['body', 'arms', 'legs', 'motion']);
+    assert.deepEqual(sections.map((section) => section.id), ['body', 'arms', 'legs', 'clothes', 'motion']);
+    assert.equal(sections[3].label, 'Clothing');
     assert.deepEqual(
       sections[0].controls.map((control) => control.id),
       ['presentation', 'bodyType', 'torso', 'height', 'shoulder', 'belly', 'hip', 'thick', 'skin'],
@@ -197,10 +198,22 @@ describe('character document', () => {
     );
     assert.deepEqual(
       sections[3].controls.map((control) => control.id),
+      ['top', 'topColor', 'outer', 'outerColor', 'bottom', 'bottomColor', 'shoes', 'shoeColor', 'shoeAccent'],
+    );
+    assert.deepEqual(
+      sections[3].controls.find((control) => control.id === 'top').options.map((option) => option.id),
+      ['none', 'tank', 'tee', 'shirt', 'hoodie'],
+    );
+    assert.deepEqual(
+      sections[3].controls.find((control) => control.id === 'bottom').options.map((option) => option.id),
+      ['none', 'pants', 'shorts', 'skirt'],
+    );
+    assert.deepEqual(
+      sections[4].controls.map((control) => control.id),
       ['walkStyle', 'anim', 'speed', 'wire', 'turn'],
     );
     assert.deepEqual(
-      sections[3].controls.find((control) => control.id === 'walkStyle').options.map((option) => option.id),
+      sections[4].controls.find((control) => control.id === 'walkStyle').options.map((option) => option.id),
       ['normal', 'stomp', 'swagger'],
     );
   });
