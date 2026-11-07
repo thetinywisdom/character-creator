@@ -87,6 +87,17 @@ dressed in the same tones as the street will disappear.
    head, arms and legs; the cat's head) are separate groups pivoting at their
    joints, ready for animation later.
 
+## 3b. Body types
+
+- **Man / Woman** (presets of the same names set matching proportions).
+- **Woman:** hourglass torso (narrow waist, flared hips), the chest as **one
+  trapezoid block** (top slopes down from the upper chest, flat underside; never
+  spheres), full thighs tapering to slim knees and calves, knees angled slightly
+  inward, longer legs, slimmer arms and neck.
+- Neck, arm and leg thickness are separate sliders.
+- Every top stops at the hip line so the waistband shows and the hip shape
+  reads as body.
+
 ## 4. Readability checklist (for any new character)
 
 - [ ] Visible at street distance on the sidewalk, in Day **and** Night lighting

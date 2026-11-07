@@ -35,6 +35,28 @@ export function capsuleBetween(a, b, radius, material, radialSegments = 16) {
   return mesh;
 }
 
+/**
+ * Tapered limb segment from a (radius r1) to b (radius r2): a cone-like
+ * cylinder with a ball at each end, so joints stay rounded.
+ */
+export function taperBetween(a, b, r1, r2, material, radialSegments = 14) {
+  const A = new THREE.Vector3(...a);
+  const B = new THREE.Vector3(...b);
+  const dir = B.clone().sub(A);
+  const length = Math.max(dir.length(), 1e-4);
+  const g = new THREE.Group();
+  // CylinderGeometry runs from +y (radiusTop) to -y (radiusBottom)
+  const cyl = new THREE.Mesh(new THREE.CylinderGeometry(r2, r1, length, seg(radialSegments, 4)), material);
+  cyl.position.copy(A).add(B).multiplyScalar(0.5);
+  cyl.quaternion.setFromUnitVectors(UP, dir.clone().normalize());
+  const ballA = new THREE.Mesh(new THREE.SphereGeometry(r1, seg(radialSegments, 4), seg(radialSegments * 0.66, 3)), material);
+  ballA.position.copy(A);
+  const ballB = new THREE.Mesh(new THREE.SphereGeometry(r2, seg(radialSegments, 4), seg(radialSegments * 0.66, 3)), material);
+  ballB.position.copy(B);
+  g.add(cyl, ballA, ballB);
+  return g;
+}
+
 /** z coordinate on the front of an ellipsoid with radii rx, ry, rz at (x, y). */
 export function surfaceZ(x, y, rx, ry, rz) {
   return rz * Math.sqrt(Math.max(0, 1 - (x / rx) ** 2 - (y / ry) ** 2));

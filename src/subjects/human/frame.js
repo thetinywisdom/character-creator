@@ -18,21 +18,28 @@ export function measure(p) {
   const headY = H - R;
   const sw = p.shoulderWidth * H;
   const hw = p.hipWidth * H;
-  const limbR = p.limbThickness * H;
-  const armR = limbR;
-  const legR = limbR * 1.3;
+  const neckR = p.neckThickness * H;
+  const armR = p.armThickness * H;
+  const legR = p.legThickness * H;
   const L = torsoLen;
   const woman = p.bodyType === 'Woman';
 
   // torso side profile (radius by height): hips -> waist -> chest -> shoulders.
-  // The woman's profile flares wider at the hips from a narrower waist.
-  const side = new THREE.SplineCurve([
-    new THREE.Vector2(hw * (woman ? 0.47 : 0.42), 0),
-    new THREE.Vector2(hw * (woman ? 0.64 : 0.5), L * (woman ? 0.15 : 0.18)),
-    new THREE.Vector2((hw + sw) * 0.25 * (woman ? 0.76 : 0.9), L * 0.5),
+  // The woman's profile is an hourglass: wide flared hips, a narrow waist.
+  const side = new THREE.SplineCurve(woman ? [
+    new THREE.Vector2(hw * 0.5, 0),
+    new THREE.Vector2(hw * 0.56, L * 0.12),
+    new THREE.Vector2((hw + sw) * 0.25 * 0.72, L * 0.5),
+    new THREE.Vector2(sw * 0.47, L * 0.82),
+    new THREE.Vector2(sw * 0.4, L * 0.97),
+    new THREE.Vector2(neckR * 1.05, L),
+  ] : [
+    new THREE.Vector2(hw * 0.42, 0),
+    new THREE.Vector2(hw * 0.5, L * 0.18),
+    new THREE.Vector2((hw + sw) * 0.25 * 0.9, L * 0.5),
     new THREE.Vector2(sw * 0.5, L * 0.86),
     new THREE.Vector2(sw * 0.4, L * 0.98),
-    new THREE.Vector2(limbR * 1.2, L),
+    new THREE.Vector2(neckR * 1.05, L),
   ]);
   const torsoSamples = side.getPoints(seg(28, 6));
   const dense = side.getPoints(96);
@@ -51,15 +58,19 @@ export function measure(p) {
   return {
     woman,
     H, headH, R, chib, legLen, neckLen, torsoLen, hipY, shoulderY, headY,
-    sw, hw, limbR, armR, legR,
+    sw, hw, armR, legR, neckR,
     torsoSamples, torsoR,
     torsoDepth: 0.62, // torso is a lathe squashed front-to-back
-    neckR: limbR * (woman ? 1.0 : 1.15),
     armLen: torsoLen * 0.85 + legLen * 0.25,
     handR: armR * 1.4,
     footH,
     footL: H * 0.13,
-    hx: Math.max(hw * 0.5 - legR, legR * 0.9), // leg spacing from the centre line
+    hx: Math.max(hw * 0.5 - legR * (woman ? 1.25 : 1), legR * 0.9), // leg spacing
+    kneeIn: woman ? 0.45 : 0.1, // how far knees and feet move toward the centre (× hx)
+    // leg shape: thigh -> knee -> ankle radii. Women: full thighs, slim knees and calves.
+    thighR: legR * (woman ? 1.4 : 1.1),
+    kneeR: legR * (woman ? 0.78 : 0.88),
+    ankleR: legR * (woman ? 0.55 : 0.65),
     // head ellipsoid radii
     rx: R * p.headWidth, ry: R, rz: R * 0.92,
   };

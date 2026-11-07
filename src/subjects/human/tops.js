@@ -37,27 +37,17 @@ export function buildTorso(f, spec, mats) {
   const torso = new THREE.Group();
   torso.name = 'torso';
   // [from, to, material] as fractions of the torso height
+  // Every top stops at the hip line, so the waistband of the trousers or
+  // skirt shows below it and the hip shape reads as body, not as a flared shirt.
+  const HIP = 0.12;
   const bands = spec.crop
     ? [[0, 0.16, mats.legwear], [0.16, 0.5, mats.skin], [0.5, 1, mats.top]]
     : spec.tank
-      ? [[0, 0.88, mats.top], [0.88, 1, mats.skin]]
-      : [[0, 1, mats.top]];
+      ? [[0, HIP, mats.legwear], [HIP, 0.88, mats.top], [0.88, 1, mats.skin]]
+      : [[0, HIP, mats.legwear], [HIP, 1, mats.top]];
   for (const [a, b, m] of bands) torso.add(band(f, a * L, b * L, m));
 
-  if (f.woman) {
-    // chest: two large, soft shapes that merge into one bust silhouette, in
-    // whatever covers that height. Kept smooth (min segments) even in low-poly.
-    const y = L * 0.72;
-    const m = (bands.find(([a, b]) => y >= a * L && y <= b * L) ?? bands.at(-1))[2];
-    const r = f.sw * 0.19;
-    const front = f.torsoR(y) * f.torsoDepth;
-    for (const sx of [-1, 1]) {
-      const bust = new THREE.Mesh(new THREE.SphereGeometry(r, seg(16, 10), seg(10, 7)), m);
-      bust.scale.set(1, 0.85, 0.75);
-      bust.position.set(sx * f.sw * 0.12, f.hipY + y, front - r * 0.5);
-      torso.add(bust);
-    }
-  }
+  if (f.woman) torso.add(chest(f, L, bands));
 
   if (spec.tank) {
     // chunky shoulder straps over the bare band
@@ -80,11 +70,39 @@ export function buildTorso(f, spec, mats) {
     collar.position.y = f.shoulderY - L * 0.02;
     torso.add(collar);
     const front = f.torsoR(L * 0.5) * f.torsoDepth;
-    const placket = new THREE.Mesh(new THREE.BoxGeometry(f.sw * 0.1, L * 0.82, f.limbR * 0.6), mats.accent);
-    placket.position.set(0, f.hipY + L * 0.44, front + f.limbR * (f.woman ? 0.9 : 0.15));
+    const placket = new THREE.Mesh(new THREE.BoxGeometry(f.sw * 0.1, L * 0.82, f.armR * 0.6), mats.accent);
+    placket.position.set(0, f.hipY + L * 0.44, front + f.armR * 0.15);
     torso.add(placket);
   }
   return torso;
+}
+
+/**
+ * Chest: a single trapezoid block, the classic low-poly way to suggest a bust.
+ * The back face sits on the torso; the front face is narrower and only as
+ * tall as the lower part of the back face, so the top slopes down and forward
+ * from the upper chest while the underside stays nearly flat. Flat faces.
+ */
+function chest(f, L, bands) {
+  const y = L * 0.72;
+  const m = (bands.find(([a, b]) => y >= a * L && y <= b * L) ?? bands.at(-1))[2];
+  const W = f.sw * 0.72;   // width at the chest (spans most of it)
+  const Hb = L * 0.34;     // height where it meets the chest
+  const D = f.sw * 0.34;   // depth of the block
+  const geo = new THREE.BoxGeometry(W, Hb, D);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    if (pos.getZ(i) > 0) {
+      // front face: narrower, shorter, lower
+      pos.setX(i, pos.getX(i) * 0.9);
+      pos.setY(i, -Hb / 2 + (pos.getY(i) + Hb / 2) * 0.42);
+    }
+  }
+  geo.computeVertexNormals();
+  const mesh = new THREE.Mesh(geo, m);
+  mesh.position.set(0, f.hipY + y, f.torsoR(y) * f.torsoDepth - D * 0.35);
+  mesh.name = 'chest';
+  return mesh;
 }
 
 /** Sleeve for one arm (arm-local: shoulder at the origin, arm hangs down -y). */

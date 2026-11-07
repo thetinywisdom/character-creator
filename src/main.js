@@ -459,6 +459,15 @@ Object.assign(window, {
   __cc: {
     params, state, galleryCells, setView, applyStreet, actions,
     enterFocus: (i) => enterFocus(galleryCells[i]),
+    /** Orbit the inspection camera by `az` radians around the subject. */
+    orbit: (az) => {
+      const cell = activeCell();
+      cell.frame(bigViewWidth() / canvas.clientHeight, focusCam, { minHeight: framingHeight() });
+      const t = cell.viewCenter;
+      focusCam.position.sub(t).applyAxisAngle(new THREE.Vector3(0, 1, 0), az).add(t);
+      controls.target.copy(t);
+      controls.update();
+    },
     apply: (id, values) => { Object.assign(params[id], values); dirty.add(id); },
   },
 });

@@ -30,7 +30,9 @@ export const human = {
     legLength:     { group: 'Body', value: 0.54,  min: 0.35,  max: 0.65, step: 0.01,  label: 'Leg length' },
     shoulderWidth: { group: 'Body', value: 0.25,  min: 0.15,  max: 0.34, step: 0.005, label: 'Shoulder width' },
     hipWidth:      { group: 'Body', value: 0.2,   min: 0.12,  max: 0.3,  step: 0.005, label: 'Hip width' },
-    limbThickness: { group: 'Body', value: 0.026, min: 0.018, max: 0.06, step: 0.001, label: 'Limb thickness' },
+    neckThickness: { group: 'Body', value: 0.03,  min: 0.015, max: 0.06, step: 0.001, label: 'Neck thickness' },
+    armThickness:  { group: 'Body', value: 0.026, min: 0.015, max: 0.05, step: 0.001, label: 'Arm thickness' },
+    legThickness:  { group: 'Body', value: 0.034, min: 0.02,  max: 0.07, step: 0.001, label: 'Leg thickness' },
     headWidth:     { group: 'Body', value: 0.8,   min: 0.7,   max: 1.1,  step: 0.01,  label: 'Head width' },
     skin:          { group: 'Body', value: 'Light', options: names(SKIN_TONES), label: 'Skin tone' },
     // head
@@ -44,9 +46,13 @@ export const human = {
     shoeColor:     { group: 'Clothes', value: 'Brown', options: names(CLOTH_COLORS), label: 'Shoe colour' },
   },
   presets: {
-    Chibi:     { headsTall: 2.6, legLength: 0.42, shoulderWidth: 0.2,  hipWidth: 0.18, limbThickness: 0.035, headWidth: 0.95 },
-    Stylized:  { headsTall: 5,   legLength: 0.5,  shoulderWidth: 0.24, hipWidth: 0.19, limbThickness: 0.03,  headWidth: 0.85 },
-    Realistic: { headsTall: 7.5, legLength: 0.54, shoulderWidth: 0.25, hipWidth: 0.2,  limbThickness: 0.026, headWidth: 0.8 },
+    // body types with matching proportions
+    Man:       { bodyType: 'Man',   height: 1.75, legLength: 0.54, shoulderWidth: 0.26, hipWidth: 0.19, neckThickness: 0.031, armThickness: 0.027, legThickness: 0.035, headWidth: 0.8 },
+    Woman:     { bodyType: 'Woman', height: 1.68, legLength: 0.58, shoulderWidth: 0.22, hipWidth: 0.23, neckThickness: 0.023, armThickness: 0.021, legThickness: 0.033, headWidth: 0.78 },
+    // overall proportion styles
+    Chibi:     { headsTall: 2.6, legLength: 0.42, shoulderWidth: 0.2,  hipWidth: 0.18, neckThickness: 0.04,  armThickness: 0.035, legThickness: 0.045, headWidth: 0.95 },
+    Stylized:  { headsTall: 5,   legLength: 0.5,  shoulderWidth: 0.24, hipWidth: 0.19, neckThickness: 0.035, armThickness: 0.03,  legThickness: 0.039, headWidth: 0.85 },
+    Realistic: { headsTall: 7.5, legLength: 0.54, shoulderWidth: 0.25, hipWidth: 0.2,  neckThickness: 0.03,  armThickness: 0.026, legThickness: 0.034, headWidth: 0.8 },
   },
 
   /** A random but believable character (realistic proportions, varied outfit). */
@@ -63,10 +69,12 @@ export const human = {
       bodyType: woman ? 'Woman' : 'Man',
       headsTall: range(7, 7.5, 0.1),
       height: woman ? range(1.5, 1.75, 0.01) : range(1.62, 1.9, 0.01),
-      legLength: range(0.5, 0.58, 0.01),
+      legLength: woman ? range(0.55, 0.6, 0.01) : range(0.5, 0.56, 0.01),
       shoulderWidth: woman ? range(0.2, 0.24, 0.005) : range(0.24, 0.29, 0.005),
-      hipWidth: woman ? range(0.2, 0.24, 0.005) : range(0.17, 0.21, 0.005),
-      limbThickness: woman ? range(0.021, 0.028, 0.001) : range(0.024, 0.032, 0.001),
+      hipWidth: woman ? range(0.21, 0.25, 0.005) : range(0.17, 0.21, 0.005),
+      neckThickness: woman ? range(0.021, 0.026, 0.001) : range(0.028, 0.035, 0.001),
+      armThickness: woman ? range(0.019, 0.024, 0.001) : range(0.024, 0.031, 0.001),
+      legThickness: woman ? range(0.03, 0.036, 0.001) : range(0.031, 0.038, 0.001),
       headWidth: range(0.76, 0.86, 0.01),
       skin: pick(names(SKIN_TONES)),
       hair: pick(['short', 'short', 'medium', 'long', 'long', 'bun', 'spiky', 'mohawk', 'curly', 'afro', 'bald']),
