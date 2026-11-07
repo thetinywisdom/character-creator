@@ -20,7 +20,7 @@ export function sculptTorso(geo, f) {
   if (f.chestShape !== 'Wedge') {
     zones.push({
       sign: 1,                      // front
-      yc: 0.7 * L,                  // fullest point
+      yc: 0.64 * L,                 // fullest point
       up: 0.17 * L,                 // long slope up toward the collarbone
       down: 0.075 * L,              // short drop underneath
       amount: f.sw * 0.17 * f.chestSize,
