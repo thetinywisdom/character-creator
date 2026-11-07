@@ -42,9 +42,9 @@ export function measure(p) {
     // the man's profile is a V: narrow hips and waist, broad chest and shoulders
     new THREE.Vector2(hw * 0.44, 0),
     new THREE.Vector2(hw * 0.5, L * 0.14),
-    new THREE.Vector2((hw + sw) * 0.25 * 0.86, L * 0.42),
-    new THREE.Vector2(sw * 0.52, L * 0.78),
-    new THREE.Vector2(sw * 0.47, L * 0.91),      // squared, muscular shoulder line
+    new THREE.Vector2((hw + sw) * 0.25 * 0.88, L * 0.42),
+    new THREE.Vector2(sw * 0.48, L * 0.8),
+    new THREE.Vector2(sw * 0.45, L * 0.91),      // squared, muscular shoulder line
     new THREE.Vector2(neckR * 2.0, L * 0.965),   // trapezius slope into the neck
     new THREE.Vector2(neckR * 1.05, L),
   ]);
@@ -73,7 +73,7 @@ export function measure(p) {
     H, headH, R, chib, legLen, neckLen, torsoLen, hipY, shoulderY, headY,
     sw, hw, armR, legR, neckR,
     torsoSamples, torsoR, torsoBottom,
-    torsoDepth: woman ? 0.72 : 0.68, // torso is a lathe squashed front-to-back
+    torsoDepth: woman ? 0.72 : 0.63, // torso is a lathe squashed front-to-back
     armLen: torsoLen * 0.85 + legLen * 0.25,
     handR: armR * 1.3,
     footH,
@@ -91,7 +91,7 @@ export function measure(p) {
     // arms held a little away from the body (A-pose); wider for the woman
     armSpread: woman ? 0.2 : 0.17,
     // arm shape: rounded shoulder cap -> elbow -> slimmer wrist, slight bend
-    shoulderR: armR * (woman ? 1.55 : 1.5),   // men: strong shoulder caps and upper arms
+    shoulderR: armR * (woman ? 1.55 : 1.35),   // men: strong shoulder caps and upper arms
     elbowR: armR * (woman ? 0.95 : 1.05),
     wristR: armR * (woman ? 0.62 : 0.86),
     elbowBend: woman ? 0.2 : 0.18,

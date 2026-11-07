@@ -55,7 +55,7 @@ export const human = {
   },
   presets: {
     // body types with matching proportions
-    Man:       { bodyType: 'Man',   height: 1.78, legLength: 0.54, shoulderWidth: 0.27, hipWidth: 0.18, neckThickness: 0.035, armThickness: 0.031, legThickness: 0.037, headWidth: 0.8 },
+    Man:       { bodyType: 'Man',   height: 1.78, legLength: 0.54, shoulderWidth: 0.27, hipWidth: 0.18, neckThickness: 0.034, armThickness: 0.029, legThickness: 0.037, headWidth: 0.8 },
     Woman:     { bodyType: 'Woman', height: 1.68, legLength: 0.58, shoulderWidth: 0.22, hipWidth: 0.23, neckThickness: 0.023, armThickness: 0.023, legThickness: 0.033, headWidth: 0.78 },
     // overall proportion styles
     Chibi:     { headsTall: 2.6, legLength: 0.42, shoulderWidth: 0.2,  hipWidth: 0.18, neckThickness: 0.04,  armThickness: 0.035, legThickness: 0.045, headWidth: 0.95 },
@@ -81,7 +81,7 @@ export const human = {
       shoulderWidth: woman ? range(0.2, 0.24, 0.005) : range(0.25, 0.29, 0.005),
       hipWidth: woman ? range(0.21, 0.25, 0.005) : range(0.16, 0.2, 0.005),
       neckThickness: woman ? range(0.021, 0.026, 0.001) : range(0.031, 0.038, 0.001),
-      armThickness: woman ? range(0.021, 0.026, 0.001) : range(0.028, 0.034, 0.001),
+      armThickness: woman ? range(0.021, 0.026, 0.001) : range(0.026, 0.032, 0.001),
       legThickness: woman ? range(0.03, 0.036, 0.001) : range(0.031, 0.038, 0.001),
       headWidth: range(0.76, 0.86, 0.01),
       skin: pick(names(SKIN_TONES)),

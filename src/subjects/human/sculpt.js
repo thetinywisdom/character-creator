@@ -20,7 +20,7 @@ export function sculptTorso(geo, f) {
     // pecs: two broad, flat masses with a short edge underneath
     zones.push({
       sign: 1, yc: 0.74 * L, up: 0.11 * L, down: 0.05 * L,
-      amount: f.sw * 0.065, two: true, x0: f.sw * 0.16, sx: f.sw * 0.13, wx: f.sw * 0.3,
+      amount: f.sw * 0.03, two: true, x0: f.sw * 0.16, sx: f.sw * 0.13, wx: f.sw * 0.3,
     });
   }
   if (f.woman && f.chestShape !== 'Wedge') {
@@ -47,10 +47,11 @@ export function sculptTorso(geo, f) {
       wx: f.hw * 0.3,
     });
   }
-  // trapezius: fullness across the upper back, below the neck (stronger on men)
+  // trapezius: a very slight, wide fullness across the upper back (a narrow,
+  // strong one reads as a hump)
   zones.push({
     sign: -1, yc: 0.86 * L, up: 0.08 * L, down: 0.14 * L,
-    amount: f.sw * (f.woman ? 0.05 : 0.08), two: false, wx: f.sw * 0.3,
+    amount: f.sw * 0.02, two: false, wx: f.sw * 0.45,
   });
   if (!zones.length) return geo;
 

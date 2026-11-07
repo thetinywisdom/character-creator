@@ -97,14 +97,14 @@ dressed in the same tones as the street will disappear.
   ("Smooth (two)") with size sliders; the older trapezoid chest and round
   bottom remain as options. The torso continues a little below the hip line
   so the bottom sits over the top of the thighs, giving the side view an
-  S-curve. Also: rounder shoulders with a gentle slope into the neck and a
-  slight fullness across the upper back; fuller upper arms tapering to the
+  S-curve. Also: rounder shoulders with a gentle slope into the neck and only a
+  very slight, wide fullness across the upper back (a strong one reads as a hump); fuller upper arms tapering to the
   elbow and a slimmer, slightly bent forearm; full thighs that start a little
   higher and taper to slim knees; a calf bulge; arms held slightly away from
   the body; longer legs.
-- **Man:** a V-shaped torso (narrow hips and waist, broad chest and squared
-  shoulders), flat sculpted pecs, a thicker neck with a trapezius slope, strong
-  shoulder caps and upper arms, fuller forearms, elbows slightly bent and arms
+- **Man:** a gentle V-shaped torso (narrow hips and waist, a moderate chest and
+  squared shoulders; fit, not bulky), very flat sculpted pecs, a thicker neck
+  with a trapezius slope (no hump), firm shoulder caps and upper arms, fuller forearms, elbows slightly bent and arms
   held away from the body, straight solid legs with little taper.
 - **Hands:** blocky and mitten-like (a box, flat side-to-side, narrowing toward
   the fingertips), for both body types.
