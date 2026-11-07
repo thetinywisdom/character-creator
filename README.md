@@ -2,7 +2,14 @@
 
 A three.js playground for finding the visual style of a 3D world before building it.
 
-**Phase 1 – style exploration:** a human, a cat and a tree, each built from simple
+**Phase 2 – characters (in progress):** the human is now a modular character
+with slots and per-item colours. Batch 1 (done): skin tones, 9 hairstyles with
+8 hair colours, 7 tops (T-shirt, shirt, tank top, crop top; short/long sleeves),
+trousers / shorts / skirt, shoe colours, a Randomize button and a crowd view.
+Next: headwear, face accessories, facial hair (batch 2); outerwear, back
+accessories, ties, fanny pack, baby carrier (batch 3).
+
+**Phase 1 – style exploration (done):** a human, a cat and a tree, each built from simple
 primitives in code, used to explore style directions side by side. They are meant to
 live in a city and be seen small, so they have no faces and are judged at street
 distance as well as up close.
@@ -32,7 +39,8 @@ npm run build    # static site in dist/
   tree variants at real-world scale.
 - **Street distance (tiny)** – shows every gallery cell small, on a street, the way
   the subjects will appear in the city.
-- **Character size** – exaggerate people and animals (1–1.6× real) so they read when tiny.
+- **Crowd** – a street of 12 random characters (plus the cat); *New random crowd* rerolls it.
+- **Extra character size** – exaggerate characters further for experiments (the cat is already 1.5×).
 - **Lighting** – Day, Sunset, Night. Each style also has its own options
   (PS1 pixel size, vertex wobble, dithering, pixel outlines; ink line width).
 - **Controls panel** – sliders for each subject's proportions, plus presets
@@ -59,6 +67,7 @@ Settings are remembered in your browser.
 src/
   main.js            app: grid, focus/lineup views, controls panel, render loop
   subjects/          human.js, cat.js, tree.js – build(params, style) -> THREE.Group
+  subjects/human/    frame.js (measurements), hair.js, tops.js, legwear.js – one file per slot
   styles/            inkCel.js, ps1.js, gray.js – materials per role + lights,
                      palette.js – shared base colours
   viewer/Cell.js     one stage (scene, lights, ground, street backdrop, camera framing)

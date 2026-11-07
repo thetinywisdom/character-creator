@@ -6,8 +6,9 @@ import { mulberry32 } from '../lib/rng.js';
 // holding one or more subjects rendered in one style. The gallery is a grid
 // of cells (subject x style); the lineup is a single cell with every subject.
 //
-// entries: [{ subject, overrides? }] – overrides pin parameters (e.g. a tree
-// preset) on top of the live slider values.
+// entries: [{ subject, overrides?, z?, rotation? }] – overrides pin parameters
+// (e.g. a tree preset) on top of the live slider values; z nudges an entry
+// forward/back; rotation fixes its facing (it then ignores the turntable).
 // backdrop: 'street' adds a road, sidewalk and a row of box buildings.
 
 const VIEW_DIR = new THREE.Vector3(0.62, 0.32, 1).normalize(); // 3/4 front view
@@ -92,12 +93,19 @@ export class Cell {
     const bounds = new THREE.Box3();
     items.forEach((it, i) => {
       const pivot = new THREE.Group();
+      const entry = this.entries[i];
       pivot.position.x = xs[i] - shift;
+      pivot.position.z = entry.z ?? 0;
+      if (entry.rotation !== undefined) {
+        pivot.rotation.y = entry.rotation;
+        pivot.userData.fixed = true;
+      }
       pivot.add(it.obj);
       this.content.add(pivot);
       this.pivots.push(pivot);
-      bounds.expandByPoint(new THREE.Vector3(pivot.position.x - it.hr, it.box.min.y, -it.hr));
-      bounds.expandByPoint(new THREE.Vector3(pivot.position.x + it.hr, it.box.max.y, it.hr));
+      const z = pivot.position.z;
+      bounds.expandByPoint(new THREE.Vector3(pivot.position.x - it.hr, it.box.min.y, z - it.hr));
+      bounds.expandByPoint(new THREE.Vector3(pivot.position.x + it.hr, it.box.max.y, z + it.hr));
     });
 
     // a wide ground plane, so subjects read as standing in a world
@@ -181,7 +189,7 @@ export class Cell {
   }
 
   setAngle(angle) {
-    for (const p of this.pivots) p.rotation.y = angle;
+    for (const p of this.pivots) if (!p.userData.fixed) p.rotation.y = angle;
   }
 
   /**

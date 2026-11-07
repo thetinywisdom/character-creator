@@ -54,14 +54,15 @@ export const inkCelStyle = {
     if (key === 'lineMax') lineMax.value = v / 100;
   },
 
-  material(role) {
-    if (!cache.has(role)) {
-      const color = role === 'ground' ? new THREE.Color(0xe2d8c3) : roleColor(role);
-      const m = new THREE.MeshToonMaterial({ color, gradientMap: RAMP });
+  material(role, color) {
+    const key = `${role}:${color ?? ''}`;
+    if (!cache.has(key)) {
+      const c = role === 'ground' ? new THREE.Color(0xe2d8c3) : roleColor(role, { color });
+      const m = new THREE.MeshToonMaterial({ color: c, gradientMap: RAMP });
       m.userData.role = role;
-      cache.set(role, m);
+      cache.set(key, m);
     }
-    return cache.get(role);
+    return cache.get(key);
   },
 
   /** Add an ink outline shell to every mesh of a freshly built object. */

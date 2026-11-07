@@ -5,6 +5,7 @@ import { subjects } from './subjects/index.js';
 import { galleryStyles, lightingPresets, styles } from './styles/index.js';
 import { Cell } from './viewer/Cell.js';
 import { defaultsFor, loadParams, saveParams } from './viewer/params.js';
+import { mulberry32 } from './lib/rng.js';
 import './style.css';
 
 // ---------------------------------------------------------------------------
@@ -20,7 +21,8 @@ const PAGE_BG = new THREE.Color(getComputedStyle(document.documentElement).getPr
 
 const params = loadParams(subjects);
 const state = {
-  view: 'gallery', // 'gallery' | 'lineup' | 'focus'
+  view: 'gallery', // 'gallery' | 'lineup' | 'crowd' | 'focus'
+  crowdSeed: 1,
   focus: null,
   turntable: true,
   speed: 0.35,
@@ -73,6 +75,30 @@ function makeLineup() {
   return cell;
 }
 
+// A street full of random characters (plus the cat), to check that outfits
+// work together and stay readable in a group.
+let crowdCell = null;
+function makeCrowd() {
+  const style = styles.find((s) => s.id === state.lineupStyle) ?? styles[0];
+  const byId = Object.fromEntries(subjects.map((s) => [s.id, s]));
+  const rng = mulberry32(state.crowdSeed * 7717 + 3);
+  const entries = [];
+  for (let i = 0; i < 12; i++) {
+    entries.push({
+      subject: byId.human,
+      overrides: byId.human.randomize(rng),
+      z: (rng() - 0.5) * 1.6,
+      rotation: (rng() - 0.5) * 1.4,
+    });
+    if (i === 5) entries.push({ subject: byId.cat, z: 0.6, rotation: 0.5 });
+  }
+  const cell = new Cell({ entries, style, renderer, gap: 0.25, viewDir: [0.18, 0.3, 1], backdrop: 'street' });
+  cell.rebuild(params);
+  cell.applyLighting(lightingPresets[state.lighting]);
+  return cell;
+}
+crowdCell = makeCrowd();
+
 galleryCells.forEach((c) => { c.rebuild(params); c.applyLighting(lightingPresets[state.lighting]); });
 
 // ---------------------------------------------------------------------------
@@ -111,14 +137,14 @@ function setView(view) {
     controls.update();
     // open just the matching subject's panel
     for (const [id, folder] of Object.entries(folders)) {
-      if (view === 'lineup' || cell.has(id)) folder.open(); else folder.close();
+      if (view === 'lineup' || view === 'crowd' || cell.has(id)) folder.open(); else folder.close();
     }
   }
 }
 
 /** Street distance shows a fixed slice of the world instead of hugging the subject. */
 function framingHeight(view = state.view) {
-  if (view === 'lineup') return LINEUP_HEIGHT;
+  if (view === 'lineup' || view === 'crowd') return LINEUP_HEIGHT;
   return state.street ? STREET_HEIGHT : 0;
 }
 
@@ -130,7 +156,9 @@ function bigViewWidth() {
 }
 
 function activeCell() {
-  return state.view === 'lineup' ? lineupCell : state.focus;
+  if (state.view === 'lineup') return lineupCell;
+  if (state.view === 'crowd') return crowdCell;
+  return state.focus;
 }
 
 // ---------------------------------------------------------------------------
@@ -144,6 +172,12 @@ const viewFolder = gui.addFolder('View');
 const actions = {
   gallery: () => setView('gallery'),
   lineup: () => setView('lineup'),
+  crowd: () => setView('crowd'),
+  newCrowd: () => {
+    state.crowdSeed += 1;
+    crowdCell = makeCrowd();
+    setView('crowd');
+  },
   screenshot: () => { shotPending = true; },
   copy: () => copySettings(),
   resetAll: () => {
@@ -154,6 +188,8 @@ const actions = {
 };
 viewFolder.add(actions, 'gallery').name('Gallery (style × subject)');
 viewFolder.add(actions, 'lineup').name('Street scene (real scale)');
+viewFolder.add(actions, 'crowd').name('Crowd (random characters)');
+viewFolder.add(actions, 'newCrowd').name('New random crowd');
 function applyStreet(on) {
   state.street = on;
   for (const cell of galleryCells) {
@@ -165,15 +201,19 @@ function applyStreet(on) {
 viewFolder.add(state, 'street').name('Street distance (tiny)').onChange(applyStreet);
 viewFolder.add(state, 'characterScale', 1, 1.6, 0.05).name('Extra character size').onChange((v) => {
   Cell.characterScale = v;
-  for (const cell of [...galleryCells, lineupCell]) cell.rebuild(params);
+  for (const cell of [...galleryCells, lineupCell, crowdCell]) cell.rebuild(params);
 });
 viewFolder.add(state, 'lighting', Object.keys(lightingPresets)).name('Lighting').onChange((name) => {
-  for (const cell of [...galleryCells, lineupCell]) cell.applyLighting(lightingPresets[name]);
+  for (const cell of [...galleryCells, lineupCell, crowdCell]) cell.applyLighting(lightingPresets[name]);
 });
 if (styles.length > 1) {
   viewFolder.add(state, 'lineupStyle', Object.fromEntries(styles.map((s) => [s.label, s.id])))
     .name('Lineup style')
-    .onChange(() => { lineupCell = makeLineup(); if (state.view === 'lineup') setView('lineup'); });
+    .onChange(() => {
+      lineupCell = makeLineup();
+      crowdCell = makeCrowd();
+      if (state.view === 'lineup' || state.view === 'crowd') setView(state.view);
+    });
 }
 viewFolder.add(state, 'turntable').name('Turntable');
 viewFolder.add(state, 'speed', 0, 1.5, 0.01).name('Spin speed');
@@ -207,10 +247,19 @@ for (const s of subjects) {
       dirty.add(s.id);
     });
   }
+  if (s.randomize) {
+    f.add({ randomize: () => {
+      Object.assign(p, s.randomize());
+      f.controllersRecursive().forEach((c) => c.updateDisplay());
+      dirty.add(s.id);
+    } }, 'randomize').name('Randomize');
+  }
+  const groups = {};
   for (const [key, def] of Object.entries(s.schema)) {
+    const target = def.group ? (groups[def.group] ??= f.addFolder(def.group)) : f;
     const ctrl = def.options
-      ? f.add(p, key, def.options)
-      : f.add(p, key, def.min, def.max, def.step);
+      ? target.add(p, key, def.options)
+      : target.add(p, key, def.min, def.max, def.step);
     ctrl.name(def.label ?? key).onChange(() => dirty.add(s.id));
   }
   f.add({ reset: () => {
@@ -408,7 +457,7 @@ requestAnimationFrame(loop);
 // handy for debugging from the console
 Object.assign(window, {
   __cc: {
-    params, state, galleryCells, setView, applyStreet,
+    params, state, galleryCells, setView, applyStreet, actions,
     enterFocus: (i) => enterFocus(galleryCells[i]),
     apply: (id, values) => { Object.assign(params[id], values); dirty.add(id); },
   },

@@ -55,6 +55,11 @@ Final colours per role (as rendered by the style):
 | `ground` | open ground | `#cac8c3` |
 
 Base colours live in `src/styles/palette.js`; the style applies the hierarchy on top.
+
+**Character colours come from curated lists** in the same file, so crowds stay
+harmonious: 6 skin tones (`SKIN_TONES`), 8 hair colours (`HAIR_COLORS`, including
+pink and blue) and 15 clothing colours (`CLOTH_COLORS`). Each item picks its own
+colour from these lists; the style still applies the character saturation boost.
 **New characters should use saturated, contrasting clothing colours**: a character
 dressed in the same tones as the street will disappear.
 
@@ -62,18 +67,23 @@ dressed in the same tones as the street will disappear.
 
 1. **Low-poly, built from simple shapes.** Spheres, capsules, cones, boxes. Detail
    comes from silhouette, not from small parts.
-2. **No faces.** Characters have no eyes, nose, mouth or ears; they are seen too
-   small for them. Personality comes from **silhouette, proportions, hair and
-   clothing colour**.
-3. **Readable silhouette first.** Check every new model at street distance
+2. **No facial features.** Characters have no eyes, nose, mouth or ears; they
+   are seen too small for them. **Face accessories are fine** (sunglasses, masks,
+   beards): they are shapes and colour blocks, not faces. Personality comes from
+   **silhouette, proportions, hair, clothing and accessories**.
+3. **Small items are oversized on purpose.** Collars, button strips, straps,
+   glasses and similar details are built bigger than real life so they read when
+   the character is tiny. A slightly comical look is accepted.
+4. **Readable silhouette first.** Check every new model at street distance
    (the "Street distance (tiny)" toggle). If you can't tell what it is from its
    outline, change the shape, not the details.
-4. **Real-world scale, in metres.** Human default is 1.6 m and 7.5 heads tall
+5. **Real-world scale, in metres.** Human default is 1.6 m and 7.5 heads tall
    (the "Realistic" preset); the cat is modelled at about 0.42 m long and drawn
    1.5× (see §5).
-5. **Colour by role, never by style.** Every part asks for a role (`skin`,
-   `cloth`, `leaf`, ...). Never hard-code a colour in a model.
-6. **Characters face +z and stand on y = 0.** Parts that will move (the human's
+6. **Colour by role, never by style.** Every part asks for a role (`skin`,
+   `cloth`, `leaf`, ...) and, for character items, a colour from the curated
+   lists. Never hard-code a style-specific colour in a model.
+7. **Characters face +z and stand on y = 0.** Parts that will move (the human's
    head, arms and legs; the cat's head) are separate groups pivoting at their
    joints, ready for animation later.
 

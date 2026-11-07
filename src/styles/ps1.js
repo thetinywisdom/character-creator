@@ -15,7 +15,7 @@ import { roleColor } from './palette.js';
 
 // Roles that belong to characters. "Colour priority" keeps these vivid while
 // the environment is toned down, so characters pop against the city.
-const CHARACTER_ROLES = new Set(['skin', 'cloth', 'clothAlt', 'shoe', 'hair', 'fur', 'furLight']);
+const CHARACTER_ROLES = new Set(['skin', 'cloth', 'clothAlt', 'accent', 'shoe', 'hair', 'fur', 'furLight']);
 const CHARACTERS = new Set(['human', 'cat']);
 
 function adjust(color, { saturate = 1, lighten = 0 }) {
@@ -76,9 +76,12 @@ export function createPs1Style({
       snapRes.value.set(w * k, h * k);
     },
 
-    material(role) {
-      if (!cache.has(role)) {
-        let color = role === 'ground' ? new THREE.Color(groundColor) : roleColor(role, { toward: 0x808080, amount: muted });
+    material(role, baseColor) {
+      const key = `${role}:${baseColor ?? ''}`;
+      if (!cache.has(key)) {
+        let color = role === 'ground'
+          ? new THREE.Color(groundColor)
+          : roleColor(role, { color: baseColor, toward: 0x808080, amount: muted });
         if (CHARACTER_ROLES.has(role) && characterBoost) adjust(color, characterBoost);
         else if (!CHARACTER_ROLES.has(role) && environment) adjust(color, environment);
         // Lambert = simple diffuse lighting, close to the period's Gouraud shading
@@ -95,9 +98,9 @@ export function createPs1Style({
         };
         m.customProgramCacheKey = () => 'ps1-snap';
         m.userData.role = role;
-        cache.set(role, m);
+        cache.set(key, m);
       }
-      return cache.get(role);
+      return cache.get(key);
     },
 
     /** Blob shadow: the dark disc PS1/N64 games put under characters. */
