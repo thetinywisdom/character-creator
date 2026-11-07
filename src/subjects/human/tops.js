@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { capsuleBetween, seg } from '../../lib/shapes.js';
+import { seg } from '../../lib/shapes.js';
 import { sculptTorso } from './sculpt.js';
 
 // Tops: the torso is built from horizontal bands (fractions of torso height),
@@ -95,15 +95,4 @@ function chest(f, L, bands) {
   mesh.position.set(0, f.hipY + y, f.torsoR(y) * f.torsoDepth - D * 0.2);
   mesh.name = 'chest';
   return mesh;
-}
-
-/** Sleeve for one arm (arm-local: shoulder at the origin, arm hangs down -y). */
-export function buildSleeve(f, spec, material) {
-  if (spec.sleeve === 'short') {
-    return capsuleBetween([0, 0, 0], [0, -f.armLen * 0.28, 0], f.armR * 1.2, material);
-  }
-  if (spec.sleeve === 'long') {
-    return capsuleBetween([0, 0, 0], [0, -(f.armLen - f.handR * 1.7), 0], f.armR * 1.15, material);
-  }
-  return null;
 }

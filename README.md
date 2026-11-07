@@ -7,7 +7,7 @@ with slots and per-item colours. Batch 1 (done): Man / Woman body types (the
 woman with an hourglass torso, chest and bottom sculpted into the body, full
 thighs tapering to slim knees; see the Body shape study view), separate neck / arm / leg thickness, skin tones, 9 hairstyles with
 8 hair colours, 7 tops (T-shirt, shirt, sleeveless tank top, crop top; short/long sleeves),
-trousers / shorts / skirt, shoe colours, a Randomize button and a crowd view.
+trousers / shorts / skirt, chunky shoes or boots, a Randomize button and a crowd view.
 Next: headwear, face accessories, facial hair (batch 2); outerwear, back
 accessories, ties, fanny pack, baby carrier (batch 3).
 

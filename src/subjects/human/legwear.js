@@ -1,11 +1,12 @@
 import * as THREE from 'three';
-import { ellipsoid, seg, taperBetween } from '../../lib/shapes.js';
+import { seg, taperBetween } from '../../lib/shapes.js';
+import { buildFoot } from './footwear.js';
 
 // Legwear: trousers, shorts, skirt. Legs are groups pivoting at the hip.
 
 export const LEGWEAR = ['Trousers', 'Shorts', 'Skirt'];
 
-export function buildLeg(f, kind, mats, sx) {
+export function buildLeg(f, kind, mats, sx, footwear = 'Shoes') {
   const leg = new THREE.Group();
   leg.name = sx < 0 ? 'legR' : 'legL';
   leg.position.set(sx * f.hx, f.hipY, 0);
@@ -15,7 +16,8 @@ export function buildLeg(f, kind, mats, sx) {
   // knees and feet sit a little closer to the centre than the hips
   const inX = -sx * f.hx * f.kneeIn;
   // thigh (hip -> knee) and shin (knee -> ankle), tapered
-  leg.add(taperBetween([0, 0, 0], [inX, knee, 0], f.thighR, f.kneeR, legMat));
+  const hip = [0, f.thighTop, 0];
+  leg.add(taperBetween(hip, [inX, knee, 0], f.thighR, f.kneeR, legMat));
   // shin: knee -> calf (bulging toward the back) -> ankle
   const calfY = knee + (ankle - knee) * 0.3;
   const calfZ = -f.kneeR * 0.35;
@@ -25,11 +27,9 @@ export function buildLeg(f, kind, mats, sx) {
     // covers the upper thigh, a little wider than the leg
     const t = 0.8;
     const rEnd = THREE.MathUtils.lerp(f.thighR, f.kneeR, t);
-    leg.add(taperBetween([0, 0, 0], [inX * t, knee * t, 0], f.thighR * 1.12, rEnd * 1.15, mats.legwear));
+    leg.add(taperBetween(hip, [inX * t, knee * t, 0], f.thighR * 1.12, rEnd * 1.15, mats.legwear));
   }
-  leg.add(ellipsoid(1, [Math.max(f.ankleR * 1.6, f.legR * 0.9), f.footH / 2, f.footL / 2], mats.shoe, {
-    position: [inX, -f.legLen + f.footH / 2, f.footL * 0.22],
-  }));
+  leg.add(buildFoot(f, footwear, mats.shoe, inX));
   return leg;
 }
 

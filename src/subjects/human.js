@@ -1,9 +1,11 @@
 import * as THREE from 'three';
-import { capsuleBetween, ellipsoid, seg } from '../lib/shapes.js';
+import { ellipsoid, seg } from '../lib/shapes.js';
 import { CLOTH_COLORS, HAIR_COLORS, SKIN_TONES } from '../styles/palette.js';
 import { measure } from './human/frame.js';
 import { HAIRSTYLES, buildHair } from './human/hair.js';
-import { TOPS, buildSleeve, buildTorso } from './human/tops.js';
+import { TOPS, buildTorso } from './human/tops.js';
+import { buildArm } from './human/arms.js';
+import { FOOTWEAR } from './human/footwear.js';
 import { LEGWEAR, buildBottom, buildLeg, buildSkirt } from './human/legwear.js';
 
 // Human character, assembled from slots: body, hair, top, legwear (more slots
@@ -48,12 +50,13 @@ export const human = {
     topColor:      { group: 'Clothes', value: 'Blue', options: names(CLOTH_COLORS), label: 'Top colour' },
     legwear:       { group: 'Clothes', value: 'Trousers', options: LEGWEAR, label: 'Legwear' },
     legwearColor:  { group: 'Clothes', value: 'Navy', options: names(CLOTH_COLORS), label: 'Legwear colour' },
-    shoeColor:     { group: 'Clothes', value: 'Brown', options: names(CLOTH_COLORS), label: 'Shoe colour' },
+    footwear:      { group: 'Clothes', value: 'Shoes', options: FOOTWEAR, label: 'Footwear' },
+    shoeColor:     { group: 'Clothes', value: 'Brown', options: names(CLOTH_COLORS), label: 'Footwear colour' },
   },
   presets: {
     // body types with matching proportions
     Man:       { bodyType: 'Man',   height: 1.75, legLength: 0.54, shoulderWidth: 0.26, hipWidth: 0.19, neckThickness: 0.031, armThickness: 0.027, legThickness: 0.035, headWidth: 0.8 },
-    Woman:     { bodyType: 'Woman', height: 1.68, legLength: 0.58, shoulderWidth: 0.22, hipWidth: 0.23, neckThickness: 0.023, armThickness: 0.021, legThickness: 0.033, headWidth: 0.78 },
+    Woman:     { bodyType: 'Woman', height: 1.68, legLength: 0.58, shoulderWidth: 0.22, hipWidth: 0.23, neckThickness: 0.023, armThickness: 0.023, legThickness: 0.033, headWidth: 0.78 },
     // overall proportion styles
     Chibi:     { headsTall: 2.6, legLength: 0.42, shoulderWidth: 0.2,  hipWidth: 0.18, neckThickness: 0.04,  armThickness: 0.035, legThickness: 0.045, headWidth: 0.95 },
     Stylized:  { headsTall: 5,   legLength: 0.5,  shoulderWidth: 0.24, hipWidth: 0.19, neckThickness: 0.035, armThickness: 0.03,  legThickness: 0.039, headWidth: 0.85 },
@@ -78,7 +81,7 @@ export const human = {
       shoulderWidth: woman ? range(0.2, 0.24, 0.005) : range(0.24, 0.29, 0.005),
       hipWidth: woman ? range(0.21, 0.25, 0.005) : range(0.17, 0.21, 0.005),
       neckThickness: woman ? range(0.021, 0.026, 0.001) : range(0.028, 0.035, 0.001),
-      armThickness: woman ? range(0.019, 0.024, 0.001) : range(0.024, 0.031, 0.001),
+      armThickness: woman ? range(0.021, 0.026, 0.001) : range(0.024, 0.031, 0.001),
       legThickness: woman ? range(0.03, 0.036, 0.001) : range(0.031, 0.038, 0.001),
       headWidth: range(0.76, 0.86, 0.01),
       skin: pick(names(SKIN_TONES)),
@@ -88,6 +91,7 @@ export const human = {
       topColor,
       legwear: pick(['Trousers', 'Trousers', 'Shorts', 'Skirt']),
       legwearColor,
+      footwear: rng() < 0.3 ? 'Boots' : 'Shoes',
       shoeColor: pick(['Black', 'Brown', 'White', 'Gray', 'Red', 'Navy']),
     };
   },
@@ -115,22 +119,12 @@ export const human = {
     root.add(neck);
 
     // --- legs (pivot at hip, for later animation) ------------------------
-    for (const sx of [-1, 1]) root.add(buildLeg(f, p.legwear, mats, sx));
+    for (const sx of [-1, 1]) root.add(buildLeg(f, p.legwear, mats, sx, p.footwear));
     if (p.legwear === 'Skirt') root.add(buildSkirt(f, mats));
     else if (f.woman && f.bottomShape === 'Round') root.add(buildBottom(f, mats));
 
     // --- arms (pivot at shoulder) ----------------------------------------
-    for (const sx of [-1, 1]) {
-      const arm = new THREE.Group();
-      arm.name = sx < 0 ? 'armR' : 'armL';
-      arm.position.set(sx * (f.sw * 0.5 - f.armR * 0.6), f.shoulderY - f.armR * 0.9, 0);
-      arm.rotation.z = sx * f.armSpread;
-      arm.add(capsuleBetween([0, 0, 0], [0, -(f.armLen - f.handR * 1.6), 0], f.armR, mats.skin));
-      const sleeve = buildSleeve(f, top, mats.top);
-      if (sleeve) arm.add(sleeve);
-      arm.add(ellipsoid(f.handR, [0.8, 1.15, 0.9], mats.skin, { position: [0, -(f.armLen - f.handR), 0] }));
-      root.add(arm);
-    }
+    for (const sx of [-1, 1]) root.add(buildArm(f, sx, top, mats, (t) => t.sleeve));
 
     // --- head ------------------------------------------------------------
     const head = new THREE.Group();

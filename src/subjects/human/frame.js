@@ -34,8 +34,9 @@ export function measure(p) {
     new THREE.Vector2(hw * 0.5, 0),
     new THREE.Vector2(hw * 0.56, L * 0.12),
     new THREE.Vector2((hw + sw) * 0.25 * 0.72, L * 0.5),
-    new THREE.Vector2(sw * 0.47, L * 0.82),
-    new THREE.Vector2(sw * 0.4, L * 0.97),
+    new THREE.Vector2(sw * 0.47, L * 0.8),
+    new THREE.Vector2(sw * 0.43, L * 0.92),  // rounder shoulder line
+    new THREE.Vector2(neckR * 1.9, L * 0.985), // gentle slope into the neck
     new THREE.Vector2(neckR * 1.05, L),
   ] : [
     new THREE.Vector2(hw * 0.42, 0),
@@ -72,19 +73,25 @@ export function measure(p) {
     torsoSamples, torsoR, torsoBottom,
     torsoDepth: woman ? 0.72 : 0.62, // torso is a lathe squashed front-to-back
     armLen: torsoLen * 0.85 + legLen * 0.25,
-    handR: armR * 1.4,
+    handR: armR * 1.3,
     footH,
     footL: H * 0.13,
     hx: Math.max(hw * 0.5 - legR * (woman ? 1.25 : 1), legR * 0.9), // leg spacing
     kneeIn: woman ? 0.2 : 0.1, // how far knees and feet move toward the centre (× hx)
     // leg shape: thigh -> knee -> ankle radii. Women: full thighs, slim knees and calves.
-    thighR: legR * (woman ? 1.4 : 1.1),
+    thighR: legR * (woman ? 1.55 : 1.1),
+    thighTop: woman ? legR * 0.45 : 0, // thighs start a little higher, so hips flow into legs
     kneeR: legR * (woman ? 0.78 : 0.88),
     ankleR: legR * (woman ? 0.55 : 0.65),
     // calf bulge behind the upper shin
     calfR: legR * (woman ? 0.78 * 1.22 : 0.88 * 1.1),
     // arms held a little away from the body (A-pose); wider for the woman
     armSpread: woman ? 0.2 : 0.12,
+    // arm shape: rounded shoulder cap -> elbow -> slimmer wrist, slight bend
+    shoulderR: armR * (woman ? 1.55 : 1.2),
+    elbowR: armR * (woman ? 0.95 : 0.9),
+    wristR: armR * (woman ? 0.62 : 0.72),
+    elbowBend: woman ? 0.2 : 0.1,
     // head ellipsoid radii
     rx: R * p.headWidth, ry: R, rz: R * 0.92,
   };

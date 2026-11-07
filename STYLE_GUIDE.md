@@ -97,8 +97,13 @@ dressed in the same tones as the street will disappear.
   ("Smooth (two)") with size sliders; the older trapezoid chest and round
   bottom remain as options. The torso continues a little below the hip line
   so the bottom sits over the top of the thighs, giving the side view an
-  S-curve. Also: full thighs tapering to slim knees, a calf bulge, arms held
-  slightly away from the body, longer legs, slimmer arms and neck.
+  S-curve. Also: rounder shoulders with a gentle slope into the neck and a
+  slight fullness across the upper back; fuller upper arms tapering to the
+  elbow and a slimmer, slightly bent forearm; full thighs that start a little
+  higher and taper to slim knees; a calf bulge; arms held slightly away from
+  the body; longer legs.
+- **Footwear:** chunky low-poly shoes or ankle boots (a box foot with a sloped
+  toe), not ovals.
 - Neck, arm and leg thickness are separate sliders.
 - Every top stops at the hip line so the waistband shows and the hip shape
   reads as body.

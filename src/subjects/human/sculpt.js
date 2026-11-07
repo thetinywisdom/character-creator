@@ -41,6 +41,11 @@ export function sculptTorso(geo, f) {
       wx: f.hw * 0.3,
     });
   }
+  // slight trapezius: a soft fullness across the upper back, below the neck
+  zones.push({
+    sign: -1, yc: 0.86 * L, up: 0.08 * L, down: 0.14 * L,
+    amount: f.sw * 0.05, two: false, wx: f.sw * 0.3,
+  });
   if (!zones.length) return geo;
 
   // weld the lathe seam first so recomputed normals stay smooth across it
