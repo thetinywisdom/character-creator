@@ -1,7 +1,7 @@
 // Subject parameters: defaults from each subject's schema, merged with
 // whatever the viewer last saved in this browser.
 
-const KEY = 'character-creator.params.v1';
+const KEY = 'character-creator.params.v2';
 
 export function defaultsFor(subject) {
   return Object.fromEntries(Object.entries(subject.schema).map(([k, d]) => [k, d.value]));

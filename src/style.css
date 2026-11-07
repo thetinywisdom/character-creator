@@ -40,9 +40,13 @@ html, body {
   pointer-events: none;
 }
 #hud > * { pointer-events: auto; }
-#hud .title { display: flex; flex-direction: column; line-height: 1.2; }
+#hud .title {
+  display: flex; flex-direction: column; line-height: 1.2;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px;
+}
 #hud .title span { color: var(--muted); font-size: 12px; }
-#hint { color: var(--muted); font-size: 12px; }
+#hint { color: var(--muted); font-size: 12px; background: var(--panel); border-radius: 6px; padding: 4px 8px; }
+#hint:empty { display: none; }
 
 #back {
   background: var(--panel);
@@ -83,7 +87,7 @@ html, body {
 }
 
 .cell {
-  height: min(calc(100vh - var(--hud-h) - 56px), 125vw / var(--cols, 3));
+  height: min(calc(100vh - var(--hud-h) - 56px), 62vh, 125vw / var(--cols, 3));
   min-height: 160px;
   border: 1px solid var(--line);
   border-radius: 8px;

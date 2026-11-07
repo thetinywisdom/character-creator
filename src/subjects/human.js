@@ -1,7 +1,8 @@
 import * as THREE from 'three';
-import { capsuleBetween, ellipsoid, surfaceZ } from '../lib/shapes.js';
+import { capsuleBetween, ellipsoid, seg } from '../lib/shapes.js';
 
-// Human gray-box. Proportions are driven by "heads tall" (2.5 = chibi,
+// Human. Default is the Realistic preset (picked in the milestone 2 review).
+// Proportions are driven by "heads tall" (2.5 = chibi,
 // 7.5 = realistic) so we can slide between comic-style and natural figures.
 // Faces +z. Feet rest on y = 0. Units are metres.
 
@@ -9,20 +10,19 @@ export const human = {
   id: 'human',
   label: 'Human',
   schema: {
-    headsTall:      { value: 5,     min: 2.5,  max: 7.5,  step: 0.1,   label: 'Heads tall' },
+    headsTall:      { value: 7.5,     min: 2.5,  max: 7.5,  step: 0.1,   label: 'Heads tall' },
     height:         { value: 1.6,   min: 1.0,  max: 2.0,  step: 0.01,  label: 'Height (m)' },
-    legLength:      { value: 0.5,   min: 0.35, max: 0.65, step: 0.01,  label: 'Leg length' },
-    shoulderWidth:  { value: 0.24,  min: 0.15, max: 0.34, step: 0.005, label: 'Shoulder width' },
-    hipWidth:       { value: 0.19,  min: 0.12, max: 0.3,  step: 0.005, label: 'Hip width' },
-    limbThickness:  { value: 0.03,  min: 0.018, max: 0.06, step: 0.001, label: 'Limb thickness' },
-    headWidth:      { value: 0.85,  min: 0.7,  max: 1.1,  step: 0.01,  label: 'Head width' },
-    eyeSize:        { value: 1,     min: 0.5,  max: 2,    step: 0.05,  label: 'Eye size' },
+    legLength:      { value: 0.54,   min: 0.35, max: 0.65, step: 0.01,  label: 'Leg length' },
+    shoulderWidth:  { value: 0.25,  min: 0.15, max: 0.34, step: 0.005, label: 'Shoulder width' },
+    hipWidth:       { value: 0.2,  min: 0.12, max: 0.3,  step: 0.005, label: 'Hip width' },
+    limbThickness:  { value: 0.026,  min: 0.018, max: 0.06, step: 0.001, label: 'Limb thickness' },
+    headWidth:      { value: 0.8,  min: 0.7,  max: 1.1,  step: 0.01,  label: 'Head width' },
     hair:           { value: 'short', options: ['none', 'short', 'long', 'bun', 'spiky'], label: 'Hair' },
   },
   presets: {
-    Chibi:     { headsTall: 2.6, legLength: 0.42, shoulderWidth: 0.2,  hipWidth: 0.18, limbThickness: 0.035, headWidth: 0.95, eyeSize: 1.4 },
-    Stylized:  { headsTall: 5,   legLength: 0.5,  shoulderWidth: 0.24, hipWidth: 0.19, limbThickness: 0.03,  headWidth: 0.85, eyeSize: 1 },
-    Realistic: { headsTall: 7.5, legLength: 0.54, shoulderWidth: 0.25, hipWidth: 0.2,  limbThickness: 0.026, headWidth: 0.8,  eyeSize: 0.8 },
+    Chibi:     { headsTall: 2.6, legLength: 0.42, shoulderWidth: 0.2,  hipWidth: 0.18, limbThickness: 0.035, headWidth: 0.95 },
+    Stylized:  { headsTall: 5,   legLength: 0.5,  shoulderWidth: 0.24, hipWidth: 0.19, limbThickness: 0.03,  headWidth: 0.85 },
+    Realistic: { headsTall: 7.5, legLength: 0.54, shoulderWidth: 0.25, hipWidth: 0.2,  limbThickness: 0.026, headWidth: 0.8 },
   },
 
   build(p, style) {
@@ -57,8 +57,8 @@ export const human = {
       new THREE.Vector2(sw * 0.4, L * 0.98),
       new THREE.Vector2(limbR * 1.2, L),
     ]);
-    const lathePts = [new THREE.Vector2(0, 0), ...side.getPoints(28), new THREE.Vector2(0, L)];
-    const torso = new THREE.Mesh(new THREE.LatheGeometry(lathePts, 28), M('cloth'));
+    const lathePts = [new THREE.Vector2(0, 0), ...side.getPoints(seg(28, 6)), new THREE.Vector2(0, L)];
+    const torso = new THREE.Mesh(new THREE.LatheGeometry(lathePts, seg(28)), M('cloth'));
     torso.position.y = hipY;
     torso.scale.z = 0.62;
     torso.name = 'torso';
@@ -68,7 +68,7 @@ export const human = {
     const neckBottom = shoulderY - L * 0.05;
     const neckTop = headY - R * 0.4;
     const neckR = limbR * 1.15;
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(neckR, neckR, neckTop - neckBottom, 14), M('skin'));
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(neckR, neckR, neckTop - neckBottom, seg(14)), M('skin'));
     neck.position.y = (neckTop + neckBottom) / 2;
     root.add(neck);
 
@@ -110,25 +110,12 @@ export const human = {
     const rx = R * p.headWidth, ry = R, rz = R * 0.92;
     head.add(ellipsoid(1, [rx, ry, rz], M('skin')));
 
-    // eyes sit lower and wider on chibi faces
-    const ey = -R * (0.05 + 0.12 * chib);
-    const ex = rx * (0.34 + 0.04 * chib);
-    const er = R * (0.075 + 0.05 * chib) * p.eyeSize;
-    for (const sx of [-1, 1]) {
-      const ez = surfaceZ(ex, ey, rx, ry, rz);
-      head.add(ellipsoid(er, [1, 1.25, 0.45], M('eye'), {
-        position: [sx * ex, ey, ez - er * 0.1],
-        rotation: [0, sx * Math.asin(ex / rx) * 0.8, 0],
-      }));
-      head.add(ellipsoid(R * 0.16, [0.5, 1, 0.8], M('skin'), { position: [sx * rx * 0.97, -R * 0.08, -R * 0.05] }));
-    }
-    const ny = ey - R * 0.22;
-    head.add(ellipsoid(R * 0.07, [1, 1, 1], M('skin'), { position: [0, ny, surfaceZ(0, ny, rx, ry, rz)] }));
+    // no facial features: these figures are seen tiny, in a city
 
     // --- hair ----------------------------------------------------------
     if (p.hair !== 'none') {
       const cap = new THREE.Mesh(
-        new THREE.SphereGeometry(1, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.58),
+        new THREE.SphereGeometry(1, seg(32), seg(16), 0, Math.PI * 2, 0, Math.PI * 0.58),
         M('hair'),
       );
       cap.scale.set(rx * 1.08, ry * 1.08, rz * 1.1);
@@ -151,7 +138,7 @@ export const human = {
         const tilt = 0.35 + (i % 2) * 0.4;
         const dir = new THREE.Vector3(Math.sin(tilt) * Math.sin(phi), Math.cos(tilt), Math.sin(tilt) * Math.cos(phi));
         if (dir.z > 0.45) continue; // keep spikes off the face
-        const spike = new THREE.Mesh(new THREE.ConeGeometry(R * 0.24, R * 0.6, 10), M('hair'));
+        const spike = new THREE.Mesh(new THREE.ConeGeometry(R * 0.24, R * 0.6, seg(10)), M('hair'));
         spike.position.set(dir.x * rx, dir.y * ry, dir.z * rz).multiplyScalar(1.02);
         spike.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
         head.add(spike);

@@ -6,9 +6,16 @@ import * as THREE from 'three';
 
 const UP = new THREE.Vector3(0, 1, 0);
 
+// Geometry detail multiplier, set by the active style while a subject builds
+// (low-poly uses a fraction, clay uses extra). Subjects wrap every segment
+// count in seg() so they never need to know which style they are built for.
+let detail = 1;
+export function setDetail(d) { detail = d; }
+export function seg(n, min = 3) { return Math.max(min, Math.round(n * detail)); }
+
 /** Sphere of radius `r`, then stretched by `scale` = [sx, sy, sz]. */
 export function ellipsoid(r, scale, material, { position, rotation, segments = 32 } = {}) {
-  const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, segments, Math.round(segments * 0.66)), material);
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, seg(segments), seg(segments * 0.66, 2)), material);
   if (scale) mesh.scale.set(...scale);
   if (position) mesh.position.set(...position);
   if (rotation) mesh.rotation.set(...rotation);
@@ -21,7 +28,7 @@ export function capsuleBetween(a, b, radius, material, radialSegments = 16) {
   const B = new THREE.Vector3(...b);
   const dir = B.clone().sub(A);
   const length = dir.length();
-  const geo = new THREE.CapsuleGeometry(radius, Math.max(length, 1e-4), 8, radialSegments);
+  const geo = new THREE.CapsuleGeometry(radius, Math.max(length, 1e-4), seg(8, 1), seg(radialSegments, 4));
   const mesh = new THREE.Mesh(geo, material);
   mesh.position.copy(A).add(B).multiplyScalar(0.5);
   if (length > 1e-6) mesh.quaternion.setFromUnitVectors(UP, dir.normalize());

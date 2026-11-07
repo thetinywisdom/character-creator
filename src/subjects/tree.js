@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { capsuleBetween, ellipsoid } from '../lib/shapes.js';
+import { capsuleBetween, ellipsoid, seg } from '../lib/shapes.js';
 import { mulberry32 } from '../lib/rng.js';
 
 // Tree gray-box with three canopy families: cloud (broadleaf clusters),
@@ -34,11 +34,11 @@ export const tree = {
     const cs = p.canopySize;
 
     // --- trunk + root flare --------------------------------------------
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.6, r, th, 16), M('bark'));
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.6, r, th, seg(16)), M('bark'));
     trunk.position.y = th / 2;
     trunk.name = 'trunk';
     root.add(trunk);
-    const flare = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.95, r * 1.45, th * 0.1, 16), M('bark'));
+    const flare = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.95, r * 1.45, th * 0.1, seg(16)), M('bark'));
     flare.position.y = th * 0.05;
     root.add(flare);
 
@@ -53,7 +53,7 @@ export const tree = {
       for (let k = 0; k < tiers; k++) {
         const f = k / tiers;
         const h = (canopyH / tiers) * 1.7;
-        const cone = new THREE.Mesh(new THREE.ConeGeometry(cs * (1 - f * 0.75), h, 20), M('leaf'));
+        const cone = new THREE.Mesh(new THREE.ConeGeometry(cs * (1 - f * 0.75), h, seg(20)), M('leaf'));
         cone.position.y = base + k * (canopyH / tiers) * 0.85 + h / 2;
         cone.rotation.y = rng() * Math.PI;
         canopy.add(cone);
