@@ -1,0 +1,129 @@
+:root {
+  --bg: #1d1f23;
+  --panel: #26292e;
+  --line: #3a3e45;
+  --text: #e8e9eb;
+  --muted: #9aa0a8;
+  --accent: #f2b64a;
+  --hud-h: 56px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  overflow: hidden;
+}
+
+#c {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
+#hud {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--hud-h);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+  z-index: 3;
+  pointer-events: none;
+}
+#hud > * { pointer-events: auto; }
+#hud .title { display: flex; flex-direction: column; line-height: 1.2; }
+#hud .title span { color: var(--muted); font-size: 12px; }
+#hint { color: var(--muted); font-size: 12px; }
+
+#back {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+#back:hover { border-color: var(--accent); }
+
+#grid {
+  position: fixed;
+  inset: 0;
+  padding: var(--hud-h) 16px 16px;
+  overflow: auto;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto repeat(var(--cols, 3), minmax(0, 1fr));
+  gap: 8px;
+  align-content: start;
+}
+#grid[hidden] { display: none; }
+
+.col-head, .row-head {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.col-head { text-align: center; padding: 4px 0; }
+.row-head {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: center;
+  align-self: center;
+}
+
+.cell {
+  height: min(calc(100vh - var(--hud-h) - 56px), 125vw / var(--cols, 3));
+  min-height: 160px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: zoom-in;
+  background: transparent;
+}
+.cell:hover { border-color: var(--accent); }
+
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 14px;
+  z-index: 4;
+}
+
+.lil-gui.autoPlace { z-index: 5; top: var(--hud-h) !important; max-height: calc(100% - var(--hud-h)) !important; }
+
+/* leave room for the controls panel on wide screens */
+@media (min-width: 900px) {
+  #grid { padding-right: 270px; }
+}
+
+/* phones: one cell per row, labels move inside the cells */
+@media (max-width: 700px) {
+  #hint { display: none; }
+  #grid { grid-template-columns: minmax(0, 1fr); padding-left: 16px; padding-right: 16px; }
+  .corner, .col-head, .row-head { display: none; }
+  .cell { height: 62vh; position: relative; }
+  .cell::before {
+    content: attr(data-label);
+    position: absolute;
+    top: 8px; left: 10px;
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+}
