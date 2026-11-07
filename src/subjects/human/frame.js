@@ -60,17 +60,21 @@ export function measure(p) {
     H, headH, R, chib, legLen, neckLen, torsoLen, hipY, shoulderY, headY,
     sw, hw, armR, legR, neckR,
     torsoSamples, torsoR,
-    torsoDepth: 0.62, // torso is a lathe squashed front-to-back
+    torsoDepth: woman ? 0.72 : 0.62, // torso is a lathe squashed front-to-back
     armLen: torsoLen * 0.85 + legLen * 0.25,
     handR: armR * 1.4,
     footH,
     footL: H * 0.13,
     hx: Math.max(hw * 0.5 - legR * (woman ? 1.25 : 1), legR * 0.9), // leg spacing
-    kneeIn: woman ? 0.45 : 0.1, // how far knees and feet move toward the centre (× hx)
+    kneeIn: woman ? 0.2 : 0.1, // how far knees and feet move toward the centre (× hx)
     // leg shape: thigh -> knee -> ankle radii. Women: full thighs, slim knees and calves.
     thighR: legR * (woman ? 1.4 : 1.1),
     kneeR: legR * (woman ? 0.78 : 0.88),
     ankleR: legR * (woman ? 0.55 : 0.65),
+    // calf bulge behind the upper shin
+    calfR: legR * (woman ? 0.78 * 1.22 : 0.88 * 1.1),
+    // arms held a little away from the body (A-pose); wider for the woman
+    armSpread: woman ? 0.2 : 0.12,
     // head ellipsoid radii
     rx: R * p.headWidth, ry: R, rz: R * 0.92,
   };

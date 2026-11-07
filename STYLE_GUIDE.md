@@ -92,8 +92,10 @@ dressed in the same tones as the street will disappear.
 - **Man / Woman** (presets of the same names set matching proportions).
 - **Woman:** hourglass torso (narrow waist, flared hips), the chest as **one
   trapezoid block** (top slopes down from the upper chest, flat underside; never
-  spheres), full thighs tapering to slim knees and calves, knees angled slightly
-  inward, longer legs, slimmer arms and neck.
+  spheres), a rounded low-poly bottom behind the top of the thighs so the side
+  view has an S-curve (chest forward, bottom back), a deeper torso, full thighs
+  tapering to slim knees, a calf bulge behind the shin, arms held slightly away
+  from the body, longer legs, slimmer arms and neck.
 - Neck, arm and leg thickness are separate sliders.
 - Every top stops at the hip line so the waistband shows and the hip shape
   reads as body.

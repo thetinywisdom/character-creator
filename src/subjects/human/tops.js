@@ -88,7 +88,7 @@ function chest(f, L, bands) {
   }
   geo.computeVertexNormals();
   const mesh = new THREE.Mesh(geo, m);
-  mesh.position.set(0, f.hipY + y, f.torsoR(y) * f.torsoDepth - D * 0.35);
+  mesh.position.set(0, f.hipY + y, f.torsoR(y) * f.torsoDepth - D * 0.2);
   mesh.name = 'chest';
   return mesh;
 }

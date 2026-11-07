@@ -4,7 +4,7 @@ import { CLOTH_COLORS, HAIR_COLORS, SKIN_TONES } from '../styles/palette.js';
 import { measure } from './human/frame.js';
 import { HAIRSTYLES, buildHair } from './human/hair.js';
 import { TOPS, buildSleeve, buildTorso } from './human/tops.js';
-import { LEGWEAR, buildLeg, buildSkirt } from './human/legwear.js';
+import { LEGWEAR, buildBottom, buildLeg, buildSkirt } from './human/legwear.js';
 
 // Human character, assembled from slots: body, hair, top, legwear (more slots
 // – headwear, accessories, outerwear – arrive in later batches as new files
@@ -112,13 +112,14 @@ export const human = {
     // --- legs (pivot at hip, for later animation) ------------------------
     for (const sx of [-1, 1]) root.add(buildLeg(f, p.legwear, mats, sx));
     if (p.legwear === 'Skirt') root.add(buildSkirt(f, mats));
+    else if (f.woman) root.add(buildBottom(f, mats));
 
     // --- arms (pivot at shoulder) ----------------------------------------
     for (const sx of [-1, 1]) {
       const arm = new THREE.Group();
       arm.name = sx < 0 ? 'armR' : 'armL';
       arm.position.set(sx * (f.sw * 0.5 - f.armR * 0.6), f.shoulderY - f.armR * 0.9, 0);
-      arm.rotation.z = sx * 0.12;
+      arm.rotation.z = sx * f.armSpread;
       arm.add(capsuleBetween([0, 0, 0], [0, -(f.armLen - f.handR * 1.6), 0], f.armR, mats.skin));
       const sleeve = buildSleeve(f, top, mats.top);
       if (sleeve) arm.add(sleeve);

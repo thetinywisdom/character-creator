@@ -16,7 +16,11 @@ export function buildLeg(f, kind, mats, sx) {
   const inX = -sx * f.hx * f.kneeIn;
   // thigh (hip -> knee) and shin (knee -> ankle), tapered
   leg.add(taperBetween([0, 0, 0], [inX, knee, 0], f.thighR, f.kneeR, legMat));
-  leg.add(taperBetween([inX, knee, 0], [inX, ankle + f.ankleR, 0], f.kneeR, f.ankleR, legMat));
+  // shin: knee -> calf (bulging toward the back) -> ankle
+  const calfY = knee + (ankle - knee) * 0.3;
+  const calfZ = -f.kneeR * 0.35;
+  leg.add(taperBetween([inX, knee, 0], [inX, calfY, calfZ], f.kneeR, f.calfR, legMat));
+  leg.add(taperBetween([inX, calfY, calfZ], [inX, ankle + f.ankleR, 0], f.calfR, f.ankleR, legMat));
   if (kind === 'Shorts') {
     // covers the upper thigh, a little wider than the leg
     const t = 0.8;
@@ -27,6 +31,23 @@ export function buildLeg(f, kind, mats, sx) {
     position: [inX, -f.legLen + f.footH / 2, f.footL * 0.22],
   }));
   return leg;
+}
+
+/**
+ * Bottom (women): a rounded, low-poly volume behind the top of the thighs,
+ * so the side view gets its S-curve (chest forward, bottom back). Few
+ * segments on purpose: it reads as faceted, like the rest of the PS1 body.
+ * Covered by whatever legwear is worn (not drawn under skirts).
+ */
+export function buildBottom(f, mats) {
+  const L = f.torsoLen;
+  const back = f.torsoR(L * 0.05) * f.torsoDepth;
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 5), mats.legwear);
+  // sticks out about 0.1 × hip width behind the torso: a curve, not a shelf
+  mesh.scale.set(f.hw * 0.44, L * 0.16, f.hw * 0.2);
+  mesh.position.set(0, f.hipY - L * 0.03, -back + f.hw * 0.1);
+  mesh.name = 'bottom';
+  return mesh;
 }
 
 /** A flared skirt hanging from just above the hips to about knee height. */
