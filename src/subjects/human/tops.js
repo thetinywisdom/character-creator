@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { capsuleBetween, seg } from '../../lib/shapes.js';
 
 // Tops: the torso is built from horizontal bands (fractions of torso height),
-// each in its own material. That's how a crop top shows a strip of skin and a
-// tank top shows bare shoulders.
+// each in its own material. That's how a crop top shows a strip of skin.
+// A tank top is a clean sleeveless body: the bare arms are what make it read.
 // Small details (shirt collars and plackets) are deliberately oversized so
 // they still read when the character is tiny (style guide).
 
@@ -12,7 +12,7 @@ export const TOPS = {
   'T-shirt (long sleeve)':  { sleeve: 'long' },
   'Shirt':                  { sleeve: 'short', collar: true },
   'Shirt (long sleeve)':    { sleeve: 'long', collar: true },
-  'Tank top':               { sleeve: 'none', tank: true },
+  'Tank top':               { sleeve: 'none' },
   'Crop top':               { sleeve: 'short', crop: true },
   'Crop top (long sleeve)': { sleeve: 'long', crop: true },
 };
@@ -42,22 +42,10 @@ export function buildTorso(f, spec, mats) {
   const HIP = 0.12;
   const bands = spec.crop
     ? [[0, 0.16, mats.legwear], [0.16, 0.5, mats.skin], [0.5, 1, mats.top]]
-    : spec.tank
-      ? [[0, HIP, mats.legwear], [HIP, 0.88, mats.top], [0.88, 1, mats.skin]]
-      : [[0, HIP, mats.legwear], [HIP, 1, mats.top]];
+    : [[0, HIP, mats.legwear], [HIP, 1, mats.top]];
   for (const [a, b, m] of bands) torso.add(band(f, a * L, b * L, m));
 
   if (f.woman) torso.add(chest(f, L, bands));
-
-  if (spec.tank) {
-    // chunky shoulder straps over the bare band
-    for (const sx of [-1, 1]) {
-      const x = sx * f.sw * 0.22;
-      const strap = new THREE.Mesh(new THREE.BoxGeometry(f.sw * 0.12, L * 0.16, f.torsoR(L * 0.93) * f.torsoDepth * 2.1), mats.top);
-      strap.position.set(x, f.hipY + L * 0.93, 0);
-      torso.add(strap);
-    }
-  }
 
   if (spec.collar) {
     // a chunky collar ring and a button strip down the front

@@ -6,7 +6,7 @@ A three.js playground for finding the visual style of a 3D world before building
 with slots and per-item colours. Batch 1 (done): Man / Woman body types (the
 woman with an hourglass torso, a trapezoid low-poly chest, full thighs tapering
 to slim knees), separate neck / arm / leg thickness, skin tones, 9 hairstyles with
-8 hair colours, 7 tops (T-shirt, shirt, tank top, crop top; short/long sleeves),
+8 hair colours, 7 tops (T-shirt, shirt, sleeveless tank top, crop top; short/long sleeves),
 trousers / shorts / skirt, shoe colours, a Randomize button and a crowd view.
 Next: headwear, face accessories, facial hair (batch 2); outerwear, back
 accessories, ties, fanny pack, baby carrier (batch 3).
