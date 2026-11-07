@@ -8,8 +8,11 @@ man with a V-shaped torso and strong arms, the woman with an hourglass torso, ch
 thighs tapering to slim knees; see the Body shape study view), separate neck / arm / leg thickness, skin tones, 9 hairstyles with
 8 hair colours, 7 tops (T-shirt, shirt, sleeveless tank top, crop top; short/long sleeves),
 trousers / shorts / skirt, chunky shoes or boots, a Randomize button and a crowd view.
-Next: headwear, face accessories, facial hair (batch 2); outerwear, back
-accessories, ties, fanny pack, baby carrier (batch 3).
+Batch 2 (done): headwear (cap, backwards cap, beanie, fedora, headphones,
+helmet), face accessories (glasses, sunglasses, flu mask), beards (short, long,
+goatee) and moustaches (classic, handlebar, thin). Hats that cover the head
+squash tall hairstyles underneath.
+Next: outerwear, back accessories, ties, fanny pack, baby carrier (batch 3).
 
 **Phase 1 – style exploration (done):** a human, a cat and a tree, each built from simple
 primitives in code, used to explore style directions side by side. They are meant to
@@ -69,7 +72,8 @@ Settings are remembered in your browser.
 src/
   main.js            app: grid, focus/lineup views, controls panel, render loop
   subjects/          human.js, cat.js, tree.js – build(params, style) -> THREE.Group
-  subjects/human/    frame.js (measurements), hair.js, tops.js, legwear.js – one file per slot
+  subjects/human/    frame.js (measurements), sculpt.js, hair.js, head.js, tops.js, arms.js,
+                     legwear.js, footwear.js – one file per slot
   styles/            inkCel.js, ps1.js, gray.js – materials per role + lights,
                      palette.js – shared base colours
   viewer/Cell.js     one stage (scene, lights, ground, street backdrop, camera framing)

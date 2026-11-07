@@ -117,6 +117,19 @@ dressed in the same tones as the street will disappear.
 - Every top stops at the hip line so the waistband shows and the hip shape
   reads as body.
 
+## 3c. Head items
+
+- **Headwear:** cap, backwards cap, beanie, fedora, headphones, helmet, in any
+  clothing colour. Hats that cover the head (cap, beanie, fedora, helmet)
+  squash tall hairstyles: under them an afro, bun, spiky or curly style becomes
+  short, a mohawk disappears, medium and long hair still show below. Headphones
+  sit over any hair and widen for big hair.
+- **Face accessories:** glasses, sunglasses, flu mask (oversized lenses and
+  frames).
+- **Facial hair:** beard (short, long, goatee) and moustache (classic,
+  handlebar, thin) are separate slots that combine; both use the hair colour
+  and are oversized.
+
 ## 4. Readability checklist (for any new character)
 
 - [ ] Visible at street distance on the sidewalk, in Day **and** Night lighting

@@ -6,6 +6,7 @@ import { HAIRSTYLES, buildHair } from './human/hair.js';
 import { TOPS, buildTorso } from './human/tops.js';
 import { buildArm } from './human/arms.js';
 import { FOOTWEAR } from './human/footwear.js';
+import { BEARDS, FACE_ACCESSORIES, HEADWEAR, MOUSTACHES, buildFaceAccessory, buildFacialHair, buildHeadwear, coversHair, hairUnder } from './human/head.js';
 import { LEGWEAR, buildBottom, buildLeg, buildSkirt } from './human/legwear.js';
 
 // Human character, assembled from slots: body, hair, top, legwear (more slots
@@ -45,6 +46,13 @@ export const human = {
     // head
     hair:          { group: 'Hair', value: 'short', options: HAIRSTYLES, label: 'Hairstyle' },
     hairColor:     { group: 'Hair', value: 'Dark brown', options: names(HAIR_COLORS), label: 'Hair colour' },
+    beard:         { group: 'Hair', value: 'None', options: BEARDS, label: 'Beard' },
+    moustache:     { group: 'Hair', value: 'None', options: MOUSTACHES, label: 'Moustache' },
+    // head items
+    headwear:      { group: 'Head', value: 'None', options: HEADWEAR, label: 'Headwear' },
+    headwearColor: { group: 'Head', value: 'Red', options: names(CLOTH_COLORS), label: 'Headwear colour' },
+    faceAccessory: { group: 'Head', value: 'None', options: FACE_ACCESSORIES, label: 'Face accessory' },
+    accessoryColor:{ group: 'Head', value: 'Black', options: names(CLOTH_COLORS), label: 'Frame / mask colour' },
     // clothes
     top:           { group: 'Clothes', value: 'T-shirt', options: names(TOPS), label: 'Top' },
     topColor:      { group: 'Clothes', value: 'Blue', options: names(CLOTH_COLORS), label: 'Top colour' },
@@ -92,6 +100,12 @@ export const human = {
       legwear: pick(['Trousers', 'Trousers', 'Shorts', 'Skirt']),
       legwearColor,
       footwear: rng() < 0.3 ? 'Boots' : 'Shoes',
+      headwear: rng() < 0.4 ? pick(HEADWEAR.slice(1)) : 'None',
+      headwearColor: pick(names(CLOTH_COLORS)),
+      faceAccessory: rng() < 0.3 ? pick(FACE_ACCESSORIES.slice(1)) : 'None',
+      accessoryColor: pick(['Black', 'Black', 'Brown', 'White', 'Red', 'Blue']),
+      beard: !woman && rng() < 0.35 ? pick(BEARDS.slice(1)) : 'None',
+      moustache: !woman && rng() < 0.3 ? pick(MOUSTACHES.slice(1)) : 'None',
       shoeColor: pick(['Black', 'Brown', 'White', 'Gray', 'Red', 'Navy']),
     };
   },
@@ -108,7 +122,13 @@ export const human = {
       legwear: style.material('clothAlt', CLOTH_COLORS[p.legwearColor]),
       shoe: style.material('shoe', CLOTH_COLORS[p.shoeColor]),
       accent: style.material('accent', accentFor(p.topColor)),
+      headwear: style.material('cloth', CLOTH_COLORS[p.headwearColor]),
+      frame: style.material('accent', CLOTH_COLORS[p.accessoryColor]),
+      mask: style.material('cloth', CLOTH_COLORS[p.accessoryColor]),
+      lens: style.material('accent', 0x16161c),
+      band: style.material('accent', CLOTH_COLORS.Black),
     };
+    f.mats = mats;
 
     // --- torso + neck ----------------------------------------------------
     root.add(buildTorso(f, top, mats));
@@ -131,7 +151,11 @@ export const human = {
     head.name = 'head';
     head.position.y = f.headY;
     head.add(ellipsoid(1, [f.rx, f.ry, f.rz], mats.skin));
-    head.add(buildHair(f, p.hair, mats.hair));
+    const hair = hairUnder(p.headwear, p.hair);
+    head.add(buildHair(f, hair, mats.hair, { underHat: coversHair(p.headwear) }));
+    head.add(buildFacialHair(f, p.beard, p.moustache, mats.hair));
+    head.add(buildHeadwear(f, p.headwear, mats.headwear, hair));
+    head.add(buildFaceAccessory(f, p.faceAccessory, mats));
     root.add(head);
 
     return root;

@@ -27,23 +27,25 @@ function backPanel(f, material, endY, width = 1.2) {
   return back;
 }
 
-export function buildHair(f, style, material) {
+/** underHat: a hat covers the top, so the hair cap hugs the scalp to stay hidden under it. */
+export function buildHair(f, style, material, { underHat = false } = {}) {
   const g = new THREE.Group();
   g.name = 'hair';
   const { R, rx, ry, rz } = f;
   const shoulder = f.shoulderY - f.headY; // head-local y of the shoulders
+  const capPuff = underHat ? 1.025 : 1.08;
 
   switch (style) {
     case 'bald':
       break;
     case 'short':
-      g.add(cap(f, material));
+      g.add(cap(f, material, capPuff));
       break;
     case 'medium': // to the shoulders
-      g.add(cap(f, material), backPanel(f, material, shoulder + R * 0.2));
+      g.add(cap(f, material, capPuff), backPanel(f, material, shoulder + R * 0.2));
       break;
     case 'long': // down the back
-      g.add(cap(f, material), backPanel(f, material, shoulder - f.torsoLen * 0.45, 1.35));
+      g.add(cap(f, material, capPuff), backPanel(f, material, shoulder - f.torsoLen * 0.45, 1.35));
       break;
     case 'bun':
       g.add(cap(f, material), ellipsoid(R * 0.4, [1, 1, 1], material, { position: [0, R * 0.8, -R * 0.55] }));
