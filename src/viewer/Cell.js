@@ -68,7 +68,7 @@ export class Cell {
     const items = this.entries.map(({ subject, overrides }) => {
       const p = overrides ? { ...params[subject.id], ...overrides } : params[subject.id];
       const obj = subject.build(p, this.style);
-      if (subject.isCharacter) obj.scale.setScalar(Cell.characterScale);
+      if (subject.isCharacter) obj.scale.setScalar((subject.exaggeration ?? 1) * Cell.characterScale);
       this.style.decorate?.(obj);
       obj.traverse((o) => {
         if (o.isMesh && !o.userData.outline) { o.castShadow = true; o.receiveShadow = true; }

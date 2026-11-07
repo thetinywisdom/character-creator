@@ -69,7 +69,8 @@ dressed in the same tones as the street will disappear.
    (the "Street distance (tiny)" toggle). If you can't tell what it is from its
    outline, change the shape, not the details.
 4. **Real-world scale, in metres.** Human default is 1.6 m and 7.5 heads tall
-   (the "Realistic" preset); the cat is about 0.42 m long.
+   (the "Realistic" preset); the cat is modelled at about 0.42 m long and drawn
+   1.5× (see §5).
 5. **Colour by role, never by style.** Every part asks for a role (`skin`,
    `cloth`, `leaf`, ...). Never hard-code a colour in a model.
 6. **Characters face +z and stand on y = 0.** Parts that will move (the human's
@@ -83,12 +84,13 @@ dressed in the same tones as the street will disappear.
 - [ ] Gets a blob shadow (`isCharacter: true` on the subject)
 - [ ] Silhouette recognisable with outlines on
 
-## 5. Open question: character size
+## 5. Character size
 
-The **Character size** slider (1–1.6× real) exaggerates people and animals so
-they read when tiny. At 1× (real scale) the cat is hard to spot from across a
-street. **To decide in Phase 2:** keep everything at real scale, or use a fixed
-exaggeration (around 1.3×) for characters only.
+- **People: real size** (1×).
+- **Animals: exaggerated where needed to read at street distance.** The cat is drawn
+  **1.5× real size** (set with `exaggeration: 1.5` on the subject).
+- The viewer's **Extra character size** slider multiplies on top of this, for
+  experiments only; the default is 1.
 
 ## 6. Keeping a style switch cheap
 

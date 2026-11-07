@@ -7,6 +7,8 @@ export const cat = {
   id: 'cat',
   label: 'Cat',
   isCharacter: true,
+  // drawn 1.5x real size so it reads from across a street (style guide §5)
+  exaggeration: 1.5,
   schema: {
     bodyLength: { value: 0.42, min: 0.25, max: 0.6,  step: 0.01, label: 'Body length (m)' },
     chubbiness: { value: 1,    min: 0.7,  max: 1.6,  step: 0.01, label: 'Chubbiness' },

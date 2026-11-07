@@ -163,7 +163,7 @@ function applyStreet(on) {
   if (state.view === 'focus') setView('focus');
 }
 viewFolder.add(state, 'street').name('Street distance (tiny)').onChange(applyStreet);
-viewFolder.add(state, 'characterScale', 1, 1.6, 0.05).name('Character size (× real)').onChange((v) => {
+viewFolder.add(state, 'characterScale', 1, 1.6, 0.05).name('Extra character size').onChange((v) => {
   Cell.characterScale = v;
   for (const cell of [...galleryCells, lineupCell]) cell.rebuild(params);
 });
