@@ -99,6 +99,28 @@ function makeCrowd() {
 }
 crowdCell = makeCrowd();
 
+// Side-by-side study of the woman's chest and bottom shapes.
+const SHAPE_STUDY = [
+  { chestShape: 'Wedge', bottomShape: 'Round' },
+  { chestShape: 'Smooth', bottomShape: 'Smooth' },
+  { chestShape: 'Smooth (two)', bottomShape: 'Smooth (two)' },
+  { chestShape: 'Smooth (two)', bottomShape: 'Smooth (two)', chestSize: 1.35, bottomSize: 1.35 },
+  { chestShape: 'Smooth (two)', bottomShape: 'Smooth (two)', chestSize: 0.65, bottomSize: 0.65 },
+];
+let studyCell = null;
+function makeStudy() {
+  const style = styles.find((s) => s.id === state.lineupStyle) ?? styles[0];
+  const human = subjects.find((s) => s.id === 'human');
+  const base = { ...defaultsFor(human), ...human.presets.Woman, hair: 'bun', hairColor: 'Brown', skin: 'Tan',
+    top: 'Tank top', topColor: 'Teal', legwear: 'Shorts', legwearColor: 'Khaki' };
+  const entries = SHAPE_STUDY.map((v) => ({ subject: human, overrides: { ...base, ...v } }));
+  const cell = new Cell({ entries, style, renderer, gap: 0.35, viewDir: [0.18, 0.3, 1] });
+  cell.rebuild(params);
+  cell.applyLighting(lightingPresets[state.lighting]);
+  return cell;
+}
+studyCell = makeStudy();
+
 galleryCells.forEach((c) => { c.rebuild(params); c.applyLighting(lightingPresets[state.lighting]); });
 
 // ---------------------------------------------------------------------------
@@ -145,6 +167,7 @@ function setView(view) {
 /** Street distance shows a fixed slice of the world instead of hugging the subject. */
 function framingHeight(view = state.view) {
   if (view === 'lineup' || view === 'crowd') return LINEUP_HEIGHT;
+  if (view === 'study') return 0;
   return state.street ? STREET_HEIGHT : 0;
 }
 
@@ -158,6 +181,7 @@ function bigViewWidth() {
 function activeCell() {
   if (state.view === 'lineup') return lineupCell;
   if (state.view === 'crowd') return crowdCell;
+  if (state.view === 'study') return studyCell;
   return state.focus;
 }
 
@@ -173,6 +197,7 @@ const actions = {
   gallery: () => setView('gallery'),
   lineup: () => setView('lineup'),
   crowd: () => setView('crowd'),
+  study: () => setView('study'),
   newCrowd: () => {
     state.crowdSeed += 1;
     crowdCell = makeCrowd();
@@ -190,6 +215,7 @@ viewFolder.add(actions, 'gallery').name('Gallery (style × subject)');
 viewFolder.add(actions, 'lineup').name('Street scene (real scale)');
 viewFolder.add(actions, 'crowd').name('Crowd (random characters)');
 viewFolder.add(actions, 'newCrowd').name('New random crowd');
+viewFolder.add(actions, 'study').name('Body shape study (woman)');
 function applyStreet(on) {
   state.street = on;
   for (const cell of galleryCells) {
@@ -204,7 +230,7 @@ viewFolder.add(state, 'characterScale', 1, 1.6, 0.05).name('Extra character size
   for (const cell of [...galleryCells, lineupCell, crowdCell]) cell.rebuild(params);
 });
 viewFolder.add(state, 'lighting', Object.keys(lightingPresets)).name('Lighting').onChange((name) => {
-  for (const cell of [...galleryCells, lineupCell, crowdCell]) cell.applyLighting(lightingPresets[name]);
+  for (const cell of [...galleryCells, lineupCell, crowdCell, studyCell]) cell.applyLighting(lightingPresets[name]);
 });
 if (styles.length > 1) {
   viewFolder.add(state, 'lineupStyle', Object.fromEntries(styles.map((s) => [s.label, s.id])))
@@ -212,7 +238,8 @@ if (styles.length > 1) {
     .onChange(() => {
       lineupCell = makeLineup();
       crowdCell = makeCrowd();
-      if (state.view === 'lineup' || state.view === 'crowd') setView(state.view);
+      studyCell = makeStudy();
+      if (['lineup', 'crowd', 'study'].includes(state.view)) setView(state.view);
     });
 }
 viewFolder.add(state, 'turntable').name('Turntable');

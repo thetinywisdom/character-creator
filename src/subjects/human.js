@@ -35,6 +35,11 @@ export const human = {
     legThickness:  { group: 'Body', value: 0.034, min: 0.02,  max: 0.07, step: 0.001, label: 'Leg thickness' },
     headWidth:     { group: 'Body', value: 0.8,   min: 0.7,   max: 1.1,  step: 0.01,  label: 'Head width' },
     skin:          { group: 'Body', value: 'Light', options: names(SKIN_TONES), label: 'Skin tone' },
+    // women only
+    chestShape:    { group: 'Body shape (woman)', value: 'Smooth (two)', options: ['Smooth (two)', 'Smooth', 'Wedge'], label: 'Chest shape' },
+    chestSize:     { group: 'Body shape (woman)', value: 1, min: 0, max: 1.6, step: 0.05, label: 'Chest size' },
+    bottomShape:   { group: 'Body shape (woman)', value: 'Smooth (two)', options: ['Smooth (two)', 'Smooth', 'Round'], label: 'Bottom shape' },
+    bottomSize:    { group: 'Body shape (woman)', value: 1, min: 0, max: 1.6, step: 0.05, label: 'Bottom size' },
     // head
     hair:          { group: 'Hair', value: 'short', options: HAIRSTYLES, label: 'Hairstyle' },
     hairColor:     { group: 'Hair', value: 'Dark brown', options: names(HAIR_COLORS), label: 'Hair colour' },
@@ -112,7 +117,7 @@ export const human = {
     // --- legs (pivot at hip, for later animation) ------------------------
     for (const sx of [-1, 1]) root.add(buildLeg(f, p.legwear, mats, sx));
     if (p.legwear === 'Skirt') root.add(buildSkirt(f, mats));
-    else if (f.woman) root.add(buildBottom(f, mats));
+    else if (f.woman && f.bottomShape === 'Round') root.add(buildBottom(f, mats));
 
     // --- arms (pivot at shoulder) ----------------------------------------
     for (const sx of [-1, 1]) {

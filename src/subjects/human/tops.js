@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { capsuleBetween, seg } from '../../lib/shapes.js';
+import { sculptTorso } from './sculpt.js';
 
 // Tops: the torso is built from horizontal bands (fractions of torso height),
 // each in its own material. That's how a crop top shows a strip of skin.
@@ -21,12 +22,14 @@ export const TOPS = {
 function band(f, y0, y1, material) {
   const L = f.torsoLen;
   const pts = [];
-  if (y0 <= 0) pts.push(new THREE.Vector2(0, 0));
+  if (y0 <= f.torsoBottom) pts.push(new THREE.Vector2(0, y0));
   pts.push(new THREE.Vector2(f.torsoR(y0), y0));
   for (const q of f.torsoSamples) if (q.y > y0 && q.y < y1) pts.push(q.clone());
   pts.push(new THREE.Vector2(f.torsoR(y1), y1));
   if (y1 >= L) pts.push(new THREE.Vector2(0, L));
-  const mesh = new THREE.Mesh(new THREE.LatheGeometry(pts, seg(28)), material);
+  // phiStart = π/2 puts the lathe seam at the side, away from the sculpted zones
+  const lathe = new THREE.LatheGeometry(pts, f.torsoRadial, Math.PI / 2);
+  const mesh = new THREE.Mesh(sculptTorso(lathe, f), material);
   mesh.position.y = f.hipY;
   mesh.scale.z = f.torsoDepth;
   return mesh;
@@ -40,12 +43,13 @@ export function buildTorso(f, spec, mats) {
   // Every top stops at the hip line, so the waistband of the trousers or
   // skirt shows below it and the hip shape reads as body, not as a flared shirt.
   const HIP = 0.12;
+  const start = f.torsoBottom / L; // 0, or below the hip line for women
   const bands = spec.crop
-    ? [[0, 0.16, mats.legwear], [0.16, 0.5, mats.skin], [0.5, 1, mats.top]]
-    : [[0, HIP, mats.legwear], [HIP, 1, mats.top]];
+    ? [[start, 0.16, mats.legwear], [0.16, 0.5, mats.skin], [0.5, 1, mats.top]]
+    : [[start, HIP, mats.legwear], [HIP, 1, mats.top]];
   for (const [a, b, m] of bands) torso.add(band(f, a * L, b * L, m));
 
-  if (f.woman) torso.add(chest(f, L, bands));
+  if (f.woman && f.chestShape === 'Wedge') torso.add(chest(f, L, bands));
 
   if (spec.collar) {
     // a chunky collar ring and a button strip down the front

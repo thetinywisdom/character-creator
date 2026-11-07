@@ -90,12 +90,15 @@ dressed in the same tones as the street will disappear.
 ## 3b. Body types
 
 - **Man / Woman** (presets of the same names set matching proportions).
-- **Woman:** hourglass torso (narrow waist, flared hips), the chest as **one
-  trapezoid block** (top slopes down from the upper chest, flat underside; never
-  spheres), a rounded low-poly bottom behind the top of the thighs so the side
-  view has an S-curve (chest forward, bottom back), a deeper torso, full thighs
-  tapering to slim knees, a calf bulge behind the shin, arms held slightly away
-  from the body, longer legs, slimmer arms and neck.
+- **Woman:** hourglass torso (narrow waist, flared hips). The chest and bottom
+  are **sculpted into the torso surface** (vertices pushed forward / back with
+  soft falloffs), not separate boxes or balls, so they grow out of the body and
+  still look faceted at PS1 polygon counts. Default shape: two soft lobes
+  ("Smooth (two)") with size sliders; the older trapezoid chest and round
+  bottom remain as options. The torso continues a little below the hip line
+  so the bottom sits over the top of the thighs, giving the side view an
+  S-curve. Also: full thighs tapering to slim knees, a calf bulge, arms held
+  slightly away from the body, longer legs, slimmer arms and neck.
 - Neck, arm and leg thickness are separate sliders.
 - Every top stops at the hip line so the waistband shows and the hip shape
   reads as body.

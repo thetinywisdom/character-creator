@@ -26,7 +26,11 @@ export function measure(p) {
 
   // torso side profile (radius by height): hips -> waist -> chest -> shoulders.
   // The woman's profile is an hourglass: wide flared hips, a narrow waist.
+  // The woman's torso continues below the hip line (to torsoBottom) so the
+  // sculpted bottom can sit over the top of the thighs, where it belongs.
+  const torsoBottom = woman ? -0.16 * L : 0;
   const side = new THREE.SplineCurve(woman ? [
+    new THREE.Vector2(hw * 0.4, torsoBottom),
     new THREE.Vector2(hw * 0.5, 0),
     new THREE.Vector2(hw * 0.56, L * 0.12),
     new THREE.Vector2((hw + sw) * 0.25 * 0.72, L * 0.5),
@@ -41,7 +45,8 @@ export function measure(p) {
     new THREE.Vector2(sw * 0.4, L * 0.98),
     new THREE.Vector2(neckR * 1.05, L),
   ]);
-  const torsoSamples = side.getPoints(seg(28, 6));
+  // women get extra rings/segments so the sculpted chest and bottom have room
+  const torsoSamples = side.getPoints(seg(28, woman ? 16 : 6));
   const dense = side.getPoints(96);
   const torsoR = (y) => {
     if (y <= dense[0].y) return dense[0].x;
@@ -57,9 +62,14 @@ export function measure(p) {
   const footH = Math.max(legR * 1.1, H * 0.04);
   return {
     woman,
+    chestShape: p.chestShape ?? 'Smooth (two)',
+    chestSize: p.chestSize ?? 1,
+    bottomShape: p.bottomShape ?? 'Smooth (two)',
+    bottomSize: p.bottomSize ?? 1,
+    torsoRadial: seg(28, woman ? 16 : 3),
     H, headH, R, chib, legLen, neckLen, torsoLen, hipY, shoulderY, headY,
     sw, hw, armR, legR, neckR,
-    torsoSamples, torsoR,
+    torsoSamples, torsoR, torsoBottom,
     torsoDepth: woman ? 0.72 : 0.62, // torso is a lathe squashed front-to-back
     armLen: torsoLen * 0.85 + legLen * 0.25,
     handR: armR * 1.4,
