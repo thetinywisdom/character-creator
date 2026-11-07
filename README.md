@@ -4,7 +4,7 @@ A three.js playground for finding the visual style of a 3D world before building
 
 **Phase 2 – characters (in progress):** the human is now a modular character
 with slots and per-item colours. Batch 1 (done): Man / Woman body types (the
-woman with an hourglass torso, chest and bottom sculpted into the body, full
+man with a V-shaped torso and strong arms, the woman with an hourglass torso, chest and bottom sculpted into the body, full
 thighs tapering to slim knees; see the Body shape study view), separate neck / arm / leg thickness, skin tones, 9 hairstyles with
 8 hair colours, 7 tops (T-shirt, shirt, sleeveless tank top, crop top; short/long sleeves),
 trousers / shorts / skirt, chunky shoes or boots, a Randomize button and a crowd view.

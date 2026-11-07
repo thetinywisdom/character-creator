@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
-// Sculpting the torso surface itself (women): instead of adding a separate
-// block or ball, vertices of the torso are pushed forward at the chest and
-// backward at the bottom with soft falloffs. The shapes grow out of the body
+// Sculpting the torso surface itself: instead of adding separate blocks or
+// balls, torso vertices are pushed forward / backward with soft falloffs.
+// Women: chest and bottom. Men: flat, defined pecs. Both: upper-back trapezius. The shapes grow out of the body
 // with no seams, and still look faceted at PS1 polygon counts.
 //
 // Shapes:  'Smooth'       one soft mass
@@ -14,10 +14,16 @@ const gauss = (d, s) => Math.exp(-((d / s) ** 2));
 
 /** Returns a new, sculpted geometry for one lathe band of the torso. */
 export function sculptTorso(geo, f) {
-  if (!f.woman) return geo;
   const L = f.torsoLen;
   const zones = [];
-  if (f.chestShape !== 'Wedge') {
+  if (!f.woman) {
+    // pecs: two broad, flat masses with a short edge underneath
+    zones.push({
+      sign: 1, yc: 0.74 * L, up: 0.11 * L, down: 0.05 * L,
+      amount: f.sw * 0.065, two: true, x0: f.sw * 0.16, sx: f.sw * 0.13, wx: f.sw * 0.3,
+    });
+  }
+  if (f.woman && f.chestShape !== 'Wedge') {
     zones.push({
       sign: 1,                      // front
       yc: 0.64 * L,                 // fullest point
@@ -29,7 +35,7 @@ export function sculptTorso(geo, f) {
       wx: f.sw * 0.22,                  // width of the single mass
     });
   }
-  if (f.bottomShape !== 'Round') {
+  if (f.woman && f.bottomShape !== 'Round') {
     zones.push({
       sign: -1,                     // back
       yc: -0.05 * L,                // over the top of the thighs
@@ -41,10 +47,10 @@ export function sculptTorso(geo, f) {
       wx: f.hw * 0.3,
     });
   }
-  // slight trapezius: a soft fullness across the upper back, below the neck
+  // trapezius: fullness across the upper back, below the neck (stronger on men)
   zones.push({
     sign: -1, yc: 0.86 * L, up: 0.08 * L, down: 0.14 * L,
-    amount: f.sw * 0.05, two: false, wx: f.sw * 0.3,
+    amount: f.sw * (f.woman ? 0.05 : 0.08), two: false, wx: f.sw * 0.3,
   });
   if (!zones.length) return geo;
 

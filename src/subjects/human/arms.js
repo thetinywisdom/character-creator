@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { ellipsoid, taperBetween } from '../../lib/shapes.js';
+import { taperBetween } from '../../lib/shapes.js';
 
 // Arms: a rounded shoulder cap, an upper arm that tapers to the elbow, and a
 // slimmer forearm with a slight forward bend. Each arm is a group pivoting at
@@ -39,7 +39,25 @@ export function buildArm(f, sx, top, mats, sleeveFor) {
     arm.add(taperBetween(E, W, f.elbowR * 1.15, f.wristR * 1.2, mats.top));
   }
 
-  const hand = wrist.clone().addScaledVector(dir, f.handR * 0.8);
-  arm.add(ellipsoid(f.handR, [0.8, 1.15, 0.9], mats.skin, { position: hand.toArray() }));
+  arm.add(buildHand(f, wrist, dir, mats.skin));
   return arm;
+}
+
+/**
+ * Blocky, mitten-like hand: a box that is flat side-to-side (palm facing the
+ * body), wider front-to-back, narrowing toward the fingertips.
+ */
+function buildHand(f, wrist, dir, material) {
+  const r = f.handR;
+  const len = r * 2.1;
+  const geo = new THREE.BoxGeometry(r * 0.85, len, r * 1.35);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    if (pos.getY(i) < 0) pos.setZ(i, pos.getZ(i) * 0.75); // fingers narrower than the palm
+  }
+  geo.computeVertexNormals();
+  const hand = new THREE.Mesh(geo, material);
+  hand.position.copy(wrist).addScaledVector(dir, len * 0.45);
+  hand.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), dir);
+  return hand;
 }

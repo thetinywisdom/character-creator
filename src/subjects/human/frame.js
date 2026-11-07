@@ -39,15 +39,17 @@ export function measure(p) {
     new THREE.Vector2(neckR * 1.9, L * 0.985), // gentle slope into the neck
     new THREE.Vector2(neckR * 1.05, L),
   ] : [
-    new THREE.Vector2(hw * 0.42, 0),
-    new THREE.Vector2(hw * 0.5, L * 0.18),
-    new THREE.Vector2((hw + sw) * 0.25 * 0.9, L * 0.5),
-    new THREE.Vector2(sw * 0.5, L * 0.86),
-    new THREE.Vector2(sw * 0.4, L * 0.98),
+    // the man's profile is a V: narrow hips and waist, broad chest and shoulders
+    new THREE.Vector2(hw * 0.44, 0),
+    new THREE.Vector2(hw * 0.5, L * 0.14),
+    new THREE.Vector2((hw + sw) * 0.25 * 0.86, L * 0.42),
+    new THREE.Vector2(sw * 0.52, L * 0.78),
+    new THREE.Vector2(sw * 0.47, L * 0.91),      // squared, muscular shoulder line
+    new THREE.Vector2(neckR * 2.0, L * 0.965),   // trapezius slope into the neck
     new THREE.Vector2(neckR * 1.05, L),
   ]);
   // women get extra rings/segments so the sculpted chest and bottom have room
-  const torsoSamples = side.getPoints(seg(28, woman ? 16 : 6));
+  const torsoSamples = side.getPoints(seg(28, 16));
   const dense = side.getPoints(96);
   const torsoR = (y) => {
     if (y <= dense[0].y) return dense[0].x;
@@ -67,31 +69,32 @@ export function measure(p) {
     chestSize: p.chestSize ?? 1,
     bottomShape: p.bottomShape ?? 'Smooth (two)',
     bottomSize: p.bottomSize ?? 1,
-    torsoRadial: seg(28, woman ? 16 : 3),
+    torsoRadial: seg(28, 16),
     H, headH, R, chib, legLen, neckLen, torsoLen, hipY, shoulderY, headY,
     sw, hw, armR, legR, neckR,
     torsoSamples, torsoR, torsoBottom,
-    torsoDepth: woman ? 0.72 : 0.62, // torso is a lathe squashed front-to-back
+    torsoDepth: woman ? 0.72 : 0.68, // torso is a lathe squashed front-to-back
     armLen: torsoLen * 0.85 + legLen * 0.25,
     handR: armR * 1.3,
     footH,
     footL: H * 0.13,
     hx: Math.max(hw * 0.5 - legR * (woman ? 1.25 : 1), legR * 0.9), // leg spacing
-    kneeIn: woman ? 0.2 : 0.1, // how far knees and feet move toward the centre (× hx)
+    kneeIn: woman ? 0.2 : 0.04, // how far knees and feet move toward the centre (× hx)
     // leg shape: thigh -> knee -> ankle radii. Women: full thighs, slim knees and calves.
-    thighR: legR * (woman ? 1.55 : 1.1),
-    thighTop: woman ? legR * 0.45 : 0, // thighs start a little higher, so hips flow into legs
-    kneeR: legR * (woman ? 0.78 : 0.88),
-    ankleR: legR * (woman ? 0.55 : 0.65),
+    // men: straight, solid legs with little taper
+    thighR: legR * (woman ? 1.55 : 1.18),
+    thighTop: woman ? legR * 0.45 : legR * 0.25, // thighs start a little higher, so hips flow into legs
+    kneeR: legR * (woman ? 0.78 : 0.98),
+    ankleR: legR * (woman ? 0.55 : 0.78),
     // calf bulge behind the upper shin
-    calfR: legR * (woman ? 0.78 * 1.22 : 0.88 * 1.1),
+    calfR: legR * (woman ? 0.78 * 1.22 : 0.98 * 1.08),
     // arms held a little away from the body (A-pose); wider for the woman
-    armSpread: woman ? 0.2 : 0.12,
+    armSpread: woman ? 0.2 : 0.17,
     // arm shape: rounded shoulder cap -> elbow -> slimmer wrist, slight bend
-    shoulderR: armR * (woman ? 1.55 : 1.2),
-    elbowR: armR * (woman ? 0.95 : 0.9),
-    wristR: armR * (woman ? 0.62 : 0.72),
-    elbowBend: woman ? 0.2 : 0.1,
+    shoulderR: armR * (woman ? 1.55 : 1.5),   // men: strong shoulder caps and upper arms
+    elbowR: armR * (woman ? 0.95 : 1.05),
+    wristR: armR * (woman ? 0.62 : 0.86),
+    elbowBend: woman ? 0.2 : 0.18,
     // head ellipsoid radii
     rx: R * p.headWidth, ry: R, rz: R * 0.92,
   };

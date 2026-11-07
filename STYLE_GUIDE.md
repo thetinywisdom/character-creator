@@ -102,6 +102,12 @@ dressed in the same tones as the street will disappear.
   elbow and a slimmer, slightly bent forearm; full thighs that start a little
   higher and taper to slim knees; a calf bulge; arms held slightly away from
   the body; longer legs.
+- **Man:** a V-shaped torso (narrow hips and waist, broad chest and squared
+  shoulders), flat sculpted pecs, a thicker neck with a trapezius slope, strong
+  shoulder caps and upper arms, fuller forearms, elbows slightly bent and arms
+  held away from the body, straight solid legs with little taper.
+- **Hands:** blocky and mitten-like (a box, flat side-to-side, narrowing toward
+  the fingertips), for both body types.
 - **Footwear:** chunky low-poly shoes or ankle boots (a box foot with a sloped
   toe), not ovals.
 - Neck, arm and leg thickness are separate sliders.
