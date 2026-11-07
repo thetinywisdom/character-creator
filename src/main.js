@@ -292,13 +292,18 @@ const blitMat = new THREE.ShaderMaterial({
     void main() {
       vec4 c = linearToOutputTexel(texture2D(tDiffuse, vUv));
       if (outline > 0.5) {
-        // a pixel is on a silhouette when a neighbour is much farther away:
-        // darken it, so shapes get a 1-pixel dark rim against what's behind
+        // Silhouette test. 1/depth changes linearly across any flat surface,
+        // so its second difference is ~0 on floors and walls (even near the
+        // horizon) and large where a shape sits in front of something else.
+        // Only the nearer pixel is darkened, giving shapes a 1-pixel dark rim.
         vec2 t = 1.0 / size;
         float d = viewDepth(vUv);
-        float far4 = max(max(viewDepth(vUv + vec2(t.x, 0.0)), viewDepth(vUv - vec2(t.x, 0.0))),
-                         max(viewDepth(vUv + vec2(0.0, t.y)), viewDepth(vUv - vec2(0.0, t.y))));
-        if (far4 - d > max(0.15, d * 0.03)) c.rgb *= 0.28;
+        float l = viewDepth(vUv - vec2(t.x, 0.0)), r = viewDepth(vUv + vec2(t.x, 0.0));
+        float dn = viewDepth(vUv - vec2(0.0, t.y)), up = viewDepth(vUv + vec2(0.0, t.y));
+        float ic = 1.0 / d;
+        float lap = abs(1.0 / l + 1.0 / r - 2.0 * ic) + abs(1.0 / dn + 1.0 / up - 2.0 * ic);
+        float farthest = max(max(l, r), max(dn, up));
+        if (lap > ic * 0.12 && farthest > d * 1.02) c.rgb *= 0.28;
       }
       if (dither > 0.5) {
         vec2 px = floor(vUv * size);

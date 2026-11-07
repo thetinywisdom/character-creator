@@ -7,12 +7,13 @@ import { grayStyle } from './gray.js';
 // decorate(root), fog, pixelScale + prepareRender(w, h) (low-res rendering),
 // outline / dither (low-res post effects), options + setOption().
 //
-// PS1 was chosen as the direction. Ink & Cel is kept (not in the gallery) so
-// switching back stays a small change; pick it in the street scene's style list.
-export const styles = [ps1Clear, ps1Bright, ps1Classic, grayStyle, inkCelStyle];
+// Chosen direction: PS1 · Bright + clear (see STYLE_GUIDE.md). The other
+// variants and Ink & Cel stay selectable in the street scene's style list,
+// so comparing or switching later stays a small change.
+export const styles = [ps1Clear, ps1Bright, ps1Classic, inkCelStyle, grayStyle];
 
-// Rows in the gallery, top to bottom.
-export const galleryStyles = [ps1Clear, ps1Bright, ps1Classic, grayStyle];
+// Rows in the gallery, top to bottom: the chosen style, then the neutral reference.
+export const galleryStyles = [ps1Clear, grayStyle];
 
 // Lighting presets, applied on top of every style's own lights.
 export const lightingPresets = {

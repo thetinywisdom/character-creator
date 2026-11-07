@@ -1,0 +1,102 @@
+# Style Guide: PS1 · Bright + clear
+
+The look of the 3D world, decided in Phase 1. Everything built from here on
+should follow these rules. The live reference is the **PS1 · Bright + clear** row
+in the viewer (`npm run dev`), and the code that defines it is `src/styles/ps1.js`
+(`ps1Clear`).
+
+## The idea
+
+1990s console 3D (few polygons, chunky pixels, wobbly vertices, dithered colour),
+but **bright and clear** instead of murky. The world is a city, and people and
+animals are seen **small**, so every rule below serves one goal: **you can always
+spot the characters.**
+
+## 1. Rendering settings
+
+| Setting | Value | Why |
+|---|---|---|
+| Pixel size | **2** (screen drawn at ½ resolution) | Chunky pixels, but tiny figures keep enough detail |
+| Vertex wobble | **0.4** | The PS1 shimmer is there without making small shapes unreadable |
+| Colour | **15-bit with 4×4 ordered dither** | Authentic banding, no smooth gradients |
+| Pixel outlines | **On**: 1 dark pixel where a shape sits in front of something farther away | Separates characters from the background |
+| Fog | **Off** | Clear air; distance is shown by size, not haze |
+| Lighting | Lambert (simple diffuse), one sun + sky light | Matches the era's flat, vertex-lit look |
+| Real shadows | 512 px shadow map (deliberately blocky) | Grounds objects without looking modern |
+| Blob shadows | **On for characters**: soft dark disc under people and animals | Reads even when the real shadow is lost |
+| Geometry detail | **0.3×** the smooth segment counts | Low-poly everywhere |
+
+## 2. Colour
+
+Colour has a **hierarchy**: characters are vivid, the city is calm.
+
+- **Characters** (skin, clothes, hair, fur): saturation boosted **×1.35**.
+- **Environment** (buildings, ground, trees, road): saturation **×0.55** and lightened
+  **15%** toward white.
+- **Sky**: clear blue `#86c8ef`.
+
+Final colours per role (as rendered by the style):
+
+| Role | Used for | Colour |
+|---|---|---|
+| `skin` | faces, arms, hands | `#fac089` |
+| `cloth` | shirts, tops | `#0078dd` |
+| `clothAlt` | trousers | `#213157` |
+| `shoe` | shoes | `#713803` |
+| `hair` | hair | `#3d2119` |
+| `fur` | cat body | `#ee8c00` |
+| `furLight` | paws, inner ears | `#fff0db` |
+| `bark` | tree trunks, branches | `#9e7e6d` |
+| `leaf` | foliage | `#88ba7e` |
+| `road` | asphalt | `#7c7e85` |
+| `sidewalk` | pavement | `#c4c0b9` |
+| `building` / `buildingAlt` | walls | `#cda692` / `#aab5c2` |
+| `window` | window bands | `#717a89` |
+| `ground` | open ground | `#cac8c3` |
+
+Base colours live in `src/styles/palette.js`; the style applies the hierarchy on top.
+**New characters should use saturated, contrasting clothing colours**: a character
+dressed in the same tones as the street will disappear.
+
+## 3. Modelling rules
+
+1. **Low-poly, built from simple shapes.** Spheres, capsules, cones, boxes. Detail
+   comes from silhouette, not from small parts.
+2. **No faces.** Characters have no eyes, nose, mouth or ears; they are seen too
+   small for them. Personality comes from **silhouette, proportions, hair and
+   clothing colour**.
+3. **Readable silhouette first.** Check every new model at street distance
+   (the "Street distance (tiny)" toggle). If you can't tell what it is from its
+   outline, change the shape, not the details.
+4. **Real-world scale, in metres.** Human default is 1.6 m and 7.5 heads tall
+   (the "Realistic" preset); the cat is about 0.42 m long.
+5. **Colour by role, never by style.** Every part asks for a role (`skin`,
+   `cloth`, `leaf`, ...). Never hard-code a colour in a model.
+6. **Characters face +z and stand on y = 0.** Parts that will move (the human's
+   head, arms and legs; the cat's head) are separate groups pivoting at their
+   joints, ready for animation later.
+
+## 4. Readability checklist (for any new character)
+
+- [ ] Visible at street distance on the sidewalk, in Day **and** Night lighting
+- [ ] Clothing colours contrast with the sidewalk and buildings
+- [ ] Gets a blob shadow (`isCharacter: true` on the subject)
+- [ ] Silhouette recognisable with outlines on
+
+## 5. Open question: character size
+
+The **Character size** slider (1–1.6× real) exaggerates people and animals so
+they read when tiny. At 1× (real scale) the cat is hard to spot from across a
+street. **To decide in Phase 2:** keep everything at real scale, or use a fixed
+exaggeration (around 1.3×) for characters only.
+
+## 6. Keeping a style switch cheap
+
+Ink & Cel was the runner-up and is still in the code (`src/styles/inkCel.js`).
+To keep a future switch to a small change:
+
+- All style-specific code stays in `src/styles/`. Models never know the style.
+- Models stay low-poly (low-poly also looks good with ink outlines).
+- Colours come from roles (see above), not from textures.
+- If pixel textures are added later, they are optional extras on top of the role
+  colours, so a style without textures still works.

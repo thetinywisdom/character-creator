@@ -9,10 +9,8 @@ export const BASE = {
   clothAlt: 0x2c3652,  // trousers
   shoe: 0x6a4029,
   hair: 0x3a2520,
-  eye: 0x1b1b20,
   fur: 0xe8913f,       // orange cat
   furLight: 0xfff0db,  // muzzle, paws, inner ears
-  nose: 0xe0727e,
   bark: 0x7a5134,
   leaf: 0x5dab47,
   // city backdrop
