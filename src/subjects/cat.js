@@ -6,6 +6,7 @@ import { capsuleBetween, ellipsoid, seg } from '../lib/shapes.js';
 export const cat = {
   id: 'cat',
   label: 'Cat',
+  isCharacter: true,
   schema: {
     bodyLength: { value: 0.42, min: 0.25, max: 0.6,  step: 0.01, label: 'Body length (m)' },
     chubbiness: { value: 1,    min: 0.7,  max: 1.6,  step: 0.01, label: 'Chubbiness' },

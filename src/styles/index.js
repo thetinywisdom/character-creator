@@ -1,12 +1,18 @@
 import { inkCelStyle } from './inkCel.js';
-import { ps1Style } from './ps1.js';
+import { ps1Classic, ps1Bright, ps1Clear } from './ps1.js';
 import { grayStyle } from './gray.js';
 
-// Row order in the gallery. Gray-box stays last as the neutral reference.
-// A style provides: id, label, background, material(role), createLights(ctx),
-// and optionally: detail (segment multiplier), decorate(root), fog,
-// pixelScale + prepareRender(w, h) (low-res rendering), options + setOption().
-export const styles = [inkCelStyle, ps1Style, grayStyle];
+// All styles. A style provides: id, label, background, material(role),
+// createLights(ctx), and optionally: detail (segment multiplier),
+// decorate(root), fog, pixelScale + prepareRender(w, h) (low-res rendering),
+// outline / dither (low-res post effects), options + setOption().
+//
+// PS1 was chosen as the direction. Ink & Cel is kept (not in the gallery) so
+// switching back stays a small change; pick it in the street scene's style list.
+export const styles = [ps1Clear, ps1Bright, ps1Classic, grayStyle, inkCelStyle];
+
+// Rows in the gallery, top to bottom.
+export const galleryStyles = [ps1Clear, ps1Bright, ps1Classic, grayStyle];
 
 // Lighting presets, applied on top of every style's own lights.
 export const lightingPresets = {

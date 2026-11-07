@@ -9,6 +9,7 @@ import { capsuleBetween, ellipsoid, seg } from '../lib/shapes.js';
 export const human = {
   id: 'human',
   label: 'Human',
+  isCharacter: true,
   schema: {
     headsTall:      { value: 7.5,     min: 2.5,  max: 7.5,  step: 0.1,   label: 'Heads tall' },
     height:         { value: 1.6,   min: 1.0,  max: 2.0,  step: 0.01,  label: 'Height (m)' },

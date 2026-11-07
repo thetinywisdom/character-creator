@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import GUI from 'lil-gui';
 import { subjects } from './subjects/index.js';
-import { lightingPresets, styles } from './styles/index.js';
+import { galleryStyles, lightingPresets, styles } from './styles/index.js';
 import { Cell } from './viewer/Cell.js';
 import { defaultsFor, loadParams, saveParams } from './viewer/params.js';
 import './style.css';
@@ -28,6 +28,7 @@ const state = {
   lineupStyle: styles[0].id,
   lighting: 'Day',
   street: false, // frame subjects small, as seen from across a street
+  characterScale: 1, // >1 exaggerates people and animals so they read when tiny
 };
 const STREET_HEIGHT = 6; // metres of height in view at street distance
 const LINEUP_HEIGHT = 9;
@@ -43,7 +44,7 @@ for (const s of subjects) {
 }
 
 const galleryCells = [];
-for (const style of styles) {
+for (const style of galleryStyles) {
   grid.append(Object.assign(document.createElement('div'), { className: 'row-head', textContent: style.label }));
   for (const subject of subjects) {
     const cell = new Cell({ entries: [{ subject }], style, renderer });
@@ -162,6 +163,10 @@ function applyStreet(on) {
   if (state.view === 'focus') setView('focus');
 }
 viewFolder.add(state, 'street').name('Street distance (tiny)').onChange(applyStreet);
+viewFolder.add(state, 'characterScale', 1, 1.6, 0.05).name('Character size (× real)').onChange((v) => {
+  Cell.characterScale = v;
+  for (const cell of [...galleryCells, lineupCell]) cell.rebuild(params);
+});
 viewFolder.add(state, 'lighting', Object.keys(lightingPresets)).name('Lighting').onChange((name) => {
   for (const cell of [...galleryCells, lineupCell]) cell.applyLighting(lightingPresets[name]);
 });
@@ -267,10 +272,17 @@ function saveScreenshot() {
 // ---------------------------------------------------------------------------
 const blitCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 const blitMat = new THREE.ShaderMaterial({
-  uniforms: { tDiffuse: { value: null }, size: { value: new THREE.Vector2(1, 1) }, dither: { value: 1 } },
+  uniforms: {
+    tDiffuse: { value: null }, tDepth: { value: null }, size: { value: new THREE.Vector2(1, 1) },
+    dither: { value: 1 }, outline: { value: 0 }, near: { value: 0.1 }, far: { value: 100 },
+  },
   vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
   fragmentShader: `
-    uniform sampler2D tDiffuse; uniform vec2 size; uniform float dither; varying vec2 vUv;
+    #include <packing>
+    uniform sampler2D tDiffuse; uniform sampler2D tDepth; uniform vec2 size;
+    uniform float dither; uniform float outline; uniform float near; uniform float far;
+    varying vec2 vUv;
+    float viewDepth(vec2 uv) { return -perspectiveDepthToViewZ(texture2D(tDepth, uv).x, near, far); }
     float bayer4(vec2 p) {
       int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
       int i = x + y * 4;
@@ -279,6 +291,15 @@ const blitMat = new THREE.ShaderMaterial({
     }
     void main() {
       vec4 c = linearToOutputTexel(texture2D(tDiffuse, vUv));
+      if (outline > 0.5) {
+        // a pixel is on a silhouette when a neighbour is much farther away:
+        // darken it, so shapes get a 1-pixel dark rim against what's behind
+        vec2 t = 1.0 / size;
+        float d = viewDepth(vUv);
+        float far4 = max(max(viewDepth(vUv + vec2(t.x, 0.0)), viewDepth(vUv - vec2(t.x, 0.0))),
+                         max(viewDepth(vUv + vec2(0.0, t.y)), viewDepth(vUv - vec2(0.0, t.y))));
+        if (far4 - d > max(0.15, d * 0.03)) c.rgb *= 0.28;
+      }
       if (dither > 0.5) {
         vec2 px = floor(vUv * size);
         c.rgb += (bayer4(px) - 0.5) / 31.0;
@@ -303,7 +324,11 @@ function renderCell(cell, camera, x, y, w, h) {
   }
   const lw = Math.max(1, Math.round(w / scale));
   const lh = Math.max(1, Math.round(h / scale));
-  cell.rt ??= new THREE.WebGLRenderTarget(1, 1, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
+  cell.rt ??= new THREE.WebGLRenderTarget(1, 1, {
+    minFilter: THREE.NearestFilter,
+    magFilter: THREE.NearestFilter,
+    depthTexture: new THREE.DepthTexture(1, 1),
+  });
   if (cell.rt.width !== lw || cell.rt.height !== lh) cell.rt.setSize(lw, lh);
   cell.style.prepareRender?.(lw, lh);
   renderer.setRenderTarget(cell.rt);
@@ -313,7 +338,11 @@ function renderCell(cell, camera, x, y, w, h) {
   renderer.setScissor(x, y, w, h);
   blitMat.uniforms.tDiffuse.value = cell.rt.texture;
   blitMat.uniforms.size.value.set(lw, lh);
-  blitMat.uniforms.dither.value = cell.style.options?.dither?.value === false ? 0 : 1;
+  blitMat.uniforms.tDepth.value = cell.rt.depthTexture;
+  blitMat.uniforms.dither.value = cell.style.dither === false ? 0 : 1;
+  blitMat.uniforms.outline.value = cell.style.outline ? 1 : 0;
+  blitMat.uniforms.near.value = camera.near;
+  blitMat.uniforms.far.value = camera.far;
   renderer.render(blitScene, blitCam);
 }
 
