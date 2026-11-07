@@ -34,18 +34,24 @@ export function measure(p) {
     new THREE.Vector2(hw * 0.5, 0),
     new THREE.Vector2(hw * 0.56, L * 0.12),
     new THREE.Vector2((hw + sw) * 0.25 * 0.72, L * 0.5),
-    new THREE.Vector2(sw * 0.47, L * 0.8),
-    new THREE.Vector2(sw * 0.43, L * 0.92),  // rounder shoulder line
-    new THREE.Vector2(neckR * 1.9, L * 0.985), // gentle slope into the neck
+    new THREE.Vector2(sw * 0.47, L * 0.77),
+    // shoulders slope down from the neck: one smooth curve, no flat top
+    new THREE.Vector2(sw * 0.43, L * 0.85),
+    new THREE.Vector2(sw * 0.33, L * 0.91),
+    new THREE.Vector2(sw * 0.2, L * 0.96),
+    new THREE.Vector2(neckR * 1.25, L * 0.992),
     new THREE.Vector2(neckR * 1.05, L),
   ] : [
     // the man's profile is a V: narrow hips and waist, broad chest and shoulders
     new THREE.Vector2(hw * 0.44, 0),
     new THREE.Vector2(hw * 0.5, L * 0.14),
     new THREE.Vector2((hw + sw) * 0.25 * 0.88, L * 0.42),
-    new THREE.Vector2(sw * 0.48, L * 0.8),
-    new THREE.Vector2(sw * 0.45, L * 0.91),      // squared, muscular shoulder line
-    new THREE.Vector2(neckR * 2.0, L * 0.965),   // trapezius slope into the neck
+    new THREE.Vector2(sw * 0.48, L * 0.76),
+    // a squarer shoulder, then the trapezius slopes up to the neck (no flat top)
+    new THREE.Vector2(sw * 0.46, L * 0.84),
+    new THREE.Vector2(sw * 0.37, L * 0.9),
+    new THREE.Vector2(sw * 0.23, L * 0.955),
+    new THREE.Vector2(neckR * 1.3, L * 0.99),
     new THREE.Vector2(neckR * 1.05, L),
   ]);
   // women get extra rings/segments so the sculpted chest and bottom have room

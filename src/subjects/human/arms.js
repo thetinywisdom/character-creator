@@ -7,7 +7,7 @@ import { taperBetween } from '../../lib/shapes.js';
 
 /** Elbow and wrist points in arm-local space (shoulder at the origin). */
 function joints(f, sx) {
-  const upper = f.armLen * 0.45;
+  const upper = f.armLen * 0.42; // the pivot sits lower now, so the upper arm is a bit shorter
   const fore = f.armLen - upper - f.handR * 1.6;
   const elbow = new THREE.Vector3(0, -upper, 0);
   // forearm tilts forward (bend) and a touch outward
@@ -19,8 +19,9 @@ function joints(f, sx) {
 export function buildArm(f, sx, top, mats, sleeveFor) {
   const arm = new THREE.Group();
   arm.name = sx < 0 ? 'armR' : 'armL';
-  // pivot low enough that the rounded shoulder cap sits inside the shoulder line
-  arm.position.set(sx * (f.sw * 0.5 - f.shoulderR * 0.55), f.shoulderY - f.shoulderR * 1.15, 0);
+  // pivot tucked in and down, so the rounded shoulder cap (and a sleeve over
+  // it) stays inside the torso's shoulder curve instead of poking above it
+  arm.position.set(sx * (f.sw * 0.5 - f.shoulderR * 0.75), f.shoulderY - f.torsoLen * 0.19, 0);
   arm.rotation.z = sx * f.armSpread;
 
   const { elbow, wrist, dir } = joints(f, sx);
@@ -32,10 +33,10 @@ export function buildArm(f, sx, top, mats, sleeveFor) {
   const sleeve = sleeveFor(top);
   if (sleeve === 'short') {
     const t = 0.6;
-    arm.add(taperBetween(O, elbow.clone().multiplyScalar(t).toArray(), f.shoulderR * 1.15,
+    arm.add(taperBetween(O, elbow.clone().multiplyScalar(t).toArray(), f.shoulderR * 1.06,
       THREE.MathUtils.lerp(f.shoulderR, f.elbowR, t) * 1.2, mats.top));
   } else if (sleeve === 'long') {
-    arm.add(taperBetween(O, E, f.shoulderR * 1.12, f.elbowR * 1.15, mats.top));
+    arm.add(taperBetween(O, E, f.shoulderR * 1.06, f.elbowR * 1.15, mats.top));
     arm.add(taperBetween(E, W, f.elbowR * 1.15, f.wristR * 1.2, mats.top));
   }
 

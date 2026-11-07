@@ -106,6 +106,9 @@ dressed in the same tones as the street will disappear.
   squared shoulders; fit, not bulky), very flat sculpted pecs, a thicker neck
   with a trapezius slope (no hump), firm shoulder caps and upper arms, fuller forearms, elbows slightly bent and arms
   held away from the body, straight solid legs with little taper.
+- **Shoulders (both):** slope down from the neck in one smooth curve (no flat
+  top). The arm's shoulder cap and any sleeve over it sit inside that curve,
+  never poking above it.
 - **Hands:** blocky and mitten-like (a box, flat side-to-side, narrowing toward
   the fingertips), for both body types.
 - **Footwear:** chunky low-poly shoes or ankle boots (a box foot with a sloped
