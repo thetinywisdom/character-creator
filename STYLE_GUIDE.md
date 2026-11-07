@@ -130,6 +130,17 @@ dressed in the same tones as the street will disappear.
   handlebar, thin) are separate slots that combine; both use the hair colour
   and are oversized.
 
+## 3d. Outerwear and accessories
+
+- **Outerwear** is a second, slightly bigger layer that follows the torso
+  profile and sculpting (so it fits both body types), with thicker long
+  sleeves. Cardigan and jacket are open at the front so the top shows; the
+  hoodie is closed, with the hood folded on the upper back.
+- **One back item** (backpack, angel wings, evil wings) and **one body item**
+  (fanny pack, neck tie, bow tie, baby carrier). Wings are deliberately big:
+  they are silhouette items. The baby is just a round head in the carrier.
+- Straps, belts and drawstrings use a dark trim colour.
+
 ## 4. Readability checklist (for any new character)
 
 - [ ] Visible at street distance on the sidewalk, in Day **and** Night lighting

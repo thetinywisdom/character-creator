@@ -19,16 +19,21 @@ export const TOPS = {
 };
 
 /** One horizontal slice of the torso, from y0 to y1 (torso-local metres). */
-function band(f, y0, y1, material) {
+export function band(f, y0, y1, material, { inflate = 0, gap = 0 } = {}) {
   const L = f.torsoLen;
+  const shell = inflate > 0; // an outer layer (jacket, hoodie): open, slightly bigger
+  const r = (y) => f.torsoR(y) + inflate;
   const pts = [];
-  if (y0 <= f.torsoBottom) pts.push(new THREE.Vector2(0, y0));
-  pts.push(new THREE.Vector2(f.torsoR(y0), y0));
-  for (const q of f.torsoSamples) if (q.y > y0 && q.y < y1) pts.push(q.clone());
-  pts.push(new THREE.Vector2(f.torsoR(y1), y1));
-  if (y1 >= L) pts.push(new THREE.Vector2(0, L));
-  // phiStart = π/2 puts the lathe seam at the side, away from the sculpted zones
-  const lathe = new THREE.LatheGeometry(pts, f.torsoRadial, Math.PI / 2);
+  if (!shell && y0 <= f.torsoBottom) pts.push(new THREE.Vector2(0, y0));
+  pts.push(new THREE.Vector2(r(y0), y0));
+  for (const q of f.torsoSamples) if (q.y > y0 && q.y < y1) pts.push(new THREE.Vector2(q.x + inflate, q.y));
+  pts.push(new THREE.Vector2(r(y1), y1));
+  if (!shell && y1 >= L) pts.push(new THREE.Vector2(0, L));
+  // A gap leaves the front open (centred on +z). Without one, phiStart = π/2
+  // puts the lathe seam at the side, away from the sculpted zones.
+  const lathe = gap > 0
+    ? new THREE.LatheGeometry(pts, f.torsoRadial, gap / 2, Math.PI * 2 - gap)
+    : new THREE.LatheGeometry(pts, f.torsoRadial, Math.PI / 2);
   const mesh = new THREE.Mesh(sculptTorso(lathe, f), material);
   mesh.position.y = f.hipY;
   mesh.scale.z = f.torsoDepth;

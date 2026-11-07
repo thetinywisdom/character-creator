@@ -12,7 +12,9 @@ Batch 2 (done): headwear (cap, backwards cap, beanie, fedora, headphones,
 helmet), face accessories (glasses, sunglasses, flu mask), beards (short, long,
 goatee) and moustaches (classic, handlebar, thin). Hats that cover the head
 squash tall hairstyles underneath.
-Next: outerwear, back accessories, ties, fanny pack, baby carrier (batch 3).
+Batch 3 (done): outerwear (open cardigan, jacket with collar, hoodie with hood,
+pocket and drawstrings), back items (backpack, angel wings, evil wings) and
+body items (fanny pack, neck tie, bow tie, baby carrier with a baby).
 
 **Phase 1 – style exploration (done):** a human, a cat and a tree, each built from simple
 primitives in code, used to explore style directions side by side. They are meant to
@@ -73,7 +75,7 @@ src/
   main.js            app: grid, focus/lineup views, controls panel, render loop
   subjects/          human.js, cat.js, tree.js – build(params, style) -> THREE.Group
   subjects/human/    frame.js (measurements), sculpt.js, hair.js, head.js, tops.js, arms.js,
-                     legwear.js, footwear.js – one file per slot
+                     legwear.js, footwear.js, outerwear.js, accessories.js – one file per slot
   styles/            inkCel.js, ps1.js, gray.js – materials per role + lights,
                      palette.js – shared base colours
   viewer/Cell.js     one stage (scene, lights, ground, street backdrop, camera framing)

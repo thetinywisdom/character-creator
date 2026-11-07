@@ -16,7 +16,8 @@ function joints(f, sx) {
   return { elbow, wrist, dir };
 }
 
-export function buildArm(f, sx, top, mats, sleeveFor) {
+/** outer: material of a jacket/hoodie/cardigan, whose long sleeves go over everything. */
+export function buildArm(f, sx, top, mats, sleeveFor, outer = null) {
   const arm = new THREE.Group();
   arm.name = sx < 0 ? 'armR' : 'armL';
   // pivot tucked in and down, so the rounded shoulder cap (and a sleeve over
@@ -30,8 +31,12 @@ export function buildArm(f, sx, top, mats, sleeveFor) {
   arm.add(taperBetween(E, W, f.elbowR, f.wristR, mats.skin));
 
   // sleeves follow the same segments, a little wider
-  const sleeve = sleeveFor(top);
-  if (sleeve === 'short') {
+  const sleeve = outer ? 'outer' : sleeveFor(top);
+  if (sleeve === 'outer') {
+    // thicker, looser sleeves of the outer layer
+    arm.add(taperBetween(O, E, f.shoulderR * 1.18, f.elbowR * 1.32, outer));
+    arm.add(taperBetween(E, W, f.elbowR * 1.32, f.wristR * 1.4, outer));
+  } else if (sleeve === 'short') {
     const t = 0.6;
     arm.add(taperBetween(O, elbow.clone().multiplyScalar(t).toArray(), f.shoulderR * 1.06,
       THREE.MathUtils.lerp(f.shoulderR, f.elbowR, t) * 1.2, mats.top));

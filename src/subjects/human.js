@@ -6,6 +6,8 @@ import { HAIRSTYLES, buildHair } from './human/hair.js';
 import { TOPS, buildTorso } from './human/tops.js';
 import { buildArm } from './human/arms.js';
 import { FOOTWEAR } from './human/footwear.js';
+import { OUTERWEAR, buildOuterwear } from './human/outerwear.js';
+import { BACK_ACCESSORIES, BODY_ACCESSORIES, buildBackAccessory, buildBodyAccessory } from './human/accessories.js';
 import { BEARDS, FACE_ACCESSORIES, HEADWEAR, MOUSTACHES, buildFaceAccessory, buildFacialHair, buildHeadwear, coversHair, hairUnder } from './human/head.js';
 import { LEGWEAR, buildBottom, buildLeg, buildSkirt } from './human/legwear.js';
 
@@ -53,11 +55,18 @@ export const human = {
     headwearColor: { group: 'Head', value: 'Red', options: names(CLOTH_COLORS), label: 'Headwear colour' },
     faceAccessory: { group: 'Head', value: 'None', options: FACE_ACCESSORIES, label: 'Face accessory' },
     accessoryColor:{ group: 'Head', value: 'Black', options: names(CLOTH_COLORS), label: 'Frame / mask colour' },
+    // accessories
+    backAccessory: { group: 'Accessories', value: 'None', options: BACK_ACCESSORIES, label: 'On the back' },
+    backColor:     { group: 'Accessories', value: 'Orange', options: names(CLOTH_COLORS), label: 'Backpack colour' },
+    bodyAccessory: { group: 'Accessories', value: 'None', options: BODY_ACCESSORIES, label: 'On the body' },
+    bodyAccessoryColor: { group: 'Accessories', value: 'Red', options: names(CLOTH_COLORS), label: 'Accessory colour' },
     // clothes
     top:           { group: 'Clothes', value: 'T-shirt', options: names(TOPS), label: 'Top' },
     topColor:      { group: 'Clothes', value: 'Blue', options: names(CLOTH_COLORS), label: 'Top colour' },
     legwear:       { group: 'Clothes', value: 'Trousers', options: LEGWEAR, label: 'Legwear' },
     legwearColor:  { group: 'Clothes', value: 'Navy', options: names(CLOTH_COLORS), label: 'Legwear colour' },
+    outerwear:     { group: 'Clothes', value: 'None', options: OUTERWEAR, label: 'Outerwear' },
+    outerwearColor:{ group: 'Clothes', value: 'Gray', options: names(CLOTH_COLORS), label: 'Outerwear colour' },
     footwear:      { group: 'Clothes', value: 'Shoes', options: FOOTWEAR, label: 'Footwear' },
     shoeColor:     { group: 'Clothes', value: 'Brown', options: names(CLOTH_COLORS), label: 'Footwear colour' },
   },
@@ -104,6 +113,12 @@ export const human = {
       headwearColor: pick(names(CLOTH_COLORS)),
       faceAccessory: rng() < 0.3 ? pick(FACE_ACCESSORIES.slice(1)) : 'None',
       accessoryColor: pick(['Black', 'Black', 'Brown', 'White', 'Red', 'Blue']),
+      outerwear: rng() < 0.3 ? pick(OUTERWEAR.slice(1)) : 'None',
+      outerwearColor: pick(names(CLOTH_COLORS)),
+      backAccessory: rng() < 0.25 ? pick(['Backpack', 'Backpack', 'Backpack', 'Angel wings', 'Evil wings']) : 'None',
+      backColor: pick(names(CLOTH_COLORS)),
+      bodyAccessory: rng() < 0.25 ? pick(BODY_ACCESSORIES.slice(1)) : 'None',
+      bodyAccessoryColor: pick(names(CLOTH_COLORS)),
       beard: !woman && rng() < 0.35 ? pick(BEARDS.slice(1)) : 'None',
       moustache: !woman && rng() < 0.3 ? pick(MOUSTACHES.slice(1)) : 'None',
       shoeColor: pick(['Black', 'Brown', 'White', 'Gray', 'Red', 'Navy']),
@@ -127,11 +142,18 @@ export const human = {
       mask: style.material('cloth', CLOTH_COLORS[p.accessoryColor]),
       lens: style.material('accent', 0x16161c),
       band: style.material('accent', CLOTH_COLORS.Black),
+      outer: style.material('cloth', CLOTH_COLORS[p.outerwearColor]),
+      back: style.material('cloth', CLOTH_COLORS[p.backColor]),
+      bodyAcc: style.material('cloth', CLOTH_COLORS[p.bodyAccessoryColor]),
+      trim: style.material('accent', 0x2a2a30),           // straps, belts, strings
+      wings: style.material('accent', p.backAccessory === 'Evil wings' ? 0x3a1424 : 0xf4f4f0),
     };
     f.mats = mats;
 
     // --- torso + neck ----------------------------------------------------
     root.add(buildTorso(f, top, mats));
+    const hasOuter = p.outerwear && p.outerwear !== 'None';
+    if (hasOuter) root.add(buildOuterwear(f, p.outerwear, mats));
     const neckBottom = f.shoulderY - f.torsoLen * 0.05;
     const neckTop = f.headY - f.R * 0.4;
     const neck = new THREE.Mesh(new THREE.CylinderGeometry(f.neckR, f.neckR, neckTop - neckBottom, seg(14)), mats.skin);
@@ -144,7 +166,11 @@ export const human = {
     else if (f.woman && f.bottomShape === 'Round') root.add(buildBottom(f, mats));
 
     // --- arms (pivot at shoulder) ----------------------------------------
-    for (const sx of [-1, 1]) root.add(buildArm(f, sx, top, mats, (t) => t.sleeve));
+    for (const sx of [-1, 1]) root.add(buildArm(f, sx, top, mats, (t) => t.sleeve, hasOuter ? mats.outer : null));
+
+    // --- accessories -------------------------------------------------------
+    root.add(buildBackAccessory(f, p.backAccessory, mats));
+    root.add(buildBodyAccessory(f, p.bodyAccessory, mats));
 
     // --- head ------------------------------------------------------------
     const head = new THREE.Group();
