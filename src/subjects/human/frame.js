@@ -22,12 +22,14 @@ export function measure(p) {
   const armR = limbR;
   const legR = limbR * 1.3;
   const L = torsoLen;
+  const woman = p.bodyType === 'Woman';
 
-  // torso side profile (radius by height): hips -> waist -> chest -> shoulders
+  // torso side profile (radius by height): hips -> waist -> chest -> shoulders.
+  // The woman's profile flares wider at the hips from a narrower waist.
   const side = new THREE.SplineCurve([
-    new THREE.Vector2(hw * 0.42, 0),
-    new THREE.Vector2(hw * 0.5, L * 0.18),
-    new THREE.Vector2((hw + sw) * 0.25 * 0.9, L * 0.5),
+    new THREE.Vector2(hw * (woman ? 0.47 : 0.42), 0),
+    new THREE.Vector2(hw * (woman ? 0.64 : 0.5), L * (woman ? 0.15 : 0.18)),
+    new THREE.Vector2((hw + sw) * 0.25 * (woman ? 0.76 : 0.9), L * 0.5),
     new THREE.Vector2(sw * 0.5, L * 0.86),
     new THREE.Vector2(sw * 0.4, L * 0.98),
     new THREE.Vector2(limbR * 1.2, L),
@@ -47,11 +49,12 @@ export function measure(p) {
 
   const footH = Math.max(legR * 1.1, H * 0.04);
   return {
+    woman,
     H, headH, R, chib, legLen, neckLen, torsoLen, hipY, shoulderY, headY,
     sw, hw, limbR, armR, legR,
     torsoSamples, torsoR,
     torsoDepth: 0.62, // torso is a lathe squashed front-to-back
-    neckR: limbR * 1.15,
+    neckR: limbR * (woman ? 1.0 : 1.15),
     armLen: torsoLen * 0.85 + legLen * 0.25,
     handR: armR * 1.4,
     footH,

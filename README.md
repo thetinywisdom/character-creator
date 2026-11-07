@@ -3,7 +3,8 @@
 A three.js playground for finding the visual style of a 3D world before building it.
 
 **Phase 2 – characters (in progress):** the human is now a modular character
-with slots and per-item colours. Batch 1 (done): skin tones, 9 hairstyles with
+with slots and per-item colours. Batch 1 (done): Man / Woman body types (the
+woman curvier at the hips and chest), skin tones, 9 hairstyles with
 8 hair colours, 7 tops (T-shirt, shirt, tank top, crop top; short/long sleeves),
 trousers / shorts / skirt, shoe colours, a Randomize button and a crowd view.
 Next: headwear, face accessories, facial hair (batch 2); outerwear, back

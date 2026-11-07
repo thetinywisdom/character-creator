@@ -44,6 +44,21 @@ export function buildTorso(f, spec, mats) {
       : [[0, 1, mats.top]];
   for (const [a, b, m] of bands) torso.add(band(f, a * L, b * L, m));
 
+  if (f.woman) {
+    // chest: two large, soft shapes that merge into one bust silhouette, in
+    // whatever covers that height. Kept smooth (min segments) even in low-poly.
+    const y = L * 0.72;
+    const m = (bands.find(([a, b]) => y >= a * L && y <= b * L) ?? bands.at(-1))[2];
+    const r = f.sw * 0.19;
+    const front = f.torsoR(y) * f.torsoDepth;
+    for (const sx of [-1, 1]) {
+      const bust = new THREE.Mesh(new THREE.SphereGeometry(r, seg(16, 10), seg(10, 7)), m);
+      bust.scale.set(1, 0.85, 0.75);
+      bust.position.set(sx * f.sw * 0.12, f.hipY + y, front - r * 0.5);
+      torso.add(bust);
+    }
+  }
+
   if (spec.tank) {
     // chunky shoulder straps over the bare band
     for (const sx of [-1, 1]) {
@@ -66,7 +81,7 @@ export function buildTorso(f, spec, mats) {
     torso.add(collar);
     const front = f.torsoR(L * 0.5) * f.torsoDepth;
     const placket = new THREE.Mesh(new THREE.BoxGeometry(f.sw * 0.1, L * 0.82, f.limbR * 0.6), mats.accent);
-    placket.position.set(0, f.hipY + L * 0.44, front + f.limbR * 0.15);
+    placket.position.set(0, f.hipY + L * 0.44, front + f.limbR * (f.woman ? 0.9 : 0.15));
     torso.add(placket);
   }
   return torso;

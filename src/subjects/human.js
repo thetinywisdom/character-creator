@@ -24,6 +24,7 @@ export const human = {
   isCharacter: true,
   schema: {
     // body
+    bodyType:      { group: 'Body', value: 'Man', options: ['Man', 'Woman'], label: 'Body type' },
     headsTall:     { group: 'Body', value: 7.5,   min: 2.5,   max: 7.5,  step: 0.1,   label: 'Heads tall' },
     height:        { group: 'Body', value: 1.6,   min: 1.0,   max: 2.0,  step: 0.01,  label: 'Height (m)' },
     legLength:     { group: 'Body', value: 0.54,  min: 0.35,  max: 0.65, step: 0.01,  label: 'Leg length' },
@@ -57,13 +58,15 @@ export const human = {
     do {
       legwearColor = pick(['Denim', 'Denim', 'Navy', 'Black', 'Khaki', 'Gray', 'Brown', ...names(CLOTH_COLORS)]);
     } while (legwearColor === topColor);
+    const woman = rng() < 0.5;
     return {
+      bodyType: woman ? 'Woman' : 'Man',
       headsTall: range(7, 7.5, 0.1),
-      height: range(1.5, 1.9, 0.01),
+      height: woman ? range(1.5, 1.75, 0.01) : range(1.62, 1.9, 0.01),
       legLength: range(0.5, 0.58, 0.01),
-      shoulderWidth: range(0.21, 0.28, 0.005),
-      hipWidth: range(0.17, 0.23, 0.005),
-      limbThickness: range(0.022, 0.032, 0.001),
+      shoulderWidth: woman ? range(0.2, 0.24, 0.005) : range(0.24, 0.29, 0.005),
+      hipWidth: woman ? range(0.2, 0.24, 0.005) : range(0.17, 0.21, 0.005),
+      limbThickness: woman ? range(0.021, 0.028, 0.001) : range(0.024, 0.032, 0.001),
       headWidth: range(0.76, 0.86, 0.01),
       skin: pick(names(SKIN_TONES)),
       hair: pick(['short', 'short', 'medium', 'long', 'long', 'bun', 'spiky', 'mohawk', 'curly', 'afro', 'bald']),
