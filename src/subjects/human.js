@@ -144,6 +144,8 @@ export const human = {
       band: style.material('accent', CLOTH_COLORS.Black),
       outer: style.material('cloth', CLOTH_COLORS[p.outerwearColor]),
       back: style.material('cloth', CLOTH_COLORS[p.backColor]),
+      backDark: style.material('cloth', new THREE.Color(CLOTH_COLORS[p.backColor]).multiplyScalar(0.72).getHex()),
+      babyCloth: style.material('cloth', 0xf3e2a0), // soft yellow baby clothes
       bodyAcc: style.material('cloth', CLOTH_COLORS[p.bodyAccessoryColor]),
       trim: style.material('accent', 0x2a2a30),           // straps, belts, strings
       wings: style.material('accent', p.backAccessory === 'Evil wings' ? 0x3a1424 : 0xf4f4f0),

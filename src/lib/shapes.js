@@ -57,6 +57,33 @@ export function taperBetween(a, b, r1, r2, material, radialSegments = 14) {
   return g;
 }
 
+/**
+ * Soft, padded box: a subdivided box whose corners are pulled toward an
+ * ellipsoid. round = how rounded overall (0 = box, 1 = ellipsoid); topRound
+ * adds extra rounding to the upper half (domed tops); topDepth < 1 makes the
+ * top thinner front-to-back than the bottom (like a backpack), keeping the
+ * +z face in place (the side that rests against the body).
+ */
+export function softBox(W, H, D, material, { round = 0.35, topRound = 0, topDepth = 1 } = {}) {
+  const geo = new THREE.BoxGeometry(W, H, D, seg(5, 3), seg(6, 3), seg(4, 2));
+  const pos = geo.attributes.position;
+  const half = new THREE.Vector3(W / 2, H / 2, D / 2);
+  const p = new THREE.Vector3(), n = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    p.fromBufferAttribute(pos, i);
+    n.copy(p).divide(half);                          // -1..1 inside the box
+    const up = Math.max(0, n.y);                     // 0 at the middle, 1 at the top
+    const k = round + topRound * up;
+    const e = n.clone().normalize().multiply(half);  // matching point on the ellipsoid
+    p.lerp(e, Math.min(k, 1));
+    const depth = THREE.MathUtils.lerp(1, topDepth, (n.y + 1) / 2);
+    p.z = (p.z - D / 2) * depth + D / 2; // taper toward the +z face
+    pos.setXYZ(i, p.x, p.y, p.z);
+  }
+  geo.computeVertexNormals();
+  return new THREE.Mesh(geo, material);
+}
+
 /** z coordinate on the front of an ellipsoid with radii rx, ry, rz at (x, y). */
 export function surfaceZ(x, y, rx, ry, rz) {
   return rz * Math.sqrt(Math.max(0, 1 - (x / rx) ** 2 - (y / ry) ** 2));

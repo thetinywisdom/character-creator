@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { capsuleBetween, ellipsoid, seg } from '../../lib/shapes.js';
+import { capsuleBetween, ellipsoid, seg, softBox } from '../../lib/shapes.js';
 
 // Back accessories (backpack, wings) and front accessories (fanny pack, ties,
 // baby carrier). One item per slot. Built in body space; oversized where small.
@@ -13,18 +13,17 @@ const backAt = (f, y, extra = 0) => -(f.torsoR(y) * f.torsoDepth + extra);
 /** How far the sculpted chest sticks out, so front items sit on top of it. */
 const chestOut = (f) => (f.woman ? f.sw * 0.17 * f.chestSize : f.sw * 0.03);
 
-/** Straps from the back, over the shoulder, to the front. */
-function straps(f, material, frontY, backY, x0) {
-  const g = new THREE.Group();
+/** Height (torso-local) where the top of the shoulder is, at distance x from the centre. */
+function shoulderTop(f, x) {
   const L = f.torsoLen;
-  for (const sx of [-1, 1]) {
-    const x = sx * x0;
-    const back = [x, f.hipY + backY, backAt(f, backY, 0.01)];
-    const over = [x, f.shoulderY - L * 0.04, 0];
-    const front = [x, f.hipY + frontY, frontAt(f, frontY, chestOut(f) * 0.6)];
-    g.add(capsuleBetween(back, over, f.armR * 0.28, material, 5));
-    g.add(capsuleBetween(over, front, f.armR * 0.28, material, 5));
-  }
+  for (let y = L; y > L * 0.5; y -= L * 0.01) if (f.torsoR(y) >= Math.abs(x)) return y;
+  return L * 0.85;
+}
+
+/** A padded strap through a list of points (torso-local y, absolute x / z). */
+function strapPath(f, pts, r, material) {
+  const g = new THREE.Group();
+  for (let i = 0; i < pts.length - 1; i++) g.add(capsuleBetween(pts[i], pts[i + 1], r, material, 6));
   return g;
 }
 
@@ -81,15 +80,49 @@ export function buildBackAccessory(f, kind, mats) {
   g.name = 'backAccessory';
   const L = f.torsoLen;
   if (kind === 'Backpack') {
-    const y = L * 0.55;
-    const W = f.sw * 0.7, H = L * 0.5, D = f.sw * 0.34;
-    const bag = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), mats.back);
-    bag.position.set(0, f.hipY + y, backAt(f, y, D * 0.45));
-    const flap = new THREE.Mesh(new THREE.BoxGeometry(W * 1.02, H * 0.28, D * 1.04), mats.trim);
-    flap.position.set(0, bag.position.y + H * 0.36, bag.position.z);
-    const pocket = new THREE.Mesh(new THREE.BoxGeometry(W * 0.6, H * 0.3, D * 0.3), mats.back);
-    pocket.position.set(0, bag.position.y - H * 0.18, bag.position.z - D * 0.6);
-    g.add(bag, flap, pocket, straps(f, mats.trim, L * 0.6, L * 0.75, f.sw * 0.2));
+    const y = L * 0.56;
+    const W = f.sw * 0.68, H = L * 0.56, D = f.sw * 0.3;
+    const back = backAt(f, y);
+    const z = back - D * 0.5 + f.sw * 0.02;
+    const cy = f.hipY + y;
+    // padded body with a domed top, thinner at the top than at the bottom
+    const body = softBox(W, H, D, mats.back, { round: 0.3, topRound: 0.45, topDepth: 0.75 });
+    body.rotation.y = Math.PI; // the flat (+z) face rests against the person's back
+    body.position.set(0, cy, z);
+    // rounded front pocket in a darker shade, low on the outer face
+    const pocket = softBox(W * 0.72, H * 0.36, D * 0.32, mats.backDark, { round: 0.45 });
+    pocket.position.set(0, cy - H * 0.22, z - D * 0.5);
+    // zipper line around the top of the main compartment
+    const zip = new THREE.Mesh(new THREE.TorusGeometry(W * 0.4, f.armR * 0.07, 3, seg(16, 8), Math.PI), mats.trim);
+    zip.scale.set(1, 0.9, 1);
+    zip.rotation.y = Math.PI / 2; // arc runs front-to-back over the top
+    zip.position.set(0, cy + H * 0.05, z);
+    // top carry handle
+    const handle = new THREE.Mesh(new THREE.TorusGeometry(W * 0.13, f.armR * 0.12, 4, seg(10, 6), Math.PI), mats.trim);
+    handle.position.set(0, cy + H * 0.5, z + D * 0.15);
+    g.add(body, pocket, zip, handle);
+
+    // shoulder straps: top of the pack -> over the shoulder -> down the chest
+    // -> under the arm -> bottom of the pack; plus a chest strap between them
+    const r = f.armR * 0.32;
+    const out = f.woman ? f.sw * 0.17 * f.chestSize * 0.5 : f.sw * 0.02;
+    for (const sx of [-1, 1]) {
+      const x = sx * f.sw * 0.2;
+      const top = shoulderTop(f, x);
+      const side = sx * f.torsoR(L * 0.45) * 1.02;
+      g.add(strapPath(f, [
+        [x * 0.9, cy + H * 0.38, back - 0.004],
+        [x, f.hipY + top + r * 0.6, 0],
+        [x, f.hipY + L * 0.78, frontAt(f, L * 0.78, out + r)],
+        [x * 1.05, f.hipY + L * 0.5, frontAt(f, L * 0.5, r * 0.8)],
+        [side, f.hipY + L * 0.38, 0],
+        [x * 1.2, cy - H * 0.42, back - 0.004],
+      ], r, mats.trim));
+    }
+    const chestY = L * 0.68;
+    g.add(capsuleBetween(
+      [-f.sw * 0.2, f.hipY + chestY, frontAt(f, chestY, out + r * 1.6)],
+      [f.sw * 0.2, f.hipY + chestY, frontAt(f, chestY, out + r * 1.6)], r * 0.55, mats.trim, 5));
   } else if (kind === 'Angel wings' || kind === 'Evil wings') {
     g.add(buildWings(f, kind, mats));
   }
@@ -135,15 +168,53 @@ export function buildBodyAccessory(f, kind, mats) {
     knot.position.set(0, y, z + 0.004);
     g.add(knot);
   } else if (kind === 'Baby carrier') {
-    const y = L * 0.5;
-    const W = f.sw * 0.6, H = L * 0.4, D = f.sw * 0.32;
-    const z = frontAt(f, y, chestOut(f) * 0.6 + D * 0.5);
-    const pouch = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), m);
-    pouch.position.set(0, f.hipY + y, z);
-    // the baby: just a round head peeking out of the top
-    const babyR = f.R * 0.6;
-    const baby = ellipsoid(babyR, [1, 1, 1], mats.skin, { position: [0, f.hipY + y + H * 0.5 + babyR * 0.55, z], segments: 14 });
-    g.add(pouch, baby, straps(f, m, L * 0.62, L * 0.6, f.sw * 0.22));
+    const y = L * 0.52;
+    const W = f.sw * 0.62, H = L * 0.44, D = f.sw * 0.3;
+    const out = f.woman ? f.sw * 0.17 * f.chestSize * 0.7 : f.sw * 0.03;
+    const z = frontAt(f, y, out + D * 0.28);
+    const cy = f.hipY + y;
+    // soft padded panel, wider at the seat (bottom) than at the top
+    const panel = softBox(W, H, D, m, { round: 0.4, topRound: 0.15 });
+    const pos = panel.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const t = (pos.getY(i) + H / 2) / H; // 0 at the bottom, 1 at the top
+      pos.setX(i, pos.getX(i) * THREE.MathUtils.lerp(1.1, 0.82, t));
+    }
+    panel.geometry.computeVertexNormals();
+    panel.position.set(0, cy, z);
+    g.add(panel);
+
+    // the baby: body inside the carrier, head above it, little legs dangling
+    const babyR = f.R * 0.62;
+    g.add(ellipsoid(babyR * 1.15, [1, 1.05, 0.85], mats.babyCloth, { position: [0, cy + H * 0.36, z], segments: 12 }));
+    g.add(ellipsoid(babyR, [1, 1, 1], mats.skin, { position: [0, cy + H * 0.5 + babyR * 0.75, z + D * 0.05], segments: 14 }));
+    for (const sx of [-1, 1]) {
+      const hip = [sx * W * 0.42, cy - H * 0.3, z + D * 0.15];
+      const foot = [sx * W * 0.62, cy - H * 0.62, z + D * 0.35];
+      g.add(capsuleBetween(hip, foot, babyR * 0.32, mats.babyCloth, 8));
+      g.add(ellipsoid(babyR * 0.3, [1, 0.8, 1.3], mats.skin, { position: [foot[0], foot[1] - babyR * 0.2, foot[2] + babyR * 0.1], segments: 8 }));
+      // tiny hands resting on the top edge of the panel
+      g.add(ellipsoid(babyR * 0.26, [1, 1, 1], mats.skin, { position: [sx * W * 0.3, cy + H * 0.47, z + D * 0.4], segments: 8 }));
+    }
+
+    // thick waist belt and shoulder straps over to the back
+    const beltY = L * 0.14;
+    const belt = new THREE.Mesh(new THREE.TorusGeometry(f.torsoR(beltY) + f.sw * 0.03, f.armR * 0.45, seg(5, 4), seg(18, 10)), m);
+    belt.rotation.x = Math.PI / 2;
+    belt.scale.y = f.torsoDepth;
+    belt.position.y = f.hipY + beltY;
+    g.add(belt);
+    const r = f.armR * 0.36;
+    for (const sx of [-1, 1]) {
+      const x = sx * f.sw * 0.22;
+      const top = shoulderTop(f, x);
+      g.add(strapPath(f, [
+        [sx * W * 0.38, cy + H * 0.4, z - D * 0.2],
+        [x, f.hipY + top + r * 0.6, 0],
+        [x * 0.6, f.hipY + L * 0.6, backAt(f, L * 0.6, r)],
+        [x * 0.9, f.hipY + beltY, backAt(f, beltY, f.sw * 0.03)],
+      ], r, m));
+    }
   }
   return g;
 }

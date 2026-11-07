@@ -139,6 +139,14 @@ dressed in the same tones as the street will disappear.
 - **One back item** (backpack, angel wings, evil wings) and **one body item**
   (fanny pack, neck tie, bow tie, baby carrier). Wings are deliberately big:
   they are silhouette items. The baby is just a round head in the carrier.
+- **Backpack:** a padded, rounded pack (domed top, thinner at the top, flat side
+  against the back) with a darker front pocket, zipper line and top handle;
+  straps run from the top of the pack over the shoulder, down the chest, under
+  the arm and back to the bottom, joined by a chest strap.
+- **Baby carrier:** a soft padded panel, wider at the seat, with a thick waist
+  belt and straps over the shoulders to the back. The baby's head shows above
+  the panel, hands rest on the top edge and legs dangle from the bottom corners.
+- Padded, rounded shapes (`softBox`) instead of plain boxes for bags and carriers.
 - Straps, belts and drawstrings use a dark trim colour.
 
 ## 4. Readability checklist (for any new character)
