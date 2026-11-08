@@ -414,12 +414,17 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 
 ## 3e-4. Interactions
 
-- **Chat bubbles:** off-white rounded boxes with a dark ink border and a
-  tail pointing at the speaker, small bold text, above the head; they pop
-  in and fade after about 3 s.
-- **Comic bursts:** a spiky star shape, slightly tilted, butter or blush
-  with black bold capitals (SLAP!, WHAP!, SMACK!, SHOVE!, WHUMP!, OOF!,
-  WHOOPS!, BONK!); they pop in big, settle and fade in under a second.
+- **The comic beat of a hit** (after the owner's example): a spiky burst
+  (black ink outline, butter star, dusty rose core, tilted) with white pixel
+  capitals outlined in ink (SLAP!, WHAP!, SMACK!, SHOVE!, WHUMP!, OOF!,
+  WHOOPS!, BONK!), popping big, settling, fading in under a second; a "?"
+  box pops over the victim's head; then they shout in a speech bubble with
+  a small name tag and red (brick) text: censored swearing from aggressive
+  people ("You motherf**ker!"), scared lines from calm ones ("Eek!!"); a
+  short screen shake.
+- **Speech bubbles:** pixel font (Silkscreen), off-white with a thick ink
+  border, a hard drop shadow, a tail pointing at the speaker, a small name
+  tag (YOU for the player); they pop in with a bounce and fade after ~3 s.
 - **Pie menu:** three round off-white buttons (icon + word) fanned above the
   person's head, popping out one after another.
 - **Target ring:** a soft butter ring on the ground under who or what you

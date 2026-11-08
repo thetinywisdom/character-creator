@@ -25,6 +25,13 @@ const LINES = {
   Calm: ['Hello!', "Isn't it lovely?", 'Have a nice day!', 'Oh, hi!', 'Just heading home.', 'The bakery here is great.', 'Thank you!'],
   Aggressive: ['What do you want?', 'Hmph.', "Don't bother me.", 'Make it quick.', "I'm busy!", 'Whatever.', 'Do I know you?'],
 };
+// what a person shouts after being hit (censored, comic-style)
+const SHOUTS = {
+  Aggressive: ['You motherf**ker!', "Oh, you're DEAD!", 'Say that again!', 'What the h*ll?!', 'You wanna go?!', '#@%&!!'],
+  Calm: ['Ow! Why?!', 'Eek!!', 'H-help!', 'Wh-what did I do?!', 'Mommy...', 'Not again!'],
+};
+// short names shown on speech bubbles (a little name tag, like a comic)
+const NAMES = ['DEB', 'BIG', 'KEN', 'YUKI', 'MOMO', 'TARO', 'HANA', 'JIRO', 'AYA', 'SORA', 'RIKU', 'NANA', 'GEN', 'MAI', 'KOTA', 'EMI'];
 const BURSTS = { slap: ['SLAP!', 'WHAP!', 'SMACK!'], push: ['SHOVE!', 'WHUMP!', 'OOF!'], slip: ['WHOOPS!'], bonk: ['BONK!'] };
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
@@ -60,9 +67,11 @@ export class Interactions {
   }
 
   // --- bubbles -------------------------------------------------------------------
-  say(anchor, text, kind = 'talk', life = kind === 'burst' ? 0.9 : 3.2, delay = 0) {
-    this.bubbles.push({ anchor, text, kind, age: -delay, life, id: Math.random() });
+  /** kind: 'talk' | 'shout' (red, angry) | 'confused' (a ? box) | 'burst' (SLAP!). name: a tag on the bubble. */
+  say(anchor, text, kind = 'talk', life = kind === 'burst' ? 0.9 : kind === 'confused' ? 0.9 : 3.2, delay = 0, name = null) {
+    this.bubbles.push({ anchor, text, kind, name, age: -delay, life, id: Math.random() });
   }
+  nameOf(n) { return (n.name ??= NAMES[Math.floor(Math.random() * NAMES.length)]); }
   headOf(n) { return () => n.root.position.clone().add(new THREE.Vector3(0, (n.look?.height ?? 1.7) + 0.3, 0)); }
   playerHead() { const p = this.city.player; return () => p.root.position.clone().add(new THREE.Vector3(0, (p.height ?? 1.7) + 0.3, 0)); }
   midOf(n) { return () => n.root.position.clone().add(new THREE.Vector3(0, (n.look?.height ?? 1.7) * 0.75, 0)); }
@@ -169,14 +178,18 @@ export class Interactions {
     p.action = { kind, t: 0, dur: kind === 'talk' ? 0.01 : 0.4 };
     const agg = n.trait === 'Aggressive';
     if (kind === 'talk') {
-      this.say(this.playerHead(), pick(LINES.player));
-      this.say(this.headOf(n), pick(LINES[agg ? 'Aggressive' : 'Calm']), 'talk', 3.2, 1.0);
+      this.say(this.playerHead(), pick(LINES.player), 'talk', 3.2, 0, 'YOU');
+      this.say(this.headOf(n), pick(LINES[agg ? 'Aggressive' : 'Calm']), 'talk', 3.2, 1.0, this.nameOf(n));
       n.act = { kind: 'talk', t: 4.2 };
       return;
     }
     // the hit lands a moment into the swing
     setTimeout(() => {
+      // the comic beat: a burst on the hit, a "?" over their head, then they shout
       this.say(this.midOf(n), pick(BURSTS[kind]), 'burst');
+      this.say(this.headOf(n), '?', 'confused', 0.9, 0.05);
+      this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 0.75, this.nameOf(n));
+      this.shake = 0.3;
       const dx = n.pos.x - p.x, dz = n.pos.z - p.z, d = Math.hypot(dx, dz) || 1;
       if (kind === 'push') n.kb = { x: (dx / d) * 3.2, z: (dz / d) * 3.2, t: 0.35 };
       n.flinch = 0.35;
@@ -192,6 +205,8 @@ export class Interactions {
     setTimeout(() => {
       if (Math.hypot(p.x - n.pos.x, p.z - n.pos.z) > 1.5 || p.riding) return;
       this.say(this.midOfPlayer(), pick(BURSTS[move]), 'burst');
+      this.say(this.playerHead(), '?', 'confused', 0.9, 0.05);
+      this.shake = 0.35;
       const dx = p.x - n.pos.x, dz = p.z - n.pos.z, d = Math.hypot(dx, dz) || 1;
       const k = move === 'push' ? 3.6 : 1.8;
       p.kb = { x: (dx / d) * k, z: (dz / d) * k, t: move === 'push' ? 0.4 : 0.25 };
@@ -206,6 +221,7 @@ export class Interactions {
     who.act = { kind: 'slip', t: 2.4, total: 2.4 };
     who.kb = null;
     this.say(isPlayer ? this.midOfPlayer() : this.midOf(who), pick(BURSTS[word]), 'burst');
+    this.say(isPlayer ? this.playerHead() : this.headOf(who), '?', 'confused', 0.9, 0.3);
     if (!isPlayer && this.menu?.npc === who) this.menu = null;
   }
 
@@ -467,6 +483,7 @@ export class Interactions {
     }
     // bubbles age and go
     for (const b of this.bubbles) b.age += dt;
+    this.shake = Math.max(0, (this.shake ?? 0) - dt);
     this.bubbles = this.bubbles.filter((b) => b.age < b.life);
     // the menu closes if you walk away
     if (this.menu && (!this.menu.npc.pos || Math.hypot(this.menu.npc.pos.x - p.x, this.menu.npc.pos.z - p.z) > PICK_REACH + 0.5)) this.closeMenu();

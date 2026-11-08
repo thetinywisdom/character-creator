@@ -293,7 +293,20 @@ function drawOverlay(c, W, H) {
     live.add(b.id);
     let el = bubbleEls.get(b.id);
     if (!el) {
-      el = Object.assign(document.createElement('div'), { className: b.kind === 'burst' ? `burst${Math.random() < 0.5 ? ' alt' : ''}` : 'bubble', textContent: b.text });
+      el = document.createElement('div');
+      if (b.kind === 'burst') {
+        // two spiky stars (outer and inner) behind outlined pixel text
+        el.className = 'burst';
+        el.style.setProperty('--tilt', `${(Math.random() < 0.5 ? -1 : 1) * (6 + Math.random() * 8)}deg`);
+        el.innerHTML = `<i class="b-out"></i><i class="b-in"></i><b>${b.text}</b>`;
+      } else if (b.kind === 'confused') {
+        el.className = 'qbox';
+        el.textContent = '?';
+      } else {
+        el.className = `bubble ${b.kind}`;
+        el.innerHTML = `${b.name ? `<small>${b.name}</small>` : ''}<span></span>`;
+        el.querySelector('span').textContent = b.text;
+      }
       overlay.appendChild(el);
       bubbleEls.set(b.id, el);
     }
@@ -312,6 +325,9 @@ function drawOverlay(c, W, H) {
     pie.style.top = `${s.y}px`;
   }
   document.querySelector('#actBtn').textContent = c.player.riding ? '⏏' : 'E';
+  // a quick screen shake on a hit
+  const sh = ix.shake ?? 0;
+  canvas.style.transform = sh > 0 ? `translate(${(Math.random() - 0.5) * 14 * sh / 0.3}px, ${(Math.random() - 0.5) * 10 * sh / 0.3}px)` : '';
 }
 
 // ---------------------------------------------------------------------------
