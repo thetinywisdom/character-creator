@@ -261,6 +261,13 @@ About one in six random characters is a child.
 - Padded, rounded shapes (`softBox`) instead of plain boxes for bags and carriers.
 - Straps, belts and drawstrings use a dark trim colour.
 
+## 3e-00. Streets
+
+- Roads are 6 m wide (two narrow lanes) between 40 m blocks with 3 m
+  sidewalks: a town should feel small and walkable, not like a highway.
+- No cars parked at the kerb on these narrow roads (they would block the
+  lane); parked cars belong in parking garages and lots.
+
 ## 3e-0. Interiors: feel real, not be real
 
 - **Painted interiors:** a shop window shows a small painted picture of the

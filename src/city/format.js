@@ -8,7 +8,7 @@
 //   "grid": {                       // the street grid (metres)
 //     "cols": 4, "rows": 3,         // blocks across (x) and down (z)
 //     "block": 40,                  // block size, sidewalk included
-//     "road": 9,                    // road width between blocks
+//     "road": 6,                    // road width between blocks (6 narrow, 9 wide)
 //     "sidewalk": 3,                // sidewalk ring inside each block
 //     "curb": 0.12                  // sidewalks are this much above the road
 //   },

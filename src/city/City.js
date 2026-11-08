@@ -15,6 +15,7 @@ import { JOINT_NAMES, createGait, poseGait, stepGait } from '../anim/gait.js';
 
 const LIMBS = new Set([...JOINT_NAMES, 'head']); // kept as separate groups so they can move
 const PLAYER_R = 0.3;
+const PERSON_R = 0.28; // pedestrians
 
 /**
  * Point at distance s along a closed polyline, with every corner rounded by
@@ -176,27 +177,83 @@ export class City {
     this.lightDir.set(...preset.dir).normalize();
   }
 
-  /** Push the player out of any collider it overlaps (circle vs box). */
-  collide(p) {
-    for (const c of this.layout.colliders) {
-      const dx = p.x - c.x, dz = p.z - c.z;
-      if (Math.abs(dx) > c.hw + PLAYER_R || Math.abs(dz) > c.hd + PLAYER_R) continue;
+  /** Static colliders near (x, z), from a coarse grid built on first use. */
+  nearColliders(x, z) {
+    const C = 8;
+    if (!this.colGrid) {
+      this.colGrid = new Map();
+      for (const c of this.layout.colliders) {
+        for (let i = Math.floor((c.x - c.hw - 1) / C); i <= Math.floor((c.x + c.hw + 1) / C); i++) {
+          for (let j = Math.floor((c.z - c.hd - 1) / C); j <= Math.floor((c.z + c.hd + 1) / C); j++) {
+            const k = `${i},${j}`;
+            if (!this.colGrid.has(k)) this.colGrid.set(k, []);
+            this.colGrid.get(k).push(c);
+          }
+        }
+      }
+    }
+    return this.colGrid.get(`${Math.floor(x / C)},${Math.floor(z / C)}`) ?? [];
+  }
+
+  /** Push a circle at pos (radius r) out of the static colliders (circle vs box). */
+  pushOut(pos, r) {
+    for (const c of this.nearColliders(pos.x, pos.z)) {
+      const dx = pos.x - c.x, dz = pos.z - c.z;
+      if (Math.abs(dx) > c.hw + r || Math.abs(dz) > c.hd + r) continue;
       const cx = Math.max(-c.hw, Math.min(c.hw, dx));
       const cz = Math.max(-c.hd, Math.min(c.hd, dz));
       let ox = dx - cx, oz = dz - cz;
       const d = Math.hypot(ox, oz);
-      if (d >= PLAYER_R) continue;
+      if (d >= r) continue;
       if (d < 1e-5) {
         // centre inside the box: push out along the shallowest axis
         const px = c.hw - Math.abs(dx), pz = c.hd - Math.abs(dz);
-        if (px < pz) p.x = c.x + Math.sign(dx || 1) * (c.hw + PLAYER_R);
-        else p.z = c.z + Math.sign(dz || 1) * (c.hd + PLAYER_R);
+        if (px < pz) pos.x = c.x + Math.sign(dx || 1) * (c.hw + r);
+        else pos.z = c.z + Math.sign(dz || 1) * (c.hd + r);
         continue;
       }
       ox /= d; oz /= d;
-      p.x += ox * (PLAYER_R - d);
-      p.z += oz * (PLAYER_R - d);
+      pos.x += ox * (r - d);
+      pos.z += oz * (r - d);
     }
+  }
+
+  /** Push a circle out of a moving car (a box turned with the car). */
+  pushOutOfCar(pos, r, car) {
+    const { x, z } = car.obj.position;
+    const fx = car.fx ?? 0, fz = car.fz ?? 1;
+    const dx = pos.x - x, dz = pos.z - z;
+    const along = dx * fx + dz * fz, side = dx * fz - dz * fx; // car space
+    const HW = 0.9, HD = 2.3;
+    if (Math.abs(side) > HW + r || Math.abs(along) > HD + r) return;
+    const ca = Math.max(-HD, Math.min(HD, along)), cs = Math.max(-HW, Math.min(HW, side));
+    let oa = along - ca, os = side - cs;
+    let d = Math.hypot(oa, os);
+    if (d < 1e-5) { // inside: out through the nearest side
+      if (HW - Math.abs(side) < HD - Math.abs(along)) { os = Math.sign(side || 1); oa = 0; d = 0; pos.x += os * fz * (HW + r - Math.abs(side)); pos.z += -os * fx * (HW + r - Math.abs(side)); return; }
+      oa = Math.sign(along || 1); os = 0; pos.x += oa * fx * (HD + r - Math.abs(along)); pos.z += oa * fz * (HD + r - Math.abs(along)); return;
+    }
+    if (d >= r) return;
+    oa /= d; os /= d;
+    const push = r - d;
+    pos.x += (oa * fx + os * fz) * push;
+    pos.z += (oa * fz - os * fx) * push;
+  }
+
+  /** Keep the player out of buildings and props, cars, other people and cats. */
+  collide(p) {
+    this.pushOut(p, PLAYER_R);
+    for (const c of this.cars) this.pushOutOfCar(p, PLAYER_R, c);
+    const others = [...this.npcs.map((n) => [n.pos, PERSON_R, n]), ...this.cats.map((c) => [c, 0.25, null])];
+    for (const [o, r, n] of others) {
+      if (!o) continue;
+      const dx = p.x - o.x, dz = p.z - o.z, d = Math.hypot(dx, dz), min = PLAYER_R + r;
+      if (d >= min || d < 1e-5) continue;
+      p.x += (dx / d) * (min - d);
+      p.z += (dz / d) * (min - d);
+      if (n) { n.off.x -= (dx / d) * 0.04; n.off.z -= (dz / d) * 0.04; } // they make way a little
+    }
+    this.pushOut(p, PLAYER_R); // never end up inside a wall after being pushed
     const lim = { x: this.layout.size.X / 2 + 20, z: this.layout.size.Z / 2 + 20 };
     p.x = Math.max(-lim.x, Math.min(lim.x, p.x));
     p.z = Math.max(-lim.z, Math.min(lim.z, p.z));
@@ -276,7 +333,23 @@ export class City {
       const len = Math.hypot(q.dx, q.dz) || 1;
       // sideways offset so people don't all walk on one line
       const ox = (-q.dz / len) * n.lane, oz = (q.dx / len) * n.lane;
-      n.root.position.set(q.x + ox, 0, q.z + oz);
+      // plus a sidestep (n.off) that steers round people and things, then
+      // fades so they drift back into their lane
+      n.off ??= { x: 0, z: 0 };
+      const bx = q.x + ox, bz = q.z + oz;
+      const pos = { x: bx + n.off.x, z: bz + n.off.z };
+      for (const o of this.npcs) {
+        if (o === n || !o.pos) continue;
+        const dx = pos.x - o.pos.x, dz = pos.z - o.pos.z, d = Math.hypot(dx, dz), min = PERSON_R * 2 + 0.08;
+        if (d < min && d > 1e-5) { pos.x += (dx / d) * (min - d) * 0.5; pos.z += (dz / d) * (min - d) * 0.5; }
+      }
+      { const dx = pos.x - p.x, dz = pos.z - p.z, d = Math.hypot(dx, dz), min = PERSON_R + PLAYER_R + 0.05;
+        if (d < min && d > 1e-5) { pos.x += (dx / d) * (min - d); pos.z += (dz / d) * (min - d); } }
+      this.pushOut(pos, PERSON_R);
+      n.off.x = (pos.x - bx) * (1 - Math.min(1, dt * 0.8));
+      n.off.z = (pos.z - bz) * (1 - Math.min(1, dt * 0.8));
+      n.pos = pos;
+      n.root.position.set(pos.x, 0, pos.z);
       n.root.rotation.y = hd;
       stepGait(n.gait, dt, n.speed);
       poseGait(n.body, n.gait);
@@ -298,6 +371,24 @@ export class City {
 
     // --- cars on the ring road -------------------------------------------------
     for (const c of this.cars) {
+      // brake for anything in the lane just ahead: the player, pedestrians,
+      // other cars (a car waiting over 3 s ignores other cars, so two cars can
+      // never block each other for good at a crossing)
+      c.cruise ??= c.speed;
+      c.wait ??= 0;
+      let blocked = false;
+      if (c.fx !== undefined) {
+        const ahead = (o, car = false) => {
+          const dx = o.x - c.obj.position.x, dz = o.z - c.obj.position.z;
+          const along = dx * c.fx + dz * c.fz, side = Math.abs(dx * c.fz - dz * c.fx);
+          return along > 0.5 && along < (car ? 6.5 : 5) && side < (car ? 1.4 : 1.3);
+        };
+        if (ahead(p)) blocked = true;
+        for (const n of this.npcs) if (n.pos && ahead(n.pos)) blocked = true;
+        if (c.wait < 3) for (const o of this.cars) if (o !== c && ahead(o.obj.position, true)) blocked = true;
+      }
+      c.wait = blocked ? c.wait + dt : 0;
+      c.speed += ((blocked ? 0 : c.cruise) - c.speed) * Math.min(1, dt * (blocked ? 6 : 1.5));
       c.s += c.speed * dt;
       // the route already runs down the middle of the kerb-side lane (driving
       // on the left, block on the driver's left), so the car sits right on it
@@ -306,6 +397,7 @@ export class City {
       const fx = q.dx / len, fz = q.dz / len;
       c.obj.position.set(q.x, -0.12, q.z);
       c.obj.rotation.y = Math.atan2(fx, fz);
+      c.fx = fx; c.fz = fz; // for braking and collisions
     }
 
     // --- camera: third person, behind and above ----------------------------------

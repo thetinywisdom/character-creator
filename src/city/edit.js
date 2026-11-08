@@ -18,7 +18,7 @@ const groupOf = (col, row) => `block:${col},${row}`;
 export function emptyCity(cols = 4, rows = 3, name = 'New town') {
   return {
     format: FORMAT, version: VERSION, meta: { name },
-    grid: { cols, rows, block: 40, road: 9, sidewalk: 3, curb: 0.12 },
+    grid: { cols, rows, block: 40, road: 6, sidewalk: 3, curb: 0.12 },
     blocks: [], objects: [],
   };
 }
@@ -63,6 +63,35 @@ export function resizeGrid(data, cols, rows) {
   return withStreets({ ...data, grid, blocks, objects: [...kept, ...generated] });
 }
 const shift = (p, dx, dz) => [p[0] + dx, p[1], p[2] + dz];
+
+/**
+ * Change the road width. Blocks keep their size; generated things are rebuilt
+ * for the new streets, and hand-placed things move with the cell they are in,
+ * so they stay where they were relative to their block.
+ */
+export function setRoadWidth(data, road) {
+  const before = data.grid, after = { ...data.grid, road };
+  const g0 = gridGeometry(before), g1 = gridGeometry(after);
+  const step0 = before.block + before.road;
+  const move = (x, z) => {
+    const col = Math.floor((x + g0.X / 2 - before.road / 2) / step0);
+    const row = Math.floor((z + g0.Z / 2 - before.road / 2) / step0);
+    const a = g0.blockRect(col, row), b = g1.blockRect(col, row);
+    return [x + (b.x0 - a.x0), z + (b.z0 - a.z0)];
+  };
+  const kept = data.objects.filter((o) => !o.group).map((o) => {
+    const [x, z] = move(o.x ?? 0, o.z ?? 0);
+    const out = { ...o, x, z };
+    if (o.asset === 'line.wire') {
+      const [ax, az] = move(o.params.a[0], o.params.a[2]), [bx, bz] = move(o.params.b[0], o.params.b[2]);
+      out.params = { ...o.params, a: [ax, o.params.a[1], az], b: [bx, o.params.b[1], bz] };
+    }
+    if (o.asset === 'prop.crosswalk') out.params = { ...o.params, length: road };
+    return out;
+  });
+  const generated = data.blocks.flatMap((b) => blockObjects(after, b));
+  return withStreets({ ...data, grid: after, blocks: data.blocks, objects: [...kept, ...generated] });
+}
 
 /** Add one hand-placed object. */
 export function addObject(data, object) {

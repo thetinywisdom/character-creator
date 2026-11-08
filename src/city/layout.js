@@ -9,7 +9,7 @@ import { buildCity } from './build.js';
 // plain JSON, no 3D. buildCity() (build.js) turns any city file into the
 // scene. generateCity(style, seed) does both, for convenience.
 
-export const ROAD = 9;      // road width (two lanes)
+export const ROAD = 6;      // road width (two narrow lanes; was 9, felt too big to explore)
 export const BLOCK = 40;    // block size including its sidewalk
 export const WALK = 3;      // sidewalk width
 const CURB_H = 0.12;        // sidewalks are this much higher than the road
@@ -160,13 +160,8 @@ export function blockObjects(grid, block) {
   for (let x = x0 + 12; x <= x1 - 8; x += 16) place('prop.streetLamp', { variant: 'Single' }, x, z1 - curb, [0, 1]);
   for (let z = z0 + 6; z <= z1 - 6; z += 16) place('prop.streetLamp', { variant: 'Single' }, x1 - curb, z, [1, 0]);
 
-  // --- maybe a car parked at the south kerb (Japan: they drive on the left)
-  if (type !== 'park' && rng() < 0.5) {
-    const kinds = ['Kei car', 'Sedan', 'Minivan', 'Kei car'];
-    const colors = ['White', 'Gray', 'Black', 'Blue', 'Red', 'White'];
-    const x = x0 + 8 + rng() * (BLOCK - 16);
-    place('vehicle.car', { variant: kinds[Math.floor(rng() * kinds.length)], color: colors[Math.floor(rng() * colors.length)] }, x, z1 + 1.4, [1, 0], -CURB_H);
-  }
+  // (no cars parked at the kerb: on 6 m roads they would block the moving cars'
+  // lane; park cars by hand in parking garages or lots instead)
   return objects;
 }
 

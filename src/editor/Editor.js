@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { ASSETS, CATALOG } from '../catalog/index.js';
 import { buildCity, buildObject } from '../city/build.js';
 import { gridGeometry, BLOCK_TYPES } from '../city/format.js';
-import { addObject, blockAt, cellAt, emptyCity, removeObject, resizeGrid, setBlock, updateObject } from '../city/edit.js';
+import { addObject, blockAt, cellAt, emptyCity, removeObject, resizeGrid, setBlock, setRoadWidth, updateObject } from '../city/edit.js';
 import { setDetail } from '../lib/shapes.js';
 import { CLOTH_COLORS } from '../styles/palette.js';
 import { SHOP_TYPES } from '../city/buildings.js';
@@ -378,6 +378,9 @@ export class Editor {
         <button data-act="cols-">− col</button><button data-act="cols+">+ col</button>
         <button data-act="rows-">− row</button><button data-act="rows+">+ row</button>
         <span class="ed-sep"></span>
+        <span>Roads</span>
+        <button data-act="road6" title="Narrow roads (6 m)">6 m</button><button data-act="road9" title="Wide roads (9 m)">9 m</button>
+        <span class="ed-sep"></span>
         <button data-act="towns">📁 My towns</button>
         <button data-act="fit">Fit view</button>
       </div>`;
@@ -468,6 +471,10 @@ export class Editor {
       if (act === 'rotSel') this.rotateSelected();
       if (act === 'delSel') this.deleteSelected();
       if (act === 'dupSel') this.duplicateSelected();
+      if (act === 'road6' || act === 'road9') {
+        const w = act === 'road6' ? 6 : 9;
+        if (w !== g.road) { this.selected = null; const next = setRoadWidth(this.data, w); next.meta = { ...next.meta, roadChosen: true }; this.setData(next); this.frameAll(); }
+      }
       if (act === 'cols-') this.resize(-1, 0);
       if (act === 'cols+') this.resize(1, 0);
       if (act === 'rows-') this.resize(0, -1);
@@ -574,6 +581,8 @@ export class Editor {
     el.querySelector('[data-act="undo"]').disabled = !this.history.length;
     el.querySelector('[data-act="redo"]').disabled = !this.future.length;
     el.querySelector('[data-k="gridSize"]').textContent = `${this.data.grid.cols} × ${this.data.grid.rows}`;
+    el.querySelector('[data-act="road6"]').classList.toggle('on', this.data.grid.road === 6);
+    el.querySelector('[data-act="road9"]').classList.toggle('on', this.data.grid.road === 9);
     el.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === this.paletteTab));
     el.querySelectorAll('.tile').forEach((b) => b.classList.toggle('on', b.dataset.asset === this.placeId));
     if (this.tool === 'place') this.renderOptions(el.querySelector('[data-k="placeOpts"]'), CATALOG[this.placeId], this.placeParams, { turn: true });

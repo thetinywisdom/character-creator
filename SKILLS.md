@@ -103,8 +103,21 @@ Roads run round every existing block and join up by themselves. Objects with
 `group: 'block:c,r'` or `'streets'` are generated and replaced on regeneration;
 objects without a group are hand-placed and kept.
 
+**Collisions.** Every catalogue asset lists its solid boxes
+(`PROP_COLLIDERS` in `catalog/index.js` for props, builders return
+`colliders` for buildings). In Walk mode (`City.js`) the player is pushed out
+of static colliders (grid lookup `nearColliders`), moving cars
+(`pushOutOfCar`), pedestrians and cats; pedestrians sidestep things and each
+other with a fading offset (`n.off`) and drift back into their lane; cars
+brake for the player, pedestrians and cars in their lane ahead (a car waiting
+over 3 s ignores other cars, so they can't block each other for good). A new
+placeable item needs a collider.
+
 **Editing.** `src/city/edit.js` functions return a NEW city and share
 unchanged objects (undo = keep old cities; the editor diffs by identity).
+`setRoadWidth(data, road)` changes road width keeping hand-placed things
+relative to their block (roads are 6 m by default; towns made with the editor
+at 9 m are narrowed once when opened unless `meta.roadChosen`).
 Never mutate a city object in place.
 
 **Merging.** The walkable city is merged into one mesh per material

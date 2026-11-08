@@ -32,6 +32,7 @@ edit; that is not this tool's job.
 | Saving | Towns autosave in the browser (IndexedDB) and export / import as JSON files |
 | Buildings | Shops and food places join block fills; public buildings (koban, post office, bank, clinic, fire station, parking, gas station) are placed by hand |
 | Cameras | Walk mode switches between third person and isometric |
+| Streets | Roads are 6 m (two narrow lanes), so towns feel small enough to explore; no cars parked at the kerb |
 
 ## Done
 
@@ -49,6 +50,7 @@ edit; that is not this tool's job.
 12. **Flicker fix**: shop windows, wooden fronts and crosswalks blinked while walking (z-fighting): 24-bit depth buffer, tighter iso camera range, surfaces kept ≥ 2 cm apart.
 13. **Smooth turning**: pedestrians and cars follow routes with rounded corners (people 1.2 m, cars 3 m) instead of snapping 90° in one frame.
 14. **Cars in their lane**: a leftover offset from the old ring road pushed cars half onto the pavement; cars now drive in the middle of the kerb-side lane (centre 2.1–2.25 m from the kerb, never on a pavement).
+15. **Narrower roads and collisions**: roads 6 m instead of 9 m (editor ☰ Roads 6 m / 9 m; editor-made towns converted once, keeping hand-placed things in place; no kerb parking on narrow roads); everything solid has a collider; the player can't pass through things, cars, people or cats; pedestrians step round things and each other; cars brake for people and cars ahead.
 
 ## Next (suggested order)
 

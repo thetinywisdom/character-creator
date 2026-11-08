@@ -248,7 +248,7 @@ interior** and upstairs windows have painted curtains (see the style guide).
   change in place, plus **Turn** (R), **Copy** and **Delete**. Moving or turning a generated thing makes it hand-placed, so
   repainting its block leaves it alone.
 - **Undo / redo** (Ctrl+Z / Ctrl+Shift+Z); a whole drag is one step.
-- **☰:** grid size (up to 12 × 12), new empty town, sample town, fit view.
+- **☰:** grid size (up to 12 × 12), road width (6 m narrow, the default, or 9 m wide), My towns, fit view.
 - **Walk it:** walk the town you built (people, cars and cats included);
   Exit city returns to the editor.
 

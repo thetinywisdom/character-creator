@@ -50,6 +50,11 @@ const PROP_COLLIDERS = {
   phoneBooth: { hw: 0.5, hd: 0.5 },
   utilityPole: { hw: 0.2, hd: 0.2 },
   car: { hw: 0.9, hd: 2.3 },
+  bicycle: { hw: 0.3, hd: 0.85 },
+  scooter: { hw: 0.35, hd: 0.9 },
+  planter: { 'Planter box': { hw: 0.7, hd: 0.25 }, 'Potted plant': { hw: 0.22, hd: 0.22 } },
+  cone: { Cone: { hw: 0.18, hd: 0.18 }, Barrier: { hw: 1.1, hd: 0.18 } },
+  bollard: { Bollard: { hw: 0.08, hd: 0.08 }, 'Guard rail': { hw: 1.0, hd: 0.06 } },
 };
 
 const PROP_SIZES = { busStop: [3.4, 1.6], car: [1.8, 4.6], bench: [1.6, 0.5], vendingMachine: [1.1, 0.9], crosswalk: [4, 6] };

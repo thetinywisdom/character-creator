@@ -17,7 +17,7 @@ import { Editor } from './editor/Editor.js';
 import { Creator } from './creator/Creator.js';
 import { TownsPanel } from './editor/TownsPanel.js';
 import { getTown, lastTownId, listTowns, putTown, setLastTownId, storageWorks } from './editor/towns.js';
-import { emptyCity } from './city/edit.js';
+import { emptyCity, setRoadWidth } from './city/edit.js';
 import { RUN_SPEED, WALK_SPEED, createGait, poseGait, stepGait } from './anim/gait.js';
 import './style.css';
 
@@ -123,6 +123,12 @@ function autosave(data) {
   saveTimer = setTimeout(() => putTown({ id: town.id, name: town.name, data }), 600);
 }
 function openTown(rec) {
+  // towns made before roads were narrowed (9 m) switch to 6 m once, unless the
+  // road width was chosen by hand (☰ Roads); positions are kept relative to blocks
+  // (only towns made with the editor: their blocks have seeds and generated
+  // things are tagged, so nothing is duplicated; older files keep 9 m roads)
+  const editorTown = rec.data?.blocks?.length && rec.data.blocks.every((b) => b.seed != null);
+  if (rec.data?.grid?.road === 9 && !rec.data.meta?.roadChosen && editorTown) rec = { ...rec, data: setRoadWidth(rec.data, 6) };
   currentTown = { id: rec.id, name: rec.name };
   setLastTownId(rec.id);
   editor.loadTown(rec.data);
