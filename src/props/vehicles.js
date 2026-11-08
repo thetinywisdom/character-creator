@@ -193,13 +193,25 @@ function buildBus(color, style) {
   const body = softBox(W, H - 0.35, L, paint, { round: 0.08 });
   body.position.y = 0.35 + (H - 0.35) / 2;
   g.add(body);
-  g.add(box(W + 0.02, 0.12, L - 0.4, stripe, [0, 1.15, 0]));                         // a colour band along the sides
-  g.add(box(W + 0.03, 1.0, L - 2.8, glass, [0, 2.2, -0.9]));                          // side window band
-  for (let i = 0; i < 7; i++) g.add(box(W + 0.04, 1.0, 0.1, paint, [0, 2.2, -L / 2 + 0.6 + i * 1.32])); // window posts
+  g.add(box(W + 0.02, 0.12, L - 0.4, stripe, [0, 1.15, 0]));                         // a colour band along the sides (the doors cover it)
+  // side windows: separate panes, with gaps where the doors are (doors on the
+  // left side only, the kerb side in Japan); the other side runs unbroken
+  const doors = [L / 2 - 1.0, -0.6]; // door centres (z), 1.1 m wide
+  const paneLen = 1.15, gap = 0.14, z0 = -L / 2 + 0.5, z1 = L / 2 - 1.75;
+  for (const sx of [-1, 1]) {
+    for (let z = z0; z + paneLen <= z1 + 0.01; z += paneLen + gap) {
+      const mid = z + paneLen / 2;
+      if (sx > 0 && doors.some((d) => Math.abs(mid - d) < 0.55 + paneLen / 2)) continue;
+      g.add(box(0.05, 0.95, paneLen, glass, [sx * (W / 2 + 0.01), 2.25, mid]));
+    }
+  }
+  // doors: a dark frame, two glass leaves with a split down the middle
+  for (const dz of doors) {
+    g.add(box(0.05, 2.35, 1.2, dark, [W / 2 + 0.012, 1.55, dz]));
+    for (const k of [-1, 1]) g.add(box(0.05, 2.15, 0.5, glass, [W / 2 + 0.03, 1.6, dz + k * 0.27]));
+  }
   g.add(box(W - 0.2, 1.5, 0.05, glass, [0, 2.0, L / 2 + 0.01]));                       // windscreen
   g.add(box(W - 0.6, 0.3, 0.06, style.material('light', 0xf0a020), [0, 2.9, L / 2 + 0.02])); // destination sign
-  g.add(box(0.05, 2.3, 1.1, glass, [W / 2 + 0.01, 1.4, L / 2 - 1.0]));                  // front door (left side: Japan)
-  g.add(box(0.05, 2.3, 1.1, glass, [W / 2 + 0.01, 1.4, -0.5]));                         // middle door
   g.add(box(W * 0.98, 0.3, 0.15, dark, [0, 0.45, L / 2]), box(W * 0.98, 0.3, 0.15, dark, [0, 0.45, -L / 2]));
   const light = style.material('light', 0xfff6dc), tail = style.material('light', 0xe0402f);
   for (const sx of [-1, 1]) {
