@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createAsset } from '../catalog/index.js';
+import { createAsset } from './index.js';
 import { setDetail } from '../lib/shapes.js';
 
 // Little pictures of catalogue assets for the editor's palette, in the app's

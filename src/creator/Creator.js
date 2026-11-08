@@ -51,6 +51,8 @@ export class Creator {
         <div class="cr-actions">
           <button data-act="random" title="A random character">🎲 Random</button>
           <button data-act="reset" title="Back to the default character">↺</button>
+          <button data-act="export" title="Save this character as a JSON file">⬇ JSON</button>
+          <button data-act="import" title="Open a character JSON file">⬆</button>
         </div>
       </div>
       <div class="cr-body"></div>`;
@@ -73,6 +75,8 @@ export class Creator {
       if (b.dataset.tab) { this.tab = b.dataset.tab; this.render(); }
       if (b.dataset.act === 'random') { this.actions.randomize(); this.render(); }
       if (b.dataset.act === 'reset') { this.actions.reset(); this.render(); }
+      if (b.dataset.act === 'export') this.actions.exportJson();
+      if (b.dataset.act === 'import') this.actions.importJson().then(() => this.render());
       if (b.dataset.preset) { this.actions.preset(b.dataset.preset); this.render(); }
       if (b.dataset.key) this.set(b.dataset.key, b.dataset.val);
     });

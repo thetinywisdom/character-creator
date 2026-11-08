@@ -1,822 +1,301 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import GUI from 'lil-gui';
 import { subjects } from './subjects/index.js';
-import { lightingPresets, style as theStyle } from './styles/index.js';
+import { lightingPresets, style } from './styles/index.js';
 import { Cell } from './viewer/Cell.js';
 import { defaultsFor, loadParams, saveParams } from './viewer/params.js';
-import { mulberry32 } from './lib/rng.js';
-import { PROP_GROUPS, propSubject } from './props/index.js';
+import { createPs1Renderer } from './render/ps1.js';
+import { ASSETS, CATALOG, createAsset } from './catalog/index.js';
+import { thumbInto } from './catalog/thumbs.js';
 import { City } from './city/City.js';
 import { CityInput } from './city/input.js';
-import { saveFile, openTextFile } from './lib/saveFile.js';
 import { generateCityData } from './city/layout.js';
-import { validateCity } from './city/format.js';
-import { CATALOG } from './catalog/index.js';
-import { Editor } from './editor/Editor.js';
+import { SHOP_TYPES } from './city/buildings.js';
 import { Creator } from './creator/Creator.js';
-import { TownsPanel } from './editor/TownsPanel.js';
-import { getTown, lastTownId, listTowns, putTown, setLastTownId, storageWorks } from './editor/towns.js';
-import { emptyCity, setRoadWidth } from './city/edit.js';
 import { RUN_SPEED, WALK_SPEED, createGait, poseGait, stepGait } from './anim/gait.js';
+import { saveFile, openTextFile } from './lib/saveFile.js';
+import { CLOTH_COLORS } from './styles/palette.js';
 import './style.css';
 
-// ---------------------------------------------------------------------------
-// Renderer: one full-screen canvas. Gallery cells are drawn into scissored
-// rectangles that track the HTML grid cells above the canvas.
-// ---------------------------------------------------------------------------
+// Tiny City Builder: a viewer for the foundation that games are built on.
+//   📦 Catalogue   every placeable item, with its id and settings
+//   👤 Characters  design a character and export / import it as JSON
+//   🏙 City        walk a generated sample town (third person or isometric)
+// Everything shown here is plain modules under src/ that games reuse (see SKILLS.md).
+
 const canvas = document.querySelector('#c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
-const PAGE_BG = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#1d1f23');
+const ps1 = createPs1Renderer(renderer);
+const PAGE_BG = new THREE.Color('#1d1f23');
 
 const params = loadParams(subjects);
-const state = {
-  view: 'editor', // 'editor' | 'city' | 'gallery' | 'props' | 'lineup' | 'crowd' | 'focus'
-  lastGrid: 'gallery', // which grid the inspection view returns to
-  crowdSeed: 1,
-  focus: null,
-  turntable: true,
-  speed: 0.35,
-  angle: 0,
-  lighting: 'Day',
-  street: false, // frame subjects small, as seen from across a street
-  characterScale: 1, // >1 exaggerates people and animals so they read when tiny
-  anim: 'Still',     // preview animation in the viewer: Still | Walk | Run | Roller skate
-  cityGait: 'Walk naturally', // how you move in the city: Walk naturally | Roller skate
-};
-const STREET_HEIGHT = 6; // metres of height in view at street distance
-const LINEUP_HEIGHT = 9;
+const human = subjects.find((s) => s.id === 'human');
+const state = { view: 'catalog', anim: 'Still', lighting: 'Day', citySeed: 3, cityView: 'third' };
 
-// ---------------------------------------------------------------------------
-// Gallery grid: one cell per subject (human, cat, tree)
-// ---------------------------------------------------------------------------
-const grid = document.querySelector('#grid');
-grid.style.setProperty('--cols', subjects.length);
-grid.append(Object.assign(document.createElement('div'), { className: 'corner' }));
-for (const s of subjects) {
-  grid.append(Object.assign(document.createElement('div'), { className: 'col-head', textContent: s.label }));
-}
-
-const galleryCells = [];
-for (const style of [theStyle]) {
-  grid.append(Object.assign(document.createElement('div'), { className: 'row-head', textContent: '' }));
-  for (const subject of subjects) {
-    const cell = new Cell({ entries: [{ subject }], style, renderer });
-    cell.el = Object.assign(document.createElement('div'), { className: 'cell', title: `${subject.label} · ${style.label}` });
-    cell.el.dataset.label = `${subject.label} · ${style.label}`;
-    cell.el.addEventListener('click', () => enterFocus(cell));
-    grid.append(cell.el);
-    galleryCells.push(cell);
-  }
-}
-
-// Props gallery: one cell per prop variant, grouped, in the chosen style
-const propsGrid = document.querySelector('#propsGrid');
-const propCells = [];
-for (const group of PROP_GROUPS) {
-  propsGrid.append(Object.assign(document.createElement('div'), { className: 'group-head', textContent: group.label }));
-  for (const prop of group.props) {
-    prop.variants.forEach((variant, i) => {
-      const color = prop.colors ? prop.colors[(i * 3 + 1) % prop.colors.length] : undefined;
-      const subject = propSubject(prop, variant, color);
-      const cell = new Cell({ entries: [{ subject }], style: theStyle, renderer });
-      cell.el = Object.assign(document.createElement('div'), { className: 'cell', title: subject.label });
-      cell.el.dataset.label = subject.label;
-      cell.el.addEventListener('click', () => enterFocus(cell));
-      propsGrid.append(cell.el);
-      propCells.push(cell);
-    });
-  }
-}
-let propsBuilt = false; // built on first visit, to keep start-up fast
-
-// The walkable city: built on first visit (and rebuilt when you return after
-// changing your character), with its own input and camera.
-const joystick = document.querySelector('#joystick');
-const cityInput = new CityInput(canvas, joystick);
-let city = null;
-let cityParamsKey = '';
-let cityData = null; // a loaded city file; null = the generated sample town
-// The city editor: built on first use, edits the current town's city file.
-let editor = null;
-async function loadCityFile() {
-  const text = await openTextFile('.json,application/json');
-  if (text == null) return null;
-  let data;
-  try { data = JSON.parse(text); } catch { toast('That file is not JSON'); return null; }
-  const problems = validateCity(data, CATALOG).filter((p) => !p.startsWith('unknown asset'));
-  if (problems.length) { toast(`Not a city file: ${problems.join(', ')}`); return null; }
-  return data;
-}
-// ---------------------------------------------------------------------------
-// My towns: every town is kept in this browser and saved as you edit
-// ---------------------------------------------------------------------------
-let currentTown = null; // { id, name }
-let saveTimer = null;
-function autosave(data) {
-  if (!currentTown) return;
-  clearTimeout(saveTimer);
-  const town = currentTown;
-  saveTimer = setTimeout(() => putTown({ id: town.id, name: town.name, data }), 600);
-}
-function openTown(rec) {
-  // towns made before roads were narrowed (9 m) switch to 6 m once, unless the
-  // road width was chosen by hand (☰ Roads); positions are kept relative to blocks
-  // (only towns made with the editor: their blocks have seeds and generated
-  // things are tagged, so nothing is duplicated; older files keep 9 m roads)
-  const editorTown = rec.data?.blocks?.length && rec.data.blocks.every((b) => b.seed != null);
-  if (rec.data?.grid?.road === 9 && !rec.data.meta?.roadChosen && editorTown) rec = { ...rec, data: setRoadWidth(rec.data, 6) };
-  currentTown = { id: rec.id, name: rec.name };
-  setLastTownId(rec.id);
-  editor.loadTown(rec.data);
-  updateSubtitle();
-}
-async function newTown(data, name) {
-  openTown(await putTown({ name, data }));
-}
-const townsPanel = new TownsPanel({
-  open: async (id) => { const rec = await getTown(id); if (rec) openTown(rec); },
-  newEmpty: () => newTown(emptyCity(4, 3), 'New town'),
-  newSample: () => newTown(generateCityData(Math.floor(Math.random() * 1000)), 'Sample town'),
-  currentId: () => currentTown?.id,
-  renamed: (id, name) => { if (currentTown?.id === id) { currentTown.name = name; editor.data.meta = { ...editor.data.meta, name }; updateSubtitle(); } },
-});
-/** At startup: reopen the last town, else the newest, else make a sample town. */
-async function openStartTown() {
-  let rec = null;
-  const last = lastTownId();
-  if (last) rec = await getTown(last);
-  if (!rec) { const [first] = await listTowns(); if (first) rec = await getTown(first.id); }
-  if (!rec) rec = await putTown({ name: 'Sample town', data: generateCityData() });
-  openTown(rec);
-  if (!(await storageWorks())) toast('This browser is not keeping towns — use 💾 Save to keep a copy');
-}
-function updateSubtitle() {
-  const sub = document.querySelector('#subtitle');
-  if (state.view === 'editor' && currentTown) sub.textContent = `City editor · ${currentTown.name}`;
-}
-
-function enterEditor() {
-  if (!editor) {
-    editor = new Editor({
-      style: theStyle, canvas, renderer,
-      data: cityData ?? city?.layout.data ?? emptyCity(4, 3), // the saved town loads in right after
-      callbacks: {
-        onSave: async (data) => { if (!(await saveFile(`${(data.meta?.name ?? 'city').replace(/\W+/g, '-').toLowerCase()}.json`, JSON.stringify(data, null, 1)))) toast('City not saved'); },
-        onLoad: loadCityFile,
-        onSample: () => generateCityData(),
-        onWalk: () => walkTown(),
-        onTowns: () => townsPanel.show(),
-        onChange: (data) => autosave(data),
-      },
-    });
-    setView('editor');
-    editor.frameAll(); // after the editor's panels are on screen, so it fits above them
-    return;
-  }
-  setView('editor');
-}
-
-function enterCity() {
-  const key = JSON.stringify(params.human);
-  if (!city || key !== cityParamsKey) {
-    const byId = Object.fromEntries(subjects.map((s) => [s.id, s]));
-    city = new City({ style: theStyle, renderer, human: byId.human, cat: byId.cat, params, data: cityData });
-    city.applyLighting(lightingPresets[state.lighting]);
-    if (state.cityView === 'iso') city.setViewMode('iso'); // keep the chosen camera when the town is rebuilt
-    cityParamsKey = key;
-  }
-  setView('city');
-}
-
-let lineupCell = makeLineup();
-function makeLineup() {
-  const style = theStyle;
-  // a street with every tree preset as a variant, the human and cat in the middle
-  const byId = Object.fromEntries(subjects.map((s) => [s.id, s]));
-  const treeVariant = (name) => ({ subject: byId.tree, overrides: byId.tree.presets[name] });
-  const entries = [
-    treeVariant('Old giant'), treeVariant('Oak'),
-    { subject: byId.human }, { subject: byId.cat },
-    treeVariant('Pine'), treeVariant('Lollipop'),
-  ];
-  const cell = new Cell({ entries, style, renderer, gap: 1.2, viewDir: [0.18, 0.3, 1], backdrop: 'street' });
-  cell.rebuild(params);
-  cell.applyLighting(lightingPresets[state.lighting]);
-  return cell;
-}
-
-// A street full of random characters (plus the cat), to check that outfits
-// work together and stay readable in a group.
-let crowdCell = null;
-function makeCrowd() {
-  const style = theStyle;
-  const byId = Object.fromEntries(subjects.map((s) => [s.id, s]));
-  const rng = mulberry32(state.crowdSeed * 7717 + 3);
-  const entries = [];
-  for (let i = 0; i < 12; i++) {
-    entries.push({
-      subject: byId.human,
-      overrides: byId.human.randomize(rng),
-      z: (rng() - 0.5) * 1.6,
-      rotation: (rng() - 0.5) * 1.4,
-    });
-    if (i === 5) entries.push({ subject: byId.cat, z: 0.6, rotation: 0.5 });
-  }
-  const cell = new Cell({ entries, style, renderer, gap: 0.25, viewDir: [0.18, 0.3, 1], backdrop: 'street' });
-  cell.rebuild(params);
-  cell.applyLighting(lightingPresets[state.lighting]);
-  return cell;
-}
-crowdCell = makeCrowd();
-
-galleryCells.forEach((c) => { c.rebuild(params); c.applyLighting(lightingPresets[state.lighting]); });
-
-// ---------------------------------------------------------------------------
-// Focus / lineup: one big orbitable view
-// ---------------------------------------------------------------------------
-const focusCam = new THREE.PerspectiveCamera(30, 1, 0.01, 500);
-const controls = new OrbitControls(focusCam, canvas);
-controls.enableDamping = true;
-controls.enabled = false;
-
-const backBtn = document.querySelector('#back');
 const hint = document.querySelector('#hint');
-const goBack = () => {
-  if (state.view === 'city') enterEditor();          // leaving a walk goes back to building
-  else if (!['editor', 'gallery', 'props'].includes(state.view)) setView(state.lastGrid);
-};
-backBtn.addEventListener('click', goBack);
-window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') goBack();
-});
-
-function enterFocus(cell) {
-  state.focus = cell;
-  setView('focus');
-}
-
-// ---------------------------------------------------------------------------
-// App bar: Build / Characters / Walk, Save / Open, and ⚙ developer settings
-// ---------------------------------------------------------------------------
-const MODE_OF = { editor: 'build', city: 'walk' }; // every other view is Characters
-const devBtn = document.querySelector('#devBtn');
-let devOpen = false;
-function updateAppBar() {
-  const mode = MODE_OF[state.view] ?? 'characters';
-  document.querySelectorAll('#modes [data-mode]').forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
-  document.querySelector('#saveBtn').hidden = mode !== 'build';
-  document.querySelector('#loadBtn').hidden = mode !== 'build';
-  document.querySelector('#townsBtn').hidden = mode !== 'build';
-  document.querySelector('#viewBtn').hidden = mode !== 'walk';
-  updateViewBtn();
-  devBtn.classList.toggle('on', devOpen);
-  // the developer panel only shows when asked for (Characters still uses it for now)
-  if (devOpen) { gui.show(); gui.open(); } else gui.hide();
-}
-devBtn.addEventListener('click', () => { devOpen = !devOpen; updateAppBar(); });
-document.querySelector('#modes').addEventListener('click', (e) => {
-  const mode = e.target.closest('[data-mode]')?.dataset.mode;
-  if (mode === 'build') enterEditor();
-  if (mode === 'characters') setView('creator');
-  if (mode === 'walk') walkTown();
-});
-document.querySelector('#saveBtn').addEventListener('click', () => actions.saveCity());
-document.querySelector('#loadBtn').addEventListener('click', () => actions.loadCity());
-document.querySelector('#townsBtn').addEventListener('click', () => townsPanel.show());
-// Walk mode camera: isometric or third person (button or V; Q / E turn the iso view)
-const viewBtn = document.querySelector('#viewBtn');
-function updateViewBtn() {
-  const iso = city?.viewMode === 'iso';
-  viewBtn.innerHTML = iso ? '🎥<span> 3rd person</span>' : '🎥<span> Iso view</span>';
-  hint.textContent = state.view !== 'city' ? hint.textContent : iso
-    ? 'WASD / arrows to walk · Shift to run · drag to turn · scroll or pinch to zoom · Q / E rotate · V third person'
-    : 'WASD / arrows to walk · Shift to run · drag to look · scroll to zoom · V isometric view · Esc to exit';
-}
-viewBtn.addEventListener('click', () => { if (city) state.cityView = city.setViewMode(); updateViewBtn(); });
-window.addEventListener('keydown', (e) => {
-  if (state.view !== 'city' || !city || e.target.closest?.('input, select, textarea')) return;
-  if (e.code === 'KeyV') { state.cityView = city.setViewMode(); updateViewBtn(); }
-  if (city.viewMode === 'iso' && e.code === 'KeyQ') city.rotateIso(-1);
-  if (city.viewMode === 'iso' && e.code === 'KeyE') city.rotateIso(1);
-});
-/** Walk the town being built (rebuilt when it or your character changed). */
-function walkTown() {
-  if (!editor) enterEditor();
-  if (cityData !== editor.data) { cityData = editor.data; city = null; }
-  enterCity();
-}
-
-function setView(view) {
-  const SUBTITLES = { editor: 'City editor', city: 'Walking the town', gallery: 'Character creator', props: 'Street props', lineup: 'Street scene', crowd: 'Crowd', focus: 'Character creator' };
-  document.querySelector('#subtitle').textContent = SUBTITLES[view] ?? '';
-  if (view === 'editor') updateSubtitle();
-  if (view === 'gallery' || view === 'props') state.lastGrid = view;
-  if (view === 'props' && !propsBuilt) {
-    propCells.forEach((c) => { c.rebuild(params); c.applyLighting(lightingPresets[state.lighting]); });
-    propsBuilt = true;
-  }
-  state.view = view;
-  editor?.show(view === 'editor');
-  creator?.show(view === 'creator');
-  updateAppBar();
-  if (view === 'creator') {
-    cityInput.active = false;
-    joystick.hidden = true;
-    grid.hidden = true;
-    propsGrid.hidden = true;
-    backBtn.hidden = true;
-    controls.enabled = true;
-    hint.textContent = 'Drag to turn · scroll or pinch to zoom';
-    creatorFrame = true;
-    return;
-  }
-  if (view === 'editor') {
-    cityInput.active = false;
-    controls.enabled = false;
-    joystick.hidden = true;
-    grid.hidden = true;
-    propsGrid.hidden = true;
-    backBtn.hidden = true;
-    hint.textContent = 'Paint blocks · place and move things · drag with two fingers or the right button to pan · scroll or pinch to zoom';
-    return;
-  }
-  const inCity = view === 'city';
-  cityInput.active = inCity;
-  controls.enabled = false;
-  joystick.hidden = !(inCity && (matchMedia('(pointer: coarse)').matches || window.innerWidth < 900));
-  if (inCity) {
-    grid.hidden = true;
-    propsGrid.hidden = true;
-    backBtn.hidden = true;
-    updateViewBtn();
-    return;
-  }
-  const big = view !== 'gallery' && view !== 'props';
-  grid.hidden = view !== 'gallery';
-  propsGrid.hidden = view !== 'props';
-  backBtn.hidden = !big;
-  controls.enabled = big;
-  backBtn.textContent = `← ${state.lastGrid === 'props' ? 'Props' : 'Back'}`;
-  hint.textContent = big
-    ? 'Drag to orbit · scroll to zoom · Esc to go back'
-    : 'Click a cell to inspect it up close';
-  if (big) {
-    const cell = activeCell();
-    cell.frame(bigViewWidth() / canvas.clientHeight, focusCam, { minHeight: framingHeight(view) });
-    controls.target.copy(cell.viewCenter);
-    controls.update();
-    // open just the matching subject's panel
-    for (const [id, folder] of Object.entries(folders)) {
-      if (view === 'lineup' || view === 'crowd' || cell.has(id)) folder.open(); else folder.close();
-    }
-  }
-}
-
-/** Street distance shows a fixed slice of the world instead of hugging the subject. */
-function framingHeight(view = state.view) {
-  if (view === 'lineup' || view === 'crowd') return LINEUP_HEIGHT;
-  return state.street ? STREET_HEIGHT : 0;
-}
-
-/** Width of the focus/lineup view: on wide screens, stop short of the open panel. */
-function bigViewWidth() {
-  const W = canvas.clientWidth;
-  if (W < 900 || gui._closed) return W;
-  return W - gui.domElement.offsetWidth - 16;
-}
-
-function activeCell() {
-  if (state.view === 'lineup') return lineupCell;
-  if (state.view === 'crowd') return crowdCell;
-  return state.focus;
-}
-
-// ---------------------------------------------------------------------------
-// Controls panel
-// ---------------------------------------------------------------------------
-const dirty = new Set();
-const gui = new GUI({ title: 'Controls' });
-if (window.innerWidth < 700) gui.close();
-
-const viewFolder = gui.addFolder('View');
-const actions = {
-  gallery: () => setView('gallery'),
-  props: () => setView('props'),
-  city: () => enterCity(),
-  /** Save the current town as a city file (JSON). */
-  saveCity: async () => {
-    const data = (state.view === 'editor' && editor?.data) || city?.layout.data || cityData || generateCityData();
-    const ok = await saveFile(`${(data.meta?.name ?? 'city').replace(/\W+/g, '-').toLowerCase()}.json`, JSON.stringify(data, null, 1));
-    if (!ok) toast('City not saved');
-  },
-  /** Load a city file and walk it. */
-  loadCity: async () => {
-    const data = await loadCityFile();
-    if (!data) return;
-    const rec = await putTown({ name: data.meta?.name || 'Opened town', data }); // becomes one of My towns
-    if (!editor) enterEditor();
-    openTown(rec);
-    if (state.view !== 'editor') enterEditor();
-    toast(`Opened "${rec.name}"`);
-    return;
-    city = null; // rebuild from the new file
-    enterCity();
-  },
-  /** Back to the generated sample town. */
-  sampleCity: () => { cityData = null; city = null; enterCity(); },
-  /** Open the city editor on the current town. */
-  editor: () => enterEditor(),
-  lineup: () => setView('lineup'),
-  crowd: () => setView('crowd'),
-  newCrowd: () => {
-    state.crowdSeed += 1;
-    crowdCell = makeCrowd();
-    setView('crowd');
-  },
-  screenshot: () => { shotPending = true; },
-  copy: () => copySettings(),
-  resetAll: () => {
-    for (const s of subjects) Object.assign(params[s.id], defaultsFor(s));
-    gui.controllersRecursive().forEach((c) => c.updateDisplay());
-    subjects.forEach((s) => dirty.add(s.id));
-  },
-};
-viewFolder.add(actions, 'editor').name('City editor');
-viewFolder.add(actions, 'city').name('Walk the city');
-viewFolder.add(actions, 'saveCity').name('Save city file (JSON)');
-viewFolder.add(actions, 'loadCity').name('Load city file (JSON)');
-viewFolder.add(actions, 'sampleCity').name('Back to the sample town');
-viewFolder.add(actions, 'gallery').name('Characters & nature (grid)');
-viewFolder.add(actions, 'props').name('Props gallery (street props)');
-viewFolder.add(actions, 'lineup').name('Street scene (real scale)');
-viewFolder.add(actions, 'crowd').name('Crowd (random characters)');
-viewFolder.add(actions, 'newCrowd').name('New random crowd');
-function applyStreet(on) {
-  state.street = on;
-  for (const cell of galleryCells) {
-    cell.setBackdrop(on ? 'street' : null);
-    cell.rebuild(params);
-  }
-  if (state.view === 'focus') setView('focus');
-}
-viewFolder.add(state, 'street').name('Street distance (tiny)').onChange(applyStreet);
-viewFolder.add(state, 'characterScale', 1, 1.6, 0.05).name('Extra character size').onChange((v) => {
-  Cell.characterScale = v;
-  for (const cell of [...galleryCells, lineupCell, crowdCell]) cell.rebuild(params);
-});
-viewFolder.add(state, 'lighting', Object.keys(lightingPresets)).name('Lighting').onChange((name) => {
-  for (const cell of [...galleryCells, ...propCells, lineupCell, crowdCell]) cell.applyLighting(lightingPresets[name]);
-  city?.applyLighting(lightingPresets[name]);
-});
-viewFolder.add(state, 'anim', ['Still', 'Walk', 'Run', 'Roller skate']).name('Preview animation');
-viewFolder.add(state, 'cityGait', ['Walk naturally', 'Roller skate']).name('City movement');
-viewFolder.add(state, 'turntable').name('Turntable');
-viewFolder.add(state, 'speed', 0, 1.5, 0.01).name('Spin speed');
-viewFolder.add(actions, 'screenshot').name('Save PNG');
-viewFolder.add(actions, 'copy').name('Copy settings (JSON)');
-viewFolder.add(actions, 'resetAll').name('Reset everything');
-
-// per-style options (ink line width, PS1 pixel size, ...)
-for (const style of [theStyle]) {
-  if (!style.options) continue;
-  const f = viewFolder.addFolder(`Style: ${style.label}`);
-  const values = Object.fromEntries(Object.entries(style.options).map(([k, d]) => [k, d.value]));
-  for (const [key, def] of Object.entries(style.options)) {
-    const ctrl = typeof def.value === 'boolean' ? f.add(values, key) : f.add(values, key, def.min, def.max, def.step);
-    ctrl.name(def.label ?? key).onChange((v) => { def.value = v; style.setOption?.(key, v); });
-  }
-  f.close();
-}
-
-const folders = {};
-const folderRefresh = {}; // subject id -> (key) => apply rules, update the panel, rebuild
-for (const s of subjects) {
-  const f = gui.addFolder(s.label);
-  folders[s.id] = f;
-  const p = params[s.id];
-  const presetState = { preset: '—' };
-  // Character rules (subjects that have them, e.g. no beards on women): after
-  // any change, fix values that are no longer allowed, narrow each dropdown to
-  // the allowed options and hide controls that don't apply.
-  const ctrls = {};
-  const groups = {};
-  const last = { ...p };
-  const refresh = (key) => {
-    if (key) s.adjust?.(p, key, last[key]);
-    s.applyRules?.(p);
-    if (s.allowedOptions) {
-      for (const [k, c] of Object.entries(ctrls)) {
-        if (!s.schema[k].options) continue;
-        const ok = s.allowedOptions(k, p);
-        if (ok.join('|') !== (c._allowed ?? s.schema[k].options).join('|')) {
-          c._allowed = ok;
-          c.options(ok); // updates the dropdown in place
-        }
-      }
-    }
-    if (s.hiddenControls) {
-      const { keys, groups: hiddenGroups } = s.hiddenControls(p);
-      for (const [k, c] of Object.entries(ctrls)) c.show(!keys.has(k));
-      for (const [name, g] of Object.entries(groups)) g.show(!hiddenGroups.has(name));
-    }
-    Object.assign(last, p);
-    f.controllersRecursive().forEach((c) => c.updateDisplay());
-  };
-  const changed = (key) => { refresh(key); dirty.add(s.id); };
-  folderRefresh[s.id] = changed;
-  if (s.presets) {
-    f.add(presetState, 'preset', ['—', ...Object.keys(s.presets)]).name('Preset').onChange((name) => {
-      if (name === '—') return;
-      Object.assign(p, s.presets[name]);
-      refresh();
-      dirty.add(s.id);
-    });
-  }
-  if (s.randomize) {
-    f.add({ randomize: () => {
-      Object.assign(p, s.randomize());
-      refresh();
-      dirty.add(s.id);
-    } }, 'randomize').name('Randomize');
-  }
-  for (const [key, def] of Object.entries(s.schema)) {
-    const target = def.group ? (groups[def.group] ??= f.addFolder(def.group)) : f;
-    const ctrl = def.options
-      ? target.add(p, key, def.options)
-      : target.add(p, key, def.min, def.max, def.step);
-    ctrl.name(def.label ?? key).onChange(() => changed(key));
-    ctrls[key] = ctrl;
-  }
-  f.add({ reset: () => {
-    Object.assign(p, defaultsFor(s));
-    refresh();
-    dirty.add(s.id);
-  } }, 'reset').name('Reset');
-  refresh();
-  f.close();
-}
-
-// ---------------------------------------------------------------------------
-// Character creator (Characters mode): chips and swatches beside a live preview
-// ---------------------------------------------------------------------------
-let creatorFrame = true; // reframe the preview (entering, or the body changed size)
-const creatorCell = () => galleryCells.find((c) => c.has('human'));
-const humanSubject = subjects.find((s) => s.id === 'human');
-const creator = new Creator({
-  subject: humanSubject,
-  params: params.human,
-  onChange: (key) => {
-    folderRefresh.human(key);
-    if (['bodyType', 'height', 'headsTall', 'legLength'].includes(key)) creatorFrame = true;
-  },
-  actions: {
-    randomize: () => { Object.assign(params.human, humanSubject.randomize()); folderRefresh.human(); creatorFrame = true; },
-    // back to the current body type's default design
-    reset: () => { Object.assign(params.human, defaultsFor(humanSubject), humanSubject.presets[params.human.bodyType]); folderRefresh.human(); creatorFrame = true; },
-    preset: (name) => { Object.assign(params.human, humanSubject.presets[name]); folderRefresh.human(); creatorFrame = true; },
-    anim: (a) => { state.anim = a; gui.controllersRecursive().forEach((c) => c.updateDisplay()); },
-    getAnim: () => (['Walk', 'Run'].includes(state.anim) ? state.anim : 'Still'),
-  },
-});
-
-function processDirty() {
-  if (!dirty.size) return;
-  for (const cell of [...galleryCells, lineupCell]) {
-    if ([...dirty].some((id) => cell.has(id))) cell.rebuild(params);
-  }
-  dirty.clear();
-  saveParams(params);
-}
-
-// ---------------------------------------------------------------------------
-// Toast, clipboard, screenshot
-// ---------------------------------------------------------------------------
 const toastEl = document.querySelector('#toast');
 let toastTimer;
 function toast(msg) {
   toastEl.textContent = msg;
   toastEl.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toastEl.hidden = true; }, 2200);
+  toastTimer = setTimeout(() => { toastEl.hidden = true; }, 2600);
 }
 
-async function copySettings() {
-  const json = JSON.stringify(params, null, 2);
-  try {
-    await navigator.clipboard.writeText(json);
-    toast('Settings copied – paste them into the chat to share');
-  } catch {
-    console.log(json);
-    toast('Clipboard blocked – settings printed to the browser console');
-  }
+// A preview stage + orbit camera, shared by the catalogue and the character creator.
+const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 500);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+let reframe = true;
+
+// ---------------------------------------------------------------------------
+// 📦 Catalogue
+// ---------------------------------------------------------------------------
+const TABS = [['all', 'All'], ['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['nature', 'Nature'], ['vehicles', 'Vehicles'], ['areas', 'Areas']];
+const catalogEl = document.querySelector('#catalog');
+const itemEl = document.querySelector('#item');
+const items = ASSETS.filter((a) => a.group);
+let catTab = 'all';
+let selected = null; // { id, params }
+let itemCell = null;
+
+function renderCatalog() {
+  const tabs = catalogEl.querySelector('.cat-tabs');
+  tabs.replaceChildren(...TABS.map(([k, l]) => {
+    const b = Object.assign(document.createElement('button'), { textContent: `${l} ${k === 'all' ? items.length : items.filter((a) => a.group === k).length}` });
+    b.classList.toggle('on', k === catTab);
+    b.onclick = () => { catTab = k; renderCatalog(); };
+    return b;
+  }));
+  const grid = catalogEl.querySelector('.cat-grid');
+  grid.replaceChildren(...items.filter((a) => catTab === 'all' || a.group === catTab).map((a) => {
+    const card = document.createElement('button');
+    card.className = 'cat-card';
+    const img = document.createElement('img');
+    img.alt = '';
+    card.append(img, Object.assign(document.createElement('b'), { textContent: a.label }), Object.assign(document.createElement('code'), { textContent: a.id }));
+    card.onclick = () => openItem(a.id);
+    thumbInto(img, renderer, style, a.id, {});
+    return card;
+  }));
 }
 
-let shotPending = false;
-function saveScreenshot() {
-  canvas.toBlob((blob) => {
-    if (!blob) return;
-    saveFile(`tiny-city-${state.view}-${Date.now()}.png`, blob).then((ok) => {
-      if (!ok) toast('Screenshot not saved');
-    });
-  });
+function openItem(id, p) {
+  const a = CATALOG[id];
+  selected = { id, params: { ...a.params, ...p } };
+  const subject = { id: 'item', label: a.label, schema: {}, isProp: true, build: (_q, st) => createAsset(id, selected.params, st) };
+  itemCell = new Cell({ entries: [{ subject }], style, renderer });
+  itemCell.rebuild({});
+  itemCell.applyLighting(lightingPresets[state.lighting]);
+  reframe = true;
+  renderItemPanel();
+  setView('item');
+}
+
+function renderItemPanel() {
+  const a = CATALOG[selected.id];
+  const p = selected.params;
+  const chips = (label, key, values, swatch = false) => {
+    if (!values || values.length < 2) return '';
+    return `<h3>${label}</h3><div class="chips">${values.map((v) => `<button data-k="${key}" data-v="${v ?? ''}" class="${(p[key] ?? '') === (v ?? '') ? 'on' : ''}${swatch ? ' sw' : ''}" ${swatch ? `title="${v}" style="background:#${(CLOTH_COLORS[v] ?? 0x888888).toString(16).padStart(6, '0')}"` : ''}>${swatch ? '' : v ?? 'Any'}</button>`).join('')}</div>`;
+  };
+  const shopTypes = 'shopType' in a.params ? [null, ...SHOP_TYPES] : null;
+  const code = `createAsset('${a.id}', ${JSON.stringify(p)}, style)`;
+  itemEl.innerHTML = `
+    <div class="it-head"><button data-act="back">← Catalogue</button><b>${a.label}</b></div>
+    <div class="it-body">
+      <p class="it-id"><code>${a.id}</code> · ${a.category} · about ${a.size[0]} × ${a.size[1]} m</p>
+      ${chips('Type', 'variant', a.variants)}
+      ${chips('Colour', 'color', a.colors, true)}
+      ${chips('Shop', 'shopType', shopTypes)}
+      ${'seed' in a.params ? '<h3>Look</h3><div class="chips"><button data-act="seed">🎲 New look</button></div>' : ''}
+      <h3>Use it in a game</h3>
+      <pre>${code}</pre>
+      <button data-act="copy">Copy</button>
+    </div>`;
+  itemEl.onclick = (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.act === 'back') return setView('catalog');
+    if (b.dataset.act === 'copy') return navigator.clipboard?.writeText(code).then(() => toast('Copied'), () => toast(code));
+    if (b.dataset.act === 'seed') selected.params.seed = Math.floor(Math.random() * 1e9);
+    if (b.dataset.k) selected.params[b.dataset.k] = b.dataset.v === '' ? null : b.dataset.v;
+    openItem(selected.id, selected.params);
+  };
 }
 
 // ---------------------------------------------------------------------------
-// Low-resolution rendering for styles with a pixelScale (PS1): render the cell
-// into a small target, then draw it back scaled up with hard pixels, reduced
-// to 15-bit colour with a 4x4 ordered dither.
+// 👤 Characters
 // ---------------------------------------------------------------------------
-const blitCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-const blitMat = new THREE.ShaderMaterial({
-  uniforms: {
-    tDiffuse: { value: null }, tDepth: { value: null }, size: { value: new THREE.Vector2(1, 1) },
-    dither: { value: 1 }, outline: { value: 0 }, near: { value: 0.1 }, far: { value: 100 },
+const humanCell = new Cell({ entries: [{ subject: human }], style, renderer });
+humanCell.rebuild(params);
+humanCell.applyLighting(lightingPresets[state.lighting]);
+let lastHuman = { ...params.human };
+/** After any change: apply the character rules, rebuild the preview, remember the settings. */
+function humanChanged(key) {
+  if (key) human.adjust?.(params.human, key, lastHuman[key]);
+  human.applyRules?.(params.human);
+  lastHuman = { ...params.human };
+  humanCell.rebuild(params);
+  saveParams(params);
+  city = null; // the city's player is this character
+}
+const CHARACTER_FORMAT = 'tiny-character';
+const creator = new Creator({
+  subject: human,
+  params: params.human,
+  onChange: (key) => { humanChanged(key); if (['bodyType', 'height', 'headsTall', 'legLength', 'build'].includes(key)) reframe = true; },
+  actions: {
+    randomize: () => { Object.assign(params.human, human.randomize()); humanChanged(); reframe = true; },
+    reset: () => { Object.assign(params.human, defaultsFor(human), human.presets[params.human.bodyType]); humanChanged(); reframe = true; },
+    preset: (name) => { Object.assign(params.human, human.presets[name]); humanChanged(); reframe = true; },
+    anim: (a) => { state.anim = a; },
+    getAnim: () => state.anim,
+    // export / import the character as JSON (format: SKILLS.md, "Character JSON")
+    exportJson: async () => {
+      const json = JSON.stringify({ format: CHARACTER_FORMAT, version: 1, params: params.human }, null, 1);
+      const ok = await saveFile(`character-${params.human.bodyType.toLowerCase()}.json`, json);
+      if (!ok) { navigator.clipboard?.writeText(json); toast('Copied the JSON instead'); }
+    },
+    importJson: async () => {
+      const text = await openTextFile('.json,application/json');
+      if (text == null) return;
+      try {
+        const d = JSON.parse(text);
+        const p = d.format === CHARACTER_FORMAT ? d.params : d; // a bare settings object works too
+        Object.assign(params.human, defaultsFor(human), p);
+        humanChanged(); reframe = true;
+        toast('Character loaded');
+      } catch { toast('That file is not a character JSON'); }
+    },
   },
-  vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
-  fragmentShader: `
-    #include <packing>
-    uniform sampler2D tDiffuse; uniform sampler2D tDepth; uniform vec2 size;
-    uniform float dither; uniform float outline; uniform float near; uniform float far;
-    varying vec2 vUv;
-    float viewDepth(vec2 uv) { return -perspectiveDepthToViewZ(texture2D(tDepth, uv).x, near, far); }
-    float bayer4(vec2 p) {
-      int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
-      int i = x + y * 4;
-      int m[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
-      return float(m[i]) / 16.0;
-    }
-    void main() {
-      vec4 c = linearToOutputTexel(texture2D(tDiffuse, vUv));
-      if (outline > 0.5) {
-        // Silhouette test. 1/depth changes linearly across any flat surface,
-        // so its second difference is ~0 on floors and walls (even near the
-        // horizon) and large where a shape sits in front of something else.
-        // Only the nearer pixel is darkened, giving shapes a 1-pixel dark rim.
-        vec2 t = 1.0 / size;
-        float d = viewDepth(vUv);
-        float l = viewDepth(vUv - vec2(t.x, 0.0)), r = viewDepth(vUv + vec2(t.x, 0.0));
-        float dn = viewDepth(vUv - vec2(0.0, t.y)), up = viewDepth(vUv + vec2(0.0, t.y));
-        float ic = 1.0 / d;
-        float lap = abs(1.0 / l + 1.0 / r - 2.0 * ic) + abs(1.0 / dn + 1.0 / up - 2.0 * ic);
-        float farthest = max(max(l, r), max(dn, up));
-        if (lap > ic * 0.12 && farthest > d * 1.02) c.rgb *= 0.28;
-      }
-      if (dither > 0.5) {
-        vec2 px = floor(vUv * size);
-        c.rgb += (bayer4(px) - 0.5) / 31.0;
-        c.rgb = floor(clamp(c.rgb, 0.0, 1.0) * 31.0 + 0.5) / 31.0;
-      }
-      gl_FragColor = c;
-    }`,
-  depthTest: false,
-  depthWrite: false,
 });
-const blitScene = new THREE.Scene();
-blitScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), blitMat));
 
-/** Render `cell` with `camera` into the canvas rectangle (x, y from bottom-left). */
-function renderCell(cell, camera, x, y, w, h) {
-  const scale = cell.style.pixelScale;
-  if (!scale) {
-    renderer.setViewport(x, y, w, h);
-    renderer.setScissor(x, y, w, h);
-    renderer.render(cell.scene, camera);
-    return;
+// ---------------------------------------------------------------------------
+// 🏙 City
+// ---------------------------------------------------------------------------
+const joystick = document.querySelector('#joystick');
+const cityInput = new CityInput(canvas, joystick);
+let city = null;
+function ensureCity() {
+  if (!city) {
+    city = new City({ style, renderer, human, cat: subjects.find((s) => s.id === 'cat'), params, data: generateCityData(state.citySeed) });
+    city.applyLighting(lightingPresets[state.lighting]);
+    if (state.cityView === 'iso') city.setViewMode('iso');
   }
-  const lw = Math.max(1, Math.round(w / scale));
-  const lh = Math.max(1, Math.round(h / scale));
-  cell.rt ??= new THREE.WebGLRenderTarget(1, 1, {
-    minFilter: THREE.NearestFilter,
-    magFilter: THREE.NearestFilter,
-    // 24-bit depth: 16-bit was too coarse and made close surfaces flicker (z-fighting)
-    depthTexture: new THREE.DepthTexture(1, 1, THREE.UnsignedIntType),
-  });
-  if (cell.rt.width !== lw || cell.rt.height !== lh) cell.rt.setSize(lw, lh);
-  cell.style.prepareRender?.(lw, lh);
-  renderer.setRenderTarget(cell.rt);
-  renderer.render(cell.scene, camera);
-  renderer.setRenderTarget(null);
-  renderer.setViewport(x, y, w, h);
-  renderer.setScissor(x, y, w, h);
-  blitMat.uniforms.tDiffuse.value = cell.rt.texture;
-  blitMat.uniforms.size.value.set(lw, lh);
-  blitMat.uniforms.tDepth.value = cell.rt.depthTexture;
-  blitMat.uniforms.dither.value = cell.style.dither === false ? 0 : 1;
-  blitMat.uniforms.outline.value = cell.style.outline ? 1 : 0;
-  blitMat.uniforms.near.value = camera.near;
-  blitMat.uniforms.far.value = camera.far;
-  renderer.render(blitScene, blitCam);
+  return city;
 }
+const viewBtn = document.querySelector('#viewBtn');
+function updateCityBar() {
+  const iso = city?.viewMode === 'iso';
+  viewBtn.innerHTML = iso ? '🎥<span> 3rd person</span>' : '🎥<span> Iso view</span>';
+  document.querySelector('#lightBtn').innerHTML = `${{ Day: '☀', Sunset: '🌇', Night: '🌙' }[state.lighting]}<span> ${state.lighting}</span>`;
+  hint.textContent = iso
+    ? 'WASD / arrows · Shift run · drag to turn · scroll or pinch to zoom · Q / E rotate · V third person'
+    : 'WASD / arrows · Shift run · drag to look · scroll to zoom · V isometric view';
+}
+viewBtn.onclick = () => { state.cityView = ensureCity().setViewMode(); updateCityBar(); };
+document.querySelector('#newTownBtn').onclick = () => { state.citySeed = Math.floor(Math.random() * 1000); city = null; ensureCity(); toast(`Town #${state.citySeed}`); };
+document.querySelector('#lightBtn').onclick = () => {
+  const names = Object.keys(lightingPresets);
+  state.lighting = names[(names.indexOf(state.lighting) + 1) % names.length];
+  for (const c of [city, humanCell, itemCell]) c?.applyLighting(lightingPresets[state.lighting]);
+  updateCityBar();
+};
+window.addEventListener('keydown', (e) => {
+  if (state.view !== 'city' || !city) return;
+  if (e.code === 'KeyV') { state.cityView = city.setViewMode(); updateCityBar(); }
+  if (city.viewMode === 'iso' && e.code === 'KeyQ') city.rotateIso(-1);
+  if (city.viewMode === 'iso' && e.code === 'KeyE') city.rotateIso(1);
+});
+
+// ---------------------------------------------------------------------------
+// Views and the app bar
+// ---------------------------------------------------------------------------
+const MODE = { catalog: 'catalog', item: 'catalog', creator: 'characters', city: 'city' };
+function setView(view) {
+  state.view = view;
+  const mode = MODE[view];
+  document.querySelectorAll('#modes [data-mode]').forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
+  catalogEl.hidden = view !== 'catalog';
+  itemEl.hidden = view !== 'item';
+  creator.show(view === 'creator');
+  document.querySelectorAll('.city-only').forEach((b) => { b.hidden = view !== 'city'; });
+  cityInput.active = view === 'city';
+  joystick.hidden = !(view === 'city' && (matchMedia('(pointer: coarse)').matches || window.innerWidth < 900));
+  controls.enabled = view === 'item' || view === 'creator';
+  if (view === 'catalog') { hint.textContent = 'Tap an item to turn it around and see its settings'; renderCatalog(); }
+  if (view === 'item' || view === 'creator') { hint.textContent = 'Drag to turn · scroll or pinch to zoom'; reframe = true; }
+  if (view === 'city') { ensureCity(); updateCityBar(); }
+}
+document.querySelector('#modes').onclick = (e) => {
+  const m = e.target.closest('[data-mode]')?.dataset.mode;
+  if (m) setView({ catalog: 'catalog', characters: 'creator', city: 'city' }[m]);
+};
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.view === 'item') setView('catalog'); });
 
 // ---------------------------------------------------------------------------
 // Render loop
 // ---------------------------------------------------------------------------
 const timer = new THREE.Timer();
-// shared gait for previewing walk / run on characters in the viewer (in place)
-const viewerGait = createGait();
-function animateHumans(cell) {
-  for (const p of cell.pivots) {
-    const o = p.children[0];
-    if (o && o.name === 'human') poseGait(o, viewerGait, state.anim === 'Roller skate' ? 'skate' : 'natural');
-  }
-}
-
+const gait = createGait(); // walk / run preview for the character creator
 function resize() {
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  const pr = renderer.getPixelRatio();
-  if (canvas.width !== Math.floor(w * pr) || canvas.height !== Math.floor(h * pr)) {
-    renderer.setSize(w, h, false);
-  }
+  const w = canvas.clientWidth, h = canvas.clientHeight, pr = renderer.getPixelRatio();
+  if (canvas.width !== Math.floor(w * pr) || canvas.height !== Math.floor(h * pr)) renderer.setSize(w, h, false);
 }
-
+function preview(cell, r, H) {
+  camera.aspect = r.w / r.h;
+  if (reframe) {
+    cell.setAngle(0);
+    cell.frame(r.w / r.h, camera, { minHeight: 0 });
+    controls.target.copy(cell.viewCenter);
+    reframe = false;
+  }
+  camera.updateProjectionMatrix();
+  controls.update();
+  ps1.render(cell, camera, r.x, H - r.y - r.h, r.w, r.h);
+}
+function panelRect(panel, W, H) {
+  const r = panel.getBoundingClientRect();
+  if (panel.hidden || !r.width) return { x: 0, y: 0, w: W, h: H };
+  return r.left > W * 0.3 ? { x: 0, y: 0, w: r.left, h: H } : { x: 0, y: 0, w: W, h: Math.max(80, r.top) };
+}
 function loop(time) {
   timer.update(time);
   resize();
-  processDirty();
   const dt = Math.min(timer.getDelta(), 0.1);
-  if (state.turntable) state.angle += dt * state.speed;
-  stepGait(viewerGait, dt, state.anim === 'Run' ? RUN_SPEED : state.anim === 'Still' ? 0 : WALK_SPEED);
-  if (viewerGait.lock != null) viewerGait.phase = viewerGait.lock * Math.PI * 2; // debug: freeze at a cycle fraction
-
   const W = canvas.clientWidth, H = canvas.clientHeight;
   renderer.setScissorTest(false);
   renderer.setClearColor(PAGE_BG);
   renderer.clear();
-  renderer.setScissorTest(true);
-
-  if (state.view === 'creator' && creator) {
-    const cell = creatorCell();
-    const r = creator.previewRect(W, H);
-    focusCam.aspect = r.w / r.h;
-    if (creatorFrame) {
-      cell.setAngle(0);
-      cell.frame(r.w / r.h, focusCam, { minHeight: 0 });
-      controls.target.copy(cell.viewCenter);
-      creatorFrame = false;
-    }
-    focusCam.updateProjectionMatrix();
-    controls.update();
-    animateHumans(cell);
-    renderCell(cell, focusCam, r.x, H - r.y - r.h, r.w, r.h);
-  } else if (state.view === 'editor' && editor) {
-    editor.updateCamera(W / H);
-    renderCell(editor, editor.camera, 0, 0, W, H);
+  if (state.view === 'item' && itemCell) preview(itemCell, panelRect(itemEl, W, H), H);
+  else if (state.view === 'creator') {
+    stepGait(gait, dt, state.anim === 'Run' ? RUN_SPEED : state.anim === 'Walk' ? WALK_SPEED : 0);
+    if (gait.lock != null) gait.phase = gait.lock * Math.PI * 2; // debug: freeze at a cycle fraction
+    for (const p of humanCell.pivots) { const o = p.children[0]; if (o?.name === 'human') poseGait(o, gait); }
+    preview(humanCell, creator.previewRect(W, H), H);
   } else if (state.view === 'city' && city) {
-    city.playerGait = state.cityGait === 'Roller skate' ? 'skate' : 'natural';
     city.update(dt, cityInput);
     city.setAspect(W / H);
-    renderCell(city, city.activeCamera, 0, 0, W, H);
-  } else if (state.view === 'gallery' || state.view === 'props') {
-    for (const cell of state.view === 'props' ? propCells : galleryCells) {
-      const r = cell.el.getBoundingClientRect();
-      if (r.bottom < 0 || r.top > H || r.right < 0 || r.left > W || r.width < 2 || r.height < 2) continue;
-      cell.setAngle(state.angle);
-      animateHumans(cell);
-      cell.frame(r.width / r.height, cell.camera, { minHeight: framingHeight() });
-      renderCell(cell, cell.camera, r.left, H - r.bottom, r.width, r.height);
-    }
-  } else {
-    const cell = activeCell();
-    const w = bigViewWidth();
-    cell.setAngle(state.angle);
-    animateHumans(cell);
-    focusCam.aspect = w / H;
-    focusCam.updateProjectionMatrix();
-    controls.update();
-    renderCell(cell, focusCam, 0, 0, w, H);
-  }
-
-  if (shotPending) {
-    shotPending = false;
-    saveScreenshot();
+    ps1.render(city, city.activeCamera, 0, 0, W, H);
   }
   requestAnimationFrame(loop);
 }
 
-enterEditor(); // the city editor is the home screen
-openStartTown();
+setView('catalog');
 requestAnimationFrame(loop);
 
-// handy for debugging from the console
+// Debug hooks for agents and tests (see SKILLS.md, "Testing and checking")
 Object.assign(window, {
   __cc: {
-    params, state, galleryCells, propCells, setView, applyStreet, actions,
-    enterProp: (i) => enterFocus(propCells[i]),
-    enterCity, cityInput, getCity: () => city, viewerGait, enterEditor, getEditor: () => editor, CATALOG,
-    enterFocus: (i) => enterFocus(galleryCells[i]),
-    /** Orbit the inspection camera by `az` radians around the subject. */
-    orbit: (az) => {
-      const cell = activeCell();
-      cell.frame(bigViewWidth() / canvas.clientHeight, focusCam, { minHeight: framingHeight() });
-      const t = cell.viewCenter;
-      focusCam.position.sub(t).applyAxisAngle(new THREE.Vector3(0, 1, 0), az).add(t);
-      controls.target.copy(t);
-      controls.update();
-    },
-    apply: (id, values) => { Object.assign(params[id], values); dirty.add(id); },
+    params, state, setView, openItem, CATALOG, getCity: () => ensureCity(), cityInput, gait,
+    /** Set character settings (rules applied). */
+    apply: (id, values) => { Object.assign(params[id], values); humanChanged(); reframe = true; },
+    newTown: (seed) => { state.citySeed = seed; city = null; return ensureCity(); },
+    /** Orbit the preview camera by `az` radians. */
+    orbit: (az) => { const t = controls.target; camera.position.sub(t).applyAxisAngle(new THREE.Vector3(0, 1, 0), az).add(t); controls.update(); },
   },
 });

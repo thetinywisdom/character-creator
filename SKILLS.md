@@ -1,213 +1,232 @@
-# SKILLS.md: working with Tiny City Builder
+# SKILLS.md: building a game on Tiny City Builder
 
-A guide for agents (and people) who need to use, extend or test this project.
-Read this first, then `PLAN.md` (where the project is going) and
-`STYLE_GUIDE.md` (how things must look). Keep this file current: see
-"Keeping the docs up to date" at the end.
+For agents (and people) making a game with this foundation, or extending it.
+Read this first, then `STYLE_GUIDE.md` (how things must look) and `PLAN.md`
+(decisions and what is next). Keep this file current (see the end).
 
 ## What this is
 
-A city builder for small Japanese towns in a PS1 look, built with three.js
-and Vite. One person (the owner) uses it on desktop, tablet and phone to build
-worlds that future web / iOS / Android games will load. It has three modes:
+A **foundation library** of plain ES modules on top of three.js: a small
+Japanese town in a PS1 look, with buildings, street props, people, cars,
+cats, walking, collisions and the PS1 render step. It is not a product for
+players. A game copies or imports the modules it needs and builds its own
+gameplay, UI and editors on top.
 
-| Mode | What it does | Main code |
+The app in this repo (`npm run dev`) is only a **viewer** for the owner and
+agents to see what exists:
+
+| Mode | Shows | Code a game reuses |
 |---|---|---|
-| 🏙 **Build** (home) | Top-down city editor: paint blocks, place assets, select / move / turn / delete, undo, grid size, My towns, save / open files | `src/editor/` |
-| 👤 **Characters** | Character creator: live preview + tabs of chips, swatches and sliders | `src/creator/Creator.js`, `src/subjects/human*` |
-| 🚶 **Walk** | Walk the town: third-person or isometric camera, pedestrians, cars, cats | `src/city/City.js`, `src/city/input.js` |
+| 📦 Catalogue (home) | every placeable item with its id, settings and a `createAsset(...)` line to copy | `src/catalog/` |
+| 👤 Characters | the character creator; ⬇ JSON / ⬆ export and import a character | `src/subjects/human*` |
+| 🏙 City | walk a generated sample town; 🎲 new town, time of day, third person / iso | `src/city/` |
 
-A hidden developer panel (⚙, lil-gui) has look options, lighting, preview
-scenes (street, crowd, props gallery, character grid) and screenshots.
+There is no city editor: a game generates its towns (`generateCityData`) or
+writes the town JSON itself.
 
-**Output is JSON.** Games consume what this tool makes as JSON: town files
-(`src/city/format.js`) and character settings (the values of `human.schema`,
-see `src/subjects/human.js` and `human/rules.js`). Games build their own
-editors and creators on top; keep the JSON formats stable and documented, and
-version them when they change.
+## Quick start for a game
+
+```js
+import * as THREE from 'three';
+import { style, lightingPresets } from './src/styles/index.js';   // the PS1 look
+import { createPs1Renderer } from './src/render/ps1.js';
+import { createAsset } from './src/catalog/index.js';
+import { generateCityData } from './src/city/layout.js';
+import { buildCity } from './src/city/build.js';
+import { City } from './src/city/City.js';
+
+const renderer = new THREE.WebGLRenderer({ canvas });
+const ps1 = createPs1Renderer(renderer);
+
+// A) one item in your own scene
+const scene = new THREE.Scene();
+scene.add(createAsset('building.koban', {}, style));       // ids: see the Catalogue
+// each frame: ps1.render({ scene, style }, camera, 0, 0, w, h);
+
+// B) a whole town (scene, colliders, walking routes, ground)
+const town = buildCity(generateCityData(42), style);
+
+// C) the ready-made walkable town used by the viewer (player, people, cars, cats, cameras)
+const city = new City({ style, renderer, human, cat, params, data: generateCityData(42) });
+// each frame: city.update(dt, input); ps1.render(city, city.activeCamera, 0, 0, w, h);
+```
+
+`City.js` is a working example of everything together (movement, collisions,
+traffic, cameras); copy what you need rather than treating it as a fixed engine.
 
 ## Run, build, publish
 
 ```bash
 npm install
-npm run dev      # dev server (Vite)
-npm run build    # production build into dist/ (must pass before committing)
+npm run dev      # the viewer (Vite)
+npm run build    # must pass before committing
 ```
 
-The owner reviews the app as a single-file page published with the Artifact
-tool: build, inline `dist/assets/*.css` and `*.js` into one HTML file (escape
-`</script` inside the JS), publish it to the same artifact URL each time. The
-page declares the `downloads` capability (saving town files and screenshots
-goes through `src/lib/saveFile.js`).
+The owner reviews the viewer as a single-file page published with the
+Artifact tool: build, inline `dist/assets/*.css` and `*.js` into one HTML file
+(escape `</script` inside the JS), publish to the same artifact URL each time.
+The page declares the `downloads` capability (character JSON export goes
+through `src/lib/saveFile.js`).
 
 ## Code map
 
 ```
-src/main.js            app shell: views, app bar, render loop, dev panel, debug hooks
-src/styles/            ps1.js (the look: materials by role, lights, low-res render), palette.js
+src/main.js            the viewer: three modes, render loop, debug hooks (not reused by games)
+src/render/ps1.js      createPs1Renderer: low-res render + dither + outlines (reuse this)
+src/styles/            ps1.js (materials by role, lights), palette.js, lightingPresets
+src/catalog/index.js   ASSET CATALOGUE: every placeable item behind one interface
+src/catalog/thumbs.js  catalogue pictures (drawn on demand, cached in the browser)
 src/subjects/          human.js (+ human/*: frame, sculpt, hair, head, tops, arms, legwear,
                        footwear, outerwear, accessories, handheld, rules), cat.js, tree.js
-src/anim/              gait.js (walk / run / roller skate, wing flap), skirt.js (skirt stretch)
-src/catalog/index.js   ASSET CATALOGUE: every placeable asset behind one interface
-src/city/format.js     city file format (JSON), grid geometry, validation
-src/city/layout.js     generator: blockObjects, streetObjects, roadNetwork, generateCityData
-src/city/build.js      buildCity(data, style): city file -> scene + colliders, routes, ground
-src/city/edit.js       immutable editing ops: setBlock, resizeGrid, add/update/removeObject, ...
-src/city/buildings.js  house, apartment, mixedUse (shop + flats), shop, office, shrine, school
-src/city/shops.js      individual shops (laundromat, kissaten, pharmacy, sushi, florist, fishmonger)
-src/city/civic.js      udon/soba, family restaurant, takoyaki, koban, post office, bank, clinic,
-                       fire station, karaoke, wooden apartment, parking garage, gas station
-src/city/interiors.js  painted shop interiors + painted curtain windows
-src/city/facades.js    painted office facades, side windows, roof clutter, roof signs
-src/city/park.js       park area
-src/city/City.js       Walk mode: player, NPCs, cars, cats, cameras (third person + iso);
-                       routes are closed polylines followed with rounded corners
-                       (alongLoop(loop, lengths, total, s, radius)); car routes run
-                       down the middle of the kerb-side lane (build.js carLoops), so
-                       cars sit right on them (no extra offset)
+src/anim/              gait.js (walk / run, wing flap), skirt.js (skirt stretch)
+src/city/format.js     town JSON format, grid geometry, validation
+src/city/layout.js     generator: generateCityData(seed), blockObjects, streetObjects, roadNetwork
+src/city/build.js      buildCity(data, style): town JSON -> scene, colliders, routes, ground
+src/city/edit.js       immutable town edits (setBlock, addObject, ...) if a game needs editing
+src/city/buildings.js  house, apartment, mixedUse, shop, office, shrine, school
+src/city/shops.js      laundromat, kissaten, pharmacy, sushi, florist, fishmonger
+src/city/civic.js      udon/soba, family restaurant, takoyaki, koban, post office, bank,
+                       clinic, fire station, karaoke, wooden apartment, parking, gas station
+src/city/interiors.js  painted shop interiors and curtains
+src/city/facades.js    painted office facades, roof clutter, roof signs
+src/city/City.js       walkable town: player, people, cars, cats, collisions, cameras
+src/city/input.js      keyboard, drag, pinch and on-screen joystick
 src/props/             street props (furniture, traffic, vehicles, extras, japan)
-src/editor/            Editor.js, thumbs.js (palette pictures, cached), towns.js (IndexedDB),
-                       TownsPanel.js (My towns)
-src/creator/Creator.js character creator panel
-src/lib/               shapes, merge (merge by material), skin (one skinned mesh per person),
-                       rng, textures (sign canvases), saveFile
+src/creator/Creator.js the character creator panel (viewer only)
+src/viewer/            Cell (a preview stage), params (saved settings)
+src/lib/               shapes, merge (one mesh per material), skin (one skinned mesh per
+                       person), rng, textures, saveFile
 ```
 
-## Core concepts
+## The rules (keep them in any game)
 
-**Style by role.** Models never pick colours or materials directly. They ask
-the style: `style.material(role, color?, map?)` with roles like `skin`,
-`cloth`, `hair`, `building`, `concrete`, `wood`, `glass`, `signage`, `light`,
-`metal`, `darkMetal`. Roles in the "vivid" set (`signage`, `light`, character
-roles) keep their colour; environment roles are softened. `light` glows
-(emissive): do not use it for big textured surfaces (it washes them out).
+**Style by role.** Models never pick materials directly; they ask
+`style.material(role, color?, map?)` with roles like `skin`, `cloth`, `hair`,
+`building`, `concrete`, `wood`, `glass`, `signage`, `light`, `metal`. Vivid
+roles (`signage`, `light`, character roles) keep their colour; environment
+roles are softened. `light` glows: never use it for big textured surfaces.
 
-**Assets.** Everything placeable lives in `src/catalog/index.js`:
+**Assets.** Everything placeable is in `src/catalog/index.js`:
 
 ```js
-{ id: 'building.koban', label, category, group /* palette tab */, params /* defaults */,
+{ id: 'building.koban', label, category, group, params /* defaults */,
   variants?, colors?, size: [w, d], build(params, style) -> THREE.Object3D }
 ```
 
 `build` returns an object standing on y = 0, facing +z, with
 `userData.colliders = [{ x, z, hw, hd }]` in its own space.
-`createAsset(id, params, style)` builds one. Categories: building, area,
-nature, prop, vehicle, ground, line. Palette tabs: buildings, street, traffic,
-extras, nature, vehicles, areas.
+`createAsset(id, params, style)` builds one; unknown params fall back to the
+defaults. `params.variant` picks from `variants`, `params.color` from
+`colors`, `params.seed` changes the look of seeded items, buildings take
+`w` / `d` (lot size) and shops `shopType`.
 
-**City file** (`src/city/format.js`): `{ format: 'tiny-city', version: 1,
-meta, grid: { cols, rows, block, road, sidewalk, curb }, blocks: [{ col, row,
-type, seed }], objects: [{ asset, params, x, z, y?, rot /* degrees */, group? }] }`.
-Block types: residential, mixed, shops, downtown, park, plaza, shrine, school.
-Roads run round every existing block and join up by themselves. Objects with
-`group: 'block:c,r'` or `'streets'` are generated and replaced on regeneration;
-objects without a group are hand-placed and kept.
+**Town JSON** (`src/city/format.js`): `{ format: 'tiny-city', version: 1,
+meta, grid: { cols, rows, block: 40, road: 6, sidewalk: 3, curb: 0.12 },
+blocks: [{ col, row, type, seed }], objects: [{ asset, params, x, z, y?, rot
+/* degrees */, group? }] }`. Block types: residential, mixed, shops, downtown,
+park, plaza, shrine, school. Roads run round every block and join up by
+themselves. Objects with `group: 'block:c,r'` or `'streets'` are generated;
+objects without a group are hand-placed. The same JSON always rebuilds the
+same town (everything is seeded with `mulberry32`).
 
-**Collisions.** Every catalogue asset lists its solid boxes
-(`PROP_COLLIDERS` in `catalog/index.js` for props, builders return
-`colliders` for buildings). In Walk mode (`City.js`) the player is pushed out
-of static colliders (grid lookup `nearColliders`), moving cars
-(`pushOutOfCar`), pedestrians and cats; pedestrians sidestep things and each
-other with a fading offset (`n.off`) and drift back into their lane; cars
-brake for the player, pedestrians and cars in their lane ahead (a car waiting
-over 3 s ignores other cars, so they can't block each other for good). A new
-placeable item needs a collider.
+**Collisions.** Every asset lists solid boxes (`PROP_COLLIDERS` for props,
+`colliders` from building builders). `City.js` shows the pattern: grid lookup
+(`nearColliders`), push the player out of boxes, cars, people and cats;
+pedestrians sidestep; cars brake for things ahead. A new item needs a collider.
 
-**Editing.** `src/city/edit.js` functions return a NEW city and share
-unchanged objects (undo = keep old cities; the editor diffs by identity).
-`setRoadWidth(data, road)` changes road width keeping hand-placed things
-relative to their block (roads are 6 m by default; towns made with the editor
-at 9 m are narrowed once when opened unless `meta.roadChosen`).
-Never mutate a city object in place.
+**Performance.** Merge static things into one mesh per material
+(`src/lib/merge.js`). Turn each walking person into one skinned mesh
+(`src/lib/skin.js`, about 2 draw calls a person). Prefer painted textures over
+many small meshes ("feel real, not be real").
 
-**Merging.** The walkable city is merged into one mesh per material
-(`src/lib/merge.js`). Shared materials = few draw calls. Custom attributes are
-stripped unless the material lists them in `userData.keepAttributes`.
-In Walk mode each person is turned into ONE skinned mesh (`src/lib/skin.js`):
-every part is bound rigidly to the joint it hangs from (`JOINT_NAMES` in
-`anim/gait.js` + `head`), its material colour baked into a vertex colour, and
-all people share one vertex-colour material, about 2 draw calls a person. The
-joints stay, so `poseGait` animates them as before. Textured or transparent
-parts and the skirt (which deforms itself) stay separate meshes. A person
-must therefore not rely on per-part materials in Walk mode (no per-frame
-material changes; textures on clothing would need their own mesh).
+**No coplanar surfaces.** Two surfaces facing the same way must be ≥ 2 cm
+apart or they flicker on phones. Keep the 24-bit depth buffer in `ps1.js`.
 
-**Determinism.** Buildings, blocks, parks and textures are seeded
-(`mulberry32`). The same city file always rebuilds the same town.
+## Characters (optional for games)
 
-**Painted, not modelled.** Shop interiors, upper-floor curtains and office
-facades are small canvas textures shared per kind (feel real, not be real).
-Prefer a painted texture over many small meshes.
+`human.build(params, style)` builds a person from settings. A game may use
+these characters, or not use them at all.
 
-**Characters.** `human.build(params, style)` from a schema (`human.schema`).
-Rules in `src/subjects/human/rules.js` (who can wear / have what, body-type
-default designs) are applied in build, the panel, the creator and the
-randomizer. `measure(p)` in `human/frame.js` gives every body measurement;
-anything worn on the torso should use `torsoSurface(f)` (in `tops.js`) to sit
-on the real sculpted body.
+**Character JSON** (exported from 👤 Characters with ⬇ JSON):
+
+```json
+{ "format": "tiny-character", "version": 1, "params": { "bodyType": "Woman", "build": "Normal", "hair": "...", ... } }
+```
+
+`params` holds the values of `human.schema` (`src/subjects/human.js`): body
+(`bodyType` Man / Woman / Boy / Girl, `build` Skinny / Normal / Bulky / Fat,
+`height`, `headsTall`, `legLength`, widths and thicknesses, `skin`), hair and
+face (`hair`, `hairColor`, `beard`, `moustache`, `headwear`, `mask`,
+`faceAccessory`), clothes (`top`, `legwear`, `outerwear`, `footwear`, each with
+a colour) and accessories (`backAccessory`, `bodyAccessory`, `handItem`).
+`human.schema[key]` gives each key's options or min / max and default.
+
+To use one in a game:
+
+```js
+import { human } from './src/subjects/human.js';
+const { params } = JSON.parse(text);
+const p = { ...defaults, ...params };      // defaults from human.schema
+human.applyRules(p);                        // fix combinations the rules forbid
+const person = human.build(p, style);       // animate with poseGait (src/anim/gait.js)
+```
+
+Rules (`human/rules.js`): no facial hair on women and children; no skirts or
+crop tops on men and boys; ties need a shirt; sailor uniform for women and
+girls, gakuran for men and boys; children don't carry babies; yukata hides
+legwear. `BODY_DEFAULTS` holds each body type's default design. Each game
+decides what players may change.
 
 ## Common tasks
 
 **Add a building.** Write `myBuilding(style, rng, w, d)` (fills a lot w × d,
-faces +z, returns `{ group, footprint: { w, d, z }, colliders }`) in
-`shops.js` / `civic.js` (reuse `body`, `signboard`, `awning`, `noren`,
-`upperFloors`, `shopWindow`), add it to that file's `SHOP_BUILDINGS` /
-`CIVIC_BUILDINGS` table with label and lot size, give its window a painted
-interior (add a painter to `PAINT` in `interiors.js` if needed). Optionally add
-it to block fills in `layout.js` (`pickBuilding`, `NEW_SHOPS`). Palette
-pictures are cached in the browser: bump `VERSION` in `editor/thumbs.js` if an
-existing asset's look changes (done for the crosswalk fix: VERSION 2).
+faces +z, returns `{ group, footprint, colliders }`) in `shops.js` /
+`civic.js` (reuse `body`, `signboard`, `awning`, `noren`, `upperFloors`,
+`shopWindow`), add it to `SHOP_BUILDINGS` / `CIVIC_BUILDINGS` with label and
+lot size, give it a painted interior (`PAINT` in `interiors.js`). Optionally
+add it to block fills in `layout.js`. It then appears in the Catalogue. Bump
+`VERSION` in `catalog/thumbs.js` if an existing item's look changes.
 
-**Add a prop.** Add `{ id, label, variants, colors?, build(params, style) }`
-to a file in `src/props/`, list it in `PROP_GROUPS` (`props/index.js`), add its
+**Add a prop.** Add `{ id, label, variants, colors?, build(params, style) }` to
+a file in `src/props/`, list it in `PROP_GROUPS` (`props/index.js`), add its
 collider in `PROP_COLLIDERS` (`catalog/index.js`).
 
-**Add a block type.** Add it to `BLOCK_TYPES` (`format.js`), give it a branch
-in `blockObjects` (`layout.js`), a label and colour in `Editor.js`.
+**Add a block type.** Add it to `BLOCK_TYPES` (`format.js`) and a branch in
+`blockObjects` (`layout.js`).
 
-**Add a character option.** Add to `human.schema` (group decides the creator
-tab; see `TAB_OF` in `Creator.js`), build it in the right `human/*.js` file,
-add rules in `rules.js` if some combinations make no sense, add it to
-`randomize` and the default designs in `rules.js` if relevant.
+**Add a character option.** Add it to `human.schema` (its group decides the
+creator tab, `TAB_OF` in `Creator.js`), build it in the right `human/*.js`
+file, add rules in `rules.js` if needed, and add it to `randomize` and the
+default designs if relevant.
 
 ## Testing and checking
 
-There is no unit test suite; changes are verified by building and looking.
+No unit tests; verify by building and looking.
 
 - `npm run build` must pass.
-- Drive the app with Playwright (Chromium is preinstalled): serve `dist/`,
-  open the page, use the debug hooks on `window.__cc` and take screenshots.
-  Useful hooks: `params`, `state`, `setView(view)`, `actions` (saveCity,
-  loadCity, city, editor, ...), `enterEditor()`, `getEditor()` (editor: `data`,
-  `loadTown(data)`, `setData`, `paintAt`, `placeAt`, `view`, `updateCamera`),
-  `enterCity()`, `getCity()` (city: `player`, `npcs`, `cars`, `cam`, `iso`,
-  `setViewMode('iso'|'third')`, `layout`), `CATALOG`, `apply(subjectId, values)`,
-  `enterFocus(i)`, `orbit(az)`, `viewerGait.lock = fraction` (freeze the gait).
-- To look at a building: load a small test town with `getEditor().loadTown()`
-  (plaza blocks, buildings placed in a row), switch to Walk, place
-  `player` / `cam` and screenshot; or use the iso view for roofs.
-- Check desktop (1280 × 720) and phone (390 × 844) sizes for UI changes.
-- Watch costs: count triangles and meshes (draw calls) of `getCity().scene`.
+- Drive the viewer with Playwright (Chromium is preinstalled; use
+  `--use-gl=angle --use-angle=swiftshader`): `npx vite preview`, open the
+  page, use `window.__cc` and take screenshots.
+- Hooks on `window.__cc`: `params`, `state`, `setView('catalog'|'item'|'creator'|'city')`,
+  `openItem(id, params)`, `CATALOG`, `apply('human', values)`, `orbit(az)`,
+  `gait.lock = fraction` (freeze the walk), `getCity()` (`player`, `npcs`,
+  `cars`, `cam`, `iso`, `setViewMode('iso'|'third')`), `newTown(seed)`, `cityInput`.
+- To look at one building: `openItem('building.bank')`, or place the player
+  in the city with `getCity().player.position.set(...)`.
+- Check desktop (1280 × 720) and phone (390 × 844).
+- Watch costs: count meshes and triangles of `getCity().scene`.
 
 ## Conventions
 
-- Plain ES modules, three.js; no frameworks. Two-space indent, comments that
-  explain why. Sizes in metres; +z faces the street; y up.
-- Keep the PS1 look: few polygons, flat colours, oversized small details so
-  they read when tiny (see STYLE_GUIDE.md).
+- Plain ES modules, three.js, no frameworks. Two-space indent, comments that
+  explain why. Metres; +z faces the street; y up.
+- Keep the PS1 look (STYLE_GUIDE.md): few polygons, flat colours, oversized
+  small details.
+- Keep it simple: build only what was asked. The owner decides what to add.
 - Commit messages: a short title, then what changed and why.
-- UI must work with touch (44 px targets, pinch, two-finger pan) and mouse.
-- **No coplanar surfaces.** Two surfaces facing the same way must be at least
-  ~2 cm apart (a painted panel in front of a wall, stripes above a road), or
-  they flicker on phones (z-fighting). The low-res render uses a 24-bit depth
-  buffer and the iso camera keeps a tight near / far range; keep it that way.
 
 ## Keeping the docs up to date
 
 Every change that adds, removes or renames a feature, file, asset, setting,
-rule or workflow must update, in the same commit:
-
-- `SKILLS.md` (this file): how to use and extend the tool.
-- `PLAN.md`: mark what is done, add what is next, record decisions.
-- `STYLE_GUIDE.md` for anything that changes how things look.
-- `README.md` for user-facing behaviour.
+rule or workflow updates, in the same commit: `SKILLS.md` (this file),
+`PLAN.md` (done / next / decisions), `STYLE_GUIDE.md` (looks) and `README.md`.

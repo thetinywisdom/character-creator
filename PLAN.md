@@ -5,16 +5,14 @@ that shape it. Update this file with every change (see SKILLS.md).
 
 ## Goal
 
-A **city builder for future games**. The owner builds small Japanese towns
-and their people in a PS1 look; future web, iOS and Android games load those
-towns and characters. The builder itself is a tool used only by the owner,
-on desktop, tablet and phone, so it must be easy to use by touch and mouse.
-The games (not the builder) are what must run well on phones.
+A **foundation for the owner's future games**: a small Japanese town and its
+people in a PS1 look, as reusable three.js modules, with SKILLS.md teaching
+game-building agents how to use them. Not a product for players and not a
+city builder: each game builds its own gameplay, UI and editors.
 
-**What the tool hands to games: JSON.** Towns (the city file) and characters
-(their settings) as plain JSON with every attribute documented. Each game
-builds its own creator / editor on top and decides how much players may
-edit; that is not this tool's job.
+The repo's app is a **viewer** for the owner and agents: 📦 Catalogue (what
+exists), 👤 Characters (design, export / import character JSON, optional for
+games), 🏙 City (walk a generated sample town to experiment).
 
 ## Decisions (agreed with the owner)
 
@@ -24,14 +22,13 @@ edit; that is not this tool's job.
 | Setting | A small Japanese town; cars drive on the left; Japanese signs |
 | Characters | Realistic proportions, no faces, tiny in the city; body types Man, Woman, Boy, Girl, each with a default design; builds Skinny / Normal / Bulky / Fat; the cat drawn 1.5× |
 | Character rules | No facial hair on women / children; no skirts or crop tops on men / boys; ties need a shirt; sailor uniform for women / girls, gakuran for men / boys; children don't carry babies; yukata hides legwear |
-| Character creator | The owner's tool for designing characters (game-style UI). Games get the character JSON and build their own creators, choosing what players can edit |
-| Output | Everything the tool makes is exported as documented JSON (town files, character settings); games read it |
+| Character creator | Viewer tool for exploring characters and exporting their JSON; using the characters is optional for games |
+| Output | Reusable modules + SKILLS.md. Towns are generated (or written as town JSON) by each game; characters can be exported as JSON |
 | Detail | "Feel real, not be real": painted shop interiors, curtains and office facades instead of modelled items |
-| App | Named Tiny City Builder; opens in the editor; modes Build / Characters / Walk; developer panel hidden behind ⚙ |
+| App | A viewer only: Catalogue (home) / Characters / City. No city editor, no saved towns, no developer panel (removed: over-complicated) |
 | Platforms | Games: web + iOS / Android via three.js wrapped with Capacitor; glTF export as a backup for other engines |
-| Saving | Towns autosave in the browser (IndexedDB) and export / import as JSON files |
-| Buildings | Shops and food places join block fills; public buildings (koban, post office, bank, clinic, fire station, parking, gas station) are placed by hand |
-| Cameras | Walk mode switches between third person and isometric |
+| Buildings | Shops and food places join block fills; public buildings (koban, post office, bank, clinic, fire station, parking, gas station) are placed by games |
+| Cameras | The city switches between third person and isometric |
 | Streets | Roads are 6 m (two narrow lanes), so towns feel small enough to explore; no cars parked at the kerb |
 
 ## Done
@@ -40,7 +37,7 @@ edit; that is not this tool's job.
 2. **Characters** (phase 2): modular human (hair 25+, facial hair, tops, legwear, footwear, outerwear, headwear, glasses, mask, accessories, hand items), natural walk / run, skirt stretch, wing flap, rules, body types with default designs, builds, street props.
 3. **Walkable city** (phase 3): generated town, pedestrians, cars, cats, lighting presets.
 4. **A. Foundation**: asset catalogue, city file format, generator / builder split, save & load.
-5. **B. City editor**: paint blocks (roads join up), place / select / move / turn / delete / copy, undo, grid size, walk it; touch and mouse.
+5. **B. City editor** (later removed, see 17).
 6. **UI redesign**: app bar with modes, picture palette with cached thumbnails, selected-object card, game-style character creator.
 7. **Never lose work**: autosave, My towns (rename, open, duplicate, delete).
 8. **Content**: shrine, school, nature tab (incl. cherry blossom), Japanese street props; sailor uniform, gakuran, yukata, apron, hand items; 18 new buildings (laundromat, kissaten, pharmacy, sushi, florist, fishmonger, udon / soba, family restaurant, takoyaki, koban, post office, bank, clinic, fire station, karaoke, wooden apartment, parking garage, gas station).
@@ -50,26 +47,25 @@ edit; that is not this tool's job.
 12. **Flicker fix**: shop windows, wooden fronts and crosswalks blinked while walking (z-fighting): 24-bit depth buffer, tighter iso camera range, surfaces kept ≥ 2 cm apart.
 13. **Smooth turning**: pedestrians and cars follow routes with rounded corners (people 1.2 m, cars 3 m) instead of snapping 90° in one frame.
 14. **Cars in their lane**: a leftover offset from the old ring road pushed cars half onto the pavement; cars now drive in the middle of the kerb-side lane (centre 2.1–2.25 m from the kerb, never on a pavement).
-15. **Narrower roads and collisions**: roads 6 m instead of 9 m (editor ☰ Roads 6 m / 9 m; editor-made towns converted once, keeping hand-placed things in place; no kerb parking on narrow roads); everything solid has a collider; the player can't pass through things, cars, people or cats; pedestrians step round things and each other; cars brake for people and cars ahead.
+15. **Narrower roads and collisions**: roads 6 m instead of 9 m (no kerb parking on narrow roads); everything solid has a collider; the player can't pass through things, cars, people or cats; pedestrians step round things and each other; cars brake for people and cars ahead.
 16. **Zebra crossings the right way**: bars run with the traffic, laid side by side across the road (fixed in the prop, so saved towns are fixed too).
 
-## Next (suggested order)
+17. **Simplified to a foundation + viewer**: removed the city editor, My towns / autosave, town save / open, the developer panel and lil-gui. The app is now Catalogue / Characters (⬇ JSON export, ⬆ import) / City. Shared PS1 render step moved to `src/render/ps1.js`. SKILLS.md rewritten for game-building agents.
 
-1. **Builder polish** (from using it): split the Buildings tab (Shops / Food / Public / Homes), stop things overlapping when placed, copy-paste groups, multi-select, rotate in 15° steps, minimap, resize a building's plot.
-2. **More people content**: elderly body type (stoop, cane, slower walk), office suit, umbrella-up and phone poses, straw hat.
-3. **More town content**: shopping arcade (shōtengai), train station (needs tracks, see 7), temple, more apartment variety, more shop types.
-4. **Character JSON for games**: save / open a character as a file, document every character attribute (name, allowed values, defaults, rules) in a format reference games can rely on.
-5. **A cast for towns**: save named characters and place them in a town (shopkeeper, resident), stored in the town file.
-6. **Atmosphere**: day / night cycle with lit windows and signs, rain with umbrellas, cherry blossom season.
-7. **Freer layouts** (town file version 2): curved / narrow roads, different block sizes, rivers and bridges, train tracks.
-8. **Game hand-off** (when a game starts): runtime library (`loadCity`, `createCharacter`, walk / traffic data, performance tricks), Capacitor test build for iOS / Android, glTF export, per-asset budgets. Player-facing creators and editors are built by each game.
+## Next (only when the owner asks)
+
+Ideas, not commitments. The owner decides what to add.
+
+1. **More people content**: elderly body type, office suit, umbrella and phone poses.
+2. **More town content**: shopping arcade, train station, temple, more shop types.
+3. **Atmosphere**: night with lit windows and signs, rain, cherry blossom season.
+4. **Freer layouts** (town JSON version 2): curved / narrow roads, rivers, train tracks.
+5. **First game hand-off**: when a game starts, note in SKILLS.md what it needed and missed.
 
 ## Known issues and small ideas
 
 - Shop sign text looks faded in the PS1 look; could be made stronger across all shops.
 - The third-person camera cannot look up at tall buildings (the iso view covers this).
-- Nothing stops things being placed on top of each other in the editor.
-- Browser storage is per device: keep file copies of important towns.
 
 ## Open questions for the owner
 
