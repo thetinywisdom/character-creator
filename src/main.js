@@ -15,6 +15,9 @@ import { validateCity } from './city/format.js';
 import { CATALOG } from './catalog/index.js';
 import { Editor } from './editor/Editor.js';
 import { Creator } from './creator/Creator.js';
+import { TownsPanel } from './editor/TownsPanel.js';
+import { getTown, lastTownId, listTowns, putTown, setLastTownId, storageWorks } from './editor/towns.js';
+import { emptyCity } from './city/edit.js';
 import { RUN_SPEED, WALK_SPEED, createGait, poseGait, stepGait } from './anim/gait.js';
 import './style.css';
 
@@ -108,16 +111,60 @@ async function loadCityFile() {
   if (problems.length) { toast(`Not a city file: ${problems.join(', ')}`); return null; }
   return data;
 }
+// ---------------------------------------------------------------------------
+// My towns: every town is kept in this browser and saved as you edit
+// ---------------------------------------------------------------------------
+let currentTown = null; // { id, name }
+let saveTimer = null;
+function autosave(data) {
+  if (!currentTown) return;
+  clearTimeout(saveTimer);
+  const town = currentTown;
+  saveTimer = setTimeout(() => putTown({ id: town.id, name: town.name, data }), 600);
+}
+function openTown(rec) {
+  currentTown = { id: rec.id, name: rec.name };
+  setLastTownId(rec.id);
+  editor.loadTown(rec.data);
+  updateSubtitle();
+}
+async function newTown(data, name) {
+  openTown(await putTown({ name, data }));
+}
+const townsPanel = new TownsPanel({
+  open: async (id) => { const rec = await getTown(id); if (rec) openTown(rec); },
+  newEmpty: () => newTown(emptyCity(4, 3), 'New town'),
+  newSample: () => newTown(generateCityData(Math.floor(Math.random() * 1000)), 'Sample town'),
+  currentId: () => currentTown?.id,
+  renamed: (id, name) => { if (currentTown?.id === id) { currentTown.name = name; editor.data.meta = { ...editor.data.meta, name }; updateSubtitle(); } },
+});
+/** At startup: reopen the last town, else the newest, else make a sample town. */
+async function openStartTown() {
+  let rec = null;
+  const last = lastTownId();
+  if (last) rec = await getTown(last);
+  if (!rec) { const [first] = await listTowns(); if (first) rec = await getTown(first.id); }
+  if (!rec) rec = await putTown({ name: 'Sample town', data: generateCityData() });
+  openTown(rec);
+  if (!(await storageWorks())) toast('This browser is not keeping towns — use 💾 Save to keep a copy');
+}
+function updateSubtitle() {
+  const sub = document.querySelector('#subtitle');
+  if (state.view === 'editor' && currentTown) sub.textContent = `City editor · ${currentTown.name}`;
+}
+
 function enterEditor() {
   if (!editor) {
     editor = new Editor({
       style: theStyle, canvas, renderer,
-      data: cityData ?? city?.layout.data ?? generateCityData(),
+      data: cityData ?? city?.layout.data ?? emptyCity(4, 3), // the saved town loads in right after
       callbacks: {
         onSave: async (data) => { if (!(await saveFile(`${(data.meta?.name ?? 'city').replace(/\W+/g, '-').toLowerCase()}.json`, JSON.stringify(data, null, 1)))) toast('City not saved'); },
         onLoad: loadCityFile,
         onSample: () => generateCityData(),
         onWalk: () => walkTown(),
+        onTowns: () => townsPanel.show(),
+        onChange: (data) => autosave(data),
       },
     });
     setView('editor');
@@ -216,6 +263,7 @@ function updateAppBar() {
   document.querySelectorAll('#modes [data-mode]').forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
   document.querySelector('#saveBtn').hidden = mode !== 'build';
   document.querySelector('#loadBtn').hidden = mode !== 'build';
+  document.querySelector('#townsBtn').hidden = mode !== 'build';
   devBtn.classList.toggle('on', devOpen);
   // the developer panel only shows when asked for (Characters still uses it for now)
   if (devOpen) { gui.show(); gui.open(); } else gui.hide();
@@ -229,6 +277,7 @@ document.querySelector('#modes').addEventListener('click', (e) => {
 });
 document.querySelector('#saveBtn').addEventListener('click', () => actions.saveCity());
 document.querySelector('#loadBtn').addEventListener('click', () => actions.loadCity());
+document.querySelector('#townsBtn').addEventListener('click', () => townsPanel.show());
 /** Walk the town being built (rebuilt when it or your character changed). */
 function walkTown() {
   if (!editor) enterEditor();
@@ -239,6 +288,7 @@ function walkTown() {
 function setView(view) {
   const SUBTITLES = { editor: 'City editor', city: 'Walking the town', gallery: 'Character creator', props: 'Street props', lineup: 'Street scene', crowd: 'Crowd', focus: 'Character creator' };
   document.querySelector('#subtitle').textContent = SUBTITLES[view] ?? '';
+  if (view === 'editor') updateSubtitle();
   if (view === 'gallery' || view === 'props') state.lastGrid = view;
   if (view === 'props' && !propsBuilt) {
     propCells.forEach((c) => { c.rebuild(params); c.applyLighting(lightingPresets[state.lighting]); });
@@ -342,8 +392,12 @@ const actions = {
   loadCity: async () => {
     const data = await loadCityFile();
     if (!data) return;
-    cityData = data;
-    if (editor) { editor.selected = null; editor.setData(data); editor.frameAll(); }
+    const rec = await putTown({ name: data.meta?.name || 'Opened town', data }); // becomes one of My towns
+    if (!editor) enterEditor();
+    openTown(rec);
+    if (state.view !== 'editor') enterEditor();
+    toast(`Opened "${rec.name}"`);
+    return;
     city = null; // rebuild from the new file
     enterCity();
   },
@@ -719,6 +773,7 @@ function loop(time) {
 }
 
 enterEditor(); // the city editor is the home screen
+openStartTown();
 requestAnimationFrame(loop);
 
 // handy for debugging from the console

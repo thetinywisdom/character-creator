@@ -95,6 +95,16 @@ export class Editor {
     }
     setDetail(1);
     this.drawSelection();
+    this.cb.onChange?.(this.data); // autosave
+  }
+
+  /** Switch to another town: fresh undo history, fitted view. */
+  loadTown(data) {
+    this.selected = null;
+    this.history = [];
+    this.future = [];
+    this.setData(data, { record: false });
+    this.frameAll();
   }
 
   // --- overlays ----------------------------------------------------------------
@@ -368,8 +378,7 @@ export class Editor {
         <button data-act="cols-">− col</button><button data-act="cols+">+ col</button>
         <button data-act="rows-">− row</button><button data-act="rows+">+ row</button>
         <span class="ed-sep"></span>
-        <button data-act="new">New empty</button>
-        <button data-act="sample">Sample town</button>
+        <button data-act="towns">📁 My towns</button>
         <button data-act="fit">Fit view</button>
       </div>`;
     document.body.appendChild(el);
@@ -463,8 +472,7 @@ export class Editor {
       if (act === 'cols+') this.resize(1, 0);
       if (act === 'rows-') this.resize(0, -1);
       if (act === 'rows+') this.resize(0, 1);
-      if (act === 'new') { this.selected = null; this.setData(emptyCity(g.cols, g.rows)); }
-      if (act === 'sample') { this.selected = null; this.setData(this.cb.onSample()); this.frameAll(); }
+      if (act === 'towns') { el.querySelector('.ed-menu').hidden = true; this.cb.onTowns?.(); }
       if (act === 'save') this.cb.onSave(this.data);
       if (act === 'load') { const d = await this.cb.onLoad(); if (d) { this.selected = null; this.setData(d); this.frameAll(); } }
       if (act === 'fit') this.frameAll();

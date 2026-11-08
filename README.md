@@ -69,8 +69,12 @@ The rules are in **[STYLE_GUIDE.md](STYLE_GUIDE.md)**.
 
 The bar at the top has three modes:
 
-- **🏙 Build:** the city editor (below). **💾 Save** and **📂 Open** save and
-  open town files.
+- **🏙 Build:** the city editor (below). Every town is **saved automatically**
+  in this browser (IndexedDB) and the app reopens the last one. **📁 Towns**
+  lists them: rename, open, duplicate, delete, or start a new empty or sample
+  town. **💾 Save** downloads the town as a file; **📂 Open** adds a town file
+  to your towns. (Browser storage is per device and browser: keep file copies
+  of towns you care about.)
 - **👤 Characters:** the character creator: a live preview (drag to turn,
   Still / Walk / Run) and a panel with four tabs (Body, Hair & face, Clothes,
   Accessories) of chips, colour swatches and sliders. Only allowed options are

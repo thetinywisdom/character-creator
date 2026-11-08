@@ -194,22 +194,23 @@ html, body {
 #hud { gap: 10px; }
 #hud .spacer { flex: 1; pointer-events: none; }
 #modes { display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
-#modes button, #saveBtn, #loadBtn, #devBtn {
+#modes button, #saveBtn, #loadBtn, #devBtn, #townsBtn {
   background: transparent; color: var(--text); border: 1px solid transparent; border-radius: 8px;
   font: inherit; min-height: 40px; min-width: 44px; padding: 6px 12px; cursor: pointer;
 }
-#saveBtn, #loadBtn, #devBtn { background: var(--panel); border-color: var(--line); }
+#saveBtn, #loadBtn, #devBtn, #townsBtn { background: var(--panel); border-color: var(--line); }
 #modes button:hover, #saveBtn:hover, #loadBtn:hover, #devBtn:hover { border-color: var(--accent); }
 #modes button.on { background: var(--accent); color: #1d1d1d; font-weight: 600; }
 #devBtn.on { background: var(--accent); color: #1d1d1d; }
-#saveBtn[hidden], #loadBtn[hidden] { display: none; }
+#saveBtn[hidden], #loadBtn[hidden], #townsBtn[hidden] { display: none; }
+#hud .title span { max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #back { min-height: 40px; }
 /* narrow screens: icons only, no subtitle */
 @media (max-width: 760px) {
   #hud { gap: 6px; padding: 0 8px; }
   #hud .title span { display: none; }
-  #modes button span, #saveBtn span, #loadBtn span { display: none; }
-  #modes button, #saveBtn, #loadBtn, #devBtn { padding: 6px 10px; }
+  #modes button span, #saveBtn span, #loadBtn span, #townsBtn span { display: none; }
+  #modes button, #saveBtn, #loadBtn, #devBtn, #townsBtn { padding: 6px 10px; }
 }
 @media (max-width: 420px) { #hud .title { display: none; } }
 
