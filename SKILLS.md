@@ -208,7 +208,9 @@ glow by changing the shared style materials (no real lights). A painted
 texture that should only partly glow carries a light mask in
 `texture.userData.glowMap` (see `curtainTexture`, `officeTexture`): paint one
 for any new painted window texture. `setSnowCover(root, on)` whitens roles
-(ground, grass, roof, leaf, ...). Both change shared materials, so apply them
+(ground, grass, roof, leaf, ...). They remember each material's own glow and colour in a
+WeakMap (never in `userData`: cloning a material mangles it, which once made
+cars black). Both change shared materials, so apply them
 per scene and switch them off when leaving (the viewer does this for snow).
 Rain and snow are faked around the camera, not a box in the world
 (`Precipitation.update(dt, camera, { pixels, distance })`, called after the

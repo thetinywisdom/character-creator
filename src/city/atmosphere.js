@@ -16,6 +16,11 @@ import * as THREE from 'three';
 // Materials are shared per style, so glow and snow also show in any other
 // scene using the same style; call setNightGlow / setSnowCover on each root.
 
+// A material's own (day) glow and colour, remembered outside the material:
+// kept in userData they were mangled when a material was cloned (cars and
+// people get marked copies for silhouettes), which made those cars black.
+const dayGlowOf = new WeakMap(), baseColorOf = new WeakMap();
+
 const GLOW = new THREE.Color(0xfff0d0);
 const WINDOW_GLOW = new THREE.Color(0xffc870);
 
@@ -24,7 +29,8 @@ export function setNightGlow(root, on) {
   forMaterials(root, (m) => {
     const role = m.userData.role;
     if (!role || !m.emissive) return;
-    const base = (m.userData.dayGlow ??= { color: m.emissive.clone(), intensity: m.emissiveIntensity, map: m.emissiveMap });
+    if (!dayGlowOf.has(m)) dayGlowOf.set(m, { color: m.emissive.clone(), intensity: m.emissiveIntensity, map: m.emissiveMap });
+    const base = dayGlowOf.get(m);
     if (!on) {
       m.emissive.copy(base.color); m.emissiveIntensity = base.intensity; setMap(m, base.map);
       return;
@@ -52,7 +58,8 @@ export function setSnowCover(root, on) {
   forMaterials(root, (m) => {
     const k = SNOW[m.userData.role];
     if (k === undefined || !m.color) return;
-    const base = (m.userData.baseColor ??= m.color.clone());
+    if (!baseColorOf.has(m)) baseColorOf.set(m, m.color.clone());
+    const base = baseColorOf.get(m);
     m.color.copy(base);
     if (on) m.color.lerp(WHITE, k);
   });
