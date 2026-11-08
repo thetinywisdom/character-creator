@@ -342,8 +342,9 @@ About one in six random characters is a child.
   box), sedan, hatchback, 6-seat minivan (sliding door), taxi (tall and
   upright, short sloping nose, square back, fender mirrors, deep navy, roof
   lamp), sports car (small 1970s fastback coupé: long bonnet, round lamps,
-  chrome bumpers and sill line, fender mirrors), city bus (window band,
-  doors on the left, lit destination sign). No brand logos.
+  chrome bumpers and sill line, fender mirrors), city bus (window panes,
+  doors on the left, lit destination sign, a rear window with the route
+  number). No brand logos.
 - **Wheels are octagons** on every vehicle (cars, bus, motorbikes, bicycles):
   exactly 8 sides, tyre and hub alike (`wheel()` / `WHEEL_SIDES` in
   `props/util.js`), whatever the detail level.

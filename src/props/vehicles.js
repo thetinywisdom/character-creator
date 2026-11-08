@@ -226,6 +226,8 @@ function buildBus(color, style) {
   }
   g.add(box(W - 0.2, 1.5, 0.05, glass, [0, 2.0, L / 2 + 0.01]));                       // windscreen
   g.add(box(W - 0.6, 0.3, 0.06, style.material('light', 0xf0a020), [0, 2.9, L / 2 + 0.02])); // destination sign
+  g.add(box(W - 0.5, 0.95, 0.05, glass, [0, 2.25, -L / 2 - 0.01]));                      // rear window
+  g.add(box(W - 0.9, 0.22, 0.06, style.material('light', 0xf0a020), [0, 2.9, -L / 2 - 0.02])); // route number at the back
   g.add(box(W * 0.98, 0.3, 0.15, dark, [0, 0.45, L / 2]), box(W * 0.98, 0.3, 0.15, dark, [0, 0.45, -L / 2]));
   const light = style.material('light', 0xfff6dc), tail = style.material('light', 0xe0402f);
   for (const sx of [-1, 1]) {
