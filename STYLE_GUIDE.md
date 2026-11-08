@@ -364,9 +364,9 @@ About one in six random characters is a child.
 - **Cat shape** (after the owner's low-poly reference): natural, not blobs.
   The torso and neck are one lofted, flat-shaded shape (narrow rump, high
   haunches, a slightly dipping back, a tucked waist, a deep chest, a short
-  thick neck); the head is a compact rounded wedge with wide cheeks and a
-  short muzzle (never a long snout; no eyes or face); big wide triangle
-  ears; long slim legs (back legs bent at the hock); the tail hangs back
+  thick neck); the head is big, round and upright, sitting high on the neck, with a small
+  muzzle low at the front (never a long snout; no eyes or face); big wide
+  triangle ears upright at the top corners, pink inside; long slim legs (back legs bent at the hock); the tail hangs back
   from the rump and lifts at the tip. **Cute first:** a big head, a short
   round body, short legs (a natural cat reads stiff and sad when tiny).
   Legs have two joints (shoulder / hip and elbow / hock), so sitting,

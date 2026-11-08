@@ -96,35 +96,42 @@ export const cat = {
     root.add(part(new THREE.Mesh(loft(torso, 10), M), 'body'));
     const neck = torso[torso.length - 1];
 
-    // --- head: the skull, wide cheeks, a short muzzle -----------------------
+    // --- head: big, round and upright, a small muzzle at the front (cute) --
+    const R = 0.058 * hs; // skull radius
     const head = new THREE.Group();
     head.name = 'head';
-    head.position.set(0, neck[1] + 0.04 * hs, neck[0] + 0.03 * hs);
+    head.position.set(0, neck[1] + R * 0.95, neck[0] + R * 0.45); // sits high on the neck
     root.add(head);
-    // compact and round: a short muzzle, wide cheeks (not a dog's long snout)
-    const skull = [
-      [-0.03, 0.006, 0.03, 0.033],
-      [-0.016, 0.008, 0.045, 0.044],
-      [0.003, 0.002, 0.05, 0.043],   // cheeks, the widest
-      [0.019, -0.008, 0.04, 0.033],
-      [0.03, -0.014, 0.025, 0.021],  // muzzle
-      [0.036, -0.016, 0.011, 0.01],
-    ].map(([z, y, w, h]) => [z * hs * 1.45, y * hs * 1.45, w * hs * 1.45 * fluff ** 0.5, h * hs * 1.45]); // a big head reads cute
+    // a round skull: rings along z on a sphere, a touch wider than tall
+    const skull = [];
+    for (let k = 0; k <= 6; k++) {
+      const t = -0.92 + (1.84 * k) / 6, r = Math.sqrt(1 - t * t);
+      skull.push([t * R * 0.95, 0, r * R * 1.08 * fluff ** 0.3, r * R]);
+    }
     head.add(part(new THREE.Mesh(loft(skull, 10), M), 'head'));
+    // the muzzle: a small soft block in front, low on the face
+    const muzzle = [
+      [0, -R * 0.36, R * 0.42, R * 0.3],
+      [R * 0.22, -R * 0.4, R * 0.36, R * 0.24],
+      [R * 0.32, -R * 0.44, R * 0.22, R * 0.15],
+    ];
+    const mz = part(new THREE.Mesh(loft(muzzle, 8, 0), M), 'muzzle');
+    mz.position.z = R * 0.68;
+    head.add(mz);
     if (fluff > 1) root.add(part(ellipsoid(g * 0.95, [1.15, 0.85, 0.8], M, { position: [0, neck[1] - g * 0.35, neck[0] - g * 0.2], segments: 10 }), 'ruff'));
 
     // --- ears: tall triangles; tufted (a dark tip) or folded forward ----------
     for (const sx of [-1, 1]) {
       const folded = p.earType === 'Folded';
       const e = p.earSize * hs;
-      const eh = (folded ? 0.036 : 0.06) * e, er_ = 0.033 * e; // big, wide triangles
+      const eh = (folded ? 0.5 : 0.85) * R * p.earSize, er_ = 0.62 * R * p.earSize; // big, wide triangles
       const ear = new THREE.Group();
-      ear.position.set(sx * 0.04 * hs, 0.052 * hs, -0.01 * hs);
-      ear.rotation.set(folded ? 1.1 : -0.12, 0, -sx * 0.28);
+      ear.position.set(sx * R * 0.55, R * 0.72, -R * 0.05); // upright at the top corners
+      ear.rotation.set(folded ? 1.1 : -0.05, 0, -sx * 0.22);
       const outer = part(new THREE.Mesh(new THREE.ConeGeometry(er_, eh, 3), M), 'ear');
       outer.position.y = eh / 2;
       outer.rotation.y = Math.PI; // a flat face toward the front
-      outer.scale.z = 0.38;
+      outer.scale.z = 0.5;
       const inner = part(new THREE.Mesh(new THREE.ConeGeometry(er_ * 0.62, eh * 0.75, 3), M), 'earInner');
       inner.position.set(0, eh * 0.4, er_ * 0.16);
       inner.rotation.y = Math.PI;
@@ -194,11 +201,11 @@ export const cat = {
     root.add(tail);
 
     // measurements the poses and the coat need
-    root.userData.cat = { legH, topY, bodyY: yc, bodyR: g, L, hr: 0.065 * hs };
+    root.userData.cat = { legH, topY, bodyY: yc, bodyR: g, L, hr: R };
     root.updateMatrixWorld(true);
     paintCoat(root, p, style, {
-      bodyY: yc, bodyR: g, zf: 0.22 * L, legH, headY: head.position.y, hr: 0.065 * hs,
-      muzzleZ: head.position.z + 0.032 * hs, tailBase: pts[0],
+      bodyY: yc, bodyR: g, zf: 0.22 * L, legH, headY: head.position.y, hr: R,
+      muzzleZ: head.position.z + R * 0.9, tailBase: pts[0],
     });
     return root;
   },
