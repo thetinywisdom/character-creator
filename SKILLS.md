@@ -84,8 +84,10 @@ npm run build    # must pass before committing
 ```
 
 The owner reviews the viewer as a single-file page published with the
-Artifact tool: build, inline `dist/assets/*.css` and `*.js` into one HTML file
-(escape `</script` inside the JS), publish to the same artifact URL each time.
+Artifact tool: `npm run build`, then `python3 scripts/single-file.py OUT.html`
+(inlines the app's CSS and JS, keeps external font links, and fails if
+anything from `assets/` is left unlinked), then open OUT.html in a browser to
+check it loads, and publish to the same artifact URL each time.
 The page declares the `downloads` capability (character JSON export goes
 through `src/lib/saveFile.js`).
 
