@@ -28,8 +28,6 @@ export const CAT_COATS = ['Short', 'Long'];
 const WHITE = PALETTE['Off white'], BLUSH = PALETTE.Blush;
 const darker = (hex, k = 0.62) => snapColor(new THREE.Color(hex).multiplyScalar(k).getHex());
 const lighter = (hex) => snapColor(new THREE.Color(hex).lerp(new THREE.Color(0xffffff), 0.45).getHex());
-// a fixed hash for blocky patches (calico)
-const hash = (x, y, z) => { const s = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return s - Math.floor(s); };
 
 export const cat = {
   id: 'cat',
@@ -272,6 +270,19 @@ function paintCoat(root, p, style, m) {
   const base = CAT_FUR[p.furColor] ?? CAT_FUR.Ginger;
   const pat = p.pattern ?? 'Solid';
   const dark = darker(base), light = lighter(base);
+  // calico patches: seeded round blobs along the back, one on the head, one on the tail
+  const seedStr = `${p.furColor}${p.tailType}${p.earType}`;
+  let sd = [...seedStr].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  const rnd = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+  const patches = [];
+  const zs = [m.tailBase.z + m.bodyR * 0.5, (m.tailBase.z + m.zf) / 2, m.zf];
+  zs.forEach((z, i) => {
+    const sx = rnd() < 0.5 ? -1 : 1;
+    patches.push({ c: new THREE.Vector3(sx * m.bodyR * (0.3 + rnd() * 0.5), m.bodyY + m.bodyR * (0.5 + rnd() * 0.4), z + (rnd() - 0.5) * m.bodyR),
+      r: m.bodyR * (1.0 + rnd() * 0.4), col: i % 2 ? PALETTE.Charcoal : PALETTE.Apricot });
+  });
+  patches.push({ c: new THREE.Vector3((rnd() - 0.5) * m.hr, m.headY + m.hr * 0.7, m.muzzleZ - m.hr * 1.2), r: m.hr * 0.9, col: rnd() < 0.5 ? PALETTE.Apricot : PALETTE.Charcoal });
+  patches.push({ c: m.tailBase.clone().add(new THREE.Vector3(0, 0.02, -0.12)), r: 0.09, col: PALETTE.Charcoal });
   const colourOf = (partName0, P) => {
     // the torso and head are single shapes: find the chest, muzzle and cheeks by position
     let partName = partName0;
@@ -288,13 +299,13 @@ function paintCoat(root, p, style, m) {
         if (partName === 'paw' || partName === 'muzzle') return light;
         if (partName === 'head') return P.y > m.headY + m.hr * 0.25 && Math.sin(P.x * 95) > 0.2 ? dark : base;
         if (low) return light;
-        return Math.sin(P.z * 52 + Math.abs(P.x) * 20) > 0.3 ? dark : base;
+        return Math.sin(P.z * 52) > 0.3 ? dark : base; // stripes follow the body's rings
       case 'Calico': {
         if (low || partName === 'paw' || partName === 'muzzle' || partName === 'chest' || partName === 'ruff') return WHITE;
         if (partName === 'leg' && P.y < m.legH * 0.7) return WHITE;
-        const s = 0.07 * (m.bodyR / 0.075);
-        const h = hash(Math.floor(P.x / s), Math.floor(P.y / s), Math.floor(P.z / s));
-        return h < 0.34 ? PALETTE.Apricot : h < 0.56 ? PALETTE.Charcoal : WHITE;
+        // round patches (a few blobs on the back, head and tail), white elsewhere
+        for (const q of patches) if (P.distanceTo(q.c) < q.r) return q.col;
+        return WHITE;
       }
       case 'Tuxedo':
         if (partName === 'paw' || partName === 'muzzle' || partName === 'ruff') return WHITE;
@@ -329,14 +340,15 @@ function paintCoat(root, p, style, m) {
     const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
     const posA = g.attributes.position, n = posA.count;
     const colours = new Float32Array(n * 3);
-    for (let i = 0; i < n; i += 3) {
-      // the face's centre in cat space decides its colour
-      a.fromBufferAttribute(posA, i).applyMatrix4(o.matrixWorld);
-      b.fromBufferAttribute(posA, i + 1).applyMatrix4(o.matrixWorld);
-      cc.fromBufferAttribute(posA, i + 2).applyMatrix4(o.matrixWorld);
-      const P = a.add(b).add(cc).multiplyScalar(1 / 3);
+    // colour whole quads (the two triangles of each square face together), so
+    // pattern edges follow the rings and run straight or round, not zig-zag
+    const step = n % 6 === 0 ? 6 : 3;
+    for (let i = 0; i < n; i += step) {
+      const P = new THREE.Vector3();
+      for (let k = 0; k < step; k++) P.add(a.fromBufferAttribute(posA, i + k).applyMatrix4(o.matrixWorld));
+      P.multiplyScalar(1 / step);
       col.setHex(colourOf(o.userData.part, P));
-      for (let k = 0; k < 3; k++) colours.set([col.r, col.g, col.b], (i + k) * 3);
+      for (let k = 0; k < step; k++) colours.set([col.r, col.g, col.b], (i + k) * 3);
     }
     g.setAttribute('color', new THREE.BufferAttribute(colours, 3));
     g.computeVertexNormals(); // non-indexed: one normal per face, flat-shaded like the reference

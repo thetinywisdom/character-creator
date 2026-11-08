@@ -371,7 +371,9 @@ About one in six random characters is a child.
   round body, short legs (a natural cat reads stiff and sad when tiny).
   Legs have two joints (shoulder / hip and elbow / hock), so sitting,
   loafing and sleeping fold them under the body instead of swinging them
-  out stiff. **Coats** are painted per face from the palette, in crisp blocks:
+  out stiff. **Coats** are painted from the palette per square face (never per triangle:
+  that gives zig-zag edges), so pattern edges run straight along the body's
+  rings or round; calico patches are round blobs:
   solid, tabby (stripes, light paws), calico (white with apricot and charcoal
   patches), tuxedo (charcoal with white chest, belly and paws), bicolour
   (colour on top, white below), points (pale body, dark ears, face, paws and
