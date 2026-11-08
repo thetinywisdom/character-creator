@@ -65,6 +65,23 @@ vertices and dithered colour, but with a clear sky, vivid characters on a calmer
 city, 1-pixel outlines and blob shadows so tiny characters stay easy to spot.
 The rules are in **[STYLE_GUIDE.md](STYLE_GUIDE.md)**.
 
+## Using the app
+
+The bar at the top has three modes:
+
+- **🏙 Build:** the city editor (below). **💾 Save** and **📂 Open** save and
+  open town files.
+- **👤 Characters:** the character creator: a live preview (drag to turn,
+  Still / Walk / Run) and a panel with four tabs (Body, Hair & face, Clothes,
+  Accessories) of chips, colour swatches and sliders. Only allowed options are
+  shown (see the character rules); **🎲 Random** and **↺** reset are always there.
+- **🚶 Walk:** walk the town you are building, as your character.
+
+**⚙** opens the developer settings (the old controls panel: look options,
+lighting, preview views such as the street scene, crowd and props gallery,
+screenshot). It is hidden unless you ask for it. On phones the panels become
+bottom sheets and the toolbars show icons only.
+
 ## Run it
 
 ```bash
@@ -131,6 +148,8 @@ src/
   props/             furniture.js, traffic.js, vehicles.js, extras.js, index.js
   catalog/index.js   the asset catalogue: every placeable asset behind one interface
   editor/Editor.js   the city editor (top-down view, tools, touch + mouse input, toolbar)
+  editor/thumbs.js   asset pictures for the palette (drawn on demand, kept in the browser)
+  creator/Creator.js the character creator panel (Characters mode)
   city/              format.js (city file format), build.js (city file -> scene), edit.js (editing operations),
                      layout.js (town generator -> city file), buildings.js, park.js,
                      City.js (walking, pedestrians, cars, camera), input.js (keys, drag, joystick)
@@ -181,14 +200,15 @@ to the generated town. Unknown assets in a file are skipped with a warning.
   round every block and join up by themselves, and intersections get
   crosswalks, traffic lights or signs depending on how many roads meet.
   Painting a block the same type again gives it a new layout.
-- **Place:** pick any catalogue asset (with its variant and colour), turn it,
-  and tap the map. Things snap to 0.5 m.
-- **Select:** tap something to select it, drag to move, **Turn** (R) or
-  **Delete**. Moving or turning a generated thing makes it hand-placed, so
+- **Place:** pick from a palette of pictures in tabs (Buildings, Street,
+  Traffic, Extras, Vehicles, Areas), choose its type and colour with chips and
+  swatches, turn it, and tap the map. Things snap to 0.5 m.
+- **Select:** tap something to select it, drag to move. A card shows its
+  picture and options (type, colour, shop type, a new look), which you can
+  change in place, plus **Turn** (R), **Copy** and **Delete**. Moving or turning a generated thing makes it hand-placed, so
   repainting its block leaves it alone.
 - **Undo / redo** (Ctrl+Z / Ctrl+Shift+Z); a whole drag is one step.
-- **☰:** grid size (up to 12 × 12), new empty town, sample town, save and
-  load city files, fit view.
+- **☰:** grid size (up to 12 × 12), new empty town, sample town, fit view.
 - **Walk it:** walk the town you built (people, cars and cats included);
   Exit city returns to the editor.
 

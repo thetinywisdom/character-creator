@@ -14,6 +14,7 @@ import { generateCityData } from './city/layout.js';
 import { validateCity } from './city/format.js';
 import { CATALOG } from './catalog/index.js';
 import { Editor } from './editor/Editor.js';
+import { Creator } from './creator/Creator.js';
 import { RUN_SPEED, WALK_SPEED, createGait, poseGait, stepGait } from './anim/gait.js';
 import './style.css';
 
@@ -217,13 +218,13 @@ function updateAppBar() {
   document.querySelector('#loadBtn').hidden = mode !== 'build';
   devBtn.classList.toggle('on', devOpen);
   // the developer panel only shows when asked for (Characters still uses it for now)
-  if (devOpen || mode === 'characters') { gui.show(); if (devOpen) gui.open(); } else gui.hide();
+  if (devOpen) { gui.show(); gui.open(); } else gui.hide();
 }
 devBtn.addEventListener('click', () => { devOpen = !devOpen; updateAppBar(); });
 document.querySelector('#modes').addEventListener('click', (e) => {
   const mode = e.target.closest('[data-mode]')?.dataset.mode;
   if (mode === 'build') enterEditor();
-  if (mode === 'characters') setView('gallery');
+  if (mode === 'characters') setView('creator');
   if (mode === 'walk') walkTown();
 });
 document.querySelector('#saveBtn').addEventListener('click', () => actions.saveCity());
@@ -245,7 +246,19 @@ function setView(view) {
   }
   state.view = view;
   editor?.show(view === 'editor');
+  creator?.show(view === 'creator');
   updateAppBar();
+  if (view === 'creator') {
+    cityInput.active = false;
+    joystick.hidden = true;
+    grid.hidden = true;
+    propsGrid.hidden = true;
+    backBtn.hidden = true;
+    controls.enabled = true;
+    hint.textContent = 'Drag to turn · scroll or pinch to zoom';
+    creatorFrame = true;
+    return;
+  }
   if (view === 'editor') {
     cityInput.active = false;
     controls.enabled = false;
@@ -358,7 +371,7 @@ viewFolder.add(actions, 'city').name('Walk the city');
 viewFolder.add(actions, 'saveCity').name('Save city file (JSON)');
 viewFolder.add(actions, 'loadCity').name('Load city file (JSON)');
 viewFolder.add(actions, 'sampleCity').name('Back to the sample town');
-viewFolder.add(actions, 'gallery').name('Character creator');
+viewFolder.add(actions, 'gallery').name('Characters & nature (grid)');
 viewFolder.add(actions, 'props').name('Props gallery (street props)');
 viewFolder.add(actions, 'lineup').name('Street scene (real scale)');
 viewFolder.add(actions, 'crowd').name('Crowd (random characters)');
@@ -401,6 +414,7 @@ for (const style of [theStyle]) {
 }
 
 const folders = {};
+const folderRefresh = {}; // subject id -> (key) => apply rules, update the panel, rebuild
 for (const s of subjects) {
   const f = gui.addFolder(s.label);
   folders[s.id] = f;
@@ -434,6 +448,7 @@ for (const s of subjects) {
     f.controllersRecursive().forEach((c) => c.updateDisplay());
   };
   const changed = (key) => { refresh(key); dirty.add(s.id); };
+  folderRefresh[s.id] = changed;
   if (s.presets) {
     f.add(presetState, 'preset', ['—', ...Object.keys(s.presets)]).name('Preset').onChange((name) => {
       if (name === '—') return;
@@ -465,6 +480,28 @@ for (const s of subjects) {
   refresh();
   f.close();
 }
+
+// ---------------------------------------------------------------------------
+// Character creator (Characters mode): chips and swatches beside a live preview
+// ---------------------------------------------------------------------------
+let creatorFrame = true; // reframe the preview (entering, or the body changed size)
+const creatorCell = () => galleryCells.find((c) => c.has('human'));
+const humanSubject = subjects.find((s) => s.id === 'human');
+const creator = new Creator({
+  subject: humanSubject,
+  params: params.human,
+  onChange: (key) => {
+    folderRefresh.human(key);
+    if (['bodyType', 'height', 'headsTall', 'legLength'].includes(key)) creatorFrame = true;
+  },
+  actions: {
+    randomize: () => { Object.assign(params.human, humanSubject.randomize()); folderRefresh.human(); creatorFrame = true; },
+    reset: () => { Object.assign(params.human, defaultsFor(humanSubject)); folderRefresh.human(); creatorFrame = true; },
+    preset: (name) => { Object.assign(params.human, humanSubject.presets[name]); folderRefresh.human(); creatorFrame = true; },
+    anim: (a) => { state.anim = a; gui.controllersRecursive().forEach((c) => c.updateDisplay()); },
+    getAnim: () => (['Walk', 'Run'].includes(state.anim) ? state.anim : 'Still'),
+  },
+});
 
 function processDirty() {
   if (!dirty.size) return;
@@ -630,7 +667,21 @@ function loop(time) {
   renderer.clear();
   renderer.setScissorTest(true);
 
-  if (state.view === 'editor' && editor) {
+  if (state.view === 'creator' && creator) {
+    const cell = creatorCell();
+    const r = creator.previewRect(W, H);
+    focusCam.aspect = r.w / r.h;
+    if (creatorFrame) {
+      cell.setAngle(0);
+      cell.frame(r.w / r.h, focusCam, { minHeight: 0 });
+      controls.target.copy(cell.viewCenter);
+      creatorFrame = false;
+    }
+    focusCam.updateProjectionMatrix();
+    controls.update();
+    animateHumans(cell);
+    renderCell(cell, focusCam, r.x, H - r.y - r.h, r.w, r.h);
+  } else if (state.view === 'editor' && editor) {
     editor.updateCamera(W / H);
     renderCell(editor, editor.camera, 0, 0, W, H);
   } else if (state.view === 'city' && city) {
