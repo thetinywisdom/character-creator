@@ -3,7 +3,8 @@ import { setDetail } from '../lib/shapes.js';
 import { mergeByMaterial } from '../lib/merge.js';
 import { skinCharacter, vertexColorMaterial } from '../lib/skin.js';
 import { mulberry32 } from '../lib/rng.js';
-import { car } from '../props/vehicles.js';
+import { bicycle, car, scooter } from '../props/vehicles.js';
+import { Interactions } from './interact.js';
 import { generateCityData } from './layout.js';
 import { buildCity } from './build.js';
 import { JOINT_NAMES, createGait, poseGait, stepGait } from '../anim/gait.js';
@@ -129,7 +130,7 @@ export class City {
       if (sil) this.silhouettes.push(sil);
       return body;
     };
-    this.player = { body: buildPerson(params.human, true), root: new THREE.Group(), x: 0, z: 0, heading: 0, speed: 0, gait: createGait() };
+    this.player = { body: buildPerson(params.human, true), root: new THREE.Group(), x: 0, z: 0, heading: 0, speed: 0, gait: createGait(), height: params.human.height };
     this.player.root.add(this.player.body);
     this.scene.add(this.player.root);
     // start on the sidewalk next to the park (or the first block)
@@ -144,6 +145,7 @@ export class City {
       const look = { ...params.human, ...human.randomize(rng) };
       const elderly = look.bodyType === 'Grandpa' || look.bodyType === 'Grandma';
       const npc = {
+        trait: look.trait ?? (rng() < 0.25 ? 'Aggressive' : 'Calm'), // how they react (interact.js)
         body: buildPerson(look),
         look,
         root: new THREE.Group(),
@@ -190,6 +192,16 @@ export class City {
       const bus = kinds[i] === 'Bus';
       this.cars.push({ obj, size: built.userData.size ?? { hw: 0.9, hd: 2.3 }, s: rng() * ring.total, speed: bus ? 5 + rng() : 7 + rng() * 3, ...ring, loop });
     }
+    // a scooter and a bicycle you can ride, parked by where you start
+    [['scooter', scooter.build({ variant: '50cc' }, style), { hw: 0.45, hd: 0.95 }, 2.4],
+     ['bicycle', bicycle.build({ color: 'Blue' }, style), { hw: 0.3, hd: 0.9 }, 3.6]].forEach(([bike, built, size, dx]) => {
+      const obj = mergeByMaterial(built);
+      obj.position.set(city.start.x + dx, 0, city.start.z);
+      obj.rotation.y = 0; // side by side, facing the road
+      this.silhouettes.push(...addObjectSilhouette(obj, silCars, silCache));
+      this.scene.add(obj);
+      this.cars.push({ obj, size, bike, parked: true, fx: 0, fz: 1, speed: 0 });
+    });
     setDetail(1);
 
     this.cam = { yaw: Math.PI, pitch: 0.32, dist: 6 };
@@ -199,6 +211,35 @@ export class City {
     this.iso = { yaw: Math.PI / 4, targetYaw: Math.PI / 4, zoom: 16 };
     this.viewMode = 'third';
     this.applyLighting({ keyColor: 0xffffff, key: 1, dir: [0.5, 1, 0.6], hemi: 1, tint: null, tintAmount: 0 });
+    // slap / push / talk, banana peels, riding (interact.js)
+    this.ix = new Interactions(this, style);
+  }
+
+  /** Walk / run a person's legs at `speed` (used while they are busy). */
+  stepPerson(who, dt, speed) {
+    stepGait(who.gait, dt, speed);
+    poseGait(who.body, who.gait);
+  }
+
+  /** A busy person is done: back to walking their route from where they are. */
+  endAct(n) {
+    n.act = null;
+    n.kb = null;
+    // the nearest point of their route; the sidestep offset carries them back smoothly
+    let best = 0, bd = Infinity, acc = 0;
+    const L = n.loop.length;
+    for (let i = 0; i < L; i++) {
+      const a = n.loop[i], b = n.loop[(i + 1) % L], len = n.lengths[i] || 1e-6;
+      const t = Math.max(0, Math.min(1, ((n.pos.x - a[0]) * (b[0] - a[0]) + (n.pos.z - a[1]) * (b[1] - a[1])) / (len * len)));
+      const d = Math.hypot(a[0] + (b[0] - a[0]) * t - n.pos.x, a[1] + (b[1] - a[1]) * t - n.pos.z);
+      if (d < bd) { bd = d; best = acc + t * len; }
+      acc += len;
+    }
+    n.s = best;
+    const q = alongLoop(n.loop, n.lengths, n.total, n.s, 1.2);
+    const len = Math.hypot(q.dx, q.dz) || 1;
+    const bx = q.x + (-q.dz / len) * n.lane, bz = q.z + (q.dx / len) * n.lane;
+    n.off = { x: n.pos.x - bx, z: n.pos.z - bz };
   }
 
   applyLighting(preset) {
@@ -366,6 +407,11 @@ export class City {
     // --- player: move relative to the camera ---------------------------------
     const p = this.player;
     const a = input.axes();
+    // clicks, keys and taps for interactions (interact.js)
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    for (const ev of input.takeEvents?.() ?? []) this.ix.handle(ev, this.activeCamera, rect);
+    const busy = this.ix.updatePlayer(dt, a); // riding, staggering or slipping
+    if (!busy) {
     const moveYaw = this.viewMode === 'iso' ? this.iso.yaw : this.cam.yaw; // move relative to the screen
     const fwd = { x: -Math.sin(moveYaw), z: -Math.cos(moveYaw) };
     const right = { x: -fwd.z, z: fwd.x };
@@ -386,12 +432,15 @@ export class City {
     this.collide(p);
     stepGait(p.gait, dt, p.speed);
     poseGait(p.body, p.gait, this.playerGait ?? 'natural');
-    const ground = this.layout.groundHeight(p.x, p.z);
-    p.root.position.set(p.x, ground, p.z);
+    this.ix.poseActor(p, dt); // a slap or push swing
+    p.root.position.set(p.x, this.layout.groundHeight(p.x, p.z), p.z);
     p.root.rotation.y = p.heading;
+    }
+    const ground = this.layout.groundHeight(p.x, p.z);
 
     // --- pedestrians ----------------------------------------------------------
     for (const n of this.npcs) {
+      if (n.act) { this.ix.updateNpc(n, dt); continue; } // slapped, chasing, fleeing, talking, slipped
       n.s += n.dir * n.speed * dt;
       const q = alongLoop(n.loop, n.lengths, n.total, n.s, 1.2); // round the corners
       const hd = Math.atan2(q.dx * n.dir, q.dz * n.dir);
@@ -418,6 +467,7 @@ export class City {
       n.root.rotation.y = hd;
       stepGait(n.gait, dt, n.speed);
       poseGait(n.body, n.gait);
+      if (n.action || n.flinch > 0) this.ix.poseActor(n, dt);
     }
 
     // --- cats: wander between random points in the park ----------------------
@@ -459,6 +509,7 @@ export class City {
 
     // --- cars on the ring road -------------------------------------------------
     for (const c of this.cars) {
+      if (c.ridden || c.parked) continue; // driven by you, or left where you parked it
       // brake for anything in the lane just ahead: the player, pedestrians,
       // other cars (a car waiting over 3 s ignores other cars, so two cars can
       // never block each other for good at a crossing)
@@ -491,7 +542,16 @@ export class City {
     }
 
     // --- camera: third person, behind and above ----------------------------------
-    const { yaw, pitch, dist } = this.cam;
+    this.ix.update(dt);
+
+    // riding: the camera eases round behind the vehicle and pulls back a little
+    if (p.riding && this.viewMode !== 'iso' && Math.abs(p.riding.drive.speed) > 1) {
+      let d = p.riding.drive.heading + Math.PI - this.cam.yaw;
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      this.cam.yaw += d * Math.min(1, dt * 2);
+    }
+    const { yaw, pitch } = this.cam;
+    const dist = this.cam.dist + (p.riding && !p.riding.bike ? 3 : 0);
     const tx = p.x, ty = ground + 1.4, tz = p.z;
     this.camera.position.set(
       tx + Math.sin(yaw) * Math.cos(pitch) * dist,

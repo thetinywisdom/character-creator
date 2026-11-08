@@ -35,6 +35,7 @@ export const human = {
   schema: {
     // body
     bodyType:      { group: 'Body', value: 'Man', options: BODY_TYPES, label: 'Body type' },
+    trait:         { group: 'Body', value: 'Calm', options: ['Calm', 'Aggressive'], label: 'Trait (how they react)' },
     build:         { group: 'Body', value: 'Normal', options: BUILDS, label: 'Build' },
     headsTall:     { group: 'Body', value: 7.5,   min: 2.5,   max: 7.5,  step: 0.1,   label: 'Heads tall' },
     height:        { group: 'Body', value: 1.6,   min: 1.0,   max: 2.0,  step: 0.01,  label: 'Height (m)' },
@@ -108,6 +109,7 @@ export const human = {
     const jitter = (v, k) => Math.round(v * (1 + (rng() - 0.5) * k) * 1000) / 1000;
     const out = {
       bodyType,
+      trait: rng() < 0.25 ? 'Aggressive' : 'Calm', // about one in four
       build: pick(['Normal', 'Normal', 'Normal', 'Normal', 'Skinny', 'Skinny', 'Bulky', 'Fat', 'Fat']),
       headsTall: range(7, 7.5, 0.1),
       height: woman ? range(1.5, 1.75, 0.01) : range(1.62, 1.9, 0.01),

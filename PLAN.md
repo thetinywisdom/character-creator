@@ -32,6 +32,7 @@ games), 🏙 City (walk a generated sample town to experiment).
 | Buildings | Shops and food places join block fills; public buildings (koban, post office, bank, clinic, fire station, parking, gas station) are placed by games |
 | Atmosphere | Night, rain and snow are cheap: shared-material glow with painted light masks, particles that follow the player; no real extra lights |
 | Building variety | A new seed must change the shape first (floors, roof, wings, layout), then details, then colour |
+| Interactions | E is the action key (pie menu on a person, get on / off a vehicle); clicks mirror it (hold slap, double push, right talk); traits Calm / Aggressive decide reactions |
 | Cameras | The city switches between third person and isometric |
 | Streets | Roads are 6 m (two narrow lanes), so towns feel small enough to explore; no cars parked at the kerb |
 
@@ -80,6 +81,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 31. **Natural cat shape**: rebuilt after the owner's reference as continuous flat-shaded lofted shapes (torso + neck, head), big triangle ears, slim legs, a low tail; patterns paint in bands.
 
 32. **Cute cats that fold their legs**: elbow and hock joints so sit / loaf / sleep tuck the legs under; cuter proportions (bigger head, shorter round body, shorter legs).
+
+33. **Character interactions**: calm / aggressive traits; slap, push and talk (Sims-style pie menu on E or click, plus shortcuts F / G / T and mouse hold / double / right click) with reactions (run away, slap back and chase, push back), chat bubbles and comic bursts (SLAP!, WHUMP!, WHOOPS!); banana peels people slip on; riding cars, the bus, a scooter and a bicycle. Iso rotate moved to < and >.
 
 ## Next (only when the owner asks)
 

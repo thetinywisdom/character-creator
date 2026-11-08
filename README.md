@@ -24,7 +24,7 @@ agents to build games on. **Agents: read `SKILLS.md`.**
 - **🏙 City**: walk a generated sample town as your character, with people,
   cars, buses, motorbikes and cats. 🎲 makes a different town, ☀ changes the time of
   day (at night windows, signs and lamps glow), 🌤 the weather (rain: people
-  open umbrellas; snow), 🎥 (or V) switches third person / isometric (Q / E
+  open umbrellas; snow), 🎥 (or V) switches third person / isometric (< >
   rotate); in the iso view people, cats and cars behind buildings show as
   silhouettes (you in yellow). WASD / arrows, Shift to run, a joystick on touch screens.
 

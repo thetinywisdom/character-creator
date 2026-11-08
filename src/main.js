@@ -214,8 +214,8 @@ function updateCityBar() {
   document.querySelector('#lightBtn').innerHTML = `${{ Day: '☀', Sunset: '🌇', Night: '🌙' }[state.lighting]}<span> ${state.lighting}</span>`;
   document.querySelector('#weatherBtn').innerHTML = `${{ Clear: '🌤', Rain: '🌧', Snow: '❄' }[state.weather]}<span> ${state.weather}</span>`;
   hint.textContent = iso
-    ? 'WASD / arrows · Shift run · drag to turn · scroll or pinch to zoom · Q / E rotate · V third person'
-    : 'WASD / arrows · Shift run · drag to look · scroll to zoom · V isometric view';
+    ? 'WASD / arrows · Shift run · drag to turn · scroll or pinch to zoom · < > rotate · V third person · E interact / ride · click: menu · hold: slap · double: push · right: talk · B banana'
+    : 'WASD / arrows · Shift run · drag to look · E interact / ride · click: menu · hold: slap · double: push · right: talk · B banana · V iso';
 }
 viewBtn.onclick = () => { state.cityView = ensureCity().setViewMode(); updateCityBar(); };
 document.querySelector('#newTownBtn').onclick = () => { state.citySeed = Math.floor(Math.random() * 1000); city = null; ensureCity(); toast(`Town #${state.citySeed}`); };
@@ -234,8 +234,9 @@ document.querySelector('#weatherBtn').onclick = () => {
 window.addEventListener('keydown', (e) => {
   if (state.view !== 'city' || !city) return;
   if (e.code === 'KeyV') { state.cityView = city.setViewMode(); updateCityBar(); }
-  if (city.viewMode === 'iso' && e.code === 'KeyQ') city.rotateIso(-1);
-  if (city.viewMode === 'iso' && e.code === 'KeyE') city.rotateIso(1);
+  // < and > turn the iso view (E is the action key)
+  if (city.viewMode === 'iso' && e.code === 'Comma') city.rotateIso(-1);
+  if (city.viewMode === 'iso' && e.code === 'Period') city.rotateIso(1);
 });
 
 // ---------------------------------------------------------------------------
@@ -252,6 +253,8 @@ function setView(view) {
   document.querySelectorAll('.city-only').forEach((b) => { b.hidden = view !== 'city'; });
   cityInput.active = view === 'city';
   joystick.hidden = !(view === 'city' && (matchMedia('(pointer: coarse)').matches || window.innerWidth < 900));
+  overlay.hidden = view !== 'city';
+  document.querySelector('#cityActions').hidden = view !== 'city';
   controls.enabled = view === 'item' || view === 'creator';
   if (view === 'catalog') { hint.textContent = 'Tap an item to turn it around and see its settings'; renderCatalog(); }
   if (view === 'item' || view === 'creator') { hint.textContent = 'Drag to turn · scroll or pinch to zoom'; reframe = true; }
@@ -264,6 +267,52 @@ document.querySelector('#modes').onclick = (e) => {
   if (m) setView({ catalog: 'catalog', characters: 'creator', city: 'city' }[m]);
 };
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.view === 'item') setView('catalog'); });
+
+// ---------------------------------------------------------------------------
+// City overlay: chat bubbles, comic bursts and the pie menu (interact.js),
+// drawn as page elements so the text stays sharp over the low-res picture
+// ---------------------------------------------------------------------------
+const overlay = document.querySelector('#overlay');
+const pie = document.querySelector('#pie');
+const bubbleEls = new Map();
+pie.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-n]');
+  if (b) cityInput.events.push({ type: 'choose', n: Number(b.dataset.n) });
+});
+document.querySelector('#actBtn').onclick = () => cityInput.events.push({ type: 'primary' });
+document.querySelector('#bananaBtn').onclick = () => cityInput.events.push({ type: 'banana' });
+function screenOf(v, camera, W, H) {
+  const s = v.clone().project(camera);
+  return { x: (s.x + 1) / 2 * W, y: (1 - s.y) / 2 * H, ok: s.z < 1 && Math.abs(s.x) < 1.3 && Math.abs(s.y) < 1.3 };
+}
+function drawOverlay(c, W, H) {
+  const ix = c.ix, cam = c.activeCamera;
+  const live = new Set();
+  for (const b of ix.bubbles) {
+    if (b.age < 0) continue;
+    live.add(b.id);
+    let el = bubbleEls.get(b.id);
+    if (!el) {
+      el = Object.assign(document.createElement('div'), { className: b.kind === 'burst' ? `burst${Math.random() < 0.5 ? ' alt' : ''}` : 'bubble', textContent: b.text });
+      overlay.appendChild(el);
+      bubbleEls.set(b.id, el);
+    }
+    const s = screenOf(b.anchor(), cam, W, H);
+    el.style.display = s.ok ? '' : 'none';
+    el.style.left = `${s.x}px`;
+    el.style.top = `${s.y}px`;
+    if (b.kind === 'talk') el.style.opacity = String(Math.min(1, (b.life - b.age) / 0.4));
+  }
+  for (const [id, el] of bubbleEls) if (!live.has(id)) { el.remove(); bubbleEls.delete(id); }
+  // the pie menu pops out of the person you chose
+  pie.hidden = !ix.menu;
+  if (ix.menu) {
+    const s = screenOf(ix.headOf(ix.menu.npc)(), cam, W, H);
+    pie.style.left = `${s.x}px`;
+    pie.style.top = `${s.y}px`;
+  }
+  document.querySelector('#actBtn').textContent = c.player.riding ? '⏏' : 'E';
+}
 
 // ---------------------------------------------------------------------------
 // Render loop
@@ -318,6 +367,7 @@ function loop(time) {
     city.update(dt, cityInput);
     city.setAspect(W / H);
     ps1.render(city, city.activeCamera, 0, 0, W, H);
+    drawOverlay(city, W, H);
   }
   requestAnimationFrame(loop);
 }

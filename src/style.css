@@ -183,3 +183,47 @@ html, body {
 
 .pal-card { cursor: default; }
 .pal-card i { display: block; width: 100%; aspect-ratio: 1.6; border-radius: 6px; }
+
+/* --- city interactions: bubbles, comic bursts, pie menu, action buttons ------ */
+#overlay { position: fixed; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+#overlay[hidden], #pie[hidden], #cityActions[hidden] { display: none; }
+.bubble {
+  position: absolute; transform: translate(-50%, -100%); max-width: 180px; padding: 6px 10px;
+  background: #f2efe8; color: #2f3236; border: 2px solid #2f3236; border-radius: 12px;
+  font: 600 13px/1.25 system-ui, sans-serif; text-align: center; white-space: normal;
+  animation: bubble-pop .18s ease-out;
+}
+.bubble::after { /* the tail pointing down at the speaker */
+  content: ''; position: absolute; left: 50%; bottom: -9px; width: 12px; height: 12px; margin-left: -6px;
+  background: #f2efe8; border-right: 2px solid #2f3236; border-bottom: 2px solid #2f3236; transform: rotate(45deg);
+}
+.burst {
+  position: absolute; transform: translate(-50%, -50%) rotate(-8deg); padding: 16px 20px;
+  background: #ece0aa; color: #2f3236; font: 900 18px/1 system-ui, sans-serif; letter-spacing: .02em;
+  clip-path: polygon(50% 0%, 61% 22%, 85% 8%, 78% 33%, 100% 38%, 80% 55%, 96% 78%, 70% 72%, 62% 100%, 48% 78%, 30% 96%, 30% 70%, 4% 80%, 18% 56%, 0% 36%, 24% 32%, 16% 6%, 40% 22%);
+  animation: burst-pop .9s ease-out forwards;
+}
+.burst.alt { background: #e8c8c4; transform: translate(-50%, -50%) rotate(7deg); }
+@keyframes bubble-pop { from { transform: translate(-50%, -100%) scale(.6); opacity: 0; } }
+@keyframes burst-pop {
+  0% { scale: .3; opacity: 0; } 15% { scale: 1.25; opacity: 1; } 35% { scale: 1; } 75% { opacity: 1; } 100% { scale: .9; opacity: 0; }
+}
+#pie { position: absolute; width: 0; height: 0; pointer-events: none; }
+#pie button {
+  position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%;
+  display: grid; place-items: center; align-content: center; gap: 0; pointer-events: auto; cursor: pointer;
+  background: #f2efe8; color: #2f3236; border: 2px solid #2f3236; font: 22px/1 system-ui;
+  box-shadow: 0 3px 0 rgba(0,0,0,.25); animation: pie-pop .16s ease-out backwards;
+}
+#pie button span { font: 700 11px/1.2 system-ui, sans-serif; }
+#pie button:hover { background: #ece0aa; }
+#pie button:nth-child(1) { left: -78px; top: -30px; }
+#pie button:nth-child(2) { left: 0; top: -84px; animation-delay: .04s; }
+#pie button:nth-child(3) { left: 78px; top: -30px; animation-delay: .08s; }
+@keyframes pie-pop { from { transform: scale(.2); opacity: 0; } }
+#cityActions { position: fixed; z-index: 4; right: max(20px, env(safe-area-inset-right, 0px)); bottom: max(24px, env(safe-area-inset-bottom, 0px)); display: flex; gap: 12px; align-items: end; }
+#cityActions button {
+  width: 64px; height: 64px; border-radius: 50%; font: 800 22px/1 system-ui; cursor: pointer;
+  background: color-mix(in srgb, var(--panel) 80%, transparent); color: var(--text); border: 2px solid var(--line);
+}
+#cityActions #actBtn { width: 76px; height: 76px; background: var(--accent); color: #1d1d1d; border-color: var(--accent); }

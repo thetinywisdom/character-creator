@@ -13,11 +13,17 @@ export class CityInput {
     this.canvas = canvas;
     this.joy = joystickEl;
     this.knob = joystickEl.querySelector('.knob');
+    this.events = []; // interaction events for interact.js (see takeEvents)
+    const KEYS = { KeyE: 'primary', KeyF: 'slap', KeyG: 'push', KeyT: 'talk', KeyB: 'banana', Escape: 'close' };
 
     window.addEventListener('keydown', (e) => {
       if (!this.active) return;
       this.keys.add(e.code);
       if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
+      if (e.repeat) return;
+      if (KEYS[e.code]) this.events.push({ type: KEYS[e.code] });
+      const n = ['Digit1', 'Digit2', 'Digit3'].indexOf(e.code);
+      if (n >= 0) this.events.push({ type: 'choose', n });
     });
     window.addEventListener('keyup', (e) => this.keys.delete(e.code));
     window.addEventListener('blur', () => this.keys.clear());
@@ -26,11 +32,37 @@ export class CityInput {
     let drag = null;
     const touches = new Map();
     let pinch = null;
+    // clicks and taps: click, hold (0.45 s), double click, right click. A press
+    // that moves more than a few pixels is a camera drag instead.
+    let press = null, clickTimer = null, lastClick = 0;
+    canvas.addEventListener('contextmenu', (e) => { if (this.active) e.preventDefault(); });
+    canvas.addEventListener('pointerdown', (e) => {
+      if (!this.active || e.target !== canvas) return;
+      if (press?.timer) clearTimeout(press.timer);
+      press = { id: e.pointerId, x: e.clientX, y: e.clientY, button: e.button, moved: false, fired: false };
+      if (e.button === 0) press.timer = setTimeout(() => { if (press && !press.moved) { press.fired = true; this.events.push({ type: 'hold', x: press.x, y: press.y }); } }, 450);
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (press && e.pointerId === press.id && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 8) { press.moved = true; clearTimeout(press.timer); }
+    });
+    canvas.addEventListener('pointerup', (e) => {
+      if (!press || e.pointerId !== press.id) return;
+      clearTimeout(press.timer);
+      const pr = press;
+      press = null;
+      if (pr.moved || pr.fired || touches.size > 1) return;
+      if (pr.button === 2) { this.events.push({ type: 'right', x: pr.x, y: pr.y }); return; }
+      if (pr.button !== 0) return;
+      const now = performance.now();
+      if (clickTimer && now - lastClick < 300) { clearTimeout(clickTimer); clickTimer = null; this.events.push({ type: 'double', x: pr.x, y: pr.y }); return; }
+      lastClick = now;
+      clickTimer = setTimeout(() => { clickTimer = null; this.events.push({ type: 'click', x: pr.x, y: pr.y }); }, 260);
+    });
     canvas.addEventListener('pointerdown', (e) => {
       if (!this.active || e.target !== canvas) return;
       touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
       canvas.setPointerCapture(e.pointerId);
-      if (touches.size === 2) { drag = null; pinch = null; return; }
+      if (touches.size === 2) { drag = null; pinch = null; if (press) { clearTimeout(press.timer); press.moved = true; } return; }
       drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
     });
     canvas.addEventListener('pointermove', (e) => {
@@ -89,6 +121,13 @@ export class CityInput {
     const len = Math.hypot(x, z);
     if (len > 1) { x /= len; z /= len; }
     return { x, z, run: k.has('ShiftLeft') || k.has('ShiftRight') };
+  }
+
+  /** Interaction events since the last call (keys, clicks, taps, UI buttons). */
+  takeEvents() {
+    const e = this.events;
+    this.events = [];
+    return e;
   }
 
   takeLook() {

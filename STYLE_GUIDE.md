@@ -412,6 +412,20 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 - **Snow:** small white flakes drifting down; ground, pavements, grass, roofs
   and leaves turn white, roads stay darker (cleared); bright, cool light.
 
+## 3e-4. Interactions
+
+- **Chat bubbles:** off-white rounded boxes with a dark ink border and a
+  tail pointing at the speaker, small bold text, above the head; they pop
+  in and fade after about 3 s.
+- **Comic bursts:** a spiky star shape, slightly tilted, butter or blush
+  with black bold capitals (SLAP!, WHAP!, SMACK!, SHOVE!, WHUMP!, OOF!,
+  WHOOPS!, BONK!); they pop in big, settle and fade in under a second.
+- **Pie menu:** three round off-white buttons (icon + word) fanned above the
+  person's head, popping out one after another.
+- **Target ring:** a soft butter ring on the ground under who or what you
+  are facing.
+- **Banana peel:** oversized butter-coloured peel with a brown tip.
+
 ## 3f. Buildings and the city
 
 - **Every seed is a different building.** Of the same kind, but with its own

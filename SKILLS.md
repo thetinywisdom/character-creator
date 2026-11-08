@@ -117,6 +117,8 @@ src/city/backs.js      dresses bare backs and sides of every building (windows, 
                        back door, drain pipe, emergency stairs), found with rays
 src/city/variety.js    shared building variety: flatsAbove, roofTop, frontExtras, side, pick, between
 src/city/silhouette.js see-through people in the iso view (stencil + GreaterDepth copy)
+src/city/interact.js   character interactions: traits, slap / push / talk (pie menu), chat
+                       bubbles + comic bursts, banana peels, riding vehicles
 src/city/atmosphere.js night glow (setNightGlow), snow cover (setSnowCover), rain / snow
                        screen layer (Precipitation), lamp light pools, weatherLight
 src/city/input.js      keyboard, drag, pinch and on-screen joystick
@@ -205,6 +207,25 @@ style material writes stencil 0, a person's materials stencil 1
 shows them in iso only. The PS1 render target has a depth + stencil buffer;
 keep it. A silhouette pixel is drawn once (it marks the stencil), so overlapping
 parts tint evenly.
+
+**Character interactions** (`src/city/interact.js`, optional for games).
+Every person has a `trait` ('Calm' | 'Aggressive', in the human schema and
+the character JSON; about 1 in 4 are aggressive). The player can:
+slap (aggressive: slaps back, then chases; calm: runs away), push (shoved
+back; aggressive: chases and pushes back; calm: runs away), talk (both say
+a line of small talk), drop banana peels (anyone stepping on one slips), and
+ride vehicles (traffic cars, the bus, a scooter and a bicycle parked by the
+start; WASD drives, people hit fall over, you get out on the driver's side
+and the vehicle stays parked). Input arrives as events
+(`CityInput.takeEvents()`): keys E (pie menu / ride), F slap, G push, T talk,
+B banana, 1-3 menu, Esc; mouse click = E, hold = slap (ride on a vehicle),
+double click = push, right click = talk; taps work the same. A busy person
+has `n.act` ({ kind: 'wait' | 'talk' | 'retaliate' | 'chase' | 'flee' |
+'slip' }) and is moved by `ix.updateNpc`; `City.endAct(n)` puts them back
+on their route. Bubbles (`ix.bubbles`: chat and comic bursts with an
+`anchor()` position) and the pie menu (`ix.menu`) are drawn by the viewer as
+page elements; a game can draw its own. Change the lines in `LINES` /
+`BURSTS`.
 
 **Night and weather.** Night is the `Night` lighting preset (`night: true`):
 `setNightGlow(root, on)` makes lamps, signs, shop interiors and lit windows
@@ -325,7 +346,7 @@ No unit tests; verify by building and looking.
 - Hooks on `window.__cc`: `params`, `state`, `setView('catalog'|'item'|'creator'|'city')`,
   `openItem(id, params)`, `CATALOG`, `human` (presets, outfits), `apply('human', values)`, `orbit(az)`,
   `gait.lock = fraction` (freeze the walk), `getCity()` (`player`, `npcs`,
-  `cars`, `cats`, `cam`, `iso`, `setViewMode('iso'|'third')`, `setWeather(kind)`),
+  `cars`, `cats`, `cam`, `iso`, `setViewMode('iso'|'third')`, `setWeather(kind)`, `ix` interactions),
   `newTown(seed)`, `cityInput`. The app bar's ☀ / 🌤 buttons switch light and weather.
 - To look at one building: `openItem('building.bank')`, or place the player
   in the city with `getCity().player.position.set(...)`.
