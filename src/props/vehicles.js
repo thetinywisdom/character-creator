@@ -100,7 +100,10 @@ export const car = {
   colors: VEHICLE_COLORS,
   build({ variant, color }, style) {
     if (variant === 'Bus') return buildBus(color, style);
-    const s = CARS[variant] ?? CARS.Sedan;
+    // the body sits 5 cm higher on its wheels than the outlines say (more ground clearance)
+    const base = CARS[variant] ?? CARS.Sedan, LIFT = 0.05;
+    const up = (pts) => pts.map(([z, y]) => [z, y + LIFT]);
+    const s = { ...base, body: up(base.body), glass: up(base.glass) };
     const g = new THREE.Group();
     const paintHex = s.taxi && !color ? 0x1c2238 : CLOTH_COLORS[color] ?? 0xe8e8e8;
     const paint = style.material('paint', paintHex);
@@ -128,7 +131,9 @@ export const car = {
       if (s.sliding) g.add(bar([s.doors[0] - 0.05, belt], [s.doors[0] - 0.05, r0[1] - 0.05], sx * px, 0.07, 0.03, dark));
     }
     // dark wheel wells seen through the arches, and the wheels
-    g.add(box(W * 0.84, s.r * 1.3, s.L * 0.9, dark, [0, s.r * 0.95, 0]));
+    // (from the bottom of the body up, so nothing dark hangs below the sills)
+    const wellLo = s.body[0][1], wellHi = s.r + s.r * 0.95;
+    g.add(box(W * 0.84, wellHi - wellLo, s.L * 0.9, dark, [0, (wellLo + wellHi) / 2, 0]));
     const tire = style.material('tire');
     const hubM = s.wheel === 'steel' ? style.material('metal', 0xb8bcc0) : s.wheel === 'retro' ? dark : style.material('metal', 0xd0d4d8);
     for (const z of s.wheels) {
@@ -190,8 +195,8 @@ function buildBus(color, style) {
   const paint = style.material('paint', CLOTH_COLORS[color] ?? 0xf2f2ee);
   const stripe = style.material('paint', color && color !== 'White' ? 0xf2f2ee : 0x2fa36b);
   const glass = style.material('glass', 0x2a3644), dark = style.material('darkMetal', 0x1e2024);
-  const body = softBox(W, H - 0.35, L, paint, { round: 0.08 });
-  body.position.y = 0.35 + (H - 0.35) / 2;
+  const body = softBox(W, H - 0.4, L, paint, { round: 0.08 });
+  body.position.y = 0.4 + (H - 0.4) / 2;
   g.add(body);
   g.add(box(W + 0.02, 0.12, L - 0.4, stripe, [0, 1.15, 0]));                         // a colour band along the sides (the doors cover it)
   // side windows: separate panes, with gaps where the doors are (doors on the
@@ -223,7 +228,7 @@ function buildBus(color, style) {
     g.add(wheel(r, 0.3, tire, [sx * (W / 2 - 0.15), r, z]));
     g.add(wheel(r * 0.55, 0.31, hub, [sx * (W / 2 - 0.15), r, z]));
   }
-  g.add(box(W * 0.85, 0.6, L * 0.9, dark, [0, 0.5, 0]));
+  g.add(box(W * 0.85, 0.5, L * 0.9, dark, [0, 0.62, 0])); // wheel wells, above the body's bottom edge
   g.userData.size = CAR_SIZES.Bus;
   return g;
 }

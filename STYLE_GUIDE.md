@@ -330,7 +330,8 @@ About one in six random characters is a child.
   one button); straw hat (wide brim, red band); flat cap.
 - **Looks** are clothes-only presets (office worker, police officer, delivery
   worker, summer stroll, rainy day, coffee run, on the phone).
-- **Cars** look like real cars, not toys: built from a side silhouette with
+- **Cars** look like real cars, not toys (with real ground clearance: the body
+  sits on its wheels, nothing dark hangs to the road): built from a side silhouette with
   wheel arches, a cabin narrower than the body, painted roof and pillars,
   door lines and handles, bumpers, lights and mirrors. Kei car (tall 4-seat
   box), sedan, hatchback, 6-seat minivan (sliding door), taxi (tall and
