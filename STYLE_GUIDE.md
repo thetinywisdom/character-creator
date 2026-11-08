@@ -126,6 +126,10 @@ dressed in the same tones as the street will disappear.
   - **long:** straight down the back, ponytail, high ponytail, twin tails,
     braid, wavy, side-swept
   - plus bald, bun, spiky, mohawk, curly, afro
+- The plain cut of each family uses the full, puffy cap; **variations sit on a
+  slimmer cap** so their defining shapes (fringe, quiff, top block, tufts) stand
+  out. Cuts defined by a fringe use a higher base hairline so the fringe forms
+  the front edge. Caps have at least 16 sides so the head never pokes through.
 - Hair that hangs down the back keeps clear of the upper back (it must never
   sink into the shirt); ties are small dark bands.
 

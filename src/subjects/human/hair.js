@@ -12,14 +12,19 @@ export const HAIRSTYLES = ['bald', ...SHORT_STYLES, ...MEDIUM_STYLES, ...LONG_ST
 
 const UP = new THREE.Vector3(0, 1, 0);
 
-/** The basic hair cap: covers the top and back of the head, shows the forehead. */
-function cap(f, material, puff = 1.08) {
+/**
+ * The basic hair cap: covers the top and back of the head, shows the forehead.
+ * It has more sides than the head (at least 16) so its flat faces never dip
+ * inside the head's corners: that showed as skin-coloured flecks.
+ * tilt: more negative raises the hairline at the front.
+ */
+function cap(f, material, puff = 1.08, tilt = -0.45) {
   const m = new THREE.Mesh(
-    new THREE.SphereGeometry(1, seg(32), seg(16), 0, Math.PI * 2, 0, Math.PI * 0.58),
+    new THREE.SphereGeometry(1, seg(32, 16), seg(16, 8), 0, Math.PI * 2, 0, Math.PI * 0.58),
     material,
   );
   m.scale.set(f.rx * puff, f.ry * puff, f.rz * (puff + 0.02));
-  m.rotation.x = -0.45;
+  m.rotation.x = tilt;
   return m;
 }
 
@@ -67,7 +72,16 @@ export function buildHair(f, style, material, { underHat = false } = {}) {
   g.name = 'hair';
   const { R, rx, ry, rz } = f;
   const shoulder = f.shoulderY - f.headY; // head-local y of the shoulders
-  const capPuff = underHat ? 1.025 : 1.08;
+  // tight caps keep a little room: PS1 vertex snapping lets the scalp poke
+  // through hair that sits right on the head
+  const capPuff = underHat ? 1.04 : 1.08;
+  // Variations sit on a slimmer cap close to the head, so the shapes that
+  // define each cut (fringe, quiff, tufts...) stand out instead of sinking
+  // into a puffy base.
+  const slim = underHat ? 1.04 : 1.045;
+  // cuts defined by a fringe sit on a cap with a higher hairline, so the
+  // fringe itself forms the front edge of the hair
+  const high = -0.72;
 
   switch (style) {
     case 'bald':
@@ -83,35 +97,40 @@ export function buildHair(f, style, material, { underHat = false } = {}) {
       break;
     // --- short variations -------------------------------------------------
     case 'short · side part': {
-      g.add(cap(f, material, capPuff));
-      // a fringe swept to one side
-      g.add(ellipsoid(1, [rx * 0.55, R * 0.24, rz * 0.48], material, { position: [rx * 0.32, R * 0.6, rz * 0.55], rotation: [0.25, 0, -0.32] }));
+      const c = cap(f, material, slim, high);
+      c.rotation.z = -0.14; // hairline lower on one side
+      g.add(c);
+      // a thick fringe swept over to one side, rising above the cap
+      g.add(ellipsoid(1, [rx * 0.72, R * 0.3, rz * 0.55], material, { position: [rx * 0.28, R * 0.66, rz * 0.48], rotation: [0.2, 0, -0.38], segments: 14 }));
       break;
     }
     case 'short · buzz cut':
-      g.add(cap(f, material, 1.025));
+      g.add(cap(f, material, 1.04, -0.62)); // tight, with the hairline set back
       break;
     case 'short · undercut':
       // shaved sides, volume on top
-      g.add(cap(f, material, 1.025));
-      g.add(ellipsoid(1, [rx * 0.82, R * 0.34, rz * 0.95], material, { position: [0, R * 0.72, rz * 0.05], segments: 16 }));
+      g.add(cap(f, material, 1.04));
+      g.add(ellipsoid(1, [rx * 0.86, R * 0.42, rz * 1.0], material, { position: [0, R * 0.8, rz * 0.06], segments: 16 }));
       break;
     case 'short · quiff':
-      g.add(cap(f, material, capPuff));
-      // a swoop of hair lifted up at the front
-      g.add(ellipsoid(1, [rx * 0.72, R * 0.32, rz * 0.55], material, { position: [0, R * 0.8, rz * 0.42], rotation: [-0.5, 0, 0], segments: 16 }));
+      g.add(cap(f, material, slim));
+      // a tall swoop of hair lifted up and forward at the front
+      g.add(ellipsoid(1, [rx * 0.76, R * 0.44, rz * 0.62], material, { position: [0, R * 0.92, rz * 0.36], rotation: [-0.6, 0, 0], segments: 16 }));
       break;
     case 'short · bowl cut':
       // an even, rounded cap with straight bangs all the way round
-      g.add(shell(f, material, underHat ? 1.03 : 1.12, { thetaLength: Math.PI * 0.55, tilt: -0.08 }));
+      // (no cap: the bowl is the whole shape, with bangs low on the forehead)
+      g.add(shell(f, material, underHat ? 1.03 : 1.14, { thetaLength: Math.PI * 0.6, tilt: 0 }));
       break;
     case 'short · messy': {
-      g.add(cap(f, material, capPuff));
-      const tufts = [[0.2, 0.3], [1.3, 0.55], [2.4, 0.35], [3.5, 0.6], [4.6, 0.4], [5.6, 0.62], [0.9, 0.85], [3.0, 0.9]];
+      g.add(cap(f, material, slim, high));
+      // chunky tufts sticking out in all directions, including a ragged fringe
+      const tufts = [[0.2, 0.3], [1.3, 0.55], [2.4, 0.35], [3.5, 0.6], [4.6, 0.4], [5.6, 0.62], [0.9, 0.85], [3.0, 0.9],
+        [-0.35, 1.0], [0.35, 1.0], [0, 0.9], [2.0, 1.0], [-2.0, 1.0]];
       for (const [phi, tilt] of tufts) {
         const dir = new THREE.Vector3(Math.sin(tilt) * Math.sin(phi), Math.cos(tilt), Math.sin(tilt) * Math.cos(phi));
-        if (dir.z > 0.55) continue;
-        const t = new THREE.Mesh(new THREE.ConeGeometry(R * 0.22, R * 0.4, seg(6, 4)), material);
+        if (dir.z > 0.75) continue;
+        const t = new THREE.Mesh(new THREE.ConeGeometry(R * 0.27, R * 0.52, seg(6, 4)), material);
         t.position.set(dir.x * rx, dir.y * ry, dir.z * rz).multiplyScalar(1.03);
         t.quaternion.setFromUnitVectors(UP, dir.clone().add(new THREE.Vector3(0.25, 0, 0)).normalize());
         g.add(t);
@@ -122,18 +141,21 @@ export function buildHair(f, style, material, { underHat = false } = {}) {
     // --- medium variations ------------------------------------------------
     case 'medium · bob':
       // rounded, chin-length all round, open at the face
-      g.add(cap(f, material, capPuff));
+      g.add(cap(f, material, slim));
       g.add(shell(f, material, underHat ? 1.06 : 1.16, { frontGap: 1.7, thetaLength: Math.PI * 0.72 }));
       break;
     case 'medium · curtains':
       // middle part, two curtains framing the face, length to the shoulders
-      g.add(cap(f, material, capPuff), backPanel(f, material, shoulder + R * 0.2));
+      const c = cap(f, material, slim, high);
+      g.add(c, backPanel(f, material, shoulder + R * 0.2));
       for (const sx of [-1, 1]) {
-        g.add(ellipsoid(1, [rx * 0.28, R * 0.62, rz * 0.3], material, { position: [sx * rx * 0.62, -R * 0.05, rz * 0.62], rotation: [0, 0, sx * 0.12] }));
+        // each curtain sweeps from the parting down past the cheek
+        g.add(ellipsoid(1, [rx * 0.36, R * 0.3, rz * 0.4], material, { position: [sx * rx * 0.42, R * 0.58, rz * 0.5], rotation: [0.3, 0, sx * 0.5], segments: 12 }));
+        g.add(ellipsoid(1, [rx * 0.3, R * 0.68, rz * 0.32], material, { position: [sx * rx * 0.7, -R * 0.08, rz * 0.55], rotation: [0, 0, sx * 0.15], segments: 12 }));
       }
       break;
     case 'medium · wavy': {
-      g.add(cap(f, material, capPuff));
+      g.add(cap(f, material, slim));
       // waves: blobs stepping down the sides and back, alternating outward
       const end = shoulder + R * 0.2;
       for (let k = 0; k < 4; k++) {
@@ -158,14 +180,14 @@ export function buildHair(f, style, material, { underHat = false } = {}) {
       break;
     }
     case 'medium · half-up':
-      g.add(cap(f, material, capPuff), backPanel(f, material, shoulder + R * 0.2));
-      g.add(ellipsoid(R * 0.28, [1, 1, 1], material, { position: [0, R * 0.55, -rz * 0.85], segments: 10 }));
+      g.add(cap(f, material, slim), backPanel(f, material, shoulder + R * 0.2));
+      g.add(ellipsoid(R * 0.36, [1, 1, 1], material, { position: [0, R * 0.62, -rz * 0.9], segments: 10 }));
       break;
 
     // --- long variations ---------------------------------------------------
     case 'long · ponytail':
     case 'long · high ponytail': {
-      g.add(cap(f, material, capPuff));
+      g.add(cap(f, material, slim));
       const high = style === 'long · high ponytail';
       const y0 = high ? R * 0.7 : R * 0.05;
       const z0 = high ? -rz * 0.85 : -rz * 1.02;
@@ -183,7 +205,7 @@ export function buildHair(f, style, material, { underHat = false } = {}) {
       break;
     }
     case 'long · twin tails': {
-      g.add(cap(f, material, capPuff));
+      g.add(cap(f, material, slim));
       for (const sx of [-1, 1]) {
         const y0 = R * 0.25;
         g.add(ellipsoid(R * 0.13, [1, 1, 1], f.mats.band, { position: [sx * rx * 0.98, y0, -rz * 0.25], segments: 8 }));
@@ -196,7 +218,7 @@ export function buildHair(f, style, material, { underHat = false } = {}) {
       break;
     }
     case 'long · braid': {
-      g.add(cap(f, material, capPuff), backPanel(f, material, -R * 0.75, 0.9));
+      g.add(cap(f, material, slim), backPanel(f, material, -R * 0.75, 0.9));
       // a single braid of alternating lobes down the back
       const endY = shoulder - f.torsoLen * 0.4;
       // a continuous core with overlapping, alternating lobes on top of it
@@ -216,7 +238,7 @@ export function buildHair(f, style, material, { underHat = false } = {}) {
       break;
     }
     case 'long · wavy': {
-      g.add(cap(f, material, capPuff), backPanel(f, material, shoulder - f.torsoLen * 0.2, 1.3));
+      g.add(cap(f, material, slim), backPanel(f, material, shoulder - f.torsoLen * 0.2, 1.3));
       const end = shoulder - f.torsoLen * 0.18; // waves stop where the back panel ends
       for (let k = 0; k < 6; k++) {
         const y = THREE.MathUtils.lerp(-R * 0.1, end, k / 5);
@@ -228,9 +250,9 @@ export function buildHair(f, style, material, { underHat = false } = {}) {
       break;
     }
     case 'long · side-swept':
-      g.add(cap(f, material, capPuff), backPanel(f, material, shoulder - f.torsoLen * 0.45, 1.35));
+      g.add(cap(f, material, slim, high), backPanel(f, material, shoulder - f.torsoLen * 0.45, 1.35));
       // a big fringe swept across the forehead, falling down one side
-      g.add(ellipsoid(1, [rx * 0.85, R * 0.26, rz * 0.4], material, { position: [rx * 0.2, R * 0.48, rz * 0.68], rotation: [0.2, 0, -0.42] }));
+      g.add(ellipsoid(1, [rx * 0.9, R * 0.3, rz * 0.45], material, { position: [rx * 0.2, R * 0.5, rz * 0.66], rotation: [0.2, 0, -0.45], segments: 14 }));
       g.add(ellipsoid(1, [rx * 0.3, R * 0.85, rz * 0.32], material, { position: [rx * 0.82, -R * 0.2, rz * 0.35] }));
       break;
 
