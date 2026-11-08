@@ -93,11 +93,14 @@ export function weatherLight(preset, weather) {
  *  view size at the camera's distance to the player. The number shown
  *  follows that visible area (zoomed in: a few real-size drops and flakes;
  *  zoomed out: the whole view covered with small ones). Same logic for both.
+ *  Zoomed in past a 24 m tall view, drops keep their screen size and number
+ *  (capped), so the weather looks the same and never gets in the way.
  *
  *   precip.update(dt, camera, { pixels, distance })   // after the camera moved;
  *     pixels = low-res picture height, distance = camera to player (third person)
  */
 const REF_AREA = 1536; // view area (m²) at the default iso zoom, where all drops show
+const MIN_HALF_VIEW = 12; // m: below this half view height, drops keep their screen size
 export class Precipitation {
   constructor(kind, { count = kind === 'Rain' ? 1200 : 900 } = {}) {
     this.kind = kind;
@@ -127,7 +130,12 @@ export class Precipitation {
     const halfH = ortho ? (camera.top - camera.bottom) / 2 / camera.zoom : Math.tan((camera.fov * Math.PI) / 360) * distance;
     const halfW = ortho ? (camera.right - camera.left) / 2 / camera.zoom : halfH * camera.aspect;
     const depth = ortho ? camera.near + 1 : distance;
-    const shown = Math.min(this.count, Math.max(40, Math.round((this.count * 4 * halfW * halfH) / REF_AREA)));
+    // drops shown follow the visible area, never less than a 24 m tall view's
+    const capH = Math.max(halfH, MIN_HALF_VIEW), capW = capH * (halfW / halfH);
+    const shown = Math.min(this.count, Math.round((this.count * 4 * capW * capH) / REF_AREA));
+    // zoomed in closer than a 24 m tall view, drops stop growing on screen
+    // (only fewer of them show), so they never get in the way
+    const grow = Math.min(1, halfH / MIN_HALF_VIEW);
     const p = this.pos;
     for (let i = 0; i < shown; i++) {
       const sd = this.seeds[i];
@@ -136,13 +144,13 @@ export class Precipitation {
       let x = sd[0] * halfW;
       if (!rain) x += Math.sin(this.t * 0.8 + sd[3]) * 0.4; // snow drifts
       const y = sd[1] * halfH;
-      if (rain) p.set([x, y, -depth, x + 0.06, y + 0.5, -depth], i * 6);
+      if (rain) p.set([x, y, -depth, x + 0.06 * grow, y + 0.5 * grow, -depth], i * 6);
       else p.set([x, y, -depth], i * 3);
     }
     this.object.geometry.setDrawRange(0, shown * (rain ? 2 : 1));
     this.object.geometry.attributes.position.needsUpdate = true;
     // an 8 cm flake, in pixels of the low-res picture
-    if (!rain) this.object.material.size = Math.max(1, (0.08 * pixels) / (2 * halfH));
+    if (!rain) this.object.material.size = Math.max(1, (0.08 * pixels) / (2 * Math.max(halfH, MIN_HALF_VIEW)));
     // ride along with the camera
     this.object.position.copy(camera.position);
     this.object.quaternion.copy(camera.quaternion);

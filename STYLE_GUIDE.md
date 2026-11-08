@@ -355,7 +355,8 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 - **Rain and snow are a layer in front of the camera** covering the whole
   view (never a box you can see the edges of, never hidden by buildings),
   but with real-world sizes and density: zoomed in, a few clear drops and
-  small flakes (the scene stays visible); zoomed out, many tiny ones.
+  small flakes (the scene stays visible); zoomed out, many tiny ones. Closer
+  in than a 24 m tall view, drops keep the size and number they have there.
 - **Rain:** thin pale streaks, slightly slanted; darker, greyer light; about
   three in four people without something in their hands open an umbrella.
 - **Snow:** small white flakes drifting down; ground, pavements, grass, roofs

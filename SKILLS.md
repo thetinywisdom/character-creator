@@ -194,8 +194,9 @@ camera moves): one layer drawn on top, always covering the view, no edges.
 Sizes and density are real-world for the view at the player (0.5 m streaks,
 8 cm flakes; iso: the orthographic view size, third person: the view size
 at the camera's distance to the player), so both cameras behave the same:
-zoomed in, a few big drops; zoomed out, many small ones. Don't scale them to
-the screen: zoomed in it hides everything.
+zoomed out, many small drops. Zoomed in past a 24 m tall view, the screen
+size and number of drops stay as at that view, so close up the weather
+looks the same and never gets in the way.
 
 **No coplanar surfaces.** Two surfaces facing the same way must be ≥ 2 cm
 apart or they flicker on phones. Keep the 24-bit depth buffer in `ps1.js`.
