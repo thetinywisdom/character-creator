@@ -4,6 +4,9 @@ import { buildCity, buildObject } from '../city/build.js';
 import { gridGeometry, BLOCK_TYPES } from '../city/format.js';
 import { addObject, blockAt, cellAt, emptyCity, removeObject, resizeGrid, setBlock, updateObject } from '../city/edit.js';
 import { setDetail } from '../lib/shapes.js';
+import { CLOTH_COLORS } from '../styles/palette.js';
+import { SHOP_TYPES } from '../city/buildings.js';
+import { thumbInto } from './thumbs.js';
 
 // City editor: a top-down view of a city file with tools to paint blocks
 // (roads join up round them by themselves), place assets from the catalogue,
@@ -16,6 +19,8 @@ import { setDetail } from '../lib/shapes.js';
 const TYPE_LABELS = { residential: 'Houses', mixed: 'Mixed', shops: 'Shops', downtown: 'Downtown', park: 'Park', plaza: 'Plaza' };
 const TYPE_COLORS = { residential: '#9fc58a', mixed: '#e8c27a', shops: '#ef8f6b', downtown: '#8fb3e0', park: '#5fae5a', plaza: '#cfc6b0', erase: '#999' };
 const SNAP = 0.5;
+const PALETTE_TABS = [['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['vehicles', 'Vehicles'], ['areas', 'Areas']];
+const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 const snap = (v) => Math.round(v / SNAP) * SNAP;
 
 export class Editor {
@@ -24,7 +29,8 @@ export class Editor {
    * callbacks: onSave(data), onLoad() -> Promise<data|null>, onWalk(data),
    * onSample() -> data, toast(msg)
    */
-  constructor({ style, canvas, data, callbacks }) {
+  constructor({ style, canvas, data, callbacks, renderer }) {
+    this.renderer = renderer;
     this.style = style;
     this.canvas = canvas;
     this.cb = callbacks;
@@ -44,6 +50,7 @@ export class Editor {
     this.tool = 'paint';
     this.brush = 'residential';
     this.placeId = 'prop.bench';
+    this.paletteTab = 'street';
     this.placeParams = {};
     this.placeRot = 0;
     this.selected = null;
@@ -143,8 +150,17 @@ export class Editor {
   frameAll() {
     const { X, Z } = gridGeometry(this.data.grid);
     const aspect = this.canvas.clientWidth / Math.max(1, this.canvas.clientHeight);
-    // half the visible height: the ground is seen at 60°, so depth looks 0.87 × as long
-    this.view = { x: 0, z: 0, zoom: Math.max(Z * 0.5 * Math.sin(Math.PI / 3), (X * 0.5) / aspect) * 1.05 + 4 };
+    // the free area: below the app bar, above the editor panels
+    const H = Math.max(1, this.canvas.clientHeight);
+    const top = 56, bottom = this.ui && !this.ui.hidden ? this.ui.getBoundingClientRect().height + 8 : 0;
+    const free = Math.max(H * 0.35, H - top - bottom);
+    // zoom = half the visible height in metres; the ground is seen at 60°, so depth looks 0.87 × as long
+    const needH = Z * Math.sin(Math.PI / 3) * 1.05 + 8, needW = (X * 1.05 + 8) / aspect;
+    const zoom = Math.max(needH * H / free, needW) / 2;
+    // shift so the town's centre sits in the middle of the free area
+    const shiftPx = (top - bottom) / 2;
+    const k = (zoom * 2) / H;
+    this.view = { x: 0, z: (-shiftPx * k) / Math.sin(Math.PI / 3), zoom };
   }
   /** Ground point (y = 0) under a screen point. */
   groundAt(clientX, clientY) {
@@ -317,29 +333,35 @@ export class Editor {
     el.hidden = true;
     el.innerHTML = `
       <div class="ed-row ed-tools">
-        <button data-tool="pan" title="Pan (or drag with two fingers / right button)">✋ Pan</button>
-        <button data-tool="paint">▦ Blocks</button>
-        <button data-tool="place">＋ Place</button>
-        <button data-tool="select">⬚ Select</button>
+        <button data-tool="pan" title="Pan (or drag with two fingers / right button)">✋<span> Pan</span></button>
+        <button data-tool="paint" title="Paint blocks">▦<span> Blocks</span></button>
+        <button data-tool="place" title="Place things">＋<span> Place</span></button>
+        <button data-tool="select" title="Select, move, change">⬚<span> Select</span></button>
         <span class="ed-sep"></span>
         <button data-act="undo" title="Undo (Ctrl+Z)">↶</button>
         <button data-act="redo" title="Redo (Ctrl+Shift+Z)">↷</button>
         <span class="ed-sep"></span>
-        <button data-act="walk" class="ed-primary">🚶 Walk it</button>
+        <button data-act="walk" class="ed-primary" title="Walk the town">🚶<span> Walk it</span></button>
         <button data-act="menu" title="File and grid">☰</button>
       </div>
       <div class="ed-row ed-ctx" data-for="paint"></div>
-      <div class="ed-row ed-ctx" data-for="place">
-        <select data-k="asset"></select>
-        <select data-k="variant"></select>
-        <select data-k="color"></select>
-        <button data-act="rotPlace" title="Turn (R)">⟳ <span data-k="rot"></span>°</button>
-        <span class="ed-hint">Tap the map to place</span>
+      <div class="ed-row ed-ctx ed-palette" data-for="place">
+        <div class="ed-tabs"></div>
+        <div class="ed-tiles"></div>
+        <div class="ed-opts" data-k="placeOpts"></div>
       </div>
-      <div class="ed-row ed-ctx" data-for="select">
-        <span class="ed-hint" data-k="selName">Tap something to select it, drag it to move</span>
-        <button data-act="rotSel" title="Turn (R)">⟳ Turn</button>
-        <button data-act="delSel" title="Delete">🗑 Delete</button>
+      <div class="ed-row ed-ctx ed-card" data-for="select">
+        <span class="ed-hint" data-k="selHint">Tap something to select it · drag it to move</span>
+        <div class="ed-selected" data-k="selCard" hidden>
+          <img class="ed-thumb" data-k="selThumb" alt="">
+          <b data-k="selName"></b>
+          <div class="ed-opts" data-k="selOpts"></div>
+          <div class="ed-actions">
+            <button data-act="rotSel" title="Turn (R)">⟳ Turn</button>
+            <button data-act="dupSel" title="Duplicate">⧉ Copy</button>
+            <button data-act="delSel" title="Delete (Del)">🗑 Delete</button>
+          </div>
+        </div>
       </div>
       <div class="ed-row ed-menu" hidden>
         <span>Grid <b data-k="gridSize"></b></span>
@@ -348,8 +370,6 @@ export class Editor {
         <span class="ed-sep"></span>
         <button data-act="new">New empty</button>
         <button data-act="sample">Sample town</button>
-        <button data-act="save">Save file</button>
-        <button data-act="load">Load file</button>
         <button data-act="fit">Fit view</button>
       </div>`;
     document.body.appendChild(el);
@@ -370,7 +390,33 @@ export class Editor {
       #editor-ui .ed-sep { width: 1px; align-self: stretch; background: #55555e; }
       #editor-ui .ed-hint { color: #aaa; padding: 0 4px; }
       #editor-ui .chip { display: inline-flex; gap: 6px; align-items: center; }
-      #editor-ui .chip i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }`;
+      #editor-ui .chip i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+      #editor-ui button { min-height: 44px; }
+      #editor-ui button:disabled { opacity: .4; }
+      #editor-ui .ed-palette, #editor-ui .ed-card { flex-direction: column; align-items: stretch; width: min(920px, 100%); }
+      #editor-ui .ed-tabs, #editor-ui .ed-tiles, #editor-ui .ed-opts, #editor-ui .ed-actions { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
+      #editor-ui .ed-tabs button { min-height: 36px; padding: 4px 12px; border-radius: 18px; background: transparent; }
+      #editor-ui .ed-tabs button.on { background: #eee; color: #1d1d1d; border-color: #eee; }
+      #editor-ui .ed-tiles { padding: 2px 0 4px; }
+      #editor-ui .tile { flex: 0 0 auto; width: 88px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; background: #2e2e35; }
+      #editor-ui .tile img, #editor-ui .ed-thumb { width: 64px; height: 64px; image-rendering: pixelated; }
+      #editor-ui .tile span { font-size: 11px; line-height: 1.15; text-align: center; color: #ddd; }
+      #editor-ui .tile.on { outline: 3px solid #f2c230; outline-offset: -3px; background: #2e2e35; color: #eee; }
+      @media (max-width: 760px) {
+        #editor-ui .ed-tools span { display: none; }
+        #editor-ui .ed-tools button { padding: 6px 12px; }
+        #editor-ui .tile { width: 78px; }
+      }
+      #editor-ui .ed-opts { align-items: center; flex-wrap: wrap; }
+      #editor-ui .ed-opts:empty { display: none; }
+      #editor-ui .ed-opts label { color: #aaa; font-size: 12px; margin-right: 2px; }
+      #editor-ui .ed-opts button { min-height: 36px; padding: 4px 10px; }
+      #editor-ui .ed-opts button.on { background: #f2c230; color: #1d1d1d; border-color: #f2c230; }
+      #editor-ui .swatch { width: 36px; padding: 0; border-width: 2px; }
+      #editor-ui .swatch.on { outline: 3px solid #f2c230; outline-offset: 1px; }
+      #editor-ui .ed-selected { display: grid; grid-template-columns: 64px 1fr; gap: 6px 10px; align-items: center; }
+      #editor-ui .ed-selected[hidden] { display: none; }
+      #editor-ui .ed-selected .ed-opts, #editor-ui .ed-selected .ed-actions { grid-column: 1 / -1; }`;
     document.head.appendChild(css);
 
     // block brush chips
@@ -387,37 +433,22 @@ export class Editor {
     hint.textContent = 'Tap or drag over cells · same type again = new layout';
     paint.appendChild(hint);
 
-    // asset list, grouped by category
-    const sel = el.querySelector('[data-k="asset"]');
-    const CATS = { building: 'Buildings', area: 'Areas', prop: 'Street props', vehicle: 'Vehicles', ground: 'Ground' };
-    for (const [cat, label] of Object.entries(CATS)) {
-      const og = document.createElement('optgroup');
-      og.label = label;
-      for (const a of ASSETS.filter((a) => a.category === cat)) og.appendChild(new Option(a.label, a.id));
-      sel.appendChild(og);
+    // palette: tabs of asset groups, each a row of pictures
+    const tabs = el.querySelector('.ed-tabs');
+    for (const [key, label] of PALETTE_TABS) {
+      const t = document.createElement('button');
+      t.dataset.tab = key;
+      t.textContent = label;
+      tabs.appendChild(t);
     }
-    sel.value = this.placeId;
-    const setAsset = (id) => {
-      this.placeId = id;
-      const a = CATALOG[id];
-      this.placeParams = { ...a.params };
-      const fill = (k, list) => {
-        const s = el.querySelector(`[data-k="${k}"]`);
-        s.replaceChildren(...(list ?? []).map((v) => new Option(v, v)));
-        s.hidden = !list || list.length < 2;
-      };
-      fill('variant', a.variants);
-      fill('color', a.colors);
-    };
-    setAsset(this.placeId);
-    sel.addEventListener('change', () => { setAsset(sel.value); this.updateUI(); });
-    el.querySelector('[data-k="variant"]').addEventListener('change', (e) => { this.placeParams.variant = e.target.value; });
-    el.querySelector('[data-k="color"]').addEventListener('change', (e) => { this.placeParams.color = e.target.value; });
-
+    this.setAsset(this.placeId);
     el.addEventListener('click', async (e) => {
       const b = e.target.closest('button');
       if (!b) return;
-      if (b.dataset.tool) { this.tool = b.dataset.tool; this.drawHover(null); }
+      if (b.dataset.tool) { this.tool = b.dataset.tool; this.drawHover(null); if (this.tool === 'place' && this.tilesStale) this.renderTiles(); }
+      if (b.dataset.tab) { this.paletteTab = b.dataset.tab; this.renderTiles(); }
+      if (b.dataset.asset) this.setAsset(b.dataset.asset);
+      if (b.dataset.opt) this.applyOption(b.closest('[data-k]').dataset.k, b.dataset.opt, b.dataset.val);
       if (b.dataset.brush) this.brush = b.dataset.brush;
       const act = b.dataset.act;
       const g = this.data.grid;
@@ -427,6 +458,7 @@ export class Editor {
       if (act === 'rotPlace') this.placeRot = (this.placeRot + 90) % 360;
       if (act === 'rotSel') this.rotateSelected();
       if (act === 'delSel') this.deleteSelected();
+      if (act === 'dupSel') this.duplicateSelected();
       if (act === 'cols-') this.resize(-1, 0);
       if (act === 'cols+') this.resize(1, 0);
       if (act === 'rows-') this.resize(0, -1);
@@ -442,6 +474,89 @@ export class Editor {
     this.updateUI();
   }
 
+  /** Pick the asset to place, with its default settings. */
+  setAsset(id) {
+    const a = CATALOG[id];
+    this.placeId = id;
+    this.placeParams = { ...a.params };
+    if (a.group) this.paletteTab = a.group;
+    this.renderTiles();
+  }
+
+  renderTiles() {
+    // pictures are drawn only once the palette is actually open
+    if (this.tool !== 'place' || !this.active) { this.tilesStale = true; this.updateUI(); return; }
+    this.tilesStale = false;
+    const row = this.ui.querySelector('.ed-tiles');
+    row.replaceChildren();
+    for (const a of ASSETS.filter((x) => x.group === this.paletteTab)) {
+      const t = document.createElement('button');
+      t.className = 'tile';
+      t.dataset.asset = a.id;
+      t.title = a.label;
+      const img = document.createElement('img');
+      img.alt = '';
+      t.append(img, Object.assign(document.createElement('span'), { textContent: a.label }));
+      row.appendChild(t);
+      thumbInto(img, this.renderer, this.style, a.id, {});
+    }
+    this.updateUI();
+  }
+
+  /** Option chips (type, colour, shop type, new look) for an asset's params. */
+  renderOptions(box, asset, params, { turn } = {}) {
+    box.replaceChildren();
+    const add = (html, attrs = {}) => {
+      const b = document.createElement('button');
+      b.innerHTML = html;
+      Object.assign(b.dataset, attrs);
+      box.appendChild(b);
+      return b;
+    };
+    const label = (t) => box.appendChild(Object.assign(document.createElement('label'), { textContent: t }));
+    if (asset.variants?.length > 1) {
+      label('Type');
+      for (const v of asset.variants) add(v, { opt: 'variant', val: v }).classList.toggle('on', params.variant === v);
+    }
+    if (asset.colors) {
+      label('Colour');
+      for (const c of asset.colors) {
+        const b = add('', { opt: 'color', val: c });
+        b.className = 'swatch';
+        b.title = c;
+        b.style.background = hex(CLOTH_COLORS[c] ?? 0x888888);
+        b.classList.toggle('on', params.color === c);
+      }
+    }
+    if ('shopType' in asset.params) {
+      label('Shop');
+      add('Any', { opt: 'shopType', val: '' }).classList.toggle('on', !params.shopType);
+      for (const t of SHOP_TYPES) add(t, { opt: 'shopType', val: t }).classList.toggle('on', params.shopType === t);
+    }
+    if ('seed' in asset.params) add('🎲 New look', { opt: 'seed', val: '' });
+    if (turn) add(`⟳ ${this.placeRot}°`, { act: 'rotPlace' }).title = 'Turn (R)';
+  }
+
+  /** A chip was tapped: change the asset to place, or the selected thing. */
+  applyOption(where, key, val) {
+    const value = key === 'seed' ? Math.floor(Math.random() * 1e9) : key === 'shopType' ? (val || null) : val;
+    if (where === 'placeOpts') { this.placeParams[key] = value; this.updateUI(); return; }
+    const s = this.selected;
+    if (!s) return;
+    this.setData(updateObject(this.data, s, { params: { ...s.params, [key]: value } }));
+  }
+
+  duplicateSelected() {
+    const s = this.selected;
+    if (!s) return;
+    const copy = { ...s, params: { ...s.params }, x: s.x + 2, z: s.z + 2 };
+    delete copy.group;
+    this.setData(addObject(this.data, copy));
+    this.selected = copy;
+    this.drawSelection();
+    this.updateUI();
+  }
+
   updateUI() {
     const el = this.ui;
     if (!el) return;
@@ -450,17 +565,26 @@ export class Editor {
     el.querySelectorAll('.ed-ctx').forEach((r) => { r.hidden = r.dataset.for !== this.tool; });
     el.querySelector('[data-act="undo"]').disabled = !this.history.length;
     el.querySelector('[data-act="redo"]').disabled = !this.future.length;
-    el.querySelector('[data-k="rot"]').textContent = this.placeRot;
     el.querySelector('[data-k="gridSize"]').textContent = `${this.data.grid.cols} × ${this.data.grid.rows}`;
+    el.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === this.paletteTab));
+    el.querySelectorAll('.tile').forEach((b) => b.classList.toggle('on', b.dataset.asset === this.placeId));
+    if (this.tool === 'place') this.renderOptions(el.querySelector('[data-k="placeOpts"]'), CATALOG[this.placeId], this.placeParams, { turn: true });
     const s = this.selected;
-    el.querySelector('[data-k="selName"]').textContent = s ? `${CATALOG[s.asset]?.label ?? s.asset}${s.params?.variant ? ' · ' + s.params.variant : ''}` : 'Tap something to select it, drag it to move';
-    el.querySelector('[data-act="rotSel"]').hidden = !s;
-    el.querySelector('[data-act="delSel"]').hidden = !s;
+    el.querySelector('[data-k="selHint"]').hidden = !!s;
+    el.querySelector('[data-k="selCard"]').hidden = !s;
+    if (s && CATALOG[s.asset]) {
+      const a = CATALOG[s.asset];
+      el.querySelector('[data-k="selName"]').textContent = a.label;
+      const img = el.querySelector('[data-k="selThumb"]');
+      if (img.dataset.asset !== s.asset) { img.dataset.asset = s.asset; img.removeAttribute('src'); thumbInto(img, this.renderer, this.style, s.asset, {}); }
+      this.renderOptions(el.querySelector('[data-k="selOpts"]'), a, { ...a.params, ...s.params });
+    }
   }
 
   show(on) {
     this.active = on;
     this.ui.hidden = !on;
+    if (on && this.tool === 'place' && this.tilesStale) this.renderTiles();
     if (!on) { this.pointers.clear(); this.drawHover(null); }
   }
 }

@@ -110,16 +110,18 @@ async function loadCityFile() {
 function enterEditor() {
   if (!editor) {
     editor = new Editor({
-      style: theStyle, canvas,
+      style: theStyle, canvas, renderer,
       data: cityData ?? city?.layout.data ?? generateCityData(),
       callbacks: {
         onSave: async (data) => { if (!(await saveFile(`${(data.meta?.name ?? 'city').replace(/\W+/g, '-').toLowerCase()}.json`, JSON.stringify(data, null, 1)))) toast('City not saved'); },
         onLoad: loadCityFile,
         onSample: () => generateCityData(),
-        onWalk: (data) => { cityData = data; city = null; enterCity(); walkedFromEditor = true; },
+        onWalk: () => walkTown(),
       },
     });
-    editor.frameAll();
+    setView('editor');
+    editor.frameAll(); // after the editor's panels are on screen, so it fits above them
+    return;
   }
   setView('editor');
 }
@@ -188,21 +190,49 @@ controls.enabled = false;
 
 const backBtn = document.querySelector('#back');
 const hint = document.querySelector('#hint');
-// leaving the city goes back to the editor when the walk started there
-let walkedFromEditor = false;
 const goBack = () => {
-  if (state.view === 'editor') setView('gallery');                       // editor -> character creator
-  else if (state.view === 'gallery' || state.view === 'props') enterEditor(); // grids -> editor (home)
-  else setView(state.view === 'city' && walkedFromEditor ? 'editor' : state.lastGrid);
+  if (state.view === 'city') enterEditor();          // leaving a walk goes back to building
+  else if (!['editor', 'gallery', 'props'].includes(state.view)) setView(state.lastGrid);
 };
 backBtn.addEventListener('click', goBack);
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !['editor', 'gallery', 'props'].includes(state.view)) goBack();
+  if (e.key === 'Escape') goBack();
 });
 
 function enterFocus(cell) {
   state.focus = cell;
   setView('focus');
+}
+
+// ---------------------------------------------------------------------------
+// App bar: Build / Characters / Walk, Save / Open, and ⚙ developer settings
+// ---------------------------------------------------------------------------
+const MODE_OF = { editor: 'build', city: 'walk' }; // every other view is Characters
+const devBtn = document.querySelector('#devBtn');
+let devOpen = false;
+function updateAppBar() {
+  const mode = MODE_OF[state.view] ?? 'characters';
+  document.querySelectorAll('#modes [data-mode]').forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
+  document.querySelector('#saveBtn').hidden = mode !== 'build';
+  document.querySelector('#loadBtn').hidden = mode !== 'build';
+  devBtn.classList.toggle('on', devOpen);
+  // the developer panel only shows when asked for (Characters still uses it for now)
+  if (devOpen || mode === 'characters') { gui.show(); if (devOpen) gui.open(); } else gui.hide();
+}
+devBtn.addEventListener('click', () => { devOpen = !devOpen; updateAppBar(); });
+document.querySelector('#modes').addEventListener('click', (e) => {
+  const mode = e.target.closest('[data-mode]')?.dataset.mode;
+  if (mode === 'build') enterEditor();
+  if (mode === 'characters') setView('gallery');
+  if (mode === 'walk') walkTown();
+});
+document.querySelector('#saveBtn').addEventListener('click', () => actions.saveCity());
+document.querySelector('#loadBtn').addEventListener('click', () => actions.loadCity());
+/** Walk the town being built (rebuilt when it or your character changed). */
+function walkTown() {
+  if (!editor) enterEditor();
+  if (cityData !== editor.data) { cityData = editor.data; city = null; }
+  enterCity();
 }
 
 function setView(view) {
@@ -215,17 +245,14 @@ function setView(view) {
   }
   state.view = view;
   editor?.show(view === 'editor');
-  if (view !== 'city') walkedFromEditor = view === 'editor' ? walkedFromEditor : false;
+  updateAppBar();
   if (view === 'editor') {
     cityInput.active = false;
     controls.enabled = false;
     joystick.hidden = true;
-    gui.close();
-    if (window.innerWidth < 700) gui.hide(); else gui.show();
     grid.hidden = true;
     propsGrid.hidden = true;
-    backBtn.hidden = false;
-    backBtn.textContent = '👤 Characters';
+    backBtn.hidden = true;
     hint.textContent = 'Paint blocks · place and move things · drag with two fingers or the right button to pan · scroll or pinch to zoom';
     return;
   }
@@ -233,23 +260,19 @@ function setView(view) {
   cityInput.active = inCity;
   controls.enabled = false;
   joystick.hidden = !(inCity && (matchMedia('(pointer: coarse)').matches || window.innerWidth < 900));
-  // on phones the panel would cover the Exit button, so hide it in the city
-  if (inCity && window.innerWidth < 700) gui.hide(); else gui.show();
   if (inCity) {
-    gui.close();
     grid.hidden = true;
     propsGrid.hidden = true;
-    backBtn.hidden = false;
-    backBtn.textContent = '← Exit city';
+    backBtn.hidden = true;
     hint.textContent = 'WASD / arrows to walk · Shift to run · drag to look · scroll to zoom · Esc to exit';
     return;
   }
   const big = view !== 'gallery' && view !== 'props';
   grid.hidden = view !== 'gallery';
   propsGrid.hidden = view !== 'props';
-  backBtn.hidden = false;
+  backBtn.hidden = !big;
   controls.enabled = big;
-  backBtn.textContent = big ? `← ${state.lastGrid === 'props' ? 'Props' : 'Characters'}` : '🏙 City editor';
+  backBtn.textContent = `← ${state.lastGrid === 'props' ? 'Props' : 'Back'}`;
   hint.textContent = big
     ? 'Drag to orbit · scroll to zoom · Esc to go back'
     : 'Click a cell to inspect it up close';

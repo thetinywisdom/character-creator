@@ -14,6 +14,8 @@ import { tiledBox } from '../props/util.js';
 //   id        'building.house', 'prop.bench', 'vehicle.car', ...
 //   label     name for menus
 //   category  'building' | 'area' | 'prop' | 'vehicle' | 'ground' | 'line'
+//   group     palette tab in the editor: 'buildings' | 'street' | 'traffic' |
+//             'extras' | 'vehicles' | 'areas' (none = not offered there)
 //   params    default settings (a city object's params override these)
 //   variants  optional list of variant names (params.variant)
 //   colors    optional list of colour names (params.color)
@@ -57,6 +59,7 @@ const buildingAssets = Object.entries(BUILDERS).map(([key, fn]) => ({
   id: `building.${key}`,
   label: BUILDING_LABELS[key],
   category: 'building',
+  group: 'buildings',
   params: { w: 10, d: 12, seed: 1, ...(key === 'shop' || key === 'mixedUse' ? { shopType: null } : {}) },
   size: [10, 12],
   build(p, style) {
@@ -71,6 +74,7 @@ const areaAssets = [{
   id: 'area.park',
   label: 'Park',
   category: 'area',
+  group: 'areas',
   params: { w: 34, d: 34, seed: 1 },
   size: [34, 34],
   build(p, style) {
@@ -80,8 +84,10 @@ const areaAssets = [{
 }];
 
 // --- props and vehicles ------------------------------------------------------
+const PALETTE_GROUP = { 'Street furniture': 'street', 'Traffic and signs': 'traffic', Vehicles: 'vehicles', Extras: 'extras' };
 const propAssets = PROP_GROUPS.flatMap((group) => group.props.map((prop) => ({
   id: `${group.label === 'Vehicles' ? 'vehicle' : 'prop'}.${prop.id}`,
+  group: PALETTE_GROUP[group.label],
   label: prop.label,
   category: group.label === 'Vehicles' ? 'vehicle' : 'prop',
   variants: prop.variants,
@@ -101,6 +107,7 @@ const groundAssets = [{
   id: 'ground.paving',
   label: 'Paving',
   category: 'ground',
+  group: 'areas',
   params: { w: 4, d: 4, color: 0x9c9a92 },
   size: [4, 4],
   build(p, style) {

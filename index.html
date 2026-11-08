@@ -12,8 +12,17 @@
         <strong>Tiny City Builder</strong>
         <span id="subtitle">City editor</span>
       </div>
-      <button id="back" type="button" hidden>← Gallery</button>
+      <nav id="modes" aria-label="Mode">
+        <button type="button" data-mode="build">🏙<span> Build</span></button>
+        <button type="button" data-mode="characters">👤<span> Characters</span></button>
+        <button type="button" data-mode="walk">🚶<span> Walk</span></button>
+      </nav>
+      <button id="back" type="button" hidden>← Back</button>
       <span id="hint"></span>
+      <span class="spacer"></span>
+      <button id="saveBtn" type="button" title="Save the town as a file">💾<span> Save</span></button>
+      <button id="loadBtn" type="button" title="Open a town file">📂<span> Open</span></button>
+      <button id="devBtn" type="button" title="Developer settings">⚙</button>
     </header>
     <main id="grid"></main>
     <main id="propsGrid" class="props-grid" hidden></main>
