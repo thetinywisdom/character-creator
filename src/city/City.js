@@ -125,6 +125,11 @@ export class City {
     setDetail(1);
 
     this.cam = { yaw: Math.PI, pitch: 0.32, dist: 6 };
+    // isometric view: an orthographic camera at the classic angle (35.3° down,
+    // turned in 45° steps), following the player; zoom = half the view height (m)
+    this.isoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 800);
+    this.iso = { yaw: Math.PI / 4, targetYaw: Math.PI / 4, zoom: 16 };
+    this.viewMode = 'third';
     this.applyLighting({ keyColor: 0xffffff, key: 1, dir: [0.5, 1, 0.6], hemi: 1, tint: null, tintAmount: 0 });
   }
 
@@ -163,16 +168,50 @@ export class City {
     p.z = Math.max(-lim.z, Math.min(lim.z, p.z));
   }
 
+  /** The camera to render with: third person or isometric. */
+  get activeCamera() { return this.viewMode === 'iso' ? this.isoCamera : this.camera; }
+
+  /** Switch between 'third' and 'iso' (no argument: toggle). */
+  setViewMode(mode = this.viewMode === 'iso' ? 'third' : 'iso') {
+    if (mode === 'iso' && this.viewMode !== 'iso') {
+      // start the iso view looking the same way the third-person camera did, snapped to 45° steps
+      const snap = Math.round((this.cam.yaw - Math.PI / 4) / (Math.PI / 2)) * (Math.PI / 2) + Math.PI / 4;
+      this.iso.yaw = this.iso.targetYaw = snap;
+    }
+    this.viewMode = mode;
+    return mode;
+  }
+
+  /** Turn the iso view by 90° (dir ±1). */
+  rotateIso(dir) { this.iso.targetYaw += dir * Math.PI / 2; }
+
+  /** Keep the cameras' shape matching the screen. */
+  setAspect(aspect) {
+    this.camera.aspect = aspect;
+    this.camera.updateProjectionMatrix();
+    const z = this.iso.zoom;
+    Object.assign(this.isoCamera, { left: -z * aspect, right: z * aspect, top: z, bottom: -z });
+    this.isoCamera.updateProjectionMatrix();
+  }
+
   update(dt, input) {
     const look = input.takeLook();
-    this.cam.yaw += look.yaw;
-    this.cam.pitch = Math.max(0.05, Math.min(1.2, this.cam.pitch + look.pitch));
-    this.cam.dist = Math.max(2.5, Math.min(18, this.cam.dist + look.zoom * 0.8));
+    if (this.viewMode === 'iso') {
+      // drag turns the view freely, wheel / pinch zooms; Q / E (rotateIso) turn it 90° smoothly
+      if (look.yaw) this.iso.targetYaw = this.iso.yaw = this.iso.yaw + look.yaw;
+      this.iso.yaw += (this.iso.targetYaw - this.iso.yaw) * Math.min(1, dt * 8);
+      this.iso.zoom = Math.max(5, Math.min(60, this.iso.zoom * Math.exp(look.zoom * 0.12)));
+    } else {
+      this.cam.yaw += look.yaw;
+      this.cam.pitch = Math.max(0.05, Math.min(1.2, this.cam.pitch + look.pitch));
+      this.cam.dist = Math.max(2.5, Math.min(18, this.cam.dist + look.zoom * 0.8));
+    }
 
     // --- player: move relative to the camera ---------------------------------
     const p = this.player;
     const a = input.axes();
-    const fwd = { x: -Math.sin(this.cam.yaw), z: -Math.cos(this.cam.yaw) };
+    const moveYaw = this.viewMode === 'iso' ? this.iso.yaw : this.cam.yaw; // move relative to the screen
+    const fwd = { x: -Math.sin(moveYaw), z: -Math.cos(moveYaw) };
     const right = { x: -fwd.z, z: fwd.x };
     const mx = right.x * a.x - fwd.x * a.z;
     const mz = right.z * a.x - fwd.z * a.z;
@@ -243,6 +282,18 @@ export class City {
       tz + Math.cos(yaw) * Math.cos(pitch) * dist,
     );
     this.camera.lookAt(tx, ty, tz);
+    // isometric camera: far up along the iso direction, looking at the player
+    const ip = Math.atan(1 / Math.SQRT2), D = 300;
+    this.isoCamera.position.set(
+      tx + Math.sin(this.iso.yaw) * Math.cos(ip) * D,
+      ty + Math.sin(ip) * D,
+      tz + Math.cos(this.iso.yaw) * Math.cos(ip) * D,
+    );
+    this.isoCamera.lookAt(tx, ty, tz);
+    // shadows cover more ground when the iso view is zoomed out
+    const reach = this.viewMode === 'iso' ? Math.max(30, this.iso.zoom * 2.2) : 30;
+    const sc = this.key.shadow.camera;
+    if (sc.right !== reach) { sc.left = sc.bottom = -reach; sc.right = sc.top = reach; sc.far = Math.max(120, reach * 4); sc.updateProjectionMatrix(); }
 
     // shadows follow the player
     this.key.position.set(p.x, 0, p.z).addScaledVector(this.lightDir, 50);

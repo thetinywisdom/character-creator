@@ -79,7 +79,11 @@ The bar at the top has three modes:
   Still / Walk / Run) and a panel with four tabs (Body, Hair & face, Clothes,
   Accessories) of chips, colour swatches and sliders. Only allowed options are
   shown (see the character rules); **🎲 Random** and **↺** reset are always there.
-- **🚶 Walk:** walk the town you are building, as your character.
+- **🚶 Walk:** walk the town you are building, as your character. **🎥** (or
+  **V**) switches between the third-person camera and an **isometric view**
+  (orthographic, the classic city-builder angle) that follows you: scroll or
+  pinch to zoom from street level to whole districts, drag to turn, **Q / E**
+  to rotate 90°. Movement is relative to the screen in both views.
 
 **⚙** opens the developer settings (the old controls panel: look options,
 lighting, preview views such as the street scene, crowd and props gallery,

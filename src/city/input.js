@@ -22,20 +22,36 @@ export class CityInput {
     window.addEventListener('keyup', (e) => this.keys.delete(e.code));
     window.addEventListener('blur', () => this.keys.clear());
 
-    // drag to look
+    // drag to look; two fingers pinch to zoom
     let drag = null;
+    const touches = new Map();
+    let pinch = null;
     canvas.addEventListener('pointerdown', (e) => {
       if (!this.active || e.target !== canvas) return;
-      drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
+      touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
       canvas.setPointerCapture(e.pointerId);
+      if (touches.size === 2) { drag = null; pinch = null; return; }
+      drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
     });
     canvas.addEventListener('pointermove', (e) => {
+      if (touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (touches.size === 2) {
+        const [a, b] = [...touches.values()];
+        const dist = Math.hypot(a.x - b.x, a.y - b.y);
+        if (pinch) this.zoomDelta += (pinch - dist) * 0.02;
+        pinch = dist;
+        return;
+      }
       if (!drag || e.pointerId !== drag.id) return;
       this.yawDelta -= (e.clientX - drag.x) * 0.006;
       this.pitchDelta += (e.clientY - drag.y) * 0.004;
       drag.x = e.clientX; drag.y = e.clientY;
     });
-    const end = (e) => { if (drag && e.pointerId === drag.id) drag = null; };
+    const end = (e) => {
+      touches.delete(e.pointerId);
+      if (touches.size < 2) pinch = null;
+      if (drag && e.pointerId === drag.id) drag = null;
+    };
     canvas.addEventListener('pointerup', end);
     canvas.addEventListener('pointercancel', end);
     canvas.addEventListener('wheel', (e) => { if (this.active) { this.zoomDelta += Math.sign(e.deltaY); e.preventDefault(); } }, { passive: false });

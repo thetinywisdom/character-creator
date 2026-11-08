@@ -180,6 +180,7 @@ function enterCity() {
     const byId = Object.fromEntries(subjects.map((s) => [s.id, s]));
     city = new City({ style: theStyle, renderer, human: byId.human, cat: byId.cat, params, data: cityData });
     city.applyLighting(lightingPresets[state.lighting]);
+    if (state.cityView === 'iso') city.setViewMode('iso'); // keep the chosen camera when the town is rebuilt
     cityParamsKey = key;
   }
   setView('city');
@@ -264,6 +265,8 @@ function updateAppBar() {
   document.querySelector('#saveBtn').hidden = mode !== 'build';
   document.querySelector('#loadBtn').hidden = mode !== 'build';
   document.querySelector('#townsBtn').hidden = mode !== 'build';
+  document.querySelector('#viewBtn').hidden = mode !== 'walk';
+  updateViewBtn();
   devBtn.classList.toggle('on', devOpen);
   // the developer panel only shows when asked for (Characters still uses it for now)
   if (devOpen) { gui.show(); gui.open(); } else gui.hide();
@@ -278,6 +281,22 @@ document.querySelector('#modes').addEventListener('click', (e) => {
 document.querySelector('#saveBtn').addEventListener('click', () => actions.saveCity());
 document.querySelector('#loadBtn').addEventListener('click', () => actions.loadCity());
 document.querySelector('#townsBtn').addEventListener('click', () => townsPanel.show());
+// Walk mode camera: isometric or third person (button or V; Q / E turn the iso view)
+const viewBtn = document.querySelector('#viewBtn');
+function updateViewBtn() {
+  const iso = city?.viewMode === 'iso';
+  viewBtn.innerHTML = iso ? '🎥<span> 3rd person</span>' : '🎥<span> Iso view</span>';
+  hint.textContent = state.view !== 'city' ? hint.textContent : iso
+    ? 'WASD / arrows to walk · Shift to run · drag to turn · scroll or pinch to zoom · Q / E rotate · V third person'
+    : 'WASD / arrows to walk · Shift to run · drag to look · scroll to zoom · V isometric view · Esc to exit';
+}
+viewBtn.addEventListener('click', () => { if (city) state.cityView = city.setViewMode(); updateViewBtn(); });
+window.addEventListener('keydown', (e) => {
+  if (state.view !== 'city' || !city || e.target.closest?.('input, select, textarea')) return;
+  if (e.code === 'KeyV') { state.cityView = city.setViewMode(); updateViewBtn(); }
+  if (city.viewMode === 'iso' && e.code === 'KeyQ') city.rotateIso(-1);
+  if (city.viewMode === 'iso' && e.code === 'KeyE') city.rotateIso(1);
+});
 /** Walk the town being built (rebuilt when it or your character changed). */
 function walkTown() {
   if (!editor) enterEditor();
@@ -327,7 +346,7 @@ function setView(view) {
     grid.hidden = true;
     propsGrid.hidden = true;
     backBtn.hidden = true;
-    hint.textContent = 'WASD / arrows to walk · Shift to run · drag to look · scroll to zoom · Esc to exit';
+    updateViewBtn();
     return;
   }
   const big = view !== 'gallery' && view !== 'props';
@@ -742,9 +761,8 @@ function loop(time) {
   } else if (state.view === 'city' && city) {
     city.playerGait = state.cityGait === 'Roller skate' ? 'skate' : 'natural';
     city.update(dt, cityInput);
-    city.camera.aspect = W / H;
-    city.camera.updateProjectionMatrix();
-    renderCell(city, city.camera, 0, 0, W, H);
+    city.setAspect(W / H);
+    renderCell(city, city.activeCamera, 0, 0, W, H);
   } else if (state.view === 'gallery' || state.view === 'props') {
     for (const cell of state.view === 'props' ? propCells : galleryCells) {
       const r = cell.el.getBoundingClientRect();
