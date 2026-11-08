@@ -99,6 +99,18 @@ Settings are remembered in your browser.
 | 4. (Optional) Paper cut-out style + idle animations | skipped |
 | 5. Pick a direction and write a short style guide | ✅ PS1 · Bright + clear |
 
+**City builder roadmap** (goal: a city builder for future web, iOS and Android
+games; mobile via three.js wrapped with Capacitor)
+
+| Step | Status |
+|---|---|
+| A. Foundation: asset catalogue, city file format, generator / builder split, save & load | ✅ |
+| B. City editor (touch-friendly): paint roads, place assets, fill blocks, undo, walk it | next |
+| C. Mobile performance: instancing, chunks, simpler distant people, phone frame budget | |
+| D. Game library: `loadCity(json)`, `createCharacter(params)`, walk / traffic data | |
+| E. Capacitor test shell (iOS + Android) | |
+| F. glTF export | |
+
 ## Code layout
 
 ```
@@ -112,13 +124,43 @@ src/
   viewer/Cell.js     one stage (scene, lights, ground, street backdrop, camera framing)
   viewer/params.js   defaults + saved settings
   props/             furniture.js, traffic.js, vehicles.js, extras.js, index.js
-  city/              layout.js (town generator), buildings.js, park.js, City.js (walking,
-                     pedestrians, cars, camera), input.js (keys, drag, joystick)
+  catalog/index.js   the asset catalogue: every placeable asset behind one interface
+  city/              format.js (city file format), build.js (city file -> scene),
+                     layout.js (town generator -> city file), buildings.js, park.js,
+                     City.js (walking, pedestrians, cars, camera), input.js (keys, drag, joystick)
   anim/gait.js       procedural walk / run cycle
-  lib/               shape helpers, seeded random, sign textures, mesh merging
+  lib/               shape helpers, seeded random, sign textures, mesh merging, saveFile
 ```
 
 Subjects never pick colours or materials themselves. They ask the style for a
 material by *role* (`skin`, `cloth`, `hair`, `fur`, `bark`, `leaf`, ...). Adding a
 new style direction means adding one file in `src/styles/` and listing it in
 `src/styles/index.js`; it then shows up as a new row in the gallery.
+
+## Building cities
+
+A city is a plain JSON file, so it can be generated, edited, saved, loaded and
+used by other projects. Three pieces:
+
+1. **Asset catalogue** (`src/catalog/index.js`). Everything that can be placed:
+   buildings (`building.house`, `building.apartment`, `building.mixedUse`,
+   `building.shop`, `building.office`), the park (`area.park`), street props
+   (`prop.bench`, `prop.streetLamp`, `prop.vendingMachine`, ...), vehicles
+   (`vehicle.car`, ...), paving and overhead wires. Every asset has the same
+   interface: `id`, `label`, `category`, default `params`, optional `variants`
+   / `colors`, a rough `size`, and `build(params, style)`. It returns an object
+   standing on y = 0, facing +z, whose `userData.colliders` lists its solid
+   boxes. `createAsset(id, params, style)` builds any of them.
+2. **City file** (`src/city/format.js` documents it). `format: "tiny-city"`,
+   `version: 1`, a street `grid` (cols, rows, block, road, sidewalk, curb), the
+   `blocks` and their types, and `objects`: each one an asset id, its params,
+   a position and a rotation in degrees.
+3. **Builder and generator.** `buildCity(data, style)` (`src/city/build.js`)
+   turns any city file into the scene, plus the colliders, pedestrian loops,
+   car loop, park area and ground height a game needs.
+   `generateCityData(seed)` (`src/city/layout.js`) writes a random town as a
+   city file.
+
+In the viewer: **View → Save city file** downloads the current town,
+**Load city file** walks any city file, and **Back to the sample town** returns
+to the generated town. Unknown assets in a file are skipped with a warning.

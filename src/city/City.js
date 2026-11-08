@@ -3,7 +3,8 @@ import { setDetail } from '../lib/shapes.js';
 import { mergeByMaterial } from '../lib/merge.js';
 import { mulberry32 } from '../lib/rng.js';
 import { car } from '../props/vehicles.js';
-import { generateCity } from './layout.js';
+import { generateCityData } from './layout.js';
+import { buildCity } from './build.js';
 import { JOINT_NAMES, createGait, poseGait, stepGait } from '../anim/gait.js';
 
 // The walkable town: a generated city, your character (built from the
@@ -37,7 +38,7 @@ function loopLengths(loop) {
 }
 
 export class City {
-  constructor({ style, renderer, human, cat, params, npcCount = 28, seed = 3 }) {
+  constructor({ style, renderer, human, cat, params, npcCount = 28, seed = 3, data = null }) {
     this.style = style;
     this.scene = new THREE.Scene();
     this.baseBackground = new THREE.Color(style.background);
@@ -58,7 +59,8 @@ export class City {
 
     // --- the town (static, merged to a few meshes) --------------------------
     setDetail(style.detail ?? 1);
-    const city = generateCity(style, seed);
+    // any city file (generated, edited or loaded); a generated town by default
+    const city = buildCity(data ?? generateCityData(seed), style);
     this.layout = city;
     this.scene.add(mergeByMaterial(city.group));
 

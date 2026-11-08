@@ -9,6 +9,10 @@ import { mulberry32 } from './lib/rng.js';
 import { PROP_GROUPS, propSubject } from './props/index.js';
 import { City } from './city/City.js';
 import { CityInput } from './city/input.js';
+import { saveFile, openTextFile } from './lib/saveFile.js';
+import { generateCityData } from './city/layout.js';
+import { validateCity } from './city/format.js';
+import { CATALOG } from './catalog/index.js';
 import { RUN_SPEED, WALK_SPEED, createGait, poseGait, stepGait } from './anim/gait.js';
 import './style.css';
 
@@ -91,11 +95,12 @@ const joystick = document.querySelector('#joystick');
 const cityInput = new CityInput(canvas, joystick);
 let city = null;
 let cityParamsKey = '';
+let cityData = null; // a loaded city file; null = the generated sample town
 function enterCity() {
   const key = JSON.stringify(params.human);
   if (!city || key !== cityParamsKey) {
     const byId = Object.fromEntries(subjects.map((s) => [s.id, s]));
-    city = new City({ style: galleryStyles[0], renderer, human: byId.human, cat: byId.cat, params });
+    city = new City({ style: galleryStyles[0], renderer, human: byId.human, cat: byId.cat, params, data: cityData });
     city.applyLighting(lightingPresets[state.lighting]);
     cityParamsKey = key;
   }
@@ -263,6 +268,26 @@ const actions = {
   gallery: () => setView('gallery'),
   props: () => setView('props'),
   city: () => enterCity(),
+  /** Save the current town as a city file (JSON). */
+  saveCity: async () => {
+    const data = city?.layout.data ?? cityData ?? generateCityData();
+    const ok = await saveFile(`${(data.meta?.name ?? 'city').replace(/\W+/g, '-').toLowerCase()}.json`, JSON.stringify(data, null, 1));
+    if (!ok) toast('City not saved');
+  },
+  /** Load a city file and walk it. */
+  loadCity: async () => {
+    const text = await openTextFile('.json,application/json');
+    if (text == null) return;
+    let data;
+    try { data = JSON.parse(text); } catch { return toast('That file is not JSON'); }
+    const problems = validateCity(data, CATALOG).filter((p) => !p.startsWith('unknown asset'));
+    if (problems.length) return toast(`Not a city file: ${problems.join(', ')}`);
+    cityData = data;
+    city = null; // rebuild from the new file
+    enterCity();
+  },
+  /** Back to the generated sample town. */
+  sampleCity: () => { cityData = null; city = null; enterCity(); },
   lineup: () => setView('lineup'),
   crowd: () => setView('crowd'),
   study: () => setView('study'),
@@ -280,6 +305,9 @@ const actions = {
   },
 };
 viewFolder.add(actions, 'city').name('Walk the city');
+viewFolder.add(actions, 'saveCity').name('Save city file (JSON)');
+viewFolder.add(actions, 'loadCity').name('Load city file (JSON)');
+viewFolder.add(actions, 'sampleCity').name('Back to the sample town');
 viewFolder.add(actions, 'gallery').name('Gallery (style × subject)');
 viewFolder.add(actions, 'props').name('Props gallery (street props)');
 viewFolder.add(actions, 'lineup').name('Street scene (real scale)');
@@ -435,11 +463,9 @@ let shotPending = false;
 function saveScreenshot() {
   canvas.toBlob((blob) => {
     if (!blob) return;
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `character-creator-${state.view}-${Date.now()}.png`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    saveFile(`character-creator-${state.view}-${Date.now()}.png`, blob).then((ok) => {
+      if (!ok) toast('Screenshot not saved');
+    });
   });
 }
 
