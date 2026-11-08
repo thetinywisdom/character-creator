@@ -142,6 +142,10 @@ dressed in the same tones as the street will disappear.
   flatter face plane and forehead, a jaw narrowing to the chin, the back of the
   lower head tucking in to the neck. Beards and the flu mask grow from the same
   shape so they fit the jaw.
+- **Hair never goes inside the body:** after any style is built, every hair
+  point inside the torso (plus ~5 cm for clothes) is pushed out to the torso
+  surface at that height. With a hoodie, hair lies over the folded hood; long,
+  loose hair hides the hood entirely.
 - Hair that hangs down the back keeps clear of the upper back (it must never
   sink into the shirt); ties are small dark bands.
 

@@ -68,6 +68,50 @@ function backPanel(f, material, endY, width = 1.2) {
   return back;
 }
 
+/**
+ * Keep hair out of the body: every hair vertex that ends up inside the torso
+ * (plus a margin for clothes and outer layers) is pushed straight out to the
+ * torso surface at that height. Works for any style (back panels, waves,
+ * tips, braids, tails) and both body types. Returns a flattened group whose
+ * meshes have their transforms baked in.
+ */
+function keepOutOfBody(g, f) {
+  // metres of clearance: clothes and outer layers, plus extra because the flat
+  // faces between pushed-out points still dip toward the body a little
+  const margin = 0.05;
+  g.updateMatrixWorld(true);
+  const out = new THREE.Group();
+  out.name = g.name;
+  g.traverse((o) => {
+    if (!o.isMesh) return;
+    const geo = o.geometry.clone();
+    geo.applyMatrix4(o.matrixWorld); // into hair-group (head-local) space
+    const pos = geo.attributes.position;
+    let moved = false;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+      const ty = y + f.headY - f.hipY; // torso-local height
+      // with a hoodie the folded hood rises above the shoulders: check up to its top
+      const top = f.hood ? f.torsoLen * 1.12 : f.torsoLen * 0.98;
+      if (ty < f.torsoBottom || ty > top) continue;
+      const ts = Math.min(ty, f.torsoLen * 0.98); // above the torso, use its top
+      // a hoodie's hood sits folded on the upper back: lie over it, not under
+      const hood = f.hood && ty > f.torsoLen * 0.62 && z < 0 ? 0.12 : 0;
+      const r = f.torsoR(ts) + margin + (hood ? 0.04 : 0);          // half width
+      const d = f.torsoR(ts) * f.depthAt(ts) + margin * 1.6 + hood; // half depth (back/chest)
+      const e = (x / r) ** 2 + (z / d) ** 2;
+      if (e >= 1) continue;
+      const k = 1 / Math.sqrt(Math.max(e, 1e-6)); // scale out along the ellipse
+      pos.setXYZ(i, x * k, y, z * k);
+      moved = true;
+    }
+    if (moved) geo.computeVertexNormals();
+    const mesh = new THREE.Mesh(geo, o.material);
+    out.add(mesh);
+  });
+  return out;
+}
+
 /** underHat: a hat covers the top, so the hair cap hugs the scalp to stay hidden under it. */
 export function buildHair(f, style, material, { underHat = false } = {}) {
   const g = new THREE.Group();
@@ -322,5 +366,5 @@ export function buildHair(f, style, material, { underHat = false } = {}) {
     default:
       g.add(crop());
   }
-  return g;
+  return keepOutOfBody(g, f);
 }

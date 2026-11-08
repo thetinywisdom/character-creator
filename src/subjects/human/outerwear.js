@@ -32,11 +32,13 @@ export function buildOuterwear(f, kind, mats) {
     g.add(collar);
   }
   if (spec.hood) {
-    // the hood, folded down on the upper back
-    const hood = new THREE.Mesh(new THREE.SphereGeometry(1, seg(14, 8), seg(8, 5)), m);
-    hood.scale.set(f.sw * 0.3, L * 0.16, f.sw * 0.2);
-    hood.position.set(0, f.shoulderY - L * 0.06, -f.torsoR(L * 0.9) * f.depthAt(L * 0.9) - f.sw * 0.06);
-    g.add(hood);
+    if (!f.hideHood) {
+      // the hood, folded down on the upper back
+      const hood = new THREE.Mesh(new THREE.SphereGeometry(1, seg(14, 8), seg(8, 5)), m);
+      hood.scale.set(f.sw * 0.3, L * 0.16, f.sw * 0.2);
+      hood.position.set(0, f.shoulderY - L * 0.06, -f.torsoR(L * 0.9) * f.depthAt(L * 0.9) - f.sw * 0.06);
+      g.add(hood);
+    }
     // front pocket and drawstrings
     const front = (y) => (f.torsoR(y) + spec.inflate) * f.depthAt(y);
     const pocket = new THREE.Mesh(new THREE.BoxGeometry(f.sw * 0.55, L * 0.16, f.sw * 0.05), m);

@@ -171,6 +171,8 @@ export const human = {
     // --- torso + neck ----------------------------------------------------
     upper.add(buildTorso(f, top, mats));
     const hasOuter = p.outerwear && p.outerwear !== 'None';
+    // long, loose hair hangs over the folded hood and would hide it anyway
+    f.hideHood = /^long(?! · (ponytail|high ponytail|braid|twin tails))/.test(p.hair ?? '');
     if (hasOuter) upper.add(buildOuterwear(f, p.outerwear, mats));
     const neckBottom = f.shoulderY - f.torsoLen * 0.05;
     const neckTop = f.headY - f.R * 0.4;
@@ -195,6 +197,7 @@ export const human = {
     head.name = 'head';
     head.position.y = f.headY;
     head.add(new THREE.Mesh(headGeometry(f), mats.skin)); // shaped like a head, not a ball
+    f.hood = p.outerwear === 'Hoodie'; // long hair lies over the folded hood
     const hair = hairUnder(p.headwear, p.hair);
     head.add(buildHair(f, hair, mats.hair, { underHat: coversHair(p.headwear) }));
     head.add(buildFacialHair(f, p.beard, p.moustache, mats.hair));
