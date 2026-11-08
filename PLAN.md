@@ -51,6 +51,7 @@ edit; that is not this tool's job.
 13. **Smooth turning**: pedestrians and cars follow routes with rounded corners (people 1.2 m, cars 3 m) instead of snapping 90° in one frame.
 14. **Cars in their lane**: a leftover offset from the old ring road pushed cars half onto the pavement; cars now drive in the middle of the kerb-side lane (centre 2.1–2.25 m from the kerb, never on a pavement).
 15. **Narrower roads and collisions**: roads 6 m instead of 9 m (editor ☰ Roads 6 m / 9 m; editor-made towns converted once, keeping hand-placed things in place; no kerb parking on narrow roads); everything solid has a collider; the player can't pass through things, cars, people or cats; pedestrians step round things and each other; cars brake for people and cars ahead.
+16. **Zebra crossings the right way**: bars run with the traffic, laid side by side across the road (fixed in the prop, so saved towns are fixed too).
 
 ## Next (suggested order)
 

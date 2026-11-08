@@ -156,7 +156,7 @@ faces +z, returns `{ group, footprint: { w, d, z }, colliders }`) in
 interior (add a painter to `PAINT` in `interiors.js` if needed). Optionally add
 it to block fills in `layout.js` (`pickBuilding`, `NEW_SHOPS`). Palette
 pictures are cached in the browser: bump `VERSION` in `editor/thumbs.js` if an
-existing asset's look changes.
+existing asset's look changes (done for the crosswalk fix: VERSION 2).
 
 **Add a prop.** Add `{ id, label, variants, colors?, build(params, style) }`
 to a file in `src/props/`, list it in `PROP_GROUPS` (`props/index.js`), add its

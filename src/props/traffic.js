@@ -114,13 +114,20 @@ export const crosswalk = {
   id: 'crosswalk',
   label: 'Crosswalk',
   variants: ['Zebra'],
-  /** opts.length = road width to cross (default 6 m). Stripes run along z. */
+  /**
+   * People cross along z, over a road opts.length wide (default 6 m) whose
+   * traffic runs along x. Like a real zebra crossing, each white bar runs the
+   * same way as the traffic (long along x, the crossing's width) and the bars
+   * are laid side by side across the road, so you walk over them.
+   */
   build(_, style, opts = {}) {
     const g = new THREE.Group();
     const white = style.material('signage', 0xf4f4f0);
     const width = 4, length = opts.length ?? 6;
-    // stripes sit clearly above the road surface (they flickered when they overlapped it)
-    for (let x = -width / 2 + 0.225; x < width / 2; x += 0.9) g.add(box(0.45, 0.02, length, white, [x, 0.024, 0]));
+    const bar = 0.45, gap = 0.45, n = Math.max(1, Math.floor((length - 0.4 + gap) / (bar + gap)));
+    const start = -((n - 1) * (bar + gap)) / 2;
+    // bars sit clearly above the road surface (they flickered when they overlapped it)
+    for (let i = 0; i < n; i++) g.add(box(width, 0.02, bar, white, [0, 0.024, start + i * (bar + gap)]));
     if (!opts.length) g.add(box(width + 1, 0.01, length + 1, style.material('road'), [0, 0.005, 0])); // show it on a bit of road
     return g;
   },

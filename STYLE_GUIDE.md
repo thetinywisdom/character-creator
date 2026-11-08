@@ -265,6 +265,8 @@ About one in six random characters is a child.
 
 - Roads are 6 m wide (two narrow lanes) between 40 m blocks with 3 m
   sidewalks: a town should feel small and walkable, not like a highway.
+- Zebra crossings: each white bar runs the same way as the traffic, and the
+  bars are laid side by side across the road (you walk over them).
 - No cars parked at the kerb on these narrow roads (they would block the
   lane); parked cars belong in parking garages and lots.
 
