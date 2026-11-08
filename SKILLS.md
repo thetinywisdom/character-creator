@@ -20,6 +20,12 @@ worlds that future web / iOS / Android games will load. It has three modes:
 A hidden developer panel (⚙, lil-gui) has look options, lighting, preview
 scenes (street, crowd, props gallery, character grid) and screenshots.
 
+**Output is JSON.** Games consume what this tool makes as JSON: town files
+(`src/city/format.js`) and character settings (the values of `human.schema`,
+see `src/subjects/human.js` and `human/rules.js`). Games build their own
+editors and creators on top; keep the JSON formats stable and documented, and
+version them when they change.
+
 ## Run, build, publish
 
 ```bash
