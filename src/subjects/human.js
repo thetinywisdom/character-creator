@@ -11,7 +11,7 @@ import { OUTERWEAR, buildOuterwear } from './human/outerwear.js';
 import { BACK_ACCESSORIES, BODY_ACCESSORIES, buildBackAccessory, buildBodyAccessory } from './human/accessories.js';
 import { BEARDS, FACE_ACCESSORIES, HEADWEAR, MASKS, MOUSTACHES, buildFaceAccessory, buildFacialHair, buildHeadwear, coversHair, hairUnder } from './human/head.js';
 import { BODY_DEFAULTS, BODY_TYPES, adjust, allowedOptions, applyRules, hiddenControls, isChild } from './human/rules.js';
-import { LEGWEAR, buildBottom, buildLeg, buildSkirt } from './human/legwear.js';
+import { LEGWEAR, buildLeg, buildSkirt } from './human/legwear.js';
 
 // Human character, assembled from slots: body, hair, top, legwear (more slots
 // – headwear, accessories, outerwear – arrive in later batches as new files
@@ -43,9 +43,7 @@ export const human = {
     headWidth:     { group: 'Body', value: 0.8,   min: 0.7,   max: 1.1,  step: 0.01,  label: 'Head width' },
     skin:          { group: 'Body', value: 'Light', options: names(SKIN_TONES), label: 'Skin tone' },
     // women only
-    chestShape:    { group: 'Body shape (woman)', value: 'Smooth (two)', options: ['Smooth (two)', 'Smooth', 'Wedge'], label: 'Chest shape' },
     chestSize:     { group: 'Body shape (woman)', value: 1, min: 0, max: 1.6, step: 0.05, label: 'Chest size' },
-    bottomShape:   { group: 'Body shape (woman)', value: 'Smooth (two)', options: ['Smooth (two)', 'Smooth', 'Round'], label: 'Bottom shape' },
     bottomSize:    { group: 'Body shape (woman)', value: 1, min: 0, max: 1.6, step: 0.05, label: 'Bottom size' },
     // head
     hair:          { group: 'Hair', value: 'short', options: HAIRSTYLES, label: 'Hairstyle' },
@@ -220,7 +218,6 @@ export const human = {
     for (const sx of [-1, 1]) root.add(buildLeg(f, p.legwear, mats, sx, p.footwear));
     // the skirt hangs from the spine joint, so it leans and twists with the hips
     if (p.legwear === 'Skirt') upper.add(buildSkirt(f, mats));
-    else if (f.woman && f.bottomShape === 'Round') root.add(buildBottom(f, mats));
 
     // --- arms (pivot at shoulder) ----------------------------------------
     for (const sx of [-1, 1]) upper.add(buildArm(f, sx, top, mats, (t) => t.sleeve, hasOuter ? mats.outer : null));

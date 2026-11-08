@@ -137,27 +137,6 @@ export function createPs1Style({
   return style;
 }
 
-// The baseline: muted, hazy, foggy.
-export const ps1Classic = createPs1Style({
-  id: 'ps1',
-  label: 'PS1 · Classic',
-  background: 0x7a8794,
-  fog: true,
-});
-
-// Clear blue sky, no fog, saturated colours, stronger sun.
-export const ps1Bright = createPs1Style({
-  id: 'ps1-bright',
-  label: 'PS1 · Bright',
-  background: 0x86c8ef,
-  groundColor: 0xb9b4a6,
-  muted: 0,
-  characterBoost: { saturate: 1.15 },
-  environment: { saturate: 1.1 },
-  hemi: [0xeaf6ff, 0x6b6456, 1.7],
-  key: [0xfff6e6, 2.4],
-});
-
 // Bright, plus every trick for spotting tiny characters: smaller pixels,
 // pixel outlines, blob shadows, vivid characters against a calmer city.
 export const ps1Clear = createPs1Style({

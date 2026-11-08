@@ -59,7 +59,6 @@ export function buildTorso(f, spec, mats) {
     : [[start, HIP, mats.legwear], [HIP, 1, mats.top]];
   for (const [a, b, m] of bands) torso.add(band(f, a * L, b * L, m));
 
-  if (f.woman && f.chestShape === 'Wedge') torso.add(chest(f, L, bands));
 
   if (spec.collar) {
     // a chunky collar ring and a button strip down the front
@@ -82,34 +81,6 @@ export function buildTorso(f, spec, mats) {
     torso.add(placket);
   }
   return torso;
-}
-
-/**
- * Chest: a single trapezoid block, the classic low-poly way to suggest a bust.
- * The back face sits on the torso; the front face is narrower and only as
- * tall as the lower part of the back face, so the top slopes down and forward
- * from the upper chest while the underside stays nearly flat. Flat faces.
- */
-function chest(f, L, bands) {
-  const y = L * 0.72;
-  const m = (bands.find(([a, b]) => y >= a * L && y <= b * L) ?? bands.at(-1))[2];
-  const W = f.sw * 0.72;   // width at the chest (spans most of it)
-  const Hb = L * 0.34;     // height where it meets the chest
-  const D = f.sw * 0.34;   // depth of the block
-  const geo = new THREE.BoxGeometry(W, Hb, D);
-  const pos = geo.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    if (pos.getZ(i) > 0) {
-      // front face: narrower, shorter, lower
-      pos.setX(i, pos.getX(i) * 0.9);
-      pos.setY(i, -Hb / 2 + (pos.getY(i) + Hb / 2) * 0.42);
-    }
-  }
-  geo.computeVertexNormals();
-  const mesh = new THREE.Mesh(geo, m);
-  mesh.position.set(0, f.hipY + y, f.torsoR(y) * f.depthAt(y) - D * 0.2);
-  mesh.name = 'chest';
-  return mesh;
 }
 
 // ---------------------------------------------------------------------------

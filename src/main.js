@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import GUI from 'lil-gui';
 import { subjects } from './subjects/index.js';
-import { galleryStyles, lightingPresets, styles } from './styles/index.js';
+import { lightingPresets, style as theStyle } from './styles/index.js';
 import { Cell } from './viewer/Cell.js';
 import { defaultsFor, loadParams, saveParams } from './viewer/params.js';
 import { mulberry32 } from './lib/rng.js';
@@ -30,14 +30,13 @@ const PAGE_BG = new THREE.Color(getComputedStyle(document.documentElement).getPr
 
 const params = loadParams(subjects);
 const state = {
-  view: 'gallery', // 'gallery' | 'props' | 'lineup' | 'crowd' | 'study' | 'focus' | 'city'
+  view: 'editor', // 'editor' | 'city' | 'gallery' | 'props' | 'lineup' | 'crowd' | 'focus'
   lastGrid: 'gallery', // which grid the inspection view returns to
   crowdSeed: 1,
   focus: null,
   turntable: true,
   speed: 0.35,
   angle: 0,
-  lineupStyle: styles[0].id,
   lighting: 'Day',
   street: false, // frame subjects small, as seen from across a street
   characterScale: 1, // >1 exaggerates people and animals so they read when tiny
@@ -48,7 +47,7 @@ const STREET_HEIGHT = 6; // metres of height in view at street distance
 const LINEUP_HEIGHT = 9;
 
 // ---------------------------------------------------------------------------
-// Gallery grid: columns = subjects, rows = styles
+// Gallery grid: one cell per subject (human, cat, tree)
 // ---------------------------------------------------------------------------
 const grid = document.querySelector('#grid');
 grid.style.setProperty('--cols', subjects.length);
@@ -58,8 +57,8 @@ for (const s of subjects) {
 }
 
 const galleryCells = [];
-for (const style of galleryStyles) {
-  grid.append(Object.assign(document.createElement('div'), { className: 'row-head', textContent: style.label }));
+for (const style of [theStyle]) {
+  grid.append(Object.assign(document.createElement('div'), { className: 'row-head', textContent: '' }));
   for (const subject of subjects) {
     const cell = new Cell({ entries: [{ subject }], style, renderer });
     cell.el = Object.assign(document.createElement('div'), { className: 'cell', title: `${subject.label} · ${style.label}` });
@@ -79,7 +78,7 @@ for (const group of PROP_GROUPS) {
     prop.variants.forEach((variant, i) => {
       const color = prop.colors ? prop.colors[(i * 3 + 1) % prop.colors.length] : undefined;
       const subject = propSubject(prop, variant, color);
-      const cell = new Cell({ entries: [{ subject }], style: galleryStyles[0], renderer });
+      const cell = new Cell({ entries: [{ subject }], style: theStyle, renderer });
       cell.el = Object.assign(document.createElement('div'), { className: 'cell', title: subject.label });
       cell.el.dataset.label = subject.label;
       cell.el.addEventListener('click', () => enterFocus(cell));
@@ -111,7 +110,7 @@ async function loadCityFile() {
 function enterEditor() {
   if (!editor) {
     editor = new Editor({
-      style: galleryStyles[0], canvas,
+      style: theStyle, canvas,
       data: cityData ?? city?.layout.data ?? generateCityData(),
       callbacks: {
         onSave: async (data) => { if (!(await saveFile(`${(data.meta?.name ?? 'city').replace(/\W+/g, '-').toLowerCase()}.json`, JSON.stringify(data, null, 1)))) toast('City not saved'); },
@@ -129,7 +128,7 @@ function enterCity() {
   const key = JSON.stringify(params.human);
   if (!city || key !== cityParamsKey) {
     const byId = Object.fromEntries(subjects.map((s) => [s.id, s]));
-    city = new City({ style: galleryStyles[0], renderer, human: byId.human, cat: byId.cat, params, data: cityData });
+    city = new City({ style: theStyle, renderer, human: byId.human, cat: byId.cat, params, data: cityData });
     city.applyLighting(lightingPresets[state.lighting]);
     cityParamsKey = key;
   }
@@ -138,7 +137,7 @@ function enterCity() {
 
 let lineupCell = makeLineup();
 function makeLineup() {
-  const style = styles.find((s) => s.id === state.lineupStyle) ?? styles[0];
+  const style = theStyle;
   // a street with every tree preset as a variant, the human and cat in the middle
   const byId = Object.fromEntries(subjects.map((s) => [s.id, s]));
   const treeVariant = (name) => ({ subject: byId.tree, overrides: byId.tree.presets[name] });
@@ -157,7 +156,7 @@ function makeLineup() {
 // work together and stay readable in a group.
 let crowdCell = null;
 function makeCrowd() {
-  const style = styles.find((s) => s.id === state.lineupStyle) ?? styles[0];
+  const style = theStyle;
   const byId = Object.fromEntries(subjects.map((s) => [s.id, s]));
   const rng = mulberry32(state.crowdSeed * 7717 + 3);
   const entries = [];
@@ -177,28 +176,6 @@ function makeCrowd() {
 }
 crowdCell = makeCrowd();
 
-// Side-by-side study of the woman's chest and bottom shapes.
-const SHAPE_STUDY = [
-  { chestShape: 'Wedge', bottomShape: 'Round' },
-  { chestShape: 'Smooth', bottomShape: 'Smooth' },
-  { chestShape: 'Smooth (two)', bottomShape: 'Smooth (two)' },
-  { chestShape: 'Smooth (two)', bottomShape: 'Smooth (two)', chestSize: 1.35, bottomSize: 1.35 },
-  { chestShape: 'Smooth (two)', bottomShape: 'Smooth (two)', chestSize: 0.65, bottomSize: 0.65 },
-];
-let studyCell = null;
-function makeStudy() {
-  const style = styles.find((s) => s.id === state.lineupStyle) ?? styles[0];
-  const human = subjects.find((s) => s.id === 'human');
-  const base = { ...defaultsFor(human), ...human.presets.Woman, hair: 'bun', hairColor: 'Brown', skin: 'Tan',
-    top: 'Tank top', topColor: 'Teal', legwear: 'Shorts', legwearColor: 'Khaki' };
-  const entries = SHAPE_STUDY.map((v) => ({ subject: human, overrides: { ...base, ...v } }));
-  const cell = new Cell({ entries, style, renderer, gap: 0.35, viewDir: [0.18, 0.3, 1] });
-  cell.rebuild(params);
-  cell.applyLighting(lightingPresets[state.lighting]);
-  return cell;
-}
-studyCell = makeStudy();
-
 galleryCells.forEach((c) => { c.rebuild(params); c.applyLighting(lightingPresets[state.lighting]); });
 
 // ---------------------------------------------------------------------------
@@ -213,10 +190,14 @@ const backBtn = document.querySelector('#back');
 const hint = document.querySelector('#hint');
 // leaving the city goes back to the editor when the walk started there
 let walkedFromEditor = false;
-const goBack = () => setView(state.view === 'city' && walkedFromEditor ? 'editor' : state.lastGrid);
+const goBack = () => {
+  if (state.view === 'editor') setView('gallery');                       // editor -> character creator
+  else if (state.view === 'gallery' || state.view === 'props') enterEditor(); // grids -> editor (home)
+  else setView(state.view === 'city' && walkedFromEditor ? 'editor' : state.lastGrid);
+};
 backBtn.addEventListener('click', goBack);
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && state.view !== state.lastGrid) goBack();
+  if (e.key === 'Escape' && !['editor', 'gallery', 'props'].includes(state.view)) goBack();
 });
 
 function enterFocus(cell) {
@@ -225,6 +206,8 @@ function enterFocus(cell) {
 }
 
 function setView(view) {
+  const SUBTITLES = { editor: 'City editor', city: 'Walking the town', gallery: 'Character creator', props: 'Street props', lineup: 'Street scene', crowd: 'Crowd', focus: 'Character creator' };
+  document.querySelector('#subtitle').textContent = SUBTITLES[view] ?? '';
   if (view === 'gallery' || view === 'props') state.lastGrid = view;
   if (view === 'props' && !propsBuilt) {
     propCells.forEach((c) => { c.rebuild(params); c.applyLighting(lightingPresets[state.lighting]); });
@@ -242,7 +225,7 @@ function setView(view) {
     grid.hidden = true;
     propsGrid.hidden = true;
     backBtn.hidden = false;
-    backBtn.textContent = '← Exit editor';
+    backBtn.textContent = '👤 Characters';
     hint.textContent = 'Paint blocks · place and move things · drag with two fingers or the right button to pan · scroll or pinch to zoom';
     return;
   }
@@ -264,9 +247,9 @@ function setView(view) {
   const big = view !== 'gallery' && view !== 'props';
   grid.hidden = view !== 'gallery';
   propsGrid.hidden = view !== 'props';
-  backBtn.hidden = !big;
+  backBtn.hidden = false;
   controls.enabled = big;
-  backBtn.textContent = `← ${state.lastGrid === 'props' ? 'Props' : 'Gallery'}`;
+  backBtn.textContent = big ? `← ${state.lastGrid === 'props' ? 'Props' : 'Characters'}` : '🏙 City editor';
   hint.textContent = big
     ? 'Drag to orbit · scroll to zoom · Esc to go back'
     : 'Click a cell to inspect it up close';
@@ -285,7 +268,6 @@ function setView(view) {
 /** Street distance shows a fixed slice of the world instead of hugging the subject. */
 function framingHeight(view = state.view) {
   if (view === 'lineup' || view === 'crowd') return LINEUP_HEIGHT;
-  if (view === 'study') return 0;
   return state.street ? STREET_HEIGHT : 0;
 }
 
@@ -299,7 +281,6 @@ function bigViewWidth() {
 function activeCell() {
   if (state.view === 'lineup') return lineupCell;
   if (state.view === 'crowd') return crowdCell;
-  if (state.view === 'study') return studyCell;
   return state.focus;
 }
 
@@ -336,7 +317,6 @@ const actions = {
   editor: () => enterEditor(),
   lineup: () => setView('lineup'),
   crowd: () => setView('crowd'),
-  study: () => setView('study'),
   newCrowd: () => {
     state.crowdSeed += 1;
     crowdCell = makeCrowd();
@@ -355,12 +335,11 @@ viewFolder.add(actions, 'city').name('Walk the city');
 viewFolder.add(actions, 'saveCity').name('Save city file (JSON)');
 viewFolder.add(actions, 'loadCity').name('Load city file (JSON)');
 viewFolder.add(actions, 'sampleCity').name('Back to the sample town');
-viewFolder.add(actions, 'gallery').name('Gallery (style × subject)');
+viewFolder.add(actions, 'gallery').name('Character creator');
 viewFolder.add(actions, 'props').name('Props gallery (street props)');
 viewFolder.add(actions, 'lineup').name('Street scene (real scale)');
 viewFolder.add(actions, 'crowd').name('Crowd (random characters)');
 viewFolder.add(actions, 'newCrowd').name('New random crowd');
-viewFolder.add(actions, 'study').name('Body shape study (woman)');
 function applyStreet(on) {
   state.street = on;
   for (const cell of galleryCells) {
@@ -375,19 +354,9 @@ viewFolder.add(state, 'characterScale', 1, 1.6, 0.05).name('Extra character size
   for (const cell of [...galleryCells, lineupCell, crowdCell]) cell.rebuild(params);
 });
 viewFolder.add(state, 'lighting', Object.keys(lightingPresets)).name('Lighting').onChange((name) => {
-  for (const cell of [...galleryCells, ...propCells, lineupCell, crowdCell, studyCell]) cell.applyLighting(lightingPresets[name]);
+  for (const cell of [...galleryCells, ...propCells, lineupCell, crowdCell]) cell.applyLighting(lightingPresets[name]);
   city?.applyLighting(lightingPresets[name]);
 });
-if (styles.length > 1) {
-  viewFolder.add(state, 'lineupStyle', Object.fromEntries(styles.map((s) => [s.label, s.id])))
-    .name('Lineup style')
-    .onChange(() => {
-      lineupCell = makeLineup();
-      crowdCell = makeCrowd();
-      studyCell = makeStudy();
-      if (['lineup', 'crowd', 'study'].includes(state.view)) setView(state.view);
-    });
-}
 viewFolder.add(state, 'anim', ['Still', 'Walk', 'Run', 'Roller skate']).name('Preview animation');
 viewFolder.add(state, 'cityGait', ['Walk naturally', 'Roller skate']).name('City movement');
 viewFolder.add(state, 'turntable').name('Turntable');
@@ -397,7 +366,7 @@ viewFolder.add(actions, 'copy').name('Copy settings (JSON)');
 viewFolder.add(actions, 'resetAll').name('Reset everything');
 
 // per-style options (ink line width, PS1 pixel size, ...)
-for (const style of styles) {
+for (const style of [theStyle]) {
   if (!style.options) continue;
   const f = viewFolder.addFolder(`Style: ${style.label}`);
   const values = Object.fromEntries(Object.entries(style.options).map(([k, d]) => [k, d.value]));
@@ -510,7 +479,7 @@ let shotPending = false;
 function saveScreenshot() {
   canvas.toBlob((blob) => {
     if (!blob) return;
-    saveFile(`character-creator-${state.view}-${Date.now()}.png`, blob).then((ok) => {
+    saveFile(`tiny-city-${state.view}-${Date.now()}.png`, blob).then((ok) => {
       if (!ok) toast('Screenshot not saved');
     });
   });
@@ -674,7 +643,7 @@ function loop(time) {
   requestAnimationFrame(loop);
 }
 
-setView('gallery');
+enterEditor(); // the city editor is the home screen
 requestAnimationFrame(loop);
 
 // handy for debugging from the console

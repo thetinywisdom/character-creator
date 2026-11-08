@@ -66,23 +66,6 @@ export function buildLeg(f, kind, mats, sx, footwear = 'Shoes') {
 }
 
 /**
- * Bottom (women): a rounded, low-poly volume behind the top of the thighs,
- * so the side view gets its S-curve (chest forward, bottom back). Few
- * segments on purpose: it reads as faceted, like the rest of the PS1 body.
- * Covered by whatever legwear is worn (not drawn under skirts).
- */
-export function buildBottom(f, mats) {
-  const L = f.torsoLen;
-  const back = f.torsoR(L * 0.05) * f.depthAt(L * 0.05);
-  const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 5), mats.legwear);
-  // sticks out about 0.1 × hip width behind the torso: a curve, not a shelf
-  mesh.scale.set(f.hw * 0.44, L * 0.16, f.hw * 0.2);
-  mesh.position.set(0, f.hipY - L * 0.03, -back + f.hw * 0.1);
-  mesh.name = 'bottom';
-  return mesh;
-}
-
-/**
  * A flared skirt hanging from just above the hips to about knee height.
  * A group named 'skirt' (kept as its own mesh when bodies are merged) holding
  * the cloth, with a few rings from waist to hem so it can stretch: each frame

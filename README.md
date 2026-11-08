@@ -1,6 +1,14 @@
-# Character Creator
+# Tiny City Builder
 
-A three.js playground for finding the visual style of a 3D world before building it.
+A city builder for small Japanese towns in a PS1 look, made with three.js, for
+future web, iOS and Android games. The app opens in the **city editor**: paint
+blocks, place things, and walk the town you built. The **character creator**
+(the 👤 Characters button) designs the people who live there; it is meant to
+become a player-facing feature of the games.
+
+The project started as a style exploration (Ink & Cel vs PS1, a gray-box
+reference, body shape studies); those explorations have been removed now that
+the look is settled. The history is in git.
 
 **Phase 3 – walkable city (first version):** press **Walk the city** to walk a
 small Japanese town as your own character (the one set up in the controls):
@@ -35,7 +43,7 @@ overhead wires). See the **Props gallery**; the street scene is dressed with the
 **Phase 2 – characters:** the human is now a modular character
 with slots and per-item colours. Batch 1 (done): Man / Woman body types (the
 man with a V-shaped torso and strong arms, the woman with an hourglass torso, chest and bottom sculpted into the body, full
-thighs tapering to slim knees; see the Body shape study view), separate neck / arm / leg thickness, skin tones, 26 hairstyles (short, medium
+thighs tapering to slim knees), separate neck / arm / leg thickness, skin tones, 26 hairstyles (short, medium
 and long, each with 6–7 cuts, plus bald, bun, spiky, mohawk, curly, afro) with
 8 hair colours, 7 tops (T-shirt, shirt, sleeveless tank top, crop top; short/long sleeves),
 trousers / shorts / skirt, chunky shoes or boots, a Randomize button and a crowd view.
@@ -56,10 +64,6 @@ Chosen direction: **PS1 · Bright + clear**: few polygons, chunky pixels, wobbly
 vertices and dithered colour, but with a clear sky, vivid characters on a calmer
 city, 1-pixel outlines and blob shadows so tiny characters stay easy to spot.
 The rules are in **[STYLE_GUIDE.md](STYLE_GUIDE.md)**.
-
-The gallery shows the chosen style next to a neutral **Gray-box** reference. The
-runner-up variants (PS1 · Bright, PS1 · Classic) and **Ink & Cel** stay in the
-code and can be picked in the street scene's style list.
 
 ## Run it
 
@@ -120,7 +124,7 @@ src/
   subjects/          human.js, cat.js, tree.js – build(params, style) -> THREE.Group
   subjects/human/    frame.js (measurements), sculpt.js, hair.js, head.js, tops.js, arms.js,
                      legwear.js, footwear.js, outerwear.js, accessories.js – one file per slot
-  styles/            inkCel.js, ps1.js, gray.js – materials per role + lights,
+  styles/            ps1.js – the look: materials per role + lights,
                      palette.js – shared base colours
   viewer/Cell.js     one stage (scene, lights, ground, street backdrop, camera framing)
   viewer/params.js   defaults + saved settings

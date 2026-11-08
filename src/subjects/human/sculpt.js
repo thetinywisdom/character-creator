@@ -6,9 +6,7 @@ import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 // Women: chest and bottom. Men: flat, defined pecs. Both: upper-back trapezius. The shapes grow out of the body
 // with no seams, and still look faceted at PS1 polygon counts.
 //
-// Shapes:  'Smooth'       one soft mass
-//          'Smooth (two)' two soft lobes with a slight dip between them
-// ('Wedge' chest and 'Round' bottom are separate meshes, see tops.js / legwear.js.)
+// Chest and bottom are two soft lobes with a slight dip between them.
 
 const gauss = (d, s) => Math.exp(-((d / s) ** 2));
 
@@ -23,7 +21,7 @@ export function sculptTorso(geo, f) {
       amount: f.sw * 0.03, two: true, x0: f.sw * 0.16, sx: f.sw * 0.13, wx: f.sw * 0.3,
     });
   }
-  if (f.woman && f.chestShape !== 'Wedge') {
+  if (f.woman) {
     zones.push({
       sign: 1,                      // front
       // Natural profile: a gentle, slightly hollow slope down from the
@@ -34,19 +32,19 @@ export function sculptTorso(geo, f) {
       down: 0.1 * L,                // rounded underside
       upShape: 'droop',
       amount: f.sw * 0.2 * f.chestSize, // a touch more: the droop profile has less volume up top
-      two: f.chestShape === 'Smooth (two)',
+      two: true,
       x0: f.sw * 0.13, sx: f.sw * 0.11, // lobe centres and width
       wx: f.sw * 0.22,                  // width of the single mass
     });
   }
-  if (f.woman && f.bottomShape !== 'Round') {
+  if (f.woman) {
     zones.push({
       sign: -1,                     // back
       yc: -0.05 * L,                // over the top of the thighs
       up: 0.14 * L,                 // curve up into the lower back
       down: 0.1 * L,                // rounded underneath, not a shelf
       amount: f.hw * 0.19 * f.bottomSize,
-      two: f.bottomShape === 'Smooth (two)',
+      two: true,
       x0: f.hw * 0.21, sx: f.hw * 0.17,
       wx: f.hw * 0.3,
     });

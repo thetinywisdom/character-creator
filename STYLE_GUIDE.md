@@ -306,8 +306,8 @@ About one in six random characters is a child.
 
 ## 6. Keeping a style switch cheap
 
-Ink & Cel was the runner-up and is still in the code (`src/styles/inkCel.js`).
-To keep a future switch to a small change:
+Ink & Cel was the runner-up; it was removed with the other explorations and is
+in the git history. To keep a future switch to a small change:
 
 - All style-specific code stays in `src/styles/`. Models never know the style.
 - Models stay low-poly (low-poly also looks good with ink outlines).

@@ -90,9 +90,7 @@ export function measure(p) {
   const footH = Math.max(legR * 1.1, H * 0.04);
   return {
     woman, child, girl,
-    chestShape: p.chestShape ?? 'Smooth (two)',
     chestSize: p.chestSize ?? 1,
-    bottomShape: p.bottomShape ?? 'Smooth (two)',
     bottomSize: p.bottomSize ?? 1,
     torsoRadial: seg(28, 16),
     H, headH, R, chib, legLen, neckLen, torsoLen, hipY, shoulderY, headY,
