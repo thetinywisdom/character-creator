@@ -153,23 +153,32 @@ export const car = {
       if (s.chrome) g.add(box(0.012, 0.03, s.L * 0.55, trim, [x, s.body[0][1] + 0.08, 0.1]));       // chrome sill line
     }
     // front: grille, lights, bumper; back: tail lights, bumper; number plates
-    const front = s.body[s.body.length - 1][0], rear = s.body[0][0];
-    const fy = topAt(s, front - 0.12) - 0.13;
+    // the body's rounded edge (bevel) puts its surface 5 cm outside the outline:
+    // lights, grille and tail lights sit on that surface, not inside it
+    const front = s.body[s.body.length - 1][0] + 0.05, rear = s.body[0][0] - 0.05;
+    const fy = topAt(s, front - 0.17) - 0.13;
     g.add(box(W * 0.42, 0.14, 0.04, s.chrome ? trim : dark, [0, fy - 0.04, front + 0.01]));                 // grille
     const light = style.material('light', 0xfff6dc), tail = style.material('light', 0xe0402f);
     for (const sx of [-1, 1]) {
+      // a dark surround behind each lamp, so it reads on any paint colour (white cars too)
       if (s.chrome) {
-        const l = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.05, 10), light);
+        const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.04, 10), trim);
+        rim.rotation.x = Math.PI / 2;
+        rim.position.set(sx * half * 0.68, fy, front + 0.01);
+        const l = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.05, 10), light);
         l.rotation.x = Math.PI / 2;
-        l.position.set(sx * half * 0.68, fy, front + 0.01);
-        g.add(l);
-      } else g.add(box(W * 0.2, 0.09, 0.05, light, [sx * half * 0.66, fy + 0.02, front - 0.01]));
-      const ty = topAt(s, rear + 0.1) - 0.16;
+        l.position.set(sx * half * 0.68, fy, front + 0.03);
+        g.add(rim, l);
+      } else {
+        g.add(box(W * 0.24, 0.13, 0.04, dark, [sx * half * 0.66, fy + 0.02, front]));
+        g.add(box(W * 0.2, 0.09, 0.05, light, [sx * half * 0.66, fy + 0.02, front + 0.015]));
+      }
+      const ty = topAt(s, rear + 0.15) - 0.16;
       g.add(box(s.taxi ? 0.14 : W * 0.16, s.taxi ? 0.38 : 0.12, 0.05, tail, [sx * half * 0.78, ty, rear - 0.01]));
     }
     const bumper = (z) => box(W * 0.98, 0.14, 0.12, s.chrome ? trim : style.material('paint', paintHex), [0, s.body[0][1] + 0.1, z]);
-    g.add(bumper(front + 0.04), bumper(rear - 0.04));
-    for (const z of [front + 0.11, rear - 0.11]) g.add(box(0.34, 0.16, 0.02, style.material('signage', 0xf4f4f0), [0, s.body[0][1] + 0.26, z]));
+    g.add(bumper(front - 0.01), bumper(rear + 0.01));
+    for (const z of [front + 0.06, rear - 0.06]) g.add(box(0.34, 0.16, 0.02, style.material('signage', 0xf4f4f0), [0, s.body[0][1] + 0.26, z]));
     // mirrors: on the doors, or out on the front fenders (taxis, older cars)
     for (const sx of [-1, 1]) {
       if (s.mirrors === 'fender') {
