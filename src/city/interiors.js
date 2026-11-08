@@ -241,6 +241,15 @@ const PAINT = {
     person(g, 180, 78, 38, '#f4f4f0');
     person(g, 60, 122, 56);
   },
+  lobby(g) {
+    room(g, '#e8e2d6', '#b8b2a4'); lights(g, '#fff6d8', 3);
+    g.fillStyle = '#9aa0a6'; g.fillRect(16, 20, 120, 70);                                          // mailbox wall
+    g.fillStyle = '#c8ccd0'; for (let r = 0; r < 5; r++) for (let i = 0; i < 6; i++) g.fillRect(19 + i * 19.5, 23 + r * 13.5, 17, 11);
+    g.fillStyle = '#5a6068'; for (let r = 0; r < 5; r++) for (let i = 0; i < 6; i++) g.fillRect(24 + i * 19.5, 28 + r * 13.5, 7, 2);
+    g.fillStyle = '#d8d4cc'; g.fillRect(170, 18, 60, 88);                                          // lift doors
+    g.fillStyle = '#a8acb0'; g.fillRect(199, 18, 2, 88);
+    g.fillStyle = '#3fa65a'; g.fillRect(150, 70, 14, 36);                                          // a potted plant
+  },
   office(g) {
     room(g, '#e4e6e8', '#b8bcc0'); lights(g);
     for (let i = 0; i < 4; i++) { g.fillStyle = '#8a8e94'; g.fillRect(14 + i * 60, 80, 46, 26); person(g, 37 + i * 60, 80, 34, '#f4f4f0'); }
@@ -298,7 +307,7 @@ export function paintedWindow(style, variant, ww, wh, x, y, z) {
   const geo = new THREE.PlaneGeometry(ww, wh);
   const uv = geo.attributes.uv;
   for (let k = 0; k < uv.count; k++) uv.setX(k, (variant + uv.getX(k)) / 4);
-  const m = new THREE.Mesh(geo, style.material('light', 0xffffff, curtainTexture()));
+  const m = new THREE.Mesh(geo, style.material('signage', 0xffffff, curtainTexture()));
   m.position.set(x, y, z);
   return m;
 }

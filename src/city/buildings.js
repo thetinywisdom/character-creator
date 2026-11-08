@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { signTexture } from '../lib/textures.js';
 import { box, cyl, face } from '../props/util.js';
 import { paintedWindow, shopWindow } from './interiors.js';
+import { FACADES, roofClutter, roofSign, sideWindows, wrapFacades } from './facades.js';
 
 // Japanese city buildings, procedurally built from boxes. Each builder fills
 // a lot of width w (x) and depth d (z), stands on y = 0, is centred on the
@@ -144,26 +145,66 @@ export function house(style, rng, w, d) {
   return { group: g, footprint: { w: bw, d: bd, z: bz } };
 }
 
+/**
+ * A mansion (マンション) block: a balcony per flat with dividers between them,
+ * concrete or railing fronts, painted sliding doors with curtains, AC units and
+ * laundry or a futon on some balconies, a lobby with mailboxes, side windows,
+ * and a lift housing and water tank on the roof.
+ */
 export function apartment(style, rng, w, d) {
   const g = new THREE.Group();
   const floors = 4 + Math.floor(rng() * 4);
   const H = floors * FLOOR;
-  const bw = w - 0.6, bd = d - 2;
-  const bz = -1;
-  g.add(box(bw, H, bd, style.material('building', pick(rng, WALLS)), [0, H / 2, bz]));
+  const bw = w - 0.6, bd = d - 2.4;
+  const bz = -1.2;
+  const wallHex = pick(rng, WALLS);
+  const wallM = style.material('building', wallHex);
+  const trim = style.material('building', new THREE.Color(wallHex).multiplyScalar(0.82).getHex());
+  g.add(box(bw, H, bd, wallM, [0, H / 2, bz]));
   g.add(box(bw + 0.2, 0.5, bd + 0.2, style.material('concrete'), [0, H + 0.25, bz])); // parapet
   const front = bz + bd / 2;
+  const units = Math.max(1, Math.round(bw / 3.6));
+  const uw = bw / units;
+  const solidFronts = rng() < 0.5; // concrete balcony walls, or metal railings
+  const LAUNDRY = [0xf4f4f0, 0x3f7fd6, 0xf28cb8, 0xf2c230, 0x3fa65a, 0xd8443c];
   for (let f = 0; f < floors; f++) {
     const y = f * FLOOR;
-    windowRow(g, style, bw, y + 1.4, front + 0.01, { spacing: 3, ww: 1.6, wh: 2 });
-    if (f > 0) {
-      // balcony slab and railing across the front
-      g.add(box(bw, 0.15, 1.1, style.material('concrete'), [0, y, front + 0.55]));
-      g.add(box(bw, 1.0, 0.06, style.material('metal', 0xc8ccd0), [0, y + 0.55, front + 1.08]));
+    for (let u = 0; u < units; u++) {
+      const x = -bw / 2 + (u + 0.5) * uw;
+      // sliding door with curtains behind the balcony (ground floor: windows)
+      const v = Math.abs(Math.round(x * 5 + f * 3)) % 4;
+      g.add(paintedWindow(style, v, uw * 0.62, f === 0 ? 1.4 : 2.1, x, y + (f === 0 ? 1.6 : 1.25), front + 0.02));
+      if (f === 0) continue;
+      // AC outdoor unit on some balconies, laundry or a futon on others
+      const r = rng();
+      if (r < 0.45) {
+        g.add(box(0.75, 0.55, 0.3, style.material('metal', 0xeceae4), [x + uw * 0.32, y + 0.42, front + 0.4]));
+        g.add(box(0.36, 0.36, 0.02, style.material('darkMetal'), [x + uw * 0.32, y + 0.42, front + 0.56]));
+      }
+      if (r > 0.6) {
+        g.add(box(uw * 0.7, 0.04, 0.04, style.material('metal', 0xb8bcc0), [x, y + 2.3, front + 0.7])); // laundry pole
+        for (let k = 0; k < 4; k++) g.add(box(0.3, 0.55, 0.03, style.material('cloth', LAUNDRY[Math.floor(rng() * LAUNDRY.length)]), [x - uw * 0.28 + k * uw * 0.18, y + 2.0, front + 0.7]));
+      } else if (r > 0.5) {
+        g.add(box(uw * 0.5, 0.06, 0.7, style.material('cloth', LAUNDRY[Math.floor(rng() * LAUNDRY.length)]), [x, y + 1.08, front + 1.1])); // futon over the rail
+      }
     }
+    if (f === 0) continue;
+    // balcony slab, the front, and dividers between flats
+    g.add(box(bw, 0.18, 1.2, style.material('concrete', 0xd8d4cc), [0, y, front + 0.6]));
+    if (solidFronts) g.add(box(bw, 1.0, 0.12, trim, [0, y + 0.55, front + 1.16]));
+    else {
+      g.add(box(bw, 0.06, 0.06, style.material('metal', 0xc8ccd0), [0, y + 1.05, front + 1.16]));
+      for (let k = 0; k <= Math.floor(bw / 0.5); k++) g.add(box(0.03, 1.0, 0.03, style.material('metal', 0xc8ccd0), [-bw / 2 + k * 0.5, y + 0.55, front + 1.16]));
+    }
+    for (let u = 1; u < units; u++) g.add(box(0.05, 2.2, 1.1, style.material('building', 0xf2f2ee), [-bw / 2 + u * uw, y + 1.2, front + 0.6]));
   }
-  g.add(box(2.0, 2.4, 0.1, style.material('glass', 0x9fc0d8), [0, 1.2, front + 0.02])); // entrance
-  return { group: g, footprint: { w: bw, d: bd, z: bz } };
+  // lobby with mailboxes behind glass, an entrance canopy
+  const ex = -bw / 2 + uw * 0.5;
+  shopWindow(g, style, 'lobby', Math.min(uw * 0.8, 2.6), 2.2, ex, 1.2, front + 0.05, { mullions: 2 });
+  g.add(box(Math.min(uw, 3.2), 0.15, 1.6, style.material('concrete', 0xc8c4bc), [ex, 2.6, front + 0.8]));
+  sideWindows(g, style, bd, bz, bw, floors, 0, FLOOR, { every: 4.5 });
+  roofClutter(g, style, rng, bw, bd, bz, H + 0.5, { units: 2 });
+  return { group: g, footprint: { w: bw, d: bd + 1.2, z: bz + 0.6 } };
 }
 
 export function mixedUse(style, rng, w, d, shopType = pick(rng, SHOP_TYPES)) {
@@ -176,6 +217,8 @@ export function mixedUse(style, rng, w, d, shopType = pick(rng, SHOP_TYPES)) {
   const front = bz + bd / 2;
   shopFront(g, style, shopType, bw, FLOOR + 1, front + 0.01);
   for (let f = 1; f < floors; f++) windowRow(g, style, bw, f * FLOOR + 2.4, front + 0.01, { spacing: 2.4, ww: 1.4, wh: 1.4 });
+  sideWindows(g, style, bd, bz, bw, floors - 1, FLOOR + 1 - 0.6, FLOOR, { every: 5 });
+  roofClutter(g, style, rng, bw, bd, bz, H, { tank: rng() < 0.5, units: 2 });
   // vertical signboard on the front corner
   const sign = verticalSign(style, rng, Math.min(H - 4, 6));
   sign.position.set(bw / 2 - 0.4, FLOOR + 1.2 + Math.min(H - 4, 6) / 2, front + 0.4);
@@ -197,17 +240,49 @@ export function shop(style, rng, w, d, shopType = pick(rng, SHOP_TYPES)) {
   return { group: g, footprint: { w: bw, d: bd, z: bz } };
 }
 
+/**
+ * An office tower: a stone podium with a lit lobby and an entrance canopy, the
+ * tower above with painted facades on all four sides (glass curtain wall,
+ * concrete with punched windows, or horizontal bands), corner columns,
+ * sometimes a set-back top, and a roof with a machine room, water tank, AC
+ * units, an antenna and a company sign.
+ */
 export function office(style, rng, w, d) {
   const g = new THREE.Group();
   const floors = 7 + Math.floor(rng() * 6);
-  const H = floors * 3.6;
+  const FH = 3.6, PODIUM = 4.4;
+  const H = PODIUM + (floors - 1) * FH;
   const bw = w - 0.6, bd = d - 1.5;
   const bz = -0.75;
-  // glass body with a concrete band at every floor
-  g.add(box(bw, H, bd, style.material('glass', pick(rng, [0x7d9db8, 0x8fa6a0, 0x6f8aa8])), [0, H / 2, bz]));
-  const band = style.material('concrete', 0xd8d8d0);
-  for (let f = 0; f <= floors; f++) g.add(box(bw + 0.1, 0.35, bd + 0.1, band, [0, f * 3.6, bz]));
-  for (const sx of [-1, 1]) g.add(box(0.6, H, 0.6, band, [sx * (bw / 2 - 0.3), H / 2, bz + bd / 2 - 0.3]));
+  const kind = pick(rng, FACADES);
+  const front = bz + bd / 2;
+  // podium: stone, a little wider, with the lobby and canopy
+  const stone = style.material('concrete', pick(rng, [0x8a8680, 0xa8a49a, 0x6a6e74]));
+  g.add(box(bw + 0.3, PODIUM, bd + 0.3, stone, [0, PODIUM / 2, bz]));
+  shopWindow(g, style, 'office', bw * 0.7, 3.0, -bw * 0.05, 1.65, front + 0.2, { mullions: 4, frame: 0x3a3c40 });
+  g.add(box(Math.min(bw * 0.4, 5), 0.25, 2.2, style.material('metal', 0xc8ccd0), [-bw * 0.05, 3.5, front + 1.2])); // canopy
+  // the tower
+  const setback = floors > 9 && rng() < 0.5 ? 2 : 0;
+  const towerH = H - PODIUM - setback * FH;
+  const core = style.material('concrete', 0x8a9098);
+  const offset = [rng(), rng()];
+  g.add(box(bw - 0.1, towerH, bd - 0.1, core, [0, PODIUM + towerH / 2, bz]));
+  wrapFacades(g, style, kind, bw - 0.1, bd - 0.1, bz, PODIUM, towerH, { bayW: 2.4, floorH: FH, offset });
+  if (setback) {
+    const tw = bw * 0.72, td = bd * 0.8, y0 = PODIUM + towerH;
+    g.add(box(tw, setback * FH, td, core, [0, y0 + (setback * FH) / 2, bz]));
+    wrapFacades(g, style, kind, tw, td, bz, y0, setback * FH, { bayW: 2.4, floorH: FH, offset: [offset[0] + 0.3, offset[1]] });
+  }
+  // corner columns up the tower
+  const col = style.material('concrete', kind === 'glass' ? 0xc8ccd0 : 0xb8b4aa);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    g.add(box(0.5, towerH, 0.5, col, [sx * (bw / 2 - 0.2), PODIUM + towerH / 2, bz + sz * (bd / 2 - 0.2)]));
+  }
+  // roof
+  const topW = setback ? bw * 0.72 : bw, topD = setback ? bd * 0.8 : bd;
+  g.add(box(topW + 0.2, 0.6, topD + 0.2, col, [0, H + 0.3, bz]));                // parapet cap
+  roofClutter(g, style, rng, topW, topD, bz, H + 0.6, { antenna: rng() < 0.5, units: 5 });
+  if (rng() < 0.6) roofSign(g, style, rng, topW, H + 0.6, bz + topD / 2);
   return { group: g, footprint: { w: bw, d: bd, z: bz } };
 }
 

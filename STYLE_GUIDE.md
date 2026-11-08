@@ -271,6 +271,19 @@ About one in six random characters is a child.
 - **Painted homes:** upper-floor windows show curtains in four looks (lit or
   dark), varied by position so neighbours differ. Offices and the school keep
   plain glass.
+- **Painted facades on big buildings** (`src/city/facades.js`): office towers
+  wear a painted window grid on all four sides, one shared tile per facade
+  style (glass curtain wall, concrete with punched windows, horizontal bands),
+  each bay a lit office with desks and people, blinds down, or dark glass,
+  offset per building so neighbours differ. Facades use the normal building
+  material so sunny and shaded sides read differently.
+- **Big buildings have a base, a body and a top:** towers get a stone podium
+  with a lit lobby and a canopy, corner columns, sometimes a set-back top, and
+  roof clutter (machine room, water tank on legs, AC units, antenna, railing,
+  a company sign). Apartment blocks get a balcony per flat with dividers,
+  concrete or railing fronts, painted sliding doors, AC units and laundry or
+  futons on some balconies, a mailbox lobby, side windows and roof clutter.
+  Shop-with-flats buildings get side windows and roof clutter too.
 - Open-fronted stalls (flower shop, fishmonger) get the picture on the back
   wall of the opening; the laundromat keeps its modelled machines.
 
