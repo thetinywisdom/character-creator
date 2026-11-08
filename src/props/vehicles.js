@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { capsuleBetween, softBox } from '../lib/shapes.js';
 import { CLOTH_COLORS } from '../styles/palette.js';
-import { box, cyl, wheel } from './util.js';
+import { WHEEL_SIDES, box, cyl, wheel } from './util.js';
 
 // Batch C – vehicles: cars (kei car, sedan, hatchback, minivan, taxi, sports
 // car, bus), a city bike ("mamachari") with a front basket, and a small scooter.
@@ -246,7 +246,7 @@ export const bicycle = {
     const r = 0.33;
     const front = [0, r, 0.55], back = [0, r, -0.5];
     for (const p of [front, back]) {
-      const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.03, 4, 14), tire);
+      const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.03, 4, WHEEL_SIDES), tire); // hexagon wheels, like every vehicle
       t.rotation.y = Math.PI / 2;
       t.position.set(...p);
       g.add(t);
@@ -302,8 +302,8 @@ export const scooter = {
     const g = new THREE.Group();
     const poly = (pts) => new THREE.Shape(pts.map(([z, y]) => new THREE.Vector2(z, y)));
     const wheelAt = (z, r, w, x = 0, hub = M.dark, spokes = false) => {
-      g.add(wheel(r, w, M.tire, [x, r, z], 16));
-      g.add(wheel(r * (spokes ? 0.86 : 0.62), w + 0.01, spokes ? M.metal : hub, [x, r, z], 16));
+      g.add(wheel(r, w, M.tire, [x, r, z]));
+      g.add(wheel(r * (spokes ? 0.86 : 0.62), w + 0.01, spokes ? M.metal : hub, [x, r, z]));
       if (spokes) g.add(wheel(r * 0.8, w + 0.02, M.dark, [x, r, z]), wheel(r * 0.22, w + 0.03, M.metal, [x, r, z]));
     };
     const fork = (top, bottom, x = 0.08, mat = M.metal) => { for (const sx of [-1, 1]) g.add(capsuleBetween([sx * x, top[1], top[0]], [sx * x, bottom[1], bottom[0]], 0.025, mat, 5)); };

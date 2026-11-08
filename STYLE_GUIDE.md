@@ -344,6 +344,9 @@ About one in six random characters is a child.
   lamp), sports car (small 1970s fastback coupé: long bonnet, round lamps,
   chrome bumpers and sill line, fender mirrors), city bus (window band,
   doors on the left, lit destination sign). No brand logos.
+- **Wheels are hexagons** on every vehicle (cars, bus, motorbikes, bicycles):
+  exactly 6 sides, tyre and hub alike (`wheel()` / `WHEEL_SIDES` in
+  `props/util.js`), whatever the detail level.
 - **Motorbikes** (no logos), each with its own default colour:
   - *50cc / Delivery:* the three-wheeled delivery scooter: one small wheel in
     front, two close together behind under a rounded pod, a tall leg shield
