@@ -13,13 +13,19 @@ export const MOUSTACHES = ['None', 'Classic', 'Handlebar', 'Thin'];
 // Hats that cover the top of the head squash tall hairstyles underneath.
 const COVERS_HAIR = new Set(['Cap', 'Cap (backwards)', 'Beanie', 'Fedora', 'Helmet']);
 const UNDER_HAT = { bald: 'bald', short: 'short', medium: 'medium', long: 'long', bun: 'short',
-  spiky: 'short', mohawk: 'bald', curly: 'short', afro: 'short' };
+  spiky: 'short', mohawk: 'bald', curly: 'short', afro: 'short',
+  'short · buzz cut': 'short · buzz cut', 'short · undercut': 'short · buzz cut',
+  'medium · bob': 'medium · bob', 'medium · curtains': 'medium',
+  'long · ponytail': 'long · ponytail', 'long · high ponytail': 'long · ponytail',
+  'long · twin tails': 'long · twin tails', 'long · braid': 'long · braid' };
+// Other variations fall back to their family's basic cut under a hat.
+const FAMILY = (hair) => (hair.startsWith('short') ? 'short' : hair.startsWith('medium') ? 'medium' : hair.startsWith('long') ? 'long' : 'short');
 
 export const coversHair = (headwear) => COVERS_HAIR.has(headwear);
 
 /** The hairstyle actually drawn, given the headwear. */
 export function hairUnder(headwear, hair) {
-  return COVERS_HAIR.has(headwear) ? (UNDER_HAT[hair] ?? 'short') : hair;
+  return COVERS_HAIR.has(headwear) ? (UNDER_HAT[hair] ?? FAMILY(hair)) : hair;
 }
 
 /** Part of a sphere, scaled to the head. phi/theta as in THREE.SphereGeometry. */

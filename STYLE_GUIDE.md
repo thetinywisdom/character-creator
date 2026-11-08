@@ -117,6 +117,18 @@ dressed in the same tones as the street will disappear.
 - Every top stops at the hip line so the waistband shows and the hip shape
   reads as body.
 
+## 3b2. Hairstyles
+
+- Three families with variations, so crowds look varied:
+  - **short:** crop, side part, buzz cut, undercut, quiff, bowl cut, messy
+  - **medium:** straight to the shoulders, bob, curtains (middle part), wavy,
+    shag (layered), half-up
+  - **long:** straight down the back, ponytail, high ponytail, twin tails,
+    braid, wavy, side-swept
+  - plus bald, bun, spiky, mohawk, curly, afro
+- Hair that hangs down the back keeps clear of the upper back (it must never
+  sink into the shirt); ties are small dark bands.
+
 ## 3c. Head items
 
 - **Headwear:** cap, backwards cap, beanie, fedora, headphones, helmet, in any

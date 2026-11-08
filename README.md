@@ -35,7 +35,8 @@ overhead wires). See the **Props gallery**; the street scene is dressed with the
 **Phase 2 – characters:** the human is now a modular character
 with slots and per-item colours. Batch 1 (done): Man / Woman body types (the
 man with a V-shaped torso and strong arms, the woman with an hourglass torso, chest and bottom sculpted into the body, full
-thighs tapering to slim knees; see the Body shape study view), separate neck / arm / leg thickness, skin tones, 9 hairstyles with
+thighs tapering to slim knees; see the Body shape study view), separate neck / arm / leg thickness, skin tones, 26 hairstyles (short, medium
+and long, each with 6–7 cuts, plus bald, bun, spiky, mohawk, curly, afro) with
 8 hair colours, 7 tops (T-shirt, shirt, sleeveless tank top, crop top; short/long sleeves),
 trousers / shorts / skirt, chunky shoes or boots, a Randomize button and a crowd view.
 Batch 2 (done): headwear (cap, backwards cap, beanie, fedora, headphones,

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { ellipsoid, seg } from '../lib/shapes.js';
 import { CLOTH_COLORS, HAIR_COLORS, SKIN_TONES } from '../styles/palette.js';
 import { measure } from './human/frame.js';
-import { HAIRSTYLES, buildHair } from './human/hair.js';
+import { HAIRSTYLES, LONG_STYLES, MEDIUM_STYLES, SHORT_STYLES, buildHair } from './human/hair.js';
 import { TOPS, buildTorso } from './human/tops.js';
 import { buildArm } from './human/arms.js';
 import { FOOTWEAR } from './human/footwear.js';
@@ -102,7 +102,9 @@ export const human = {
       legThickness: woman ? range(0.03, 0.036, 0.001) : range(0.031, 0.038, 0.001),
       headWidth: range(0.76, 0.86, 0.01),
       skin: pick(names(SKIN_TONES)),
-      hair: pick(['short', 'short', 'medium', 'long', 'long', 'bun', 'spiky', 'mohawk', 'curly', 'afro', 'bald']),
+      // mostly short / medium / long cuts (with their variations), sometimes something special
+      hair: pick([...SHORT_STYLES, ...MEDIUM_STYLES, ...LONG_STYLES, ...SHORT_STYLES, ...LONG_STYLES,
+        'bun', 'spiky', 'mohawk', 'curly', 'afro', 'bald']),
       hairColor: pick(['Black', 'Black', 'Dark brown', 'Dark brown', 'Brown', 'Blonde', 'Red', 'Gray', 'Pink', 'Blue']),
       top: pick(names(TOPS)),
       topColor,
