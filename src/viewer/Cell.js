@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 import { disposeGeometry, setDetail } from '../lib/shapes.js';
 import { mulberry32 } from '../lib/rng.js';
+import { bench, busStop, postBox, streetLamp, trashBin } from '../props/furniture.js';
+import { crosswalk, streetSign, trafficLight } from '../props/traffic.js';
+import { bicycle, car } from '../props/vehicles.js';
+import { planter, utilityPole, vendingMachine, wire } from '../props/extras.js';
 
 // A Cell is one little stage: its own scene, lights, ground and camera,
 // holding one or more subjects rendered in one style. The gallery is a grid
@@ -157,6 +161,58 @@ export class Cell {
       }
       x += w;
     }
+
+    // --- street props (Japanese street) ----------------------------------
+    // Thin items (lamps, poles, signs) go on the curb in front of the
+    // subjects; bulky ones stand against the buildings so nothing hides
+    // the subjects from the camera.
+    const S = this.style;
+    const put = (obj, px, pz, ry = 0, py = 0) => { obj.position.set(px, py, pz); obj.rotation.y = ry; street.add(obj); return obj; };
+    const roadTop = -0.14;
+    const curbZ = backZ + walkDepth - 0.45;
+    const wallZ = backZ + 0.55;
+    const roadZ = backZ + walkDepth + 3.5;
+    const half = len / 2 - 2;
+    // utility poles with sagging wires, and street lamps between them
+    const poles = [];
+    for (let px = -half; px <= half; px += 14) {
+      put(utilityPole.build({ variant: poles.length % 2 ? 'Plain' : 'With transformer' }, S), px, curbZ);
+      poles.push(px);
+      if (px + 7 <= half) put(streetLamp.build({ variant: 'Single' }, S), px + 7, curbZ); // arm reaches over the road
+    }
+    for (let k = 0; k < poles.length - 1; k++) {
+      for (const [dx, y] of [[-0.6, 8.7], [0.6, 8.7], [0, 7.9]]) {
+        street.add(wire([poles[k] + dx, y, curbZ], [poles[k + 1] + dx, y, curbZ], S, 0.45));
+      }
+    }
+    // against the buildings: vending machines, recycling bins, a bench, planters
+    const wallItems = [
+      [vendingMachine.build({ variant: 'Red' }, S), -half + 4],
+      [vendingMachine.build({ variant: 'White' }, S), -half + 5.1],
+      [trashBin.build({ variant: 'Recycling station' }, S), -half + 6.6],
+      [bench.build({ variant: 'Park bench' }, S), half - 9],
+      [planter.build({ variant: 'Planter box' }, S), half - 5],
+      [bicycle.build({ color: 'White' }, S), half - 3, Math.PI / 2],
+    ];
+    for (const [obj, px, ry = 0] of wallItems) put(obj, px, wallZ + (ry ? 0.3 : 0), ry);
+    // on the curb: post box, a bus stop pole, a stop sign
+    put(postBox.build({}, S), -half + 10, curbZ - 0.2);
+    put(busStop.build({ variant: 'Pole' }, S), half - 12, curbZ);
+    put(streetSign.build({ variant: 'Stop' }, S), half - 1, curbZ);
+    // on the road: a crosswalk with a traffic light, and cars parked along the curb
+    // (low enough that they stay under the camera's line of sight to the subjects)
+    const cw = crosswalk.build({}, S, { length: 7 });
+    put(cw, -half + 1, roadZ, 0, roadTop);
+    put(trafficLight.build({ variant: 'Car signal' }, S), -half + 3.4, curbZ, 0);
+    const carRng = mulberry32(7);
+    const colors = ['White', 'Gray', 'Black', 'Blue', 'Red'];
+    const kinds = ['Kei car', 'Sedan', 'Minivan', 'Taxi'];
+    for (let px = -half + 8; px < half - 3; px += 7 + carRng() * 4) {
+      const kind = kinds[Math.floor(carRng() * kinds.length)];
+      put(car.build({ variant: kind, color: kind === 'Taxi' ? undefined : colors[Math.floor(carRng() * colors.length)] }, S),
+        px, roadZ - 2.2, Math.PI / 2, roadTop);
+    }
+
     street.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
     this.style.decorate?.(street);
     setDetail(1);

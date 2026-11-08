@@ -70,7 +70,42 @@ html, body {
   gap: 8px;
   align-content: start;
 }
-#grid[hidden] { display: none; }
+#grid[hidden], #propsGrid[hidden] { display: none; }
+
+/* props gallery: a plain grid of labelled cells */
+#propsGrid {
+  position: fixed;
+  inset: 0;
+  padding: var(--hud-h) 16px 16px;
+  overflow: auto;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  align-content: start;
+}
+#propsGrid .group-head {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding-top: 8px;
+}
+#propsGrid .cell { height: 240px; min-height: 0; position: relative; }
+#propsGrid .cell::before {
+  content: attr(data-label);
+  position: absolute;
+  top: 6px; left: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  z-index: 1;
+}
 
 .col-head, .row-head {
   color: var(--muted);
@@ -112,7 +147,7 @@ html, body {
 
 /* leave room for the controls panel on wide screens */
 @media (min-width: 900px) {
-  #grid { padding-right: 270px; }
+  #grid, #propsGrid { padding-right: 270px; }
 }
 
 /* phones: one cell per row, labels move inside the cells */

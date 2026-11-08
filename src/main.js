@@ -6,6 +6,7 @@ import { galleryStyles, lightingPresets, styles } from './styles/index.js';
 import { Cell } from './viewer/Cell.js';
 import { defaultsFor, loadParams, saveParams } from './viewer/params.js';
 import { mulberry32 } from './lib/rng.js';
+import { PROP_GROUPS, propSubject } from './props/index.js';
 import './style.css';
 
 // ---------------------------------------------------------------------------
@@ -21,7 +22,8 @@ const PAGE_BG = new THREE.Color(getComputedStyle(document.documentElement).getPr
 
 const params = loadParams(subjects);
 const state = {
-  view: 'gallery', // 'gallery' | 'lineup' | 'crowd' | 'focus'
+  view: 'gallery', // 'gallery' | 'props' | 'lineup' | 'crowd' | 'study' | 'focus'
+  lastGrid: 'gallery', // which grid the inspection view returns to
   crowdSeed: 1,
   focus: null,
   turntable: true,
@@ -57,6 +59,26 @@ for (const style of galleryStyles) {
     galleryCells.push(cell);
   }
 }
+
+// Props gallery: one cell per prop variant, grouped, in the chosen style
+const propsGrid = document.querySelector('#propsGrid');
+const propCells = [];
+for (const group of PROP_GROUPS) {
+  propsGrid.append(Object.assign(document.createElement('div'), { className: 'group-head', textContent: group.label }));
+  for (const prop of group.props) {
+    prop.variants.forEach((variant, i) => {
+      const color = prop.colors ? prop.colors[(i * 3 + 1) % prop.colors.length] : undefined;
+      const subject = propSubject(prop, variant, color);
+      const cell = new Cell({ entries: [{ subject }], style: galleryStyles[0], renderer });
+      cell.el = Object.assign(document.createElement('div'), { className: 'cell', title: subject.label });
+      cell.el.dataset.label = subject.label;
+      cell.el.addEventListener('click', () => enterFocus(cell));
+      propsGrid.append(cell.el);
+      propCells.push(cell);
+    });
+  }
+}
+let propsBuilt = false; // built on first visit, to keep start-up fast
 
 let lineupCell = makeLineup();
 function makeLineup() {
@@ -133,9 +155,9 @@ controls.enabled = false;
 
 const backBtn = document.querySelector('#back');
 const hint = document.querySelector('#hint');
-backBtn.addEventListener('click', () => setView('gallery'));
+backBtn.addEventListener('click', () => setView(state.lastGrid));
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && state.view !== 'gallery') setView('gallery');
+  if (e.key === 'Escape' && state.view !== state.lastGrid) setView(state.lastGrid);
 });
 
 function enterFocus(cell) {
@@ -144,11 +166,18 @@ function enterFocus(cell) {
 }
 
 function setView(view) {
+  if (view === 'gallery' || view === 'props') state.lastGrid = view;
+  if (view === 'props' && !propsBuilt) {
+    propCells.forEach((c) => { c.rebuild(params); c.applyLighting(lightingPresets[state.lighting]); });
+    propsBuilt = true;
+  }
   state.view = view;
-  const big = view !== 'gallery';
-  grid.hidden = big;
+  const big = view !== 'gallery' && view !== 'props';
+  grid.hidden = view !== 'gallery';
+  propsGrid.hidden = view !== 'props';
   backBtn.hidden = !big;
   controls.enabled = big;
+  backBtn.textContent = `← ${state.lastGrid === 'props' ? 'Props' : 'Gallery'}`;
   hint.textContent = big
     ? 'Drag to orbit · scroll to zoom · Esc to go back'
     : 'Click a cell to inspect it up close';
@@ -195,6 +224,7 @@ if (window.innerWidth < 700) gui.close();
 const viewFolder = gui.addFolder('View');
 const actions = {
   gallery: () => setView('gallery'),
+  props: () => setView('props'),
   lineup: () => setView('lineup'),
   crowd: () => setView('crowd'),
   study: () => setView('study'),
@@ -212,6 +242,7 @@ const actions = {
   },
 };
 viewFolder.add(actions, 'gallery').name('Gallery (style × subject)');
+viewFolder.add(actions, 'props').name('Props gallery (street props)');
 viewFolder.add(actions, 'lineup').name('Street scene (real scale)');
 viewFolder.add(actions, 'crowd').name('Crowd (random characters)');
 viewFolder.add(actions, 'newCrowd').name('New random crowd');
@@ -230,7 +261,7 @@ viewFolder.add(state, 'characterScale', 1, 1.6, 0.05).name('Extra character size
   for (const cell of [...galleryCells, lineupCell, crowdCell]) cell.rebuild(params);
 });
 viewFolder.add(state, 'lighting', Object.keys(lightingPresets)).name('Lighting').onChange((name) => {
-  for (const cell of [...galleryCells, lineupCell, crowdCell, studyCell]) cell.applyLighting(lightingPresets[name]);
+  for (const cell of [...galleryCells, ...propCells, lineupCell, crowdCell, studyCell]) cell.applyLighting(lightingPresets[name]);
 });
 if (styles.length > 1) {
   viewFolder.add(state, 'lineupStyle', Object.fromEntries(styles.map((s) => [s.label, s.id])))
@@ -453,8 +484,8 @@ function loop(time) {
   renderer.clear();
   renderer.setScissorTest(true);
 
-  if (state.view === 'gallery') {
-    for (const cell of galleryCells) {
+  if (state.view === 'gallery' || state.view === 'props') {
+    for (const cell of state.view === 'props' ? propCells : galleryCells) {
       const r = cell.el.getBoundingClientRect();
       if (r.bottom < 0 || r.top > H || r.right < 0 || r.left > W || r.width < 2 || r.height < 2) continue;
       cell.setAngle(state.angle);
@@ -484,7 +515,8 @@ requestAnimationFrame(loop);
 // handy for debugging from the console
 Object.assign(window, {
   __cc: {
-    params, state, galleryCells, setView, applyStreet, actions,
+    params, state, galleryCells, propCells, setView, applyStreet, actions,
+    enterProp: (i) => enterFocus(propCells[i]),
     enterFocus: (i) => enterFocus(galleryCells[i]),
     /** Orbit the inspection camera by `az` radians around the subject. */
     orbit: (az) => {

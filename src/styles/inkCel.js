@@ -54,11 +54,11 @@ export const inkCelStyle = {
     if (key === 'lineMax') lineMax.value = v / 100;
   },
 
-  material(role, color) {
-    const key = `${role}:${color ?? ''}`;
+  material(role, color, map = null) {
+    const key = `${role}:${color ?? ''}:${map?.uuid ?? ''}`;
     if (!cache.has(key)) {
-      const c = role === 'ground' ? new THREE.Color(0xe2d8c3) : roleColor(role, { color });
-      const m = new THREE.MeshToonMaterial({ color: c, gradientMap: RAMP });
+      const c = map ? new THREE.Color(0xffffff) : role === 'ground' ? new THREE.Color(0xe2d8c3) : roleColor(role, { color });
+      const m = new THREE.MeshToonMaterial({ color: c, gradientMap: RAMP, map });
       m.userData.role = role;
       cache.set(key, m);
     }

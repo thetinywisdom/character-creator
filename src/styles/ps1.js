@@ -17,6 +17,8 @@ import { roleColor } from './palette.js';
 // the environment is toned down, so characters pop against the city.
 const CHARACTER_ROLES = new Set(['skin', 'cloth', 'clothAlt', 'accent', 'shoe', 'hair', 'fur', 'furLight']);
 const CHARACTERS = new Set(['human', 'cat']);
+// Small, important city items stay vivid too (signs, post boxes, lamps).
+const VIVID_ROLES = new Set(['signage', 'light']);
 
 function adjust(color, { saturate = 1, lighten = 0 }) {
   const hsl = color.getHSL({});
@@ -76,16 +78,20 @@ export function createPs1Style({
       snapRes.value.set(w * k, h * k);
     },
 
-    material(role, baseColor) {
-      const key = `${role}:${baseColor ?? ''}`;
+    /** map: optional texture (sign faces, shop signs); the colour then tints it. */
+    material(role, baseColor, map = null) {
+      const key = `${role}:${baseColor ?? ''}:${map?.uuid ?? ''}`;
       if (!cache.has(key)) {
         let color = role === 'ground'
           ? new THREE.Color(groundColor)
           : roleColor(role, { color: baseColor, toward: 0x808080, amount: muted });
-        if (CHARACTER_ROLES.has(role) && characterBoost) adjust(color, characterBoost);
-        else if (!CHARACTER_ROLES.has(role) && environment) adjust(color, environment);
+        const vivid = CHARACTER_ROLES.has(role) || VIVID_ROLES.has(role);
+        if (map) color = new THREE.Color(baseColor ?? 0xffffff); // textures keep their own colours
+        else if (vivid && characterBoost) adjust(color, characterBoost);
+        else if (!vivid && environment) adjust(color, environment);
         // Lambert = simple diffuse lighting, close to the period's Gouraud shading
-        const m = new THREE.MeshLambertMaterial({ color });
+        const m = new THREE.MeshLambertMaterial({ color, map });
+        if (role === 'light') { m.emissive = color.clone(); m.emissiveIntensity = 0.55; }
         m.onBeforeCompile = (shader) => {
           shader.uniforms.snapRes = snapRes;
           shader.vertexShader = 'uniform vec2 snapRes;\n' + shader.vertexShader.replace(

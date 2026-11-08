@@ -2,7 +2,16 @@
 
 A three.js playground for finding the visual style of a 3D world before building it.
 
-**Phase 2 – characters (in progress):** the human is now a modular character
+**Phase 2 – street props (done):** Japanese street props in four groups:
+street furniture (bench, street lamp, recycling bins, bollard / guard rail,
+fire hydrant with its 消火栓 sign, red post box, bus stop pole and shelter),
+traffic and signs (horizontal car signal, pedestrian signal, 止まれ stop sign,
+speed limit, street name, cone and barrier, zebra crosswalk), vehicles (kei
+car, sedan, minivan, taxi with roof lamp, city bike with basket, 50cc scooter)
+and extras (planters, drink vending machines, phone booth, utility poles with
+overhead wires). See the **Props gallery**; the street scene is dressed with them.
+
+**Phase 2 – characters:** the human is now a modular character
 with slots and per-item colours. Batch 1 (done): Man / Woman body types (the
 man with a V-shaped torso and strong arms, the woman with an hourglass torso, chest and bottom sculpted into the body, full
 thighs tapering to slim knees; see the Body shape study view), separate neck / arm / leg thickness, skin tones, 9 hairstyles with
@@ -80,7 +89,8 @@ src/
                      palette.js – shared base colours
   viewer/Cell.js     one stage (scene, lights, ground, street backdrop, camera framing)
   viewer/params.js   defaults + saved settings
-  lib/               shape helpers, seeded random
+  props/             furniture.js, traffic.js, vehicles.js, extras.js, index.js
+  lib/               shape helpers, seeded random, sign textures
 ```
 
 Subjects never pick colours or materials themselves. They ask the style for a

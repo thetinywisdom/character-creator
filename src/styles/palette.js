@@ -20,6 +20,18 @@ export const BASE = {
   building: 0xc98a62,
   buildingAlt: 0x8fa3b8,
   window: 0x3a4556,
+  // props and city
+  metal: 0x9aa0a6,      // poles, frames
+  darkMetal: 0x3c4046,  // legs, housings
+  wood: 0x9a6a3e,
+  concrete: 0xb4b0a8,
+  paint: 0xd8d8d8,      // vehicle bodies (colour passed per prop)
+  glass: 0x2e3b4c,      // car and shop windows
+  tire: 0x1f1f22,
+  signage: 0xd83a34,    // signs, post box, hydrant (vivid, readable when small)
+  light: 0xfff3c4,      // lamps and traffic-light lenses (glow at night)
+  grass: 0x78a85a,
+  roof: 0x4a5560,
 };
 
 // Character colour choices. Small, curated lists keep crowds harmonious.

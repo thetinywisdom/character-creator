@@ -149,6 +149,21 @@ dressed in the same tones as the street will disappear.
 - Padded, rounded shapes (`softBox`) instead of plain boxes for bags and carriers.
 - Straps, belts and drawstrings use a dark trim colour.
 
+## 3e. Street props (Japan)
+
+- The city is **Japanese**: red post boxes, red hydrants with a 消火栓 sign,
+  horizontal traffic lights, inverted-triangle 止まれ stop signs, drink vending
+  machines, recycling stations, white guard rails, concrete utility poles with
+  overhead wires, kei cars and taxis with a roof lamp, city bikes with baskets.
+- Signs, post boxes, hydrants and lamps use the vivid `signage` / `light` roles
+  so they stay readable; lamps and traffic-light lenses glow. Sign text is a
+  small, hard-filtered canvas texture (90s console look).
+- Everything else in the city (buildings, roads, poles, vehicles) stays in the
+  calmer environment colours, so characters still stand out.
+- Street layout: thin items (poles, lamps, signs) on the curb, bulky items
+  (vending machines, bins, benches) against the buildings, parked cars in the
+  lane next to the curb.
+
 ## 4. Readability checklist (for any new character)
 
 - [ ] Visible at street distance on the sidewalk, in Day **and** Night lighting
