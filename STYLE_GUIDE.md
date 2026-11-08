@@ -186,10 +186,12 @@ dressed in the same tones as the street will disappear.
 - **Natural walk and run** are keyed from classic animation pose sequences
   (contact → down → passing → up → contact, per step), and the lowest heel or
   toe is pinned to the ground so the standing foot stays planted.
-  - Walk: contact with the front heel down, toes up and knee straight; the
-    weight goes **down** just after contact (standing knee bends) and **up**
-    just after passing (standing leg straightens, heel lifts); the swinging
-    knee bends ~60° as it passes; arms swing opposite the legs.
+  - Walk: contact with the front heel down, toes up and knee nearly straight;
+    the weight settles **down** softly just after contact and goes **up** just
+    after passing (standing leg straightens, heel lifts). Keep it relaxed: the
+    swinging knee bends only ~45°, enough for the foot to clear the ground; a
+    higher knee lift or a deeper down reads as marching or stomping. Arms
+    swing loosely (~±15°) opposite the legs.
   - Run: 4 steps a second; contact with the leg reaching forward; a deep down
     pose; the back heel tucks high behind on the passing pose; on the up pose
     the push-off leg is fully extended behind and the front knee is high; both

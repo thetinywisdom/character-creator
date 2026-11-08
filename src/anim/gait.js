@@ -15,8 +15,9 @@ import * as THREE from 'three';
 //    soles is pinned to the ground, so the body rises over the standing leg
 //    and the planted foot does not slide or float.
 //      Walk: keyed from a classic animation walk (contact, down, passing, up):
-//      heel strike with a straight knee, weight down after contact, up after
-//      passing, toe push-off behind, knee ~60° as the leg passes.
+//      heel strike with a nearly straight knee, a soft settle after contact,
+//      up after passing, toe push-off behind; the passing knee bends ~45°,
+//      just enough to clear the ground (more reads as marching).
 //      Run: keyed from a classic animation run cycle (contact, down, passing,
 //      up, flight), 4 steps a second, strong lean, big arm swing, high heel
 //      tuck behind and high knee in front.
@@ -48,10 +49,13 @@ export const RUN_SPEED = 4.2;
 //  up      (3/8)  standing leg straight, heel lifting; other leg reaching forward
 //  contact (4/8)  this leg is now behind, on its toes
 // The second half is the other leg's first half.
+// Kept relaxed so it does not read as marching: the passing knee only lifts
+// enough for the foot to clear the ground, the leg reaches forward moderately,
+// and the "down" is a soft settle rather than a drop.
 const WALK = {
-  hip: [[0, 30], [1 / 8, 20], [2 / 8, 3], [3 / 8, -10], [4 / 8, -16], [5 / 8, -8], [6 / 8, 20], [7 / 8, 32]],
-  knee: [[0, 2], [1 / 8, 22], [2 / 8, 8], [3 / 8, 2], [4 / 8, 12], [5 / 8, 45], [6 / 8, 62], [7 / 8, 35]],
-  ankle: [[0, 12], [1 / 8, -4], [2 / 8, 3], [3 / 8, -6], [4 / 8, -14], [5 / 8, -20], [6 / 8, -10], [7 / 8, 4]],
+  hip: [[0, 25], [1 / 8, 18], [2 / 8, 6], [3 / 8, -6], [4 / 8, -13], [5 / 8, -6], [6 / 8, 12], [7 / 8, 24]],
+  knee: [[0, 4], [1 / 8, 14], [2 / 8, 8], [3 / 8, 4], [4 / 8, 12], [5 / 8, 36], [6 / 8, 45], [7 / 8, 20]],
+  ankle: [[0, 8], [1 / 8, -2], [2 / 8, 3], [3 / 8, -4], [4 / 8, -12], [5 / 8, -14], [6 / 8, -4], [7 / 8, 4]],
 };
 // Run: keyed from a classic animation run cycle (7 drawings per step:
 // contact, down, -, passing, up, -, contact), read for the left leg:
@@ -146,8 +150,8 @@ function poseNatural(body, g) {
     if (j[`foot${side}`]) j[`foot${side}`].rotation.x = -ankle * D * a;
     // arms swing with the opposite leg: forward when that leg's heel strikes
     const c = Math.cos(Math.PI * 2 * opp);
-    const shoulder = lerp(4 + 22 * c, 10 + 50 * c, run);   // running: big swing, forward ~60°, back ~40°
-    const elbow = lerp(16 + 14 * c, 90 + 20 * c, run);     // forward arm bent more than the back arm
+    const shoulder = lerp(3 + 15 * c, 10 + 50 * c, run);   // running: big swing, forward ~60°, back ~40°
+    const elbow = lerp(14 + 10 * c, 90 + 20 * c, run);     // forward arm bent more than the back arm
     const arm = j[`arm${side}`];
     if (arm) {
       arm.rotation.x = -shoulder * D * a;
