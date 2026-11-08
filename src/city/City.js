@@ -16,18 +16,48 @@ import { JOINT_NAMES, createGait, poseGait, stepGait } from '../anim/gait.js';
 const LIMBS = new Set([...JOINT_NAMES, 'head']); // kept as separate groups so they can move
 const PLAYER_R = 0.3;
 
-/** Point at distance s along a closed polyline. Returns position and heading. */
-function alongLoop(loop, lengths, total, s) {
+/**
+ * Point at distance s along a closed polyline, with every corner rounded by
+ * a curve of radius r (so walkers and cars turn smoothly instead of snapping
+ * 90°). Returns the position and the direction of travel (dx, dz).
+ */
+function alongLoop(loop, lengths, total, s, r = 0) {
   s = ((s % total) + total) % total;
-  for (let i = 0; i < loop.length; i++) {
+  const n = loop.length;
+  for (let i = 0; i < n; i++) {
     if (s <= lengths[i]) {
-      const a = loop[i], b = loop[(i + 1) % loop.length];
-      const t = s / Math.max(lengths[i], 1e-6);
+      const a = loop[i], b = loop[(i + 1) % n];
+      const len = Math.max(lengths[i], 1e-6);
+      if (r > 0) {
+        // the rounding at a corner k uses the same radius from both sides
+        const rAt = (k) => Math.min(r, lengths[(k - 1 + n) % n] / 2, lengths[k] / 2);
+        const rEnd = rAt((i + 1) % n), rStart = rAt(i);
+        if (s > len - rEnd) return corner(loop, (i + 1) % n, rEnd, (s - (len - rEnd)) / (2 * rEnd));
+        if (s < rStart) return corner(loop, i, rStart, 0.5 + s / (2 * rStart));
+      }
+      const t = s / len;
       return { x: a[0] + (b[0] - a[0]) * t, z: a[1] + (b[1] - a[1]) * t, dx: b[0] - a[0], dz: b[1] - a[1] };
     }
     s -= lengths[i];
   }
   return { x: loop[0][0], z: loop[0][1], dx: 1, dz: 0 };
+}
+
+/** On the curve round corner k (radius r), at t from 0 (before) to 1 (after). */
+function corner(loop, k, r, t) {
+  const n = loop.length;
+  const p = loop[(k - 1 + n) % n], c = loop[k], q = loop[(k + 1) % n];
+  const li = Math.hypot(c[0] - p[0], c[1] - p[1]) || 1, lo = Math.hypot(q[0] - c[0], q[1] - c[1]) || 1;
+  const p0 = [c[0] - ((c[0] - p[0]) / li) * r, c[1] - ((c[1] - p[1]) / li) * r];
+  const p2 = [c[0] + ((q[0] - c[0]) / lo) * r, c[1] + ((q[1] - c[1]) / lo) * r];
+  const u = 1 - t;
+  // quadratic curve with the corner as control point; its slope is the heading
+  return {
+    x: u * u * p0[0] + 2 * u * t * c[0] + t * t * p2[0],
+    z: u * u * p0[1] + 2 * u * t * c[1] + t * t * p2[1],
+    dx: 2 * u * (c[0] - p0[0]) + 2 * t * (p2[0] - c[0]),
+    dz: 2 * u * (c[1] - p0[1]) + 2 * t * (p2[1] - c[1]),
+  };
 }
 
 function loopLengths(loop) {
@@ -241,7 +271,7 @@ export class City {
     // --- pedestrians ----------------------------------------------------------
     for (const n of this.npcs) {
       n.s += n.dir * n.speed * dt;
-      const q = alongLoop(n.loop, n.lengths, n.total, n.s);
+      const q = alongLoop(n.loop, n.lengths, n.total, n.s, 1.2); // round the corners
       const hd = Math.atan2(q.dx * n.dir, q.dz * n.dir);
       const len = Math.hypot(q.dx, q.dz) || 1;
       // sideways offset so people don't all walk on one line
@@ -269,7 +299,7 @@ export class City {
     // --- cars on the ring road -------------------------------------------------
     for (const c of this.cars) {
       c.s += c.speed * dt;
-      const q = alongLoop(c.loop, c.lengths, c.total, c.s);
+      const q = alongLoop(c.loop, c.lengths, c.total, c.s, 4); // cars swing round wider
       const len = Math.hypot(q.dx, q.dz) || 1;
       const fx = q.dx / len, fz = q.dz / len;
       // keep left: offset toward the driver's left side

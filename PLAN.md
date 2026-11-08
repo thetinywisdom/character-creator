@@ -47,6 +47,7 @@ edit; that is not this tool's job.
 10. **Isometric camera** in Walk mode (switch with third person; zoom, rotate).
 11. **Cheaper walking people**: each person is one skinned mesh with vertex colours sharing one material: ~2 draw calls instead of ~21; a sample town went from 925 to 298 meshes (−68%).
 12. **Flicker fix**: shop windows, wooden fronts and crosswalks blinked while walking (z-fighting): 24-bit depth buffer, tighter iso camera range, surfaces kept ≥ 2 cm apart.
+13. **Smooth turning**: pedestrians and cars follow routes with rounded corners (people 1.2 m, cars 4 m) instead of snapping 90° in one frame.
 
 ## Next (suggested order)
 

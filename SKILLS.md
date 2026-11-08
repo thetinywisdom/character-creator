@@ -60,7 +60,9 @@ src/city/civic.js      udon/soba, family restaurant, takoyaki, koban, post offic
 src/city/interiors.js  painted shop interiors + painted curtain windows
 src/city/facades.js    painted office facades, side windows, roof clutter, roof signs
 src/city/park.js       park area
-src/city/City.js       Walk mode: player, NPCs, cars, cats, cameras (third person + iso)
+src/city/City.js       Walk mode: player, NPCs, cars, cats, cameras (third person + iso);
+                       routes are closed polylines followed with rounded corners
+                       (alongLoop(loop, lengths, total, s, radius))
 src/props/             street props (furniture, traffic, vehicles, extras, japan)
 src/editor/            Editor.js, thumbs.js (palette pictures, cached), towns.js (IndexedDB),
                        TownsPanel.js (My towns)
