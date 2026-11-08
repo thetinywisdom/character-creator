@@ -11,8 +11,14 @@ café, bakery, bookshop, izakaya), and a park with a playground, benches, trees,
 a toilet hut and cats. Streets have sidewalks, crosswalks, traffic lights,
 utility poles with wires, lamps, vending machines, parked cars and cars
 driving on the left, plus pedestrians walking the sidewalks.
-Characters walk and run with a jointed, procedural gait (knees, ankles, elbows);
-the viewer's **Preview animation** setting shows it up close.
+Characters walk and run with a jointed gait keyframed from clinical gait data
+(heel strike, planted stance foot, toe push-off, knee flexion in swing); the old
+gliding cycle is kept as **Roller skate**. The viewer's **Preview animation**
+setting shows each one up close, and **City movement** picks yours in the city.
+Gait references: [Lower-limb walking pattern](https://www.wikipedia.com/wiki/Lower-limb_walking_pattern),
+normative sagittal gait angles ([J NeuroEng Rehabil 8:55](https://jneuroengrehab.biomedcentral.com/articles/10.1186/1743-0003-8-55/tables/1)),
+running kinematics ([PMC8993226](https://pmc.ncbi.nlm.nih.gov/articles/PMC8993226/figure/F1));
+classic sources: Perry & Burnfield, *Gait Analysis*; Winter, *Biomechanics and Motor Control of Human Movement*.
 Controls: WASD / arrows to walk, Shift to run, drag to look, scroll to zoom,
 Esc to leave; on phones an on-screen joystick.
 

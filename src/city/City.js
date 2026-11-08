@@ -186,7 +186,7 @@ export class City {
     }
     this.collide(p);
     stepGait(p.gait, dt, p.speed);
-    poseGait(p.body, p.gait);
+    poseGait(p.body, p.gait, this.playerGait ?? 'natural');
     const ground = this.layout.groundHeight(p.x, p.z);
     p.root.position.set(p.x, ground, p.z);
     p.root.rotation.y = p.heading;

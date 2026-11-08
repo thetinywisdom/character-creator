@@ -38,6 +38,13 @@ export function buildLeg(f, kind, mats, sx, footwear = 'Shoes') {
   const foot = buildFoot(f, footwear, mats.shoe, 0);
   foot.position.set(0, -ankle, 0);
   footJoint.add(foot);
+  // heel and toe on the sole, in ankle-joint space: the gait keeps the
+  // lowest of these on the ground so the standing foot stays planted
+  const Lf = f.footL * 1.05;
+  footJoint.userData.sole = [
+    new THREE.Vector3(0, -f.footH, Lf * 0.25 - Lf / 2),
+    new THREE.Vector3(0, -f.footH, Lf * 0.25 + Lf / 2),
+  ];
   shin.add(footJoint);
   if (kind === 'Shorts') {
     // covers the upper thigh, a little wider than the leg

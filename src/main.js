@@ -36,7 +36,8 @@ const state = {
   lighting: 'Day',
   street: false, // frame subjects small, as seen from across a street
   characterScale: 1, // >1 exaggerates people and animals so they read when tiny
-  anim: 'Still',     // preview animation for characters in the viewer: Still | Walk | Run
+  anim: 'Still',     // preview animation in the viewer: Still | Walk | Run | Roller skate
+  cityGait: 'Walk naturally', // how you move in the city: Walk naturally | Roller skate
 };
 const STREET_HEIGHT = 6; // metres of height in view at street distance
 const LINEUP_HEIGHT = 9;
@@ -312,7 +313,8 @@ if (styles.length > 1) {
       if (['lineup', 'crowd', 'study'].includes(state.view)) setView(state.view);
     });
 }
-viewFolder.add(state, 'anim', ['Still', 'Walk', 'Run']).name('Preview animation');
+viewFolder.add(state, 'anim', ['Still', 'Walk', 'Run', 'Roller skate']).name('Preview animation');
+viewFolder.add(state, 'cityGait', ['Walk naturally', 'Roller skate']).name('City movement');
 viewFolder.add(state, 'turntable').name('Turntable');
 viewFolder.add(state, 'speed', 0, 1.5, 0.01).name('Spin speed');
 viewFolder.add(actions, 'screenshot').name('Save PNG');
@@ -507,7 +509,7 @@ const viewerGait = createGait();
 function animateHumans(cell) {
   for (const p of cell.pivots) {
     const o = p.children[0];
-    if (o && o.name === 'human') poseGait(o, viewerGait);
+    if (o && o.name === 'human') poseGait(o, viewerGait, state.anim === 'Roller skate' ? 'skate' : 'natural');
   }
 }
 
@@ -525,7 +527,8 @@ function loop(time) {
   processDirty();
   const dt = Math.min(timer.getDelta(), 0.1);
   if (state.turntable) state.angle += dt * state.speed;
-  stepGait(viewerGait, dt, state.anim === 'Run' ? RUN_SPEED : state.anim === 'Walk' ? WALK_SPEED : 0);
+  stepGait(viewerGait, dt, state.anim === 'Run' ? RUN_SPEED : state.anim === 'Still' ? 0 : WALK_SPEED);
+  if (viewerGait.lock != null) viewerGait.phase = viewerGait.lock * Math.PI * 2; // debug: freeze at a cycle fraction
 
   const W = canvas.clientWidth, H = canvas.clientHeight;
   renderer.setScissorTest(false);
@@ -534,6 +537,7 @@ function loop(time) {
   renderer.setScissorTest(true);
 
   if (state.view === 'city' && city) {
+    city.playerGait = state.cityGait === 'Roller skate' ? 'skate' : 'natural';
     city.update(dt, cityInput);
     city.camera.aspect = W / H;
     city.camera.updateProjectionMatrix();
@@ -573,7 +577,7 @@ Object.assign(window, {
   __cc: {
     params, state, galleryCells, propCells, setView, applyStreet, actions,
     enterProp: (i) => enterFocus(propCells[i]),
-    enterCity, cityInput, getCity: () => city,
+    enterCity, cityInput, getCity: () => city, viewerGait,
     enterFocus: (i) => enterFocus(galleryCells[i]),
     /** Orbit the inspection camera by `az` radians around the subject. */
     orbit: (az) => {

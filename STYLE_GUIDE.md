@@ -183,12 +183,18 @@ dressed in the same tones as the street will disappear.
 ## 3g. Animation
 
 - Characters have real joints: hip → knee → ankle, shoulder → elbow.
-- **Walk:** about 1.8 steps per second; the knee bends most in early swing, the
-  foot stays level and plants heel-first, arms swing opposite the legs with a
-  soft elbow, the body rises over each step and sways slightly.
-- **Run:** about 2.9 steps per second; high heel kick, knee lift, roughly 90°
-  elbows pumping harder, a forward lean, a dip on landing and a float between
-  steps.
+- **Natural walk and run** are keyframed from clinical gait data (sagittal hip,
+  knee and ankle angle curves, heel strike at 0% of the cycle), and the lowest
+  heel or toe is pinned to the ground so the standing foot stays planted.
+  - Walk: the front leg lands heel-first with the hip ~30° forward and the knee
+    almost straight; the back leg is slightly bent and pushes off the toes
+    (~18° at ~62%); the knee bends ~60° in early swing; arms swing opposite the
+    legs with a soft elbow; the body rises over the standing leg.
+  - Run: shorter ground contact (~38%), knee bends ~40° on landing, strong
+    push-off, knee ~100° in swing, flight between steps, ~8° forward lean,
+    elbows ~90°.
+- **Roller skate:** the first, sine-based cycle (smooth, gliding legs), kept as
+  an option ("Preview animation" and "City movement").
 - Walk blends into run with speed, and both fade to a standing pose with a
   slight breathing motion.
 
