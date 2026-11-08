@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { capsuleBetween, ellipsoid, seg, surfaceZ } from '../../lib/shapes.js';
+import { azimuth, headShell, smooth } from './headShape.js';
 
 // Head items: headwear, face accessories and facial hair. Built in head-local
 // space (head centre at the origin, face toward +z). Everything is chunkier
@@ -26,16 +27,6 @@ export const coversHair = (headwear) => COVERS_HAIR.has(headwear);
 /** The hairstyle actually drawn, given the headwear. */
 export function hairUnder(headwear, hair) {
   return COVERS_HAIR.has(headwear) ? (UNDER_HAT[hair] ?? FAMILY(hair)) : hair;
-}
-
-/** Part of a sphere, scaled to the head. phi/theta as in THREE.SphereGeometry. */
-function shell(f, scale, material, phiStart, phiLength, thetaStart, thetaLength, w = 24, h = 10) {
-  const m = new THREE.Mesh(
-    new THREE.SphereGeometry(1, seg(w), seg(h, 4), phiStart, phiLength, thetaStart, thetaLength),
-    material,
-  );
-  m.scale.set(f.rx * scale, f.ry * scale, f.rz * scale);
-  return m;
 }
 
 /** Half disc sticking out toward +z: cap brims and visors. */
@@ -151,9 +142,11 @@ export function buildFaceAccessory(f, kind, mats) {
     bridge.position.set(0, ey + R * 0.02, zf);
     g.add(bridge);
   } else if (kind === 'Flu mask') {
-    // a curved patch over the lower face, from below the nose to the chin
-    const mask = shell(f, 1.05, mats.mask, Math.PI / 2 - 1.0, 2.0, 1.6, 0.85, 16, 6);
-    g.add(mask);
+    // a patch over the lower face, from below the nose to the chin, grown
+    // from the head shape so it sits on the jaw
+    g.add(new THREE.Mesh(headShell(f,
+      (d) => Math.abs(azimuth(d)) < 1.05 && d.y < -0.02 && d.y > -0.8,
+      () => R * 0.05), mats.mask));
     for (const sx of [-1, 1]) {
       // ear loops
       g.add(capsuleBetween([sx * rx * 0.85, -R * 0.1, rz * 0.5], [sx * rx * 1.02, -R * 0.05, -rz * 0.05], R * 0.03, mats.mask, 6));
@@ -169,8 +162,10 @@ export function buildFacialHair(f, beard, moustache, material) {
   const { R, rx, ry, rz } = f;
 
   if (beard === 'Short' || beard === 'Long') {
-    // jaw and chin, from ear to ear
-    g.add(shell(f, 1.07, material, Math.PI / 2 - 1.6, 3.2, 1.85, Math.PI - 0.25 - 1.85, 20, 6));
+    // jaw and chin, from ear to ear, grown from the head shape (fuller at the chin)
+    g.add(new THREE.Mesh(headShell(f,
+      (d) => Math.abs(azimuth(d)) < 1.75 && d.y < -0.2,
+      (d) => R * 0.04 + R * 0.06 * smooth(-0.25, -0.85, d.y)), material));
   }
   if (beard === 'Long') {
     const hang = new THREE.Mesh(new THREE.ConeGeometry(R * 0.44, R * 0.9, seg(8, 5)), material);

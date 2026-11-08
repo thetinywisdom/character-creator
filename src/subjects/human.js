@@ -6,6 +6,7 @@ import { HAIRSTYLES, LONG_STYLES, MEDIUM_STYLES, SHORT_STYLES, buildHair } from 
 import { TOPS, buildTorso } from './human/tops.js';
 import { buildArm } from './human/arms.js';
 import { FOOTWEAR } from './human/footwear.js';
+import { headGeometry } from './human/headShape.js';
 import { OUTERWEAR, buildOuterwear } from './human/outerwear.js';
 import { BACK_ACCESSORIES, BODY_ACCESSORIES, buildBackAccessory, buildBodyAccessory } from './human/accessories.js';
 import { BEARDS, FACE_ACCESSORIES, HEADWEAR, MOUSTACHES, buildFaceAccessory, buildFacialHair, buildHeadwear, coversHair, hairUnder } from './human/head.js';
@@ -193,7 +194,7 @@ export const human = {
     const head = new THREE.Group();
     head.name = 'head';
     head.position.y = f.headY;
-    head.add(ellipsoid(1, [f.rx, f.ry, f.rz], mats.skin));
+    head.add(new THREE.Mesh(headGeometry(f), mats.skin)); // shaped like a head, not a ball
     const hair = hairUnder(p.headwear, p.hair);
     head.add(buildHair(f, hair, mats.hair, { underHat: coversHair(p.headwear) }));
     head.add(buildFacialHair(f, p.beard, p.moustache, mats.hair));

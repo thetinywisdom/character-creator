@@ -26,10 +26,14 @@ export function sculptTorso(geo, f) {
   if (f.woman && f.chestShape !== 'Wedge') {
     zones.push({
       sign: 1,                      // front
-      yc: 0.64 * L,                 // fullest point
-      up: 0.17 * L,                 // long slope up toward the collarbone
-      down: 0.075 * L,              // short drop underneath
-      amount: f.sw * 0.17 * f.chestSize,
+      // Natural profile: a gentle, slightly hollow slope down from the
+      // collarbone, the fullest point low on the chest, and a rounded,
+      // heavier underside that curves back in (not a shelf near the top).
+      yc: 0.56 * L,                 // fullest point, low on the chest
+      up: 0.34 * L,                 // long, slightly concave slope from the collarbone
+      down: 0.1 * L,                // rounded underside
+      upShape: 'droop',
+      amount: f.sw * 0.2 * f.chestSize, // a touch more: the droop profile has less volume up top
       two: f.chestShape === 'Smooth (two)',
       x0: f.sw * 0.13, sx: f.sw * 0.11, // lobe centres and width
       wx: f.sw * 0.22,                  // width of the single mass
@@ -71,7 +75,11 @@ export function sculptTorso(geo, f) {
       const facing = (s.sign * z) / r; // 1 = straight ahead of the zone
       if (facing <= 0) continue;
       const t = y - s.yc;
-      const vy = gauss(t, t > 0 ? s.up : s.down);
+      // above the fullest point: a 'droop' ramp (slightly hollow, gently
+      // rising toward the fullest point) instead of a bell curve
+      const vy = t > 0 && s.upShape === 'droop'
+        ? Math.pow(Math.max(0, 1 - t / s.up), 1.8)
+        : gauss(t, t > 0 ? s.up : s.down);
       const vx = s.two ? Math.max(gauss(x - s.x0, s.sx), gauss(x + s.x0, s.sx)) : gauss(x, s.wx);
       dz += s.sign * s.amount * vy * vx * facing ** 1.5;
     }

@@ -90,8 +90,10 @@ dressed in the same tones as the street will disappear.
 ## 3b. Body types
 
 - **Man / Woman** (presets of the same names set matching proportions).
-- **Woman:** hourglass torso (narrow waist, flared hips). The chest and bottom
-  are **sculpted into the torso surface** (vertices pushed forward / back with
+- **Woman:** hourglass torso (narrow waist, flared hips). The chest's profile
+  slopes gently down from the collarbone to its fullest point low on the chest,
+  with a rounded, heavier underside (never full right under the shoulders).
+  The chest and bottom are **sculpted into the torso surface** (vertices pushed forward / back with
   soft falloffs), not separate boxes or balls, so they grow out of the body and
   still look faceted at PS1 polygon counts. Default shape: two soft lobes
   ("Smooth (two)") with size sliders; the older trapezoid chest and round
@@ -126,10 +128,15 @@ dressed in the same tones as the street will disappear.
   - **long:** straight down the back, ponytail, high ponytail, twin tails,
     braid, wavy, side-swept
   - plus bald, bun, spiky, mohawk, curly, afro
-- The plain cut of each family uses the full, puffy cap; **variations sit on a
-  slimmer cap** so their defining shapes (fringe, quiff, top block, tufts) stand
-  out. Cuts defined by a fringe use a higher base hairline so the fringe forms
-  the front edge. Caps have at least 16 sides so the head never pokes through.
+- **No base cap.** Every style grows its own hair from the head shape: its own
+  hairline (front, temples, over the ear, nape) and its own thickness map
+  (quiff bulging at the front, undercut thin at the sides, bob flaring at the
+  bottom...), tapering to the scalp at the hairline so it blends in. Extra
+  pieces (tails, buns, braids, curtains, tufts) are added on top.
+- **The head is shaped like a head**, not a ball: fuller skull at the back,
+  flatter face plane and forehead, a jaw narrowing to the chin, the back of the
+  lower head tucking in to the neck. Beards and the flu mask grow from the same
+  shape so they fit the jaw.
 - Hair that hangs down the back keeps clear of the upper back (it must never
   sink into the shirt); ties are small dark bands.
 
