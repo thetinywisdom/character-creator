@@ -12,6 +12,7 @@ function prepare(geo, material) {
   for (const name of Object.keys(g.attributes)) {
     if (name === 'position' || name === 'normal') continue;
     if (name === 'uv' && material.map) continue;
+    if (material.userData?.keepAttributes?.includes(name)) continue; // e.g. the interior shader's room data
     g.deleteAttribute(name);
   }
   if (material.map && !g.attributes.uv) {

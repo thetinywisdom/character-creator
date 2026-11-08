@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { signTexture } from '../lib/textures.js';
 import { box, cyl, face } from '../props/util.js';
+import { paintedWindows, shopInterior } from './interiors.js';
 
 // Japanese city buildings, procedurally built from boxes. Each builder fills
 // a lot of width w (x) and depth d (z), stands on y = 0, is centred on the
@@ -66,11 +67,22 @@ const SHOPS = {
 };
 export const SHOP_TYPES = Object.keys(SHOPS);
 
-/** A ground-floor shop front on the +z face, w wide, h tall, at depth z. */
-function shopFront(g, style, type, w, h, z) {
+/**
+ * A ground-floor shop front on the +z face, w wide, h tall, at depth z.
+ * interior (glass shops only): 'picture' | 'room' | 'shader' | 'hybrid' shows
+ * the inside instead of plain glass (see interiors.js).
+ */
+function shopFront(g, style, type, w, h, z, interior = null) {
   const s = SHOPS[type];
   const glass = style.material('glass', 0x9fc0d8);
-  if (s.glass) g.add(box(w * 0.86, h * 0.62, 0.06, glass, [0, h * 0.36, z]));
+  if (s.glass && interior) {
+    const ow = w * 0.86, oh = h * 0.62;
+    g.add(shopInterior(interior, style, ow, oh, z));
+    // window frame instead of solid glass
+    const fm = style.material('darkMetal', 0x6a6e74);
+    g.add(box(ow + 0.1, 0.1, 0.1, fm, [0, oh + 0.1, z + 0.02]), box(ow + 0.1, 0.1, 0.1, fm, [0, 0.08, z + 0.02]));
+    for (let i = 0; i <= 3; i++) g.add(box(0.07, oh, 0.07, fm, [-ow / 2 + (i * ow) / 3, oh / 2 + 0.1, z + 0.02]));
+  } else if (s.glass) g.add(box(w * 0.86, h * 0.62, 0.06, glass, [0, h * 0.36, z]));
   else g.add(box(w * 0.86, h * 0.62, 0.06, style.material('wood', 0x5a3a28), [0, h * 0.36, z]));
   g.add(box(1.0, 2.1, 0.08, style.material('window'), [w * 0.25, 1.05, z + 0.01])); // door
   // signboard across the top
@@ -152,16 +164,30 @@ export function apartment(style, rng, w, d) {
   return { group: g, footprint: { w: bw, d: bd, z: bz } };
 }
 
-export function mixedUse(style, rng, w, d, shopType = pick(rng, SHOP_TYPES)) {
+export function mixedUse(style, rng, w, d, shopType = pick(rng, SHOP_TYPES), opts = {}) {
   const g = new THREE.Group();
   const floors = 3 + Math.floor(rng() * 3);
   const H = floors * FLOOR + 1;
   const bw = w - 0.4, bd = d - 1;
   const bz = -0.5;
-  g.add(box(bw, H, bd, style.material('building', pick(rng, WALLS)), [0, H / 2, bz]));
   const front = bz + bd / 2;
-  shopFront(g, style, shopType, bw, FLOOR + 1, front + 0.01);
-  for (let f = 1; f < floors; f++) windowRow(g, style, bw, f * FLOOR + 2.4, front + 0.01, { spacing: 2.4, ww: 1.4, wh: 1.4 });
+  const wallM = style.material('building', pick(rng, WALLS));
+  const interior = opts.interior && SHOPS[shopType].glass ? opts.interior : null;
+  const hG = FLOOR + 1; // the shop floor
+  if (interior) {
+    // hollow shop floor: the room behind the glass (3 m) is left open
+    const room = 3;
+    g.add(box(bw, H - hG, bd, wallM, [0, hG + (H - hG) / 2, bz]));
+    g.add(box(bw, hG, bd - room, wallM, [0, hG / 2, bz - room / 2]));
+    for (const sx of [-1, 1]) g.add(box(0.25, hG, room, wallM, [sx * (bw / 2 - 0.125), hG / 2, front - room / 2]));
+    const top = hG - (hG * 0.62 + 0.1); // wall above the window opening
+    g.add(box(bw, top, room, wallM, [0, hG - top / 2, front - room / 2]));
+  } else g.add(box(bw, H, bd, wallM, [0, H / 2, bz]));
+  shopFront(g, style, shopType, bw, hG, front + 0.01, interior);
+  for (let f = 1; f < floors; f++) {
+    if (opts.interior === 'hybrid') paintedWindows(g, style, bw, f * FLOOR + 2.4, front + 0.01, { seed: f });
+    else windowRow(g, style, bw, f * FLOOR + 2.4, front + 0.01, { spacing: 2.4, ww: 1.4, wh: 1.4 });
+  }
   // vertical signboard on the front corner
   const sign = verticalSign(style, rng, Math.min(H - 4, 6));
   sign.position.set(bw / 2 - 0.4, FLOOR + 1.2 + Math.min(H - 4, 6) / 2, front + 0.4);

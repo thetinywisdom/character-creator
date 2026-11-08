@@ -72,7 +72,7 @@ const buildingAssets = Object.entries(BUILDERS).map(([key, fn]) => ({
   params: { w: BUILDING_SIZES[key]?.[0] ?? 10, d: BUILDING_SIZES[key]?.[1] ?? 12, seed: 1, ...(key === 'shop' || key === 'mixedUse' ? { shopType: null } : {}) },
   size: BUILDING_SIZES[key] ?? [10, 12],
   build(p, style) {
-    const b = fn(style, mulberry32(p.seed ?? 1), p.w, p.d, p.shopType ?? undefined);
+    const b = fn(style, mulberry32(p.seed ?? 1), p.w, p.d, p.shopType ?? undefined, p);
     const fp = b.footprint;
     // builders with several solid parts list them; otherwise the footprint is solid
     return withColliders(b.group, b.colliders ?? [{ x: 0, z: fp.z, hw: fp.w / 2, hd: fp.d / 2 }]);
