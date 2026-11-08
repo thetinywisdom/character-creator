@@ -152,15 +152,28 @@ export const human = {
     };
     f.mats = mats;
 
+    // --- spine joint -------------------------------------------------------
+    // Everything above the hips (torso, outer layer, neck, arms, accessories,
+    // head) hangs from a spine joint at hip height, so the upper body can lean
+    // and twist over the legs. `upper` shifts back down so parts are built in
+    // body space as before.
+    const spine = new THREE.Group();
+    spine.name = 'spine';
+    spine.position.y = f.hipY;
+    root.add(spine);
+    const upper = new THREE.Group();
+    upper.position.y = -f.hipY;
+    spine.add(upper);
+
     // --- torso + neck ----------------------------------------------------
-    root.add(buildTorso(f, top, mats));
+    upper.add(buildTorso(f, top, mats));
     const hasOuter = p.outerwear && p.outerwear !== 'None';
-    if (hasOuter) root.add(buildOuterwear(f, p.outerwear, mats));
+    if (hasOuter) upper.add(buildOuterwear(f, p.outerwear, mats));
     const neckBottom = f.shoulderY - f.torsoLen * 0.05;
     const neckTop = f.headY - f.R * 0.4;
     const neck = new THREE.Mesh(new THREE.CylinderGeometry(f.neckR, f.neckR, neckTop - neckBottom, seg(14)), mats.skin);
     neck.position.y = (neckTop + neckBottom) / 2;
-    root.add(neck);
+    upper.add(neck);
 
     // --- legs (pivot at hip, for later animation) ------------------------
     for (const sx of [-1, 1]) root.add(buildLeg(f, p.legwear, mats, sx, p.footwear));
@@ -168,11 +181,11 @@ export const human = {
     else if (f.woman && f.bottomShape === 'Round') root.add(buildBottom(f, mats));
 
     // --- arms (pivot at shoulder) ----------------------------------------
-    for (const sx of [-1, 1]) root.add(buildArm(f, sx, top, mats, (t) => t.sleeve, hasOuter ? mats.outer : null));
+    for (const sx of [-1, 1]) upper.add(buildArm(f, sx, top, mats, (t) => t.sleeve, hasOuter ? mats.outer : null));
 
     // --- accessories -------------------------------------------------------
-    root.add(buildBackAccessory(f, p.backAccessory, mats));
-    root.add(buildBodyAccessory(f, p.bodyAccessory, mats));
+    upper.add(buildBackAccessory(f, p.backAccessory, mats));
+    upper.add(buildBodyAccessory(f, p.bodyAccessory, mats));
 
     // --- head ------------------------------------------------------------
     const head = new THREE.Group();
@@ -184,7 +197,7 @@ export const human = {
     head.add(buildFacialHair(f, p.beard, p.moustache, mats.hair));
     head.add(buildHeadwear(f, p.headwear, mats.headwear, hair));
     head.add(buildFaceAccessory(f, p.faceAccessory, mats));
-    root.add(head);
+    upper.add(head);
 
     return root;
   },

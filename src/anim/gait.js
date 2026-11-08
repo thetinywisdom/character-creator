@@ -4,7 +4,7 @@ import * as THREE from 'three';
 //
 // Joints (groups placed at their pivots, built in subjects/human/*.js):
 //   legL/legR (hip) -> shinL/shinR (knee) -> footL/footR (ankle)
-//   armL/armR (shoulder) -> foreL/foreR (elbow)
+//   spine (hips, carries the upper body) -> armL/armR (shoulder) -> foreL/foreR (elbow), head
 // For a joint hanging down, negative x rotation swings it forward (+z, the way
 // the character faces); positive bends a knee back; for the foot, positive
 // points the toes down.
@@ -25,7 +25,7 @@ import * as THREE from 'three';
 // Sources for the shapes of the curves: standard sagittal-plane gait data
 // (e.g. Perry & Burnfield; Winter), see README.
 
-export const JOINT_NAMES = ['legL', 'legR', 'shinL', 'shinR', 'footL', 'footR', 'armL', 'armR', 'foreL', 'foreR'];
+export const JOINT_NAMES = ['spine', 'head', 'legL', 'legR', 'shinL', 'shinR', 'footL', 'footR', 'armL', 'armR', 'foreL', 'foreR'];
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
@@ -125,14 +125,39 @@ function poseNatural(body, g) {
     const c = Math.cos(Math.PI * 2 * opp);
     const shoulder = lerp(4 + 16 * c, 8 + 32 * c, run);
     const elbow = lerp(18 + 10 * c, 88 + 12 * c, run);
-    if (j[`arm${side}`]) j[`arm${side}`].rotation.x = -shoulder * D * a;
+    const arm = j[`arm${side}`];
+    if (arm) {
+      arm.rotation.x = -shoulder * D * a;
+      // running: arms tuck closer to the body and come a little across the
+      // chest on the forward swing (never past the centre line)
+      if (arm.userData.baseZ === undefined) arm.userData.baseZ = arm.rotation.z;
+      const sx = side === 'L' ? 1 : -1;
+      arm.rotation.z = arm.userData.baseZ * (1 - 0.45 * run * a) - sx * 7 * D * pos(c) * run * a;
+    }
     if (j[`fore${side}`]) j[`fore${side}`].rotation.x = -elbow * D * a;
   }
-  // trunk: forward lean when running, a small sway and counter-twist walking
-  const s = Math.sin(Math.PI * 2 * u);
-  body.rotation.x = 8 * D * run * a;
-  body.rotation.z = 1.5 * D * s * a * (1 - run);
-  body.rotation.y = 3 * D * s * a;
+  // trunk. Lean and twist happen at the spine (hips), not around the feet:
+  //  - the upper body leans forward from the hips (more when running)
+  //  - pelvis and shoulders counter-rotate: as the left leg swings forward,
+  //    the left hip comes forward and the right shoulder comes forward
+  //  - the head turns back against the shoulders so it keeps facing ahead,
+  //    and tilts up a little against the lean so the eyes stay on the path
+  const c0 = Math.cos(Math.PI * 2 * u); // 1 at left heel strike
+  const pelvis = lerp(4, 7, run) * D * a;
+  const shoulders = lerp(4, 9, run) * D * a;
+  const lean = lerp(2, 10, run) * D * a;
+  body.rotation.x = 2 * D * run * a;          // a touch of whole-body lean from the ankles
+  body.rotation.y = -pelvis * c0;             // left hip forward at left heel strike
+  body.rotation.z = 1.5 * D * Math.sin(Math.PI * 2 * u) * a * (1 - run);
+  if (j.spine) {
+    j.spine.rotation.x = lean;
+    j.spine.rotation.y = (pelvis + shoulders) * c0; // undo the pelvis, then turn the shoulders the other way
+    j.spine.rotation.z = -0.8 * D * Math.sin(Math.PI * 2 * u) * a; // small counter-sway
+  }
+  if (j.head) {
+    j.head.rotation.y = -shoulders * c0;
+    j.head.rotation.x = -lean * 0.7;
+  }
   // keep the standing foot on the ground; when running, float between steps
   body.position.y = 0;
   const ground = lowestSole(body, j);
@@ -163,6 +188,9 @@ function skateArm(psi, run) {
 
 function poseSkate(body, g) {
   const j = jointsOf(body);
+  // the skate cycle moves the whole body; keep the upper-body joints neutral
+  for (const n of ['spine', 'head']) if (j[n]) j[n].rotation.set(0, 0, 0);
+  for (const n of ['armL', 'armR']) if (j[n] && j[n].userData.baseZ !== undefined) j[n].rotation.z = j[n].userData.baseZ;
   const a = g.amount, run = g.run, phi = g.phase;
   for (const [side, psi] of [['L', phi], ['R', phi + Math.PI]]) {
     const leg = skateLeg(psi, run);

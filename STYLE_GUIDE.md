@@ -191,8 +191,13 @@ dressed in the same tones as the street will disappear.
     (~18° at ~62%); the knee bends ~60° in early swing; arms swing opposite the
     legs with a soft elbow; the body rises over the standing leg.
   - Run: shorter ground contact (~38%), knee bends ~40° on landing, strong
-    push-off, knee ~100° in swing, flight between steps, ~8° forward lean,
-    elbows ~90°.
+    push-off, knee ~100° in swing, flight between steps, elbows ~90°.
+  - Upper body: a **spine joint at the hips** carries the torso, arms and head.
+    The lean (~10° running, ~2° walking) happens there, over the legs, not
+    around the feet. Pelvis and shoulders counter-rotate (left hip forward,
+    right shoulder forward), the head turns back to keep facing ahead and
+    tilts up against the lean. Running arms tuck in and come slightly across
+    the chest on the forward swing.
 - **Roller skate:** the first, sine-based cycle (smooth, gliding legs), kept as
   an option ("Preview animation" and "City movement").
 - Walk blends into run with speed, and both fade to a standing pose with a
