@@ -113,14 +113,6 @@ export class Creator {
       body.appendChild(s);
       return s;
     };
-    if (this.tab === 'body' && this.subject.presets) {
-      const s = section('Proportions');
-      const row = s.appendChild(Object.assign(document.createElement('div'), { className: 'cr-chips' }));
-      for (const name of ['Chibi', 'Stylized', 'Realistic']) {
-        if (!this.subject.presets[name]) continue;
-        row.appendChild(Object.assign(document.createElement('button'), { textContent: name })).dataset.preset = name;
-      }
-    }
     for (const [key, def] of Object.entries(schema)) {
       const tab = TAB_OF[key] ?? GROUP_TAB[def.group] ?? 'body';
       if (tab !== this.tab || hidden.keys.has(key) || hidden.groups.has(def.group)) continue;

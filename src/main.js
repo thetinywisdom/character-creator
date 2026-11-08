@@ -496,7 +496,8 @@ const creator = new Creator({
   },
   actions: {
     randomize: () => { Object.assign(params.human, humanSubject.randomize()); folderRefresh.human(); creatorFrame = true; },
-    reset: () => { Object.assign(params.human, defaultsFor(humanSubject)); folderRefresh.human(); creatorFrame = true; },
+    // back to the current body type's default design
+    reset: () => { Object.assign(params.human, defaultsFor(humanSubject), humanSubject.presets[params.human.bodyType]); folderRefresh.human(); creatorFrame = true; },
     preset: (name) => { Object.assign(params.human, humanSubject.presets[name]); folderRefresh.human(); creatorFrame = true; },
     anim: (a) => { state.anim = a; gui.controllersRecursive().forEach((c) => c.updateDisplay()); },
     getAnim: () => (['Walk', 'Run'].includes(state.anim) ? state.anim : 'Still'),

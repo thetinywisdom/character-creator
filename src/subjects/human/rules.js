@@ -14,6 +14,8 @@
 // None, a skirt to trousers, a crop top to the matching T-shirt, a tie to None.
 
 export const BODY_TYPES = ['Man', 'Woman', 'Boy', 'Girl'];
+/** Body build: how slim or heavy (see frame.js for what each changes). */
+export const BUILDS = ['Skinny', 'Normal', 'Bulky', 'Fat'];
 export const isChild = (p) => p.bodyType === 'Boy' || p.bodyType === 'Girl';
 export const isFemale = (p) => p.bodyType === 'Woman' || p.bodyType === 'Girl';
 export const isMale = (p) => !isFemale(p);
@@ -64,21 +66,34 @@ export function applyRules(p, schema) {
   return p;
 }
 
-/** Proportions for each body type: used when switching between adult and child. */
+// The default design of each body type: proportions and a look of its own.
+// Picking a body type applies its design (skin tone is kept); Reset goes
+// back to the current type's design.
+const PLAIN = {
+  build: 'Normal', chestSize: 1, bottomSize: 1, beard: 'None', moustache: 'None',
+  headwear: 'None', faceAccessory: 'None', mask: 'None', outerwear: 'None',
+  backAccessory: 'None', bodyAccessory: 'None', footwear: 'Shoes',
+};
 export const BODY_DEFAULTS = {
-  Man:   { headsTall: 7.5, height: 1.78, legLength: 0.54, shoulderWidth: 0.27, hipWidth: 0.18, neckThickness: 0.034, armThickness: 0.029, legThickness: 0.037, headWidth: 0.8 },
-  Woman: { headsTall: 7.5, height: 1.68, legLength: 0.58, shoulderWidth: 0.22, hipWidth: 0.23, neckThickness: 0.023, armThickness: 0.023, legThickness: 0.033, headWidth: 0.78 },
-  // about 8 years old: a big head (6 heads tall), short legs, narrow shoulders
-  Boy:   { headsTall: 5.8, height: 1.28, legLength: 0.5, shoulderWidth: 0.23, hipWidth: 0.2, neckThickness: 0.027, armThickness: 0.024, legThickness: 0.033, headWidth: 0.85 },
-  Girl:  { headsTall: 5.8, height: 1.26, legLength: 0.51, shoulderWidth: 0.22, hipWidth: 0.2, neckThickness: 0.025, armThickness: 0.023, legThickness: 0.032, headWidth: 0.84 },
+  Man: { ...PLAIN, headsTall: 7.5, height: 1.75, legLength: 0.54, shoulderWidth: 0.27, hipWidth: 0.18, neckThickness: 0.034, armThickness: 0.029, legThickness: 0.037, headWidth: 0.8,
+    hair: 'short · side part', hairColor: 'Black', top: 'Shirt', topColor: 'White', legwear: 'Trousers', legwearColor: 'Navy', shoeColor: 'Brown' },
+  Woman: { ...PLAIN, headsTall: 7.5, height: 1.62, legLength: 0.58, shoulderWidth: 0.22, hipWidth: 0.23, neckThickness: 0.023, armThickness: 0.023, legThickness: 0.033, headWidth: 0.78,
+    hair: 'long', hairColor: 'Dark brown', top: 'T-shirt (long sleeve)', topColor: 'Pink', legwear: 'Skirt', legwearColor: 'Navy', shoeColor: 'Black' },
+  // about 8 years old: a big head (6 heads tall), short legs, narrow shoulders,
+  // and a school bag (randoseru: black for boys, red for girls)
+  Boy: { ...PLAIN, headsTall: 5.8, height: 1.28, legLength: 0.5, shoulderWidth: 0.23, hipWidth: 0.2, neckThickness: 0.027, armThickness: 0.024, legThickness: 0.033, headWidth: 0.85,
+    hair: 'short · messy', hairColor: 'Black', top: 'T-shirt', topColor: 'Yellow', legwear: 'Shorts', legwearColor: 'Navy', shoeColor: 'White',
+    backAccessory: 'Backpack', backColor: 'Black' },
+  Girl: { ...PLAIN, headsTall: 5.8, height: 1.26, legLength: 0.51, shoulderWidth: 0.22, hipWidth: 0.2, neckThickness: 0.025, armThickness: 0.023, legThickness: 0.032, headWidth: 0.84,
+    hair: 'long · twin tails', hairColor: 'Black', top: 'T-shirt', topColor: 'White', legwear: 'Skirt', legwearColor: 'Red', shoeColor: 'Red',
+    backAccessory: 'Backpack', backColor: 'Red' },
 };
 
 /**
- * Called when one control changes (before the rules are applied): switching
- * between an adult and a child body type brings the matching proportions.
+ * Called when one control changes (before the rules are applied): picking a
+ * body type applies its default design.
  */
 export function adjust(p, key, previous) {
   if (key !== 'bodyType' || previous === p.bodyType) return p;
-  if (isChild(p) !== isChild({ bodyType: previous })) Object.assign(p, BODY_DEFAULTS[p.bodyType]);
-  return p;
+  return Object.assign(p, BODY_DEFAULTS[p.bodyType]);
 }

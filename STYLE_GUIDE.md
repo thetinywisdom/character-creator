@@ -190,6 +190,23 @@ Four body types: **Man, Woman, Boy, Girl**. Children (about 8 years old) are
 soft torso (no waist, no V, no chest sculpting). Switching between an adult
 and a child body type brings the matching proportions.
 
+**Default designs.** Each body type has its own default design, applied when
+it is picked (skin tone is kept) and by Reset: Man (side-part hair, white
+shirt, navy trousers), Woman (long hair, pink long-sleeve top, navy skirt),
+Boy (messy hair, yellow T-shirt, navy shorts, black school bag) and Girl
+(twin tails, white T-shirt, red skirt, red school bag), with their
+proportions. School bags follow the randoseru custom: black for boys, red for
+girls.
+
+**Builds:** Skinny, Normal, Bulky, Fat, on top of the proportion sliders.
+Skinny: narrower and thinner everywhere. Bulky: broad shoulders, thick arms
+and legs, stronger pecs and neck. Fat: a wide waist, a round belly, deeper
+torso, thick limbs (wrists and ankles stay slimmer) and a slightly fuller
+face; heavier builds hold their arms further out. Children get a softer
+version of each. Clothes and accessories follow the body surface, so they fit
+every build. (The old Chibi / Stylized / Realistic presets are gone; the
+Heads tall slider still changes proportions.)
+
 Options that make sense together (`src/subjects/human/rules.js`, one list used
 by the control panel, the randomizer, the crowd, the city and build()):
 

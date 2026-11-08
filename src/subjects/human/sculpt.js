@@ -18,7 +18,14 @@ export function sculptTorso(geo, f) {
     // pecs (adults only: children have a soft, flat chest): two broad, flat masses with a short edge underneath
     zones.push({
       sign: 1, yc: 0.74 * L, up: 0.11 * L, down: 0.05 * L,
-      amount: f.sw * 0.03, two: true, x0: f.sw * 0.16, sx: f.sw * 0.13, wx: f.sw * 0.3,
+      amount: f.sw * 0.03 * (1 + 1.6 * (f.muscle ?? 0)), two: true, x0: f.sw * 0.16, sx: f.sw * 0.13, wx: f.sw * 0.3,
+    });
+  }
+  if (f.belly > 0) {
+    // a round belly, fullest just below the middle of the torso
+    zones.push({
+      sign: 1, yc: 0.3 * L, up: 0.3 * L, down: 0.24 * L,
+      amount: f.sw * 0.16 * f.belly, two: false, x0: 0, sx: f.sw * 0.2, wx: f.sw * 0.34,
     });
   }
   if (f.woman) {

@@ -10,7 +10,21 @@ const smoothstep = (a, b, t) => {
   return x * x * (3 - 2 * x);
 };
 
+// Body builds. Each scales widths, depth and limb thickness on top of the
+// sliders; 'belly' sculpts a round belly (Fat), 'muscle' broader shoulders,
+// fuller upper arms and stronger pecs (Bulky). Children get a softer version.
+const BUILDS = {
+  Skinny: { width: 0.88, waist: 0.9, depth: 0.88, limb: 0.8, neck: 0.86, shoulder: 0.95, belly: 0, muscle: 0 },
+  Normal: { width: 1, waist: 1, depth: 1, limb: 1, neck: 1, shoulder: 1, belly: 0, muscle: 0 },
+  Bulky:  { width: 1.04, waist: 1.02, depth: 1.08, limb: 1.24, neck: 1.25, shoulder: 1.16, belly: 0, muscle: 1 },
+  Fat:    { width: 1.16, waist: 1.32, depth: 1.2, limb: 1.32, neck: 1.3, shoulder: 1.05, belly: 1, muscle: 0 },
+};
+
 export function measure(p) {
+  const kid = p.bodyType === 'Boy' || p.bodyType === 'Girl';
+  const B0 = BUILDS[p.build] ?? BUILDS.Normal;
+  // children: the same shapes, toned down
+  const B = kid ? Object.fromEntries(Object.entries(B0).map(([k, v]) => [k, k === 'belly' || k === 'muscle' ? v * 0.6 : 1 + (v - 1) * 0.6])) : B0;
   const H = p.height;
   const headH = H / p.headsTall;
   const R = headH / 2;
@@ -21,11 +35,12 @@ export function measure(p) {
   const hipY = legLen;
   const shoulderY = hipY + torsoLen;
   const headY = H - R;
-  const sw = p.shoulderWidth * H;
-  const hw = p.hipWidth * H;
-  const neckR = p.neckThickness * H;
-  const armR = p.armThickness * H;
-  const legR = p.legThickness * H;
+  const sw = p.shoulderWidth * H * B.shoulder;
+  const hw = p.hipWidth * H * B.width;
+  const neckR = p.neckThickness * H * B.neck;
+  const armR = p.armThickness * H * B.limb;
+  const legR = p.legThickness * H * B.limb;
+  const waist = B.waist; // the middle of the torso: wider when fat
   const L = torsoLen;
   const woman = p.bodyType === 'Woman';
   const child = p.bodyType === 'Boy' || p.bodyType === 'Girl';
@@ -41,7 +56,7 @@ export function measure(p) {
     // tummy, small sloping shoulders
     new THREE.Vector2(hw * 0.47, 0),
     new THREE.Vector2(hw * 0.5, L * 0.18),
-    new THREE.Vector2((hw + sw) * 0.25 * 0.98, L * 0.42),
+    new THREE.Vector2((hw + sw) * 0.25 * 0.98 * waist, L * 0.42),
     new THREE.Vector2(sw * 0.45, L * 0.74),
     new THREE.Vector2(sw * 0.42, L * 0.84),
     new THREE.Vector2(sw * 0.31, L * 0.91),
@@ -52,7 +67,7 @@ export function measure(p) {
     new THREE.Vector2(hw * 0.4, torsoBottom),
     new THREE.Vector2(hw * 0.5, 0),
     new THREE.Vector2(hw * 0.56, L * 0.12),
-    new THREE.Vector2((hw + sw) * 0.25 * 0.72, L * 0.5),
+    new THREE.Vector2((hw + sw) * 0.25 * 0.72 * waist, L * 0.5),
     new THREE.Vector2(sw * 0.47, L * 0.77),
     // shoulders slope down from the neck: one smooth curve, no flat top
     new THREE.Vector2(sw * 0.43, L * 0.85),
@@ -64,7 +79,7 @@ export function measure(p) {
     // the man's profile is a V: narrow hips and waist, broad chest and shoulders
     new THREE.Vector2(hw * 0.44, 0),
     new THREE.Vector2(hw * 0.5, L * 0.14),
-    new THREE.Vector2((hw + sw) * 0.25 * 0.88, L * 0.42),
+    new THREE.Vector2((hw + sw) * 0.25 * 0.88 * waist, L * 0.42),
     new THREE.Vector2(sw * 0.48, L * 0.76),
     // a squarer shoulder, then the trapezius slopes up to the neck (no flat top)
     new THREE.Vector2(sw * 0.46, L * 0.84),
@@ -96,11 +111,12 @@ export function measure(p) {
     H, headH, R, chib, legLen, neckLen, torsoLen, hipY, shoulderY, headY,
     sw, hw, armR, legR, neckR,
     torsoSamples, torsoR, torsoBottom,
-    torsoDepth: woman ? 0.72 : child ? 0.74 : 0.63, // torso is a lathe squashed front-to-back
+    torsoDepth: (woman ? 0.72 : child ? 0.74 : 0.63) * B.depth,
+    belly: B.belly, muscle: B.muscle, // torso is a lathe squashed front-to-back
     // ...and squashed more toward the shoulders: the upper torso is wide but
     // shallow. Without this the widest part (the shoulders) was also the
     // deepest, which pushed out a hump on the upper back.
-    depthAt: (y) => (woman ? 0.72 : child ? 0.74 : 0.63) * (1 - 0.32 * smoothstep(L * 0.55, L * 0.97, y)),
+    depthAt: (y) => (woman ? 0.72 : child ? 0.74 : 0.63) * B.depth * (1 - 0.32 * smoothstep(L * 0.55, L * 0.97, y)),
     armLen: torsoLen * 0.85 + legLen * 0.25,
     handR: armR * 1.3,
     footH,
@@ -112,17 +128,17 @@ export function measure(p) {
     thighR: legR * (woman ? 1.55 : child ? 1.15 : 1.18),
     thighTop: woman ? legR * 0.45 : legR * 0.25, // thighs start a little higher, so hips flow into legs
     kneeR: legR * (woman ? 0.78 : child ? 0.9 : 0.98),
-    ankleR: legR * (woman ? 0.55 : child ? 0.7 : 0.78),
+    ankleR: legR * (woman ? 0.55 : child ? 0.7 : 0.78) / (1 + 0.3 * (B.limb - 1)), // ankles stay slimmer
     // calf bulge behind the upper shin
     calfR: legR * (woman ? 0.78 * 1.22 : child ? 0.9 * 1.06 : 0.98 * 1.08),
     // arms held a little away from the body (A-pose); wider for the woman
-    armSpread: woman ? 0.2 : 0.17,
+    armSpread: (woman ? 0.2 : 0.17) * (1 + 0.8 * B.belly) + 0.04 * B.muscle, // heavier builds hold their arms out
     // arm shape: rounded shoulder cap -> elbow -> slimmer wrist, slight bend
-    shoulderR: armR * (woman ? 1.55 : child ? 1.2 : 1.35),   // men: strong shoulder caps and upper arms
+    shoulderR: armR * (woman ? 1.55 : child ? 1.2 : 1.35) * (1 + 0.1 * B.muscle),   // men: strong shoulder caps and upper arms
     elbowR: armR * (woman ? 0.95 : 1.05),
-    wristR: armR * (woman ? 0.62 : child ? 0.78 : 0.86),
+    wristR: armR * (woman ? 0.62 : child ? 0.78 : 0.86) / (1 + 0.15 * (B.limb - 1)), // wrists stay slimmer
     elbowBend: woman ? 0.2 : 0.18,
     // head ellipsoid radii
-    rx: R * p.headWidth, ry: R, rz: R * 0.92,
+    rx: R * p.headWidth * (1 + 0.06 * B.belly), ry: R, rz: R * 0.92,
   };
 }

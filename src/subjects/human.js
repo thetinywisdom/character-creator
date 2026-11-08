@@ -10,7 +10,7 @@ import { headGeometry } from './human/headShape.js';
 import { OUTERWEAR, buildOuterwear } from './human/outerwear.js';
 import { BACK_ACCESSORIES, BODY_ACCESSORIES, buildBackAccessory, buildBodyAccessory } from './human/accessories.js';
 import { BEARDS, FACE_ACCESSORIES, HEADWEAR, MASKS, MOUSTACHES, buildFaceAccessory, buildFacialHair, buildHeadwear, coversHair, hairUnder } from './human/head.js';
-import { BODY_DEFAULTS, BODY_TYPES, adjust, allowedOptions, applyRules, hiddenControls, isChild } from './human/rules.js';
+import { BODY_DEFAULTS, BODY_TYPES, BUILDS, adjust, allowedOptions, applyRules, hiddenControls, isChild } from './human/rules.js';
 import { LEGWEAR, buildLeg, buildSkirt } from './human/legwear.js';
 
 // Human character, assembled from slots: body, hair, top, legwear (more slots
@@ -32,6 +32,7 @@ export const human = {
   schema: {
     // body
     bodyType:      { group: 'Body', value: 'Man', options: BODY_TYPES, label: 'Body type' },
+    build:         { group: 'Body', value: 'Normal', options: BUILDS, label: 'Build' },
     headsTall:     { group: 'Body', value: 7.5,   min: 2.5,   max: 7.5,  step: 0.1,   label: 'Heads tall' },
     height:        { group: 'Body', value: 1.6,   min: 1.0,   max: 2.0,  step: 0.01,  label: 'Height (m)' },
     legLength:     { group: 'Body', value: 0.54,  min: 0.35,  max: 0.65, step: 0.01,  label: 'Leg length' },
@@ -73,15 +74,11 @@ export const human = {
     shoeColor:     { group: 'Clothes', value: 'Brown', options: names(CLOTH_COLORS), label: 'Footwear colour' },
   },
   presets: {
-    // body types with matching proportions
-    Man:       { bodyType: 'Man',   height: 1.78, legLength: 0.54, shoulderWidth: 0.27, hipWidth: 0.18, neckThickness: 0.034, armThickness: 0.029, legThickness: 0.037, headWidth: 0.8 },
-    Woman:     { bodyType: 'Woman', height: 1.68, legLength: 0.58, shoulderWidth: 0.22, hipWidth: 0.23, neckThickness: 0.023, armThickness: 0.023, legThickness: 0.033, headWidth: 0.78 },
-    Boy:       { bodyType: 'Boy',  ...BODY_DEFAULTS.Boy },
-    Girl:      { bodyType: 'Girl', ...BODY_DEFAULTS.Girl },
-    // overall proportion styles
-    Chibi:     { headsTall: 2.6, legLength: 0.42, shoulderWidth: 0.2,  hipWidth: 0.18, neckThickness: 0.04,  armThickness: 0.035, legThickness: 0.045, headWidth: 0.95 },
-    Stylized:  { headsTall: 5,   legLength: 0.5,  shoulderWidth: 0.24, hipWidth: 0.19, neckThickness: 0.035, armThickness: 0.03,  legThickness: 0.039, headWidth: 0.85 },
-    Realistic: { headsTall: 7.5, legLength: 0.54, shoulderWidth: 0.25, hipWidth: 0.2,  neckThickness: 0.03,  armThickness: 0.026, legThickness: 0.034, headWidth: 0.8 },
+    // each body type's default design (proportions and a look)
+    Man:   { bodyType: 'Man',   ...BODY_DEFAULTS.Man },
+    Woman: { bodyType: 'Woman', ...BODY_DEFAULTS.Woman },
+    Boy:   { bodyType: 'Boy',   ...BODY_DEFAULTS.Boy },
+    Girl:  { bodyType: 'Girl',  ...BODY_DEFAULTS.Girl },
   },
 
   /** A random but believable character (realistic proportions, varied outfit). */
@@ -101,6 +98,7 @@ export const human = {
     const jitter = (v, k) => Math.round(v * (1 + (rng() - 0.5) * k) * 1000) / 1000;
     const out = {
       bodyType,
+      build: pick(['Normal', 'Normal', 'Normal', 'Normal', 'Skinny', 'Skinny', 'Bulky', 'Fat', 'Fat']),
       headsTall: range(7, 7.5, 0.1),
       height: woman ? range(1.5, 1.75, 0.01) : range(1.62, 1.9, 0.01),
       legLength: woman ? range(0.55, 0.6, 0.01) : range(0.5, 0.56, 0.01),
@@ -138,7 +136,7 @@ export const human = {
     };
     if (child) {
       // child proportions, a little varied; brighter, simpler outfits
-      for (const k of Object.keys(kid)) out[k] = jitter(kid[k], k === 'height' ? 0.2 : 0.08);
+      for (const k of Object.keys(kid)) if (typeof kid[k] === 'number') out[k] = jitter(kid[k], k === 'height' ? 0.2 : 0.08);
       out.headsTall = range(5.4, 6.2, 0.1);
       out.outerwear = rng() < 0.2 ? 'Hoodie' : 'None';
       out.footwear = 'Shoes';
@@ -247,3 +245,6 @@ export const human = {
     return root;
   },
 };
+
+// the schema's defaults are the Man's default design
+for (const [k, v] of Object.entries(BODY_DEFAULTS.Man)) if (human.schema[k]) human.schema[k].value = v;
