@@ -361,6 +361,16 @@ About one in six random characters is a child.
     with coloured rims, a pinstripe. Black.
   - *Mini scooter:* a tiny folding scooter: a box body up on small wheels, a
     dark side strip, a tall handlebar stem, a little seat on top. Yellow.
+- **Cat shape:** a deep chest, a slimmer waist, round haunches, a short neck,
+  a round head with cheeks and a small muzzle (still no eyes or face), front
+  legs in two tapering parts, back legs bent at the hock, a tail thick at
+  the base. **Coats** are painted per face from the palette, in crisp blocks:
+  solid, tabby (stripes, light paws), calico (white with apricot and charcoal
+  patches), tuxedo (charcoal with white chest, belly and paws), bicolour
+  (colour on top, white below), points (pale body, dark ears, face, paws and
+  tail); inner ears blush. Tails long, curled over the back, or a short bob;
+  ears pointed, tufted (dark tips) or folded; short or long (fluffy, with a
+  ruff) coat. Poses: sit, loaf (paws tucked), sleep (curled, tail round).
 - **Cat:** walks with the cat's lateral sequence (feet a quarter cycle apart),
   head nodding, tail held up and swaying; runs with a bounding gallop (front
   pair, then back pair), the body rocking and the tail lowered behind.

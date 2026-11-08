@@ -14,7 +14,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   Street, Traffic, Extras, Nature, Animals, Vehicles, Areas). Tap one to turn
   it around, try its types, colours and looks, and copy the `createAsset(...)`
   line that builds it. 🎲 New look gives a really different building (shape,
-  height, roof, layout), not just a new colour. The cat has Still / Walk / Run.
+  height, roof, layout), not just a new colour. The cat has patterns, tail, ear and coat types, and Still / Walk / Run /
+  Sit / Loaf / Sleep.
 - **👤 Characters**: the character creator (Body, Hair & face, Clothes,
   Accessories; Still / Walk / Run preview). Body types Man, Woman, Boy, Girl,
   Grandpa, Grandma; ready-made Looks in the Clothes tab (office worker,

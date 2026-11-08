@@ -48,6 +48,8 @@ export function skinCharacter(root, jointNames, material, { keepGroups = ['skirt
     while (j && !indexOf.has(j)) j = j.parent;
     const bone = indexOf.get(j) ?? 0;
     let g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+    // a part painted per face (a cat's coat) keeps its own colours
+    const own = mat.vertexColors && g.attributes.color ? g.attributes.color.array.slice() : null;
     for (const name of Object.keys(g.attributes)) if (name !== 'position' && name !== 'normal') g.deleteAttribute(name);
     if (!g.attributes.normal) g.computeVertexNormals();
     g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld));
@@ -57,7 +59,8 @@ export function skinCharacter(root, jointNames, material, { keepGroups = ['skirt
     const c = mat.color.clone();
     if (mat.emissive && mat.emissiveIntensity) c.add(mat.emissive.clone().multiplyScalar(mat.emissiveIntensity * 0.6));
     for (let i = 0; i < n; i++) {
-      col.set([c.r, c.g, c.b], i * 3);
+      if (own) col.set([own[i * 3] * c.r, own[i * 3 + 1] * c.g, own[i * 3 + 2] * c.b], i * 3);
+      else col.set([c.r, c.g, c.b], i * 3);
       si[i * 4] = bone;
       sw[i * 4] = 1;
     }

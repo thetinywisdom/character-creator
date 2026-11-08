@@ -5,7 +5,7 @@ import { SHOP_BUILDINGS } from '../city/shops.js';
 import { CIVIC_BUILDINGS } from '../city/civic.js';
 const EXTRA_BUILDINGS = { ...SHOP_BUILDINGS, ...CIVIC_BUILDINGS };
 import { tree } from '../subjects/tree.js';
-import { CAT_FUR, cat } from '../subjects/cat.js';
+import { CAT_COATS, CAT_EARS, CAT_FUR, CAT_PATTERNS, CAT_TAILS, cat } from '../subjects/cat.js';
 import { dressBacks } from '../city/backs.js';
 import { bush } from '../props/extras.js';
 import { park } from '../city/park.js';
@@ -28,6 +28,7 @@ import { tiledBox } from '../props/util.js';
 //   colors    optional list of colour names (params.color)
 //   swatches  optional { colour name: hex } when the names are not cloth colours
 //   animated  optional: 'cat' = the object has joints for poseCat (anim/catGait.js)
+//   options   optional extra choices { param: [values] } (a cat's pattern, tail, ...)
 //   size      rough [width, depth] in metres, for editor previews and snapping
 //   build(params, style) -> THREE.Object3D, standing on y = 0, facing +z.
 //             Its userData.colliders lists solid boxes in its own local space:
@@ -193,11 +194,14 @@ const animalAssets = [{
   variants: Object.keys(cat.presets),
   colors: Object.keys(CAT_FUR),
   swatches: CAT_FUR,
-  params: { variant: 'Housecat', color: 'Ginger' },
+  // extra choices, shown as chips in the catalogue: { param: [values] }
+  options: { pattern: CAT_PATTERNS, tailType: CAT_TAILS, earType: CAT_EARS, coat: CAT_COATS },
+  params: { variant: 'Housecat', color: 'Ginger', pattern: 'Solid', tailType: 'Long', earType: 'Pointed', coat: 'Short' },
   size: [0.4, 0.9],
   build(p, style) {
     const defaults = Object.fromEntries(Object.entries(cat.schema).map(([k, d]) => [k, d.value]));
-    const c = cat.build({ ...defaults, ...(cat.presets[p.variant] ?? {}), furColor: p.color ?? 'Ginger' }, style);
+    const c = cat.build({ ...defaults, ...(cat.presets[p.variant] ?? {}), furColor: p.color ?? 'Ginger',
+      pattern: p.pattern ?? 'Solid', tailType: p.tailType ?? 'Long', earType: p.earType ?? 'Pointed', coat: p.coat ?? 'Short' }, style);
     const g = new THREE.Group();
     g.scale.setScalar(cat.exaggeration ?? 1);
     g.add(c);

@@ -7,6 +7,8 @@
 //  Walk: the cat's lateral sequence: back left, front left, back right, front
 //        right, a quarter cycle apart. Feet lift in the swing, the head bobs
 //        a little, the tail sways slowly, held up.
+//  Poses: sit, loaf and sleep (CAT_POSES), blended in when the cat stops
+//        (set g.pose; stepCatGait fades it in and out).
 //  Run:  a bounding gallop: the front pair lands together, then the back pair
 //        half a cycle later; the body rocks nose-up / nose-down and lifts off
 //        the ground between bounds; the tail streams out behind.
@@ -24,8 +26,21 @@ const WALK_OFF = { legBL: 0, legFL: 0.25, legBR: 0.5, legFR: 0.75 };
 const RUN_OFF = { legFL: 0, legFR: 0.08, legBL: 0.5, legBR: 0.58 };
 
 export function createCatGait(phase = 0) {
-  return { phase, amount: 0, run: 0, t: Math.random() * 10 };
+  return { phase, amount: 0, run: 0, t: Math.random() * 10, pose: null, poseW: 0 };
 }
+
+// Resting poses (blended in when the cat stops; g.pose = 'sit' | 'loaf' | 'sleep').
+// Angles in radians; y in leg heights (the cat lowers itself onto the ground).
+//  sit:   rear down, front legs straight, back legs folded forward, head up,
+//         tail lying round to one side
+//  loaf:  all paws tucked under, body down on the ground, tail wrapped round
+//  sleep: loaf rolled a little onto one side, head down and turned, tail
+//         wrapped round further
+export const CAT_POSES = {
+  sit:   { y: -0.22, rx: -0.6, rz: 0, legF: 0.6, legB: -1.05, head: 0.45, headY: 0, tailX: -0.6, tailY: 0.9 },
+  loaf:  { y: -0.82, rx: 0.02, rz: 0, legF: 1.45, legB: -1.45, head: 0.12, headY: 0, tailX: -1.35, tailY: 1.9 },
+  sleep: { y: -0.88, rx: 0.02, rz: 0.32, legF: 1.3, legB: -1.3, head: 0.55, headY: 0.85, tailX: -1.35, tailY: 1.9 },
+};
 
 /** Advance the cycle for a cat moving at `speed` m/s. */
 export function stepCatGait(g, dt, speed) {
@@ -36,6 +51,9 @@ export function stepCatGait(g, dt, speed) {
   const ref = lerp(CAT_WALK_SPEED, CAT_RUN_SPEED, g.run);
   const stride = Math.max(0.6, Math.min(1.3, speed / ref));
   if (g.amount > 0.01) g.phase += lerp(TAU * 1.9, TAU * 3.4, g.run) * stride * dt;
+  // a resting pose fades in when standing still, out when moving off
+  const want = g.pose && speed < 0.05 ? 1 : 0;
+  g.poseW += (want - g.poseW) * Math.min(1, dt * (want ? 1.6 : 4));
   g.t += dt;
 }
 
@@ -43,6 +61,8 @@ function jointsOf(body) {
   if (!body.userData.catJoints) {
     const j = {};
     body.traverse((o) => { if (CAT_JOINTS.includes(o.name)) j[o.name] = o; });
+    // the tail first lowers (x), then swings round the side (y)
+    if (j.tail) j.tail.rotation.order = 'YXZ';
     body.userData.catJoints = j;
   }
   return body.userData.catJoints;
@@ -80,5 +100,30 @@ export function poseCat(body, g) {
   if (j.tail) {
     j.tail.rotation.y = lerp(0.25 * Math.sin(g.t * 1.6), 0.08 * Math.sin(TAU * u), a);
     j.tail.rotation.x = -0.55 * run * a; // lowers to stream out behind when running
+  }
+  // blend toward a resting pose
+  const P = CAT_POSES[g.pose], w = g.poseW ?? 0;
+  body.rotation.z = 0;
+  if (!P || w < 0.001) return;
+  const legH = body.userData.cat?.legH ?? 0.13;
+  const breathe = g.pose === 'sleep' ? 0.004 * Math.sin(g.t * 1.4) : 0;
+  body.position.y = lerp(body.position.y, P.y * legH + breathe, w);
+  body.rotation.x = lerp(body.rotation.x, P.rx, w);
+  body.rotation.z = P.rz * w;
+  for (const name of ['legFL', 'legFR', 'legBL', 'legBR']) {
+    const leg = j[name];
+    if (!leg) continue;
+    leg.rotation.x = lerp(leg.rotation.x, name.startsWith('legF') ? P.legF : P.legB, w);
+    leg.position.y = lerp(leg.position.y, leg.userData.restY, w);
+  }
+  if (j.head) {
+    j.head.rotation.x = lerp(j.head.rotation.x, P.head, w);
+    j.head.rotation.y = lerp(j.head.rotation.y, P.headY + (g.pose === 'sit' ? 0.25 * Math.sin(g.t * 0.4) : 0), w);
+  }
+  if (j.tail) {
+    // a sitting tail still flicks now and then
+    const flick = g.pose === 'sit' ? 0.12 * Math.sin(g.t * 2.2) * Math.max(0, Math.sin(g.t * 0.5)) : 0;
+    j.tail.rotation.x = lerp(j.tail.rotation.x, P.tailX, w);
+    j.tail.rotation.y = lerp(j.tail.rotation.y, P.tailY + flick, w);
   }
 }

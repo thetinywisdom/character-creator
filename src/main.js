@@ -109,6 +109,7 @@ function openItem(id, p) {
   setView('item');
 }
 
+const OPTION_LABELS = { pattern: 'Pattern', tailType: 'Tail', earType: 'Ears', coat: 'Coat' };
 function renderItemPanel() {
   const a = CATALOG[selected.id];
   const p = selected.params;
@@ -125,7 +126,8 @@ function renderItemPanel() {
       ${chips('Type', 'variant', a.variants)}
       ${chips('Colour', 'color', a.colors, true)}
       ${chips('Shop', 'shopType', shopTypes)}
-      ${a.animated ? `<h3>Animation</h3><div class="chips">${['Still', 'Walk', 'Run'].map((m) => `<button data-anim="${m}" class="${state.itemAnim === m ? 'on' : ''}">${m}</button>`).join('')}</div>` : ''}
+      ${Object.entries(a.options ?? {}).map(([k, vals]) => chips(OPTION_LABELS[k] ?? k, k, vals)).join('')}
+      ${a.animated ? `<h3>Animation</h3><div class="chips">${['Still', 'Walk', 'Run', 'Sit', 'Loaf', 'Sleep'].map((m) => `<button data-anim="${m}" class="${state.itemAnim === m ? 'on' : ''}">${m}</button>`).join('')}</div>` : ''}
       ${'seed' in a.params ? '<h3>Look</h3><div class="chips"><button data-act="seed">🎲 New look</button></div>' : ''}
       <h3>Use it in a game</h3>
       <pre>${code}</pre>
@@ -301,7 +303,8 @@ function loop(time) {
   if (state.view === 'item' && itemCell) {
     if (CATALOG[selected.id].animated === 'cat') {
       // walk / run in place: the cat's gait (anim/catGait.js)
-      stepCatGait(catGait, dt, { Still: 0, Walk: CAT_WALK_SPEED, Run: CAT_RUN_SPEED }[state.itemAnim]);
+      catGait.pose = { Sit: 'sit', Loaf: 'loaf', Sleep: 'sleep' }[state.itemAnim] ?? null;
+      stepCatGait(catGait, dt, { Walk: CAT_WALK_SPEED, Run: CAT_RUN_SPEED }[state.itemAnim] ?? 0);
       itemCell.scene.traverse((o) => { if (o.name === 'cat') poseCat(o, catGait); });
     }
     preview(itemCell, panelRect(itemEl, W, H), H);

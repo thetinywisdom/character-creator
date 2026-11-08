@@ -162,7 +162,7 @@ export class City {
     // cats wandering in the park
     this.cats = [];
     for (let i = 0; i < 3; i++) {
-      const raw = cat.build({ ...params.cat }, style);
+      const raw = cat.build({ ...params.cat, ...cat.randomize(rng) }, style); // every cat its own pattern, tail, ears
       // one skinned mesh per cat, joints kept for the walk / run (anim/catGait.js)
       const body = skinCharacter(raw, new Set(CAT_JOINTS), personMat);
       const catSil = addSilhouette(body, silPeople, silCache);
@@ -433,7 +433,14 @@ export class City {
         }
         const dx = c.tx - c.x, dz = c.tz - c.z;
         const d = Math.hypot(dx, dz);
-        if (d < 0.3) { c.tx = 0; c.wait = 1 + Math.random() * 4; } else {
+        if (d < 0.3) {
+          // arrived: sit, loaf or curl up for a nap (naps last longer)
+          c.tx = 0;
+          const r = Math.random();
+          c.gait.pose = r < 0.5 ? 'sit' : r < 0.82 ? 'loaf' : 'sleep';
+          c.wait = c.gait.pose === 'sleep' ? 12 + Math.random() * 15 : c.gait.pose === 'loaf' ? 5 + Math.random() * 7 : 2 + Math.random() * 4;
+        } else {
+          c.gait.pose = null;
           target = Math.min(c.cruise, d * 2); // slow down on arrival
           c.x += (dx / d) * c.speed * dt;
           c.z += (dz / d) * c.speed * dt;
