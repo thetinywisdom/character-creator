@@ -62,7 +62,9 @@ src/city/facades.js    painted office facades, side windows, roof clutter, roof 
 src/city/park.js       park area
 src/city/City.js       Walk mode: player, NPCs, cars, cats, cameras (third person + iso);
                        routes are closed polylines followed with rounded corners
-                       (alongLoop(loop, lengths, total, s, radius))
+                       (alongLoop(loop, lengths, total, s, radius)); car routes run
+                       down the middle of the kerb-side lane (build.js carLoops), so
+                       cars sit right on them (no extra offset)
 src/props/             street props (furniture, traffic, vehicles, extras, japan)
 src/editor/            Editor.js, thumbs.js (palette pictures, cached), towns.js (IndexedDB),
                        TownsPanel.js (My towns)

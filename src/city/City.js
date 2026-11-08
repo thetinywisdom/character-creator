@@ -299,11 +299,12 @@ export class City {
     // --- cars on the ring road -------------------------------------------------
     for (const c of this.cars) {
       c.s += c.speed * dt;
-      const q = alongLoop(c.loop, c.lengths, c.total, c.s, 4); // cars swing round wider
+      // the route already runs down the middle of the kerb-side lane (driving
+      // on the left, block on the driver's left), so the car sits right on it
+      const q = alongLoop(c.loop, c.lengths, c.total, c.s, 3);
       const len = Math.hypot(q.dx, q.dz) || 1;
       const fx = q.dx / len, fz = q.dz / len;
-      // keep left: offset toward the driver's left side
-      c.obj.position.set(q.x + fz * 2.2, -0.12, q.z - fx * 2.2);
+      c.obj.position.set(q.x, -0.12, q.z);
       c.obj.rotation.y = Math.atan2(fx, fz);
     }
 
