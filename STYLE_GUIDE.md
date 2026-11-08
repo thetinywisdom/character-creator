@@ -223,6 +223,10 @@ options. Anything a change makes invalid falls back to a sensible value: beard
 to None, skirt to trousers, crop top to the matching T-shirt, tie to None.
 About one in six random characters is a child.
 
+- **Shirts:** the collar is the shirt's own colour; the front has a row of
+  five small round buttons in a contrast colour, laid on the shirt surface (a
+  continuous dark strip read as a tie).
+
 ## 3d. Outerwear and accessories
 
 - **Outerwear** is a second, slightly bigger layer that follows the torso
@@ -233,7 +237,7 @@ About one in six random characters is a child.
   (fanny pack, neck tie, bow tie, baby carrier). Wings are deliberately big:
   they are silhouette items, and flap slowly and gently all the time (a little
   faster when running). The baby is just a round head in the carrier.
-- **Everything worn sits on the real body shape:** straps, ties, plackets and
+- **Everything worn sits on the real body shape:** straps, ties, shirt buttons and
   packs are placed on the sculpted torso surface (measured, chest and back
   included), never on a plain cylinder. A tie drapes straight down off the
   chest; a pack or carrier rests on the furthest point of the back or front.

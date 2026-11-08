@@ -61,24 +61,32 @@ export function buildTorso(f, spec, mats) {
 
 
   if (spec.collar) {
-    // a chunky collar ring and a button strip down the front
+    // a chunky collar ring in the shirt's own colour, and a row of small
+    // round buttons down the front (a dark strip read as a tie)
     const collar = new THREE.Mesh(
       new THREE.TorusGeometry(f.neckR * 1.55, f.neckR * 0.6, seg(6), seg(14)),
-      mats.accent,
+      mats.top,
     );
     collar.rotation.x = Math.PI / 2;
     collar.scale.y = 0.8;
     collar.position.y = f.shoulderY - L * 0.02;
     torso.add(collar);
-    // the button strip follows the shirt front (over the chest, in at the waist)
+    // buttons sit on the shirt front, each facing out along the surface
     const surf = torsoSurface(f);
-    const samples = [];
-    for (let i = 0; i <= 16; i++) {
-      const y = THREE.MathUtils.lerp(0.13, 0.9, i / 16) * L;
-      samples.push({ y: f.hipY + y, z: surf.front(0, y) - 0.003, w: f.sw * 0.1 });
+    const r = f.sw * 0.03; // oversized so they still read when tiny
+    const disc = new THREE.CylinderGeometry(r, r, r * 0.5, seg(10, 6));
+    const up = new THREE.Vector3(0, 1, 0), n = new THREE.Vector3();
+    const count = 5;
+    for (let i = 0; i < count; i++) {
+      const y = THREE.MathUtils.lerp(0.22, 0.84, i / (count - 1)) * L;
+      const dy = L * 0.02;
+      const slope = (surf.front(0, y + dy) - surf.front(0, y - dy)) / (2 * dy);
+      n.set(0, -slope, 1).normalize();
+      const b = new THREE.Mesh(disc, mats.accent);
+      b.quaternion.setFromUnitVectors(up, n);
+      b.position.set(0, f.hipY + y, surf.front(0, y)).addScaledVector(n, r * 0.15);
+      torso.add(b);
     }
-    const placket = ribbon(samples, f.armR * 0.35, mats.accent);
-    torso.add(placket);
   }
   return torso;
 }
