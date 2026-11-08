@@ -180,6 +180,10 @@ There is no unit test suite; changes are verified by building and looking.
   they read when tiny (see STYLE_GUIDE.md).
 - Commit messages: a short title, then what changed and why.
 - UI must work with touch (44 px targets, pinch, two-finger pan) and mouse.
+- **No coplanar surfaces.** Two surfaces facing the same way must be at least
+  ~2 cm apart (a painted panel in front of a wall, stripes above a road), or
+  they flicker on phones (z-fighting). The low-res render uses a 24-bit depth
+  buffer and the iso camera keeps a tight near / far range; keep it that way.
 
 ## Keeping the docs up to date
 

@@ -85,7 +85,7 @@ function shopFront(g, style, type, w, h, z) {
   if (s.glass) shopWindow(g, style, s.inside, w * 0.86, h * 0.62, 0, h * 0.36, z + 0.03);
   else {
     g.add(box(w * 0.86, h * 0.62, 0.06, style.material('wood', 0x5a3a28), [0, h * 0.36, z]));
-    shopWindow(g, style, s.inside, Math.min(w * 0.4, 2.6), 1.3, -w * 0.2, 1.45, z + 0.06, { mullions: 2, frame: 0x3a2418 });
+    shopWindow(g, style, s.inside, Math.min(w * 0.4, 2.6), 1.3, -w * 0.2, 1.45, z + 0.07, { mullions: 2, frame: 0x3a2418 }); // in front of the wooden panel
   }
   g.add(box(1.0, 2.1, 0.08, style.material('window'), [w * 0.25, 1.05, z + 0.01])); // door
   // signboard across the top

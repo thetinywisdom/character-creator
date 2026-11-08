@@ -280,7 +280,7 @@ export function interiorPanel(style, kind, w, h, x, y, z) {
 
 /** A shop window: the painted inside plus a thin frame with mullions. */
 export function shopWindow(g, style, kind, w, h, x, y, z, { mullions = 3, frame = 0x6a6e74 } = {}) {
-  g.add(interiorPanel(style, kind, w, h, x, y, z - 0.03));
+  g.add(interiorPanel(style, kind, w, h, x, y, z - 0.015)); // keep it clear of the wall behind
   const fm = style.material('darkMetal', frame);
   g.add(box(w + 0.1, 0.09, 0.09, fm, [x, y + h / 2, z]), box(w + 0.1, 0.09, 0.09, fm, [x, y - h / 2, z]));
   for (let i = 0; i <= mullions; i++) g.add(box(0.07, h, 0.07, fm, [x - w / 2 + (i * w) / mullions, y, z]));

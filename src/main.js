@@ -686,7 +686,8 @@ function renderCell(cell, camera, x, y, w, h) {
   cell.rt ??= new THREE.WebGLRenderTarget(1, 1, {
     minFilter: THREE.NearestFilter,
     magFilter: THREE.NearestFilter,
-    depthTexture: new THREE.DepthTexture(1, 1),
+    // 24-bit depth: 16-bit was too coarse and made close surfaces flicker (z-fighting)
+    depthTexture: new THREE.DepthTexture(1, 1, THREE.UnsignedIntType),
   });
   if (cell.rt.width !== lw || cell.rt.height !== lh) cell.rt.setSize(lw, lh);
   cell.style.prepareRender?.(lw, lh);

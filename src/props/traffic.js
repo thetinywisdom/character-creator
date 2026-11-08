@@ -119,7 +119,8 @@ export const crosswalk = {
     const g = new THREE.Group();
     const white = style.material('signage', 0xf4f4f0);
     const width = 4, length = opts.length ?? 6;
-    for (let x = -width / 2 + 0.225; x < width / 2; x += 0.9) g.add(box(0.45, 0.02, length, white, [x, 0.011, 0]));
+    // stripes sit clearly above the road surface (they flickered when they overlapped it)
+    for (let x = -width / 2 + 0.225; x < width / 2; x += 0.9) g.add(box(0.45, 0.02, length, white, [x, 0.024, 0]));
     if (!opts.length) g.add(box(width + 1, 0.01, length + 1, style.material('road'), [0, 0.005, 0])); // show it on a bit of road
     return g;
   },

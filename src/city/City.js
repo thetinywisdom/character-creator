@@ -131,7 +131,7 @@ export class City {
     this.cam = { yaw: Math.PI, pitch: 0.32, dist: 6 };
     // isometric view: an orthographic camera at the classic angle (35.3° down,
     // turned in 45° steps), following the player; zoom = half the view height (m)
-    this.isoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 800);
+    this.isoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 40, 400);
     this.iso = { yaw: Math.PI / 4, targetYaw: Math.PI / 4, zoom: 16 };
     this.viewMode = 'third';
     this.applyLighting({ keyColor: 0xffffff, key: 1, dir: [0.5, 1, 0.6], hemi: 1, tint: null, tintAmount: 0 });
@@ -287,7 +287,7 @@ export class City {
     );
     this.camera.lookAt(tx, ty, tz);
     // isometric camera: far up along the iso direction, looking at the player
-    const ip = Math.atan(1 / Math.SQRT2), D = 300;
+    const ip = Math.atan(1 / Math.SQRT2), D = 160; // near / far kept tight for depth precision
     this.isoCamera.position.set(
       tx + Math.sin(this.iso.yaw) * Math.cos(ip) * D,
       ty + Math.sin(ip) * D,

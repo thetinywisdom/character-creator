@@ -46,6 +46,7 @@ edit; that is not this tool's job.
 9. **Making it feel alive**: painted shop interiors for every shop type, painted curtains upstairs, painted office facades, apartment balconies with laundry, roof clutter, rooftop signs.
 10. **Isometric camera** in Walk mode (switch with third person; zoom, rotate).
 11. **Cheaper walking people**: each person is one skinned mesh with vertex colours sharing one material: ~2 draw calls instead of ~21; a sample town went from 925 to 298 meshes (−68%).
+12. **Flicker fix**: shop windows, wooden fronts and crosswalks blinked while walking (z-fighting): 24-bit depth buffer, tighter iso camera range, surfaces kept ≥ 2 cm apart.
 
 ## Next (suggested order)
 
