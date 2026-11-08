@@ -14,12 +14,12 @@ import * as THREE from 'three';
 //    ankle curves over the cycle, heel strike at 0%). The lowest point of the
 //    soles is pinned to the ground, so the body rises over the standing leg
 //    and the planted foot does not slide or float.
-//      Walk: heel strike with the hip ~30° forward and the knee nearly straight,
-//      small knee give on loading, foot rolls flat, heel rises, toe push-off
-//      ~18° at ~62%, knee peaks ~60° in early swing, then reaches forward again.
-//      Run: shorter stance (~38%), knee bends ~40° on landing, strong push-off,
-//      knee ~100° in swing, flight phases between steps, forward lean,
-//      elbows ~90°.
+//      Walk: keyed from a classic animation walk (contact, down, passing, up):
+//      heel strike with a straight knee, weight down after contact, up after
+//      passing, toe push-off behind, knee ~60° as the leg passes.
+//      Run: keyed from a classic animation run cycle (contact, down, passing,
+//      up, flight), 4 steps a second, strong lean, big arm swing, high heel
+//      tuck behind and high knee in front.
 //  - 'skate': the first, sine-based cycle (smooth and gliding; kept as the
 //    "Roller skate" option).
 // Sources for the shapes of the curves: standard sagittal-plane gait data
@@ -37,15 +37,38 @@ export const RUN_SPEED = 4.2;
 
 // --- keyframes: [cycle fraction, degrees]; hip & knee flexion positive,
 // ankle dorsiflexion (toes up) positive ---------------------------------------
+// Walk: keyed from the classic animation walk (contact, down, passing, up,
+// contact per step), read for the left leg. "The weight goes DOWN just after
+// the contact, and UP just after the passing position": the down pose bends
+// the standing knee; the up pose straightens it and rises onto the ball of
+// the foot. Ground pinning turns that into the body's up-and-down.
+//  contact (0)    leg forward, knee straight, heel down and toes up
+//  down    (1/8)  standing knee bent, foot flat; back foot peeling off
+//  passing (2/8)  standing leg upright; other leg passes, knee bent, foot hanging
+//  up      (3/8)  standing leg straight, heel lifting; other leg reaching forward
+//  contact (4/8)  this leg is now behind, on its toes
+// The second half is the other leg's first half.
 const WALK = {
-  hip: [[0, 30], [0.1, 25], [0.2, 15], [0.3, 6], [0.4, -3], [0.5, -10], [0.58, -8], [0.66, 4], [0.75, 21], [0.85, 32], [0.93, 32]],
-  knee: [[0, 4], [0.08, 13], [0.15, 18], [0.25, 11], [0.4, 5], [0.5, 10], [0.6, 38], [0.7, 62], [0.76, 58], [0.85, 35], [0.95, 6]],
-  ankle: [[0, 0], [0.07, -7], [0.15, -1], [0.3, 6], [0.45, 10], [0.53, 4], [0.62, -18], [0.7, -10], [0.8, -1], [0.9, 2]],
+  hip: [[0, 30], [1 / 8, 20], [2 / 8, 3], [3 / 8, -10], [4 / 8, -16], [5 / 8, -8], [6 / 8, 20], [7 / 8, 32]],
+  knee: [[0, 2], [1 / 8, 22], [2 / 8, 8], [3 / 8, 2], [4 / 8, 12], [5 / 8, 45], [6 / 8, 62], [7 / 8, 35]],
+  ankle: [[0, 12], [1 / 8, -4], [2 / 8, 3], [3 / 8, -6], [4 / 8, -14], [5 / 8, -20], [6 / 8, -10], [7 / 8, 4]],
 };
+// Run: keyed from a classic animation run cycle (7 drawings per step:
+// contact, down, -, passing, up, -, contact), read for the left leg:
+//  1 contact  (0/12)  leg reaching forward, heel landing
+//  2 down     (1/12)  knee bent deep, body lowest
+//  4 passing  (3/12)  standing leg straightening, other heel tucked high behind
+//  5 up       (4/12)  push-off leg extended behind on the toe, body highest
+//  6          (5/12)  both feet off the ground
+//  7 contact  (6/12)  the other foot lands; this leg folds up behind
+// The second half of the cycle is the other leg's first half.
 const RUN = {
-  hip: [[0, 28], [0.12, 18], [0.25, 2], [0.38, -12], [0.5, 4], [0.65, 34], [0.8, 48], [0.9, 40]],
-  knee: [[0, 20], [0.13, 42], [0.28, 28], [0.38, 18], [0.5, 55], [0.65, 100], [0.74, 104], [0.85, 70], [0.95, 30]],
-  ankle: [[0, 2], [0.12, 18], [0.28, 10], [0.38, -22], [0.5, -12], [0.65, 0], [0.85, 4]],
+  hip: [[0, 35], [1 / 12, 15], [2 / 12, 0], [3 / 12, -15], [4 / 12, -25], [5 / 12, -20],
+    [6 / 12, -15], [7 / 12, 10], [8 / 12, 35], [9 / 12, 55], [10 / 12, 68], [11 / 12, 55]],
+  knee: [[0, 10], [1 / 12, 48], [2 / 12, 35], [3 / 12, 20], [4 / 12, 8], [5 / 12, 50],
+    [6 / 12, 100], [7 / 12, 125], [8 / 12, 115], [9 / 12, 100], [10 / 12, 78], [11 / 12, 38]],
+  ankle: [[0, 0], [1 / 12, 22], [2 / 12, 15], [3 / 12, -5], [4 / 12, -30], [5 / 12, -22],
+    [6 / 12, -12], [7 / 12, 0], [8 / 12, 2], [9 / 12, 6], [10 / 12, 6], [11 / 12, 4]],
 };
 
 /** Periodic Catmull-Rom through keyframes (u in [0, 1)). */
@@ -73,10 +96,10 @@ export function stepGait(g, dt, speed) {
   const k = Math.min(1, dt * 6);
   g.amount += (amountTarget - g.amount) * k;
   g.run += (runTarget - g.run) * k;
-  // cadence: about 1.8 steps/s walking, 2.9 running (a full cycle is two steps)
+  // cadence: about 1.8 steps/s walking, 4 running (a full cycle is two steps)
   const refSpeed = lerp(WALK_SPEED, RUN_SPEED, g.run);
   const stride = Math.max(0.55, Math.min(1.25, speed / refSpeed));
-  const omega = lerp(5.6, 9.2, g.run) * stride;
+  const omega = lerp(5.6, 12.6, g.run) * stride;
   if (g.amount > 0.01) g.phase += omega * dt;
   g.t += dt;
 }
@@ -123,8 +146,8 @@ function poseNatural(body, g) {
     if (j[`foot${side}`]) j[`foot${side}`].rotation.x = -ankle * D * a;
     // arms swing with the opposite leg: forward when that leg's heel strikes
     const c = Math.cos(Math.PI * 2 * opp);
-    const shoulder = lerp(4 + 16 * c, 8 + 32 * c, run);
-    const elbow = lerp(18 + 10 * c, 88 + 12 * c, run);
+    const shoulder = lerp(4 + 22 * c, 10 + 50 * c, run);   // running: big swing, forward ~60°, back ~40°
+    const elbow = lerp(16 + 14 * c, 90 + 20 * c, run);     // forward arm bent more than the back arm
     const arm = j[`arm${side}`];
     if (arm) {
       arm.rotation.x = -shoulder * D * a;
@@ -145,8 +168,8 @@ function poseNatural(body, g) {
   const c0 = Math.cos(Math.PI * 2 * u); // 1 at left heel strike
   const pelvis = lerp(4, 7, run) * D * a;
   const shoulders = lerp(4, 9, run) * D * a;
-  const lean = lerp(2, 10, run) * D * a;
-  body.rotation.x = 2 * D * run * a;          // a touch of whole-body lean from the ankles
+  const lean = lerp(2, 16, run) * D * a;
+  body.rotation.x = 5 * D * run * a;          // plus some whole-body lean from the ankles
   body.rotation.y = -pelvis * c0;             // left hip forward at left heel strike
   body.rotation.z = 1.5 * D * Math.sin(Math.PI * 2 * u) * a * (1 - run);
   if (j.spine) {
@@ -161,7 +184,8 @@ function poseNatural(body, g) {
   // keep the standing foot on the ground; when running, float between steps
   body.position.y = 0;
   const ground = lowestSole(body, j);
-  const flight = 0.055 * Math.pow(pos(Math.cos(Math.PI * 4 * (u - 0.44))), 1.5) * run * a;
+  // flight: centred between push-off (4/12) and the next contact (6/12)
+  const flight = 0.06 * Math.pow(pos(Math.cos(Math.PI * 4 * (u - 5 / 12))), 2) * run * a;
   const breathe = 0.004 * Math.sin(g.t * 2.2) * (1 - a);
   body.position.y = -ground + flight + breathe;
 }

@@ -11,8 +11,9 @@ café, bakery, bookshop, izakaya), and a park with a playground, benches, trees,
 a toilet hut and cats. Streets have sidewalks, crosswalks, traffic lights,
 utility poles with wires, lamps, vending machines, parked cars and cars
 driving on the left, plus pedestrians walking the sidewalks.
-Characters walk and run with a jointed gait keyframed from clinical gait data
-(heel strike, planted stance foot, toe push-off, knee flexion in swing); the old
+Characters walk and run with a jointed gait keyed from classic animation walk
+and run cycles (contact, down, passing, up), cross-checked against clinical
+gait data (heel strike, planted stance foot, toe push-off); the old
 gliding cycle is kept as **Roller skate**. The viewer's **Preview animation**
 setting shows each one up close, and **City movement** picks yours in the city.
 Gait references: [Lower-limb walking pattern](https://www.wikipedia.com/wiki/Lower-limb_walking_pattern),

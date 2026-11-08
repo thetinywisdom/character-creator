@@ -183,15 +183,18 @@ dressed in the same tones as the street will disappear.
 ## 3g. Animation
 
 - Characters have real joints: hip → knee → ankle, shoulder → elbow.
-- **Natural walk and run** are keyframed from clinical gait data (sagittal hip,
-  knee and ankle angle curves, heel strike at 0% of the cycle), and the lowest
-  heel or toe is pinned to the ground so the standing foot stays planted.
-  - Walk: the front leg lands heel-first with the hip ~30° forward and the knee
-    almost straight; the back leg is slightly bent and pushes off the toes
-    (~18° at ~62%); the knee bends ~60° in early swing; arms swing opposite the
-    legs with a soft elbow; the body rises over the standing leg.
-  - Run: shorter ground contact (~38%), knee bends ~40° on landing, strong
-    push-off, knee ~100° in swing, flight between steps, elbows ~90°.
+- **Natural walk and run** are keyed from classic animation pose sequences
+  (contact → down → passing → up → contact, per step), and the lowest heel or
+  toe is pinned to the ground so the standing foot stays planted.
+  - Walk: contact with the front heel down, toes up and knee straight; the
+    weight goes **down** just after contact (standing knee bends) and **up**
+    just after passing (standing leg straightens, heel lifts); the swinging
+    knee bends ~60° as it passes; arms swing opposite the legs.
+  - Run: 4 steps a second; contact with the leg reaching forward; a deep down
+    pose; the back heel tucks high behind on the passing pose; on the up pose
+    the push-off leg is fully extended behind and the front knee is high; both
+    feet leave the ground for a moment; strong lean (~16° from the hips plus
+    ~5° overall) and a big arm swing with bent elbows.
   - Upper body: a **spine joint at the hips** carries the torso, arms and head.
     The lean (~10° running, ~2° walking) happens there, over the legs, not
     around the feet. Pelvis and shoulders counter-rotate (left hip forward,
