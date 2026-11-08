@@ -188,10 +188,13 @@ texture that should only partly glow carries a light mask in
 for any new painted window texture. `setSnowCover(root, on)` whitens roles
 (ground, grass, roof, leaf, ...). Both change shared materials, so apply them
 per scene and switch them off when leaving (the viewer does this for snow).
-Rain and snow are a layer in front of the camera, not a box in the world
-(`Precipitation.update(dt, camera, { distance })`, called after the camera
-moves): particles live in screen space, so nothing hides them and there are
-no edges; their size follows the zoom (softly, a square root).
+Rain and snow are faked around the camera, not a box in the world
+(`Precipitation.update(dt, camera, { pixels })`, called after the camera
+moves): drawn on top, always covering the view, no edges. Sizes and density
+stay real-world (0.5 m streaks, 8 cm flakes): zoomed in you see a few big
+drops, zoomed out many small ones. In third person each drop has its own
+distance (2–28 m). Don't scale them to the screen: zoomed in it hides
+everything.
 
 **No coplanar surfaces.** Two surfaces facing the same way must be ≥ 2 cm
 apart or they flicker on phones. Keep the 24-bit depth buffer in `ps1.js`.

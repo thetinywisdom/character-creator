@@ -8,8 +8,8 @@ import * as THREE from 'three';
 //      shop interiors and other textured 'signage' glow as painted
 //      'window' glass                       a dim warm glow
 //    plus soft additive light pools on the ground under street lamps.
-//  - Rain / snow: a layer of streaks or flakes in front of the camera
-//    (Precipitation), sized by the zoom; snow also: ground, grass, roofs and leaves turn
+//  - Rain / snow: streaks or flakes faked around the camera (Precipitation),
+//    real-world sizes, always covering the view; snow also: ground, grass, roofs and leaves turn
 //    white (material colours lerp toward white, restored when it stops).
 //  - weatherLight(preset, weather) darkens / cools a lighting preset.
 //
@@ -84,73 +84,73 @@ export function weatherLight(preset, weather) {
 }
 
 /**
- * Falling rain or snow as a layer in front of the camera (not a box in the
- * world): it covers the whole view, nothing can hide it, and it has no
- * edges. Each particle lives in screen space (u, v in -1..1) and is placed
- * on a plane just in front of the camera every frame, so the zoom changes
- * its size: the iso camera spreads the layer over the view in metres, so
- * zooming in makes the drops and flakes bigger; in third person the layer
- * scales with the camera distance. A depth factor per particle (0.5–1.5)
- * gives near and far drops different speeds and lengths.
+ * Falling rain or snow, faked around the camera instead of filling a box in
+ * the world: it always covers the whole view, it has no edges, and it is
+ * drawn on top (depthTest off), so buildings never hide it. Sizes and
+ * densities are in metres, like real rain:
+ *  - iso (orthographic): drops sit on a plane in front of the camera; the
+ *    number shown follows the visible area (zoomed in: a few real-size drops
+ *    and flakes; zoomed out: the whole view covered with small ones).
+ *  - third person: each drop has its own distance (2–28 m) inside the view,
+ *    so near drops look big and far ones small.
  *
- *   precip.update(dt, camera, { distance })   // after the camera has moved
+ *   precip.update(dt, camera, { pixels })   // after the camera moved;
+ *                                           // pixels = low-res picture height
  */
+const REF_AREA = 1536; // view area (m²) at the default iso zoom, where all drops show
 export class Precipitation {
-  constructor(kind, { count = kind === 'Rain' ? 900 : 700 } = {}) {
+  constructor(kind, { count = kind === 'Rain' ? 1200 : 900 } = {}) {
     this.kind = kind;
+    this.count = count;
     const rnd = () => Math.random();
-    this.seeds = Array.from({ length: count }, () => [rnd() * 2 - 1, rnd() * 2 - 1, 0.5 + rnd(), rnd() * 100]);
+    // [u, v] in -1..1 on the view, speed factor, phase, distance factor
+    this.seeds = Array.from({ length: count }, () => [rnd() * 2 - 1, rnd() * 2 - 1, 0.8 + rnd() * 0.4, rnd() * 100, rnd()]);
     const geo = new THREE.BufferGeometry();
     const rain = kind === 'Rain';
     this.pos = new Float32Array(count * (rain ? 6 : 3));
     geo.setAttribute('position', new THREE.BufferAttribute(this.pos, 3));
     const common = { transparent: true, depthTest: false, depthWrite: false };
     this.object = rain
-      ? new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0xd8e4f2, opacity: 0.65, ...common }))
-      : new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 2, sizeAttenuation: false, ...common }));
+      ? new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0xb8c8dc, opacity: 0.55, ...common }))
+      : new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, sizeAttenuation: true, ...common }));
     this.object.frustumCulled = false;
     this.object.renderOrder = 20; // after everything, on top
     this.t = 0;
   }
 
-  update(dt, camera, { distance = 6 } = {}) {
+  update(dt, camera, { pixels = 300 } = {}) {
     this.t += dt;
     const rain = this.kind === 'Rain';
-    // the layer: a plane just in front of the camera, sized to cover the view
-    let halfH, halfW, depth, scale;
-    if (camera.isOrthographicCamera) {
+    const ortho = camera.isOrthographicCamera;
+    const fall = rain ? 14 : 1.1; // m/s
+    let shown = this.count, halfH = 1, halfW = 1;
+    if (ortho) {
       halfH = (camera.top - camera.bottom) / 2 / camera.zoom;
       halfW = (camera.right - camera.left) / 2 / camera.zoom;
-      depth = camera.near + 1;
-      // zooming in makes them bigger on screen, but softly (square root), so
-      // a zoomed-out view still shows the weather
-      scale = Math.sqrt(halfH / 16);
-    } else {
-      depth = camera.near + 0.5;
-      halfH = Math.tan((camera.fov * Math.PI) / 360) * depth;
-      halfW = halfH * camera.aspect;
-      scale = (halfH / 9) * (6 / distance); // closer camera = bigger drops
+      shown = Math.min(this.count, Math.max(40, Math.round((this.count * 4 * halfW * halfH) / REF_AREA)));
     }
-    // falling speed in view heights per second
-    const fall = rain ? 1.5 : 0.09;
+    const tanH = ortho ? 0 : Math.tan((camera.fov * Math.PI) / 360);
     const p = this.pos;
-    this.seeds.forEach((sd, i) => {
-      const f = sd[2];
-      sd[1] -= fall * f * dt;
-      if (sd[1] < -1.1) { sd[1] += 2.2; sd[0] = Math.random() * 2 - 1; }
-      let u = sd[0];
-      if (!rain) u += Math.sin(this.t * 0.7 + sd[3]) * 0.015 * f; // snow drifts
-      const x = u * halfW, y = sd[1] * halfH;
-      if (rain) {
-        const len = 0.7 * f * scale, slant = 0.1 * f * scale;
-        p.set([x, y, -depth, x + slant, y + len, -depth], i * 6);
-      } else p.set([x, y, -depth], i * 3);
-    });
+    for (let i = 0; i < shown; i++) {
+      const sd = this.seeds[i];
+      // this drop's distance and the view's half size there
+      const dist = ortho ? camera.near + 1 : 2 + 26 * sd[4];
+      const hH = ortho ? halfH : tanH * dist, hW = ortho ? halfW : hH * camera.aspect;
+      sd[1] -= (fall * sd[2] * (rain ? 1 : 0.85) * dt) / hH;
+      if (sd[1] < -1.05) { sd[1] += 2.1; sd[0] = Math.random() * 2 - 1; }
+      let x = sd[0] * hW;
+      if (!rain) x += Math.sin(this.t * 0.8 + sd[3]) * 0.4; // snow drifts
+      const y = sd[1] * hH;
+      if (rain) p.set([x, y, -dist, x + 0.06, y + 0.5, -dist], i * 6);
+      else p.set([x, y, -dist], i * 3);
+    }
+    this.object.geometry.setDrawRange(0, shown * (rain ? 2 : 1));
     this.object.geometry.attributes.position.needsUpdate = true;
     if (!rain) {
-      // flake size in pixels of the low-res picture, following the zoom
-      const px = camera.isOrthographicCamera ? Math.sqrt(16 / halfH) : 6 / distance;
-      this.object.material.size = Math.max(1, Math.min(4, 2 * px));
+      const m = this.object.material;
+      if (m.sizeAttenuation === ortho) { m.sizeAttenuation = !ortho; m.needsUpdate = true; }
+      // iso: an 8 cm flake in pixels of the low-res picture; third person: 5 cm in the world
+      m.size = ortho ? Math.max(1, (0.08 * pixels) / (2 * halfH)) : 0.05;
     }
     // ride along with the camera
     this.object.position.copy(camera.position);

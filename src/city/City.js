@@ -76,6 +76,7 @@ function loopLengths(loop) {
 export class City {
   constructor({ style, renderer, human, cat, params, npcCount = 28, seed = 3, data = null }) {
     this.style = style;
+    this.renderer = renderer;
     this.scene = new THREE.Scene();
     this.baseBackground = new THREE.Color(style.background);
     this.scene.background = this.baseBackground.clone();
@@ -492,7 +493,7 @@ export class City {
     );
     this.isoCamera.lookAt(tx, ty, tz);
     // rain / snow: a layer in front of whichever camera is in use
-    this.precip?.update(dt, this.activeCamera, { distance: this.cam.dist });
+    this.precip?.update(dt, this.activeCamera, { pixels: this.renderer.domElement.clientHeight / (this.style.pixelScale || 1) });
     // shadows cover more ground when the iso view is zoomed out
     const reach = this.viewMode === 'iso' ? Math.max(30, this.iso.zoom * 2.2) : 30;
     const sc = this.key.shadow.camera;

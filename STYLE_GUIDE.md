@@ -353,8 +353,9 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   interiors and sign faces glow, lamps glow brighter, soft warm pools of
   light lie under street lamps. No real extra lights (cheap on phones).
 - **Rain and snow are a layer in front of the camera** covering the whole
-  view (never a box you can see the edges of, never hidden by buildings);
-  zooming in makes drops and flakes bigger, zooming out smaller (softly).
+  view (never a box you can see the edges of, never hidden by buildings),
+  but with real-world sizes and density: zoomed in, a few clear drops and
+  small flakes (the scene stays visible); zoomed out, many tiny ones.
 - **Rain:** thin pale streaks, slightly slanted; darker, greyer light; about
   three in four people without something in their hands open an umbrella.
 - **Snow:** small white flakes drifting down; ground, pavements, grass, roofs

@@ -62,7 +62,7 @@ games), 🏙 City (walk a generated sample town to experiment).
 22. **Real variety per seed**: every building's New look changes shape, height, roof, layout and details, not only colour (shared helpers in `city/variety.js`): houses (1–3 floors, roof types, wing, carport, front wall / hedge), shops (flats above, roofs, door side, awnings, things out front), civic buildings (heights, layouts, sign schemes, modern / classic koban, gas station pumps and car, shrine gates and side buildings, school wings and gym).
 23. **Iso silhouettes**: people hidden behind buildings show as flat silhouettes in the iso view (the player in yellow).
 
-24. **Rain and snow as a camera layer**: they were a box following the player (its edges showed and buildings hid it); now a layer in front of the camera covering the whole view, sized by the zoom.
+24. **Rain and snow as a camera layer**: they were a box following the player (its edges showed and buildings hid it); now faked around the camera (drawn on top, covering the whole view) with real-world sizes and density, so zooming in stays clear (a screen-sized version hid everything when zoomed in).
 
 ## Next (only when the owner asks)
 
