@@ -56,7 +56,7 @@ function strand(points, r0, r1, material) {
 /** How far back hair must hang to clear the upper back, at head-local height y. */
 function backZ(f, y) {
   const ty = y + f.headY - f.hipY; // torso-local height
-  const torsoBack = ty < f.torsoLen ? f.torsoR(Math.max(0, ty)) * f.torsoDepth : 0;
+  const torsoBack = ty < f.torsoLen ? f.torsoR(Math.max(0, ty)) * f.depthAt(Math.max(0, ty)) : 0;
   // generous clearance: the shirt, the sculpted upper back and the spine lean all add depth
   return -Math.max(f.rz * 1.0, torsoBack + f.R * 0.45);
 }

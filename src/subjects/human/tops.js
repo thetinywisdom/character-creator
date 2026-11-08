@@ -34,9 +34,14 @@ export function band(f, y0, y1, material, { inflate = 0, gap = 0 } = {}) {
   const lathe = gap > 0
     ? new THREE.LatheGeometry(pts, f.torsoRadial, gap / 2, Math.PI * 2 - gap)
     : new THREE.LatheGeometry(pts, f.torsoRadial, Math.PI / 2);
-  const mesh = new THREE.Mesh(sculptTorso(lathe, f), material);
+  // sculpt (in round-lathe space, assuming the base depth), then flatten each
+  // height by its own depth so the torso gets shallower toward the shoulders
+  const geo = sculptTorso(lathe, f);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) pos.setZ(i, pos.getZ(i) * f.depthAt(pos.getY(i)));
+  geo.computeVertexNormals();
+  const mesh = new THREE.Mesh(geo, material);
   mesh.position.y = f.hipY;
-  mesh.scale.z = f.torsoDepth;
   return mesh;
 }
 
@@ -66,7 +71,7 @@ export function buildTorso(f, spec, mats) {
     collar.scale.y = 0.8;
     collar.position.y = f.shoulderY - L * 0.02;
     torso.add(collar);
-    const front = f.torsoR(L * 0.5) * f.torsoDepth;
+    const front = f.torsoR(L * 0.5) * f.depthAt(L * 0.5);
     const placket = new THREE.Mesh(new THREE.BoxGeometry(f.sw * 0.1, L * 0.82, f.armR * 0.6), mats.accent);
     placket.position.set(0, f.hipY + L * 0.44, front + f.armR * 0.15);
     torso.add(placket);
@@ -97,7 +102,7 @@ function chest(f, L, bands) {
   }
   geo.computeVertexNormals();
   const mesh = new THREE.Mesh(geo, m);
-  mesh.position.set(0, f.hipY + y, f.torsoR(y) * f.torsoDepth - D * 0.2);
+  mesh.position.set(0, f.hipY + y, f.torsoR(y) * f.depthAt(y) - D * 0.2);
   mesh.name = 'chest';
   return mesh;
 }

@@ -8,8 +8,8 @@ export const BACK_ACCESSORIES = ['None', 'Backpack', 'Angel wings', 'Evil wings'
 export const BODY_ACCESSORIES = ['None', 'Fanny pack', 'Neck tie', 'Bow tie', 'Baby carrier'];
 
 /** Front / back surface of the torso at torso-local height y, plus a margin. */
-const frontAt = (f, y, extra = 0) => f.torsoR(y) * f.torsoDepth + extra;
-const backAt = (f, y, extra = 0) => -(f.torsoR(y) * f.torsoDepth + extra);
+const frontAt = (f, y, extra = 0) => f.torsoR(y) * f.depthAt(y) + extra;
+const backAt = (f, y, extra = 0) => -(f.torsoR(y) * f.depthAt(y) + extra);
 /** How far the sculpted chest sticks out, so front items sit on top of it. */
 const chestOut = (f) => (f.woman ? f.sw * 0.17 * f.chestSize : f.sw * 0.03);
 
@@ -87,7 +87,8 @@ export function buildBackAccessory(f, kind, mats) {
     const cy = f.hipY + y;
     // padded body with a domed top, thinner at the top than at the bottom
     const body = softBox(W, H, D, mats.back, { round: 0.3, topRound: 0.45, topDepth: 0.75 });
-    body.rotation.y = Math.PI; // the flat (+z) face rests against the person's back
+    // no rotation: softBox keeps its +z face full and flat, and +z points at the
+    // person's back, so the flat side rests on the back and the top tapers outward
     body.position.set(0, cy, z);
     // rounded front pocket in a darker shade, low on the outer face
     const pocket = softBox(W * 0.72, H * 0.36, D * 0.32, mats.backDark, { round: 0.45 });
@@ -141,7 +142,7 @@ export function buildBodyAccessory(f, kind, mats) {
     pack.position.set(0, f.hipY + y, frontAt(f, y, f.sw * 0.08));
     const belt = new THREE.Mesh(new THREE.TorusGeometry(f.torsoR(y) * 1.06, f.armR * 0.2, seg(4, 3), seg(18, 10)), mats.trim);
     belt.rotation.x = Math.PI / 2;
-    belt.scale.y = f.torsoDepth; // torus lies flat; its local y is world z
+    belt.scale.y = f.depthAt(y); // torus lies flat; its local y is world z
     belt.position.y = f.hipY + y;
     g.add(pack, belt);
   } else if (kind === 'Neck tie') {
@@ -201,7 +202,7 @@ export function buildBodyAccessory(f, kind, mats) {
     const beltY = L * 0.14;
     const belt = new THREE.Mesh(new THREE.TorusGeometry(f.torsoR(beltY) + f.sw * 0.03, f.armR * 0.45, seg(5, 4), seg(18, 10)), m);
     belt.rotation.x = Math.PI / 2;
-    belt.scale.y = f.torsoDepth;
+    belt.scale.y = f.depthAt(beltY);
     belt.position.y = f.hipY + beltY;
     g.add(belt);
     const r = f.armR * 0.36;

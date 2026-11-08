@@ -35,10 +35,10 @@ export function buildOuterwear(f, kind, mats) {
     // the hood, folded down on the upper back
     const hood = new THREE.Mesh(new THREE.SphereGeometry(1, seg(14, 8), seg(8, 5)), m);
     hood.scale.set(f.sw * 0.3, L * 0.16, f.sw * 0.2);
-    hood.position.set(0, f.shoulderY - L * 0.06, -f.torsoR(L * 0.9) * f.torsoDepth - f.sw * 0.06);
+    hood.position.set(0, f.shoulderY - L * 0.06, -f.torsoR(L * 0.9) * f.depthAt(L * 0.9) - f.sw * 0.06);
     g.add(hood);
     // front pocket and drawstrings
-    const front = (y) => (f.torsoR(y) + spec.inflate) * f.torsoDepth;
+    const front = (y) => (f.torsoR(y) + spec.inflate) * f.depthAt(y);
     const pocket = new THREE.Mesh(new THREE.BoxGeometry(f.sw * 0.55, L * 0.16, f.sw * 0.05), m);
     pocket.position.set(0, f.hipY + L * 0.2, front(L * 0.2) + f.sw * 0.01);
     g.add(pocket);

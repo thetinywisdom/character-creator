@@ -63,7 +63,7 @@ export function buildLeg(f, kind, mats, sx, footwear = 'Shoes') {
  */
 export function buildBottom(f, mats) {
   const L = f.torsoLen;
-  const back = f.torsoR(L * 0.05) * f.torsoDepth;
+  const back = f.torsoR(L * 0.05) * f.depthAt(L * 0.05);
   const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 5), mats.legwear);
   // sticks out about 0.1 × hip width behind the torso: a curve, not a shelf
   mesh.scale.set(f.hw * 0.44, L * 0.16, f.hw * 0.2);

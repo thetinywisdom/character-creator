@@ -119,6 +119,11 @@ dressed in the same tones as the street will disappear.
 - Every top stops at the hip line so the waistband shows and the hip shape
   reads as body.
 
+- **Torso depth** shrinks toward the shoulders (about 30% shallower at the
+  top): the upper torso is wide but shallow. A uniformly deep torso pushes out
+  a hump on the upper back. Anything that sits on the torso (straps, ties,
+  belts, hair down the back) uses the same depth-by-height.
+
 ## 3b2. Hairstyles
 
 - Three families with variations, so crowds look varied:
