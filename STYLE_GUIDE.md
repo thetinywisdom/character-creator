@@ -111,8 +111,8 @@ dressed in the same tones as the street will disappear.
   never poking above it.
 - **Hands:** blocky and mitten-like (a box, flat side-to-side, narrowing toward
   the fingertips), for both body types.
-- **Footwear:** chunky low-poly shoes or ankle boots (a box foot with a sloped
-  toe), not ovals.
+- **Footwear:** slim, low shoes or ankle boots: a sole-length box that narrows
+  and slopes down to a rounded toe (oversized, chunky feet read as bricks).
 - Neck, arm and leg thickness are separate sliders.
 - Every top stops at the hip line so the waistband shows and the hip shape
   reads as body.
