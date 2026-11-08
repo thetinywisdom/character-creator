@@ -52,6 +52,16 @@ export function buildLeg(f, kind, mats, sx, footwear = 'Shoes') {
     const rEnd = THREE.MathUtils.lerp(f.thighR, f.kneeR, t);
     leg.add(taperBetween(hip, [inX * t, knee * t, 0], f.thighR * 1.12, rEnd * 1.15, mats.legwear));
   }
+  if (kind === 'Skirt') {
+    // The part of the thigh the skirt covers is drawn in the skirt colour (an
+    // old low-poly trick): when a leg swings out of the rigid skirt while
+    // walking or running, it reads as fabric stretched over the thigh instead
+    // of a bare leg poking through. Ends just above the hem, so standing still
+    // it stays hidden inside the skirt.
+    const t = 0.4 / 0.48;
+    const rEnd = THREE.MathUtils.lerp(f.thighR, f.kneeR, t);
+    leg.add(taperBetween(hip, [inX * t, knee * t, 0], f.thighR * 1.06, rEnd * 1.08, mats.legwear));
+  }
   return leg;
 }
 

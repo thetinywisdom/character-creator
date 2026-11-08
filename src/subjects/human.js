@@ -188,7 +188,8 @@ export const human = {
 
     // --- legs (pivot at hip, for later animation) ------------------------
     for (const sx of [-1, 1]) root.add(buildLeg(f, p.legwear, mats, sx, p.footwear));
-    if (p.legwear === 'Skirt') root.add(buildSkirt(f, mats));
+    // the skirt hangs from the spine joint, so it leans and twists with the hips
+    if (p.legwear === 'Skirt') upper.add(buildSkirt(f, mats));
     else if (f.woman && f.bottomShape === 'Round') root.add(buildBottom(f, mats));
 
     // --- arms (pivot at shoulder) ----------------------------------------

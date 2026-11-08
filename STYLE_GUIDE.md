@@ -173,6 +173,11 @@ dressed in the same tones as the street will disappear.
   full beard. The handlebar is a full moustache whose ends narrow and curl up
   the cheeks.
 
+- **Skirts in motion:** the skirt hangs from the spine joint, so it leans and
+  twists with the hips. The part of each thigh the skirt covers is drawn in
+  the skirt colour (an old low-poly trick), so a leg swinging out of the rigid
+  skirt reads as fabric stretched over the thigh, not a bare leg poking through.
+
 ## 3d. Outerwear and accessories
 
 - **Outerwear** is a second, slightly bigger layer that follows the torso
