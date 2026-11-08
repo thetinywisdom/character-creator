@@ -91,16 +91,20 @@ export const cat = {
       [0.3, -0.014, 1.04, 1.14],  // a deep chest
       [0.42, 0.004, 0.86, 1.0],   // shoulders
       [0.49, 0.035, 0.74, 0.82],  // base of the neck
-      [0.545, 0.07, 0.64, 0.66],  // a short, thick neck
+      [0.525, 0.058, 0.66, 0.68], // a short, thick neck
     ].map(([z, y, w, h]) => [z * L, yc + y, w * g, h * g]);
-    root.add(part(new THREE.Mesh(loft(torso, 10), M), 'body'));
     const neck = torso[torso.length - 1];
+    const R = 0.058 * hs; // skull radius
+    const headPos = [0, neck[1] + R * 0.6, neck[0] + R * 0.3]; // low on a short neck
+    // the neck runs on up into the skull (its last ring hidden inside), so
+    // head and body flow together instead of a ball sitting on a tube
+    torso.push([headPos[2] - R * 0.25, headPos[1] - R * 0.2, R * 0.85, R * 0.8]);
+    root.add(part(new THREE.Mesh(loft(torso, 10), M), 'body'));
 
     // --- head: big, round and upright, a small muzzle at the front (cute) --
-    const R = 0.058 * hs; // skull radius
     const head = new THREE.Group();
     head.name = 'head';
-    head.position.set(0, neck[1] + R * 0.95, neck[0] + R * 0.45); // sits high on the neck
+    head.position.set(...headPos);
     root.add(head);
     // a round skull: rings along z on a sphere, a touch wider than tall
     const skull = [];
