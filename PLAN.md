@@ -29,6 +29,7 @@ games), 🏙 City (walk a generated sample town to experiment).
 | Platforms | Games: web + iOS / Android via three.js wrapped with Capacitor; glTF export as a backup for other engines |
 | Buildings | Shops and food places join block fills; public buildings (koban, post office, bank, clinic, fire station, parking, gas station) are placed by games |
 | Atmosphere | Night, rain and snow are cheap: shared-material glow with painted light masks, particles that follow the player; no real extra lights |
+| Building variety | A new seed must change the shape first (floors, roof, wings, layout), then details, then colour |
 | Cameras | The city switches between third person and isometric |
 | Streets | Roads are 6 m (two narrow lanes), so towns feel small enough to explore; no cars parked at the kerb |
 
@@ -57,6 +58,9 @@ games), 🏙 City (walk a generated sample town to experiment).
 19. **People content**: Grandpa and Grandma body types (stoop, slow walk, walking stick); suit jacket, police uniform; straw hat, flat cap, police cap; held items with arm poses (open umbrella, phone, ice cream, coffee cup, boxes in both arms); a Looks row (office worker, police officer, delivery worker, ...); motorbikes (delivery scooter, step-through moped, motorcycle) parked round town.
 20. **More trees**: Japanese maple, ginkgo, zelkova, black pine, weeping willow, bamboo (parks and shrine groves use them).
 21. **Atmosphere**: lit night (windows, signs, shop interiors, lamps and light pools, via light masks, no real lights), rain (streaks, darker light, people open umbrellas), snow (flakes, white ground, roofs and trees). City buttons ☀ (time of day) and 🌤 (weather).
+
+22. **Real variety per seed**: every building's New look changes shape, height, roof, layout and details, not only colour (shared helpers in `city/variety.js`): houses (1–3 floors, roof types, wing, carport, front wall / hedge), shops (flats above, roofs, door side, awnings, things out front), civic buildings (heights, layouts, sign schemes, modern / classic koban, gas station pumps and car, shrine gates and side buildings, school wings and gym).
+23. **Iso silhouettes**: people hidden behind buildings show as flat silhouettes in the iso view (the player in yellow).
 
 ## Next (only when the owner asks)
 

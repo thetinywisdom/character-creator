@@ -103,6 +103,10 @@ export function createPs1Style({
           );
         };
         m.customProgramCacheKey = () => 'ps1-snap';
+        // stencil 0 = "no person visible here" (city/silhouette.js draws hidden people only there)
+        m.stencilWrite = true;
+        m.stencilRef = 0;
+        m.stencilZPass = THREE.ReplaceStencilOp;
         m.userData.role = role;
         cache.set(key, m);
       }

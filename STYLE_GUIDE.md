@@ -359,6 +359,16 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 
 ## 3f. Buildings and the city
 
+- **Every seed is a different building.** Of the same kind, but with its own
+  shape: shop houses with 0–3 floors of flats above (curtained windows,
+  sometimes balconies or AC units), flat roofs with a parapet and roof
+  clutter (stair hut, tank, AC units, laundry pole) or pitched tile roofs,
+  the door and displays on either side, awnings and signs in a few schemes,
+  bikes / boards / planters out front. Colour changes alone don't count.
+- **Iso view: see-through people.** People behind buildings show as flat
+  silhouettes, blue at 60% (the player yellow at 85%), so nobody is lost
+  behind a building.
+
 - **Buildings** are boxes with a few strong details, in muted wall colours:
   houses (2 floors, gable tile roof, low block wall, small balcony), apartment
   blocks (balcony slab and railing on every floor), mixed-use buildings (shop

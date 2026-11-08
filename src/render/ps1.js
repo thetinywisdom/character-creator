@@ -9,7 +9,8 @@ import * as THREE from 'three';
 //   ps1.render(stage, camera, x, y, w, h);  // stage = { scene, style }, x / y from bottom-left
 //
 // `stage.rt` is created on first use (one low-res target per stage). The
-// depth buffer is 24-bit: 16-bit was too coarse and made close surfaces flicker.
+// depth buffer is 24-bit (with an 8-bit stencil): 16-bit was too coarse and made
+// close surfaces flicker.
 
 export function createPs1Renderer(renderer) {
   const blitCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -76,7 +77,8 @@ export function createPs1Renderer(renderer) {
     stage.rt ??= new THREE.WebGLRenderTarget(1, 1, {
       minFilter: THREE.NearestFilter,
       magFilter: THREE.NearestFilter,
-      depthTexture: new THREE.DepthTexture(1, 1, THREE.UnsignedIntType),
+      stencilBuffer: true, // see-through silhouettes (city/silhouette.js)
+      depthTexture: Object.assign(new THREE.DepthTexture(1, 1, THREE.UnsignedInt248Type), { format: THREE.DepthStencilFormat }),
     });
     if (stage.rt.width !== lw || stage.rt.height !== lh) stage.rt.setSize(lw, lh);
     stage.style.prepareRender?.(lw, lh);

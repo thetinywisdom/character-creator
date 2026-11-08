@@ -113,6 +113,8 @@ src/city/interiors.js  painted shop interiors and curtains
 src/city/facades.js    painted office facades, roof clutter, roof signs
 src/city/City.js       walkable town: player, people, cars, cats, collisions, cameras,
                        setWeather('Clear'|'Rain'|'Snow'), night via applyLighting
+src/city/variety.js    shared building variety: flatsAbove, roofTop, frontExtras, side, pick, between
+src/city/silhouette.js see-through people in the iso view (stencil + GreaterDepth copy)
 src/city/atmosphere.js night glow (setNightGlow), snow cover (setSnowCover), rain / snow
                        particles (Precipitation), lamp light pools, weatherLight
 src/city/input.js      keyboard, drag, pinch and on-screen joystick
@@ -169,6 +171,14 @@ pedestrians sidestep; cars brake for things ahead. A new item needs a collider.
 (`src/lib/merge.js`). Turn each walking person into one skinned mesh
 (`src/lib/skin.js`, about 2 draw calls a person). Prefer painted textures over
 many small meshes ("feel real, not be real").
+
+**See-through people.** In the iso view, people hidden by buildings show as
+flat silhouettes (blue; the player yellow), `src/city/silhouette.js`. Every
+style material writes stencil 0, a person's materials stencil 1
+(`markPerson`), and a copy of each skinned person is drawn last with
+`depthFunc: GreaterDepth` where the stencil is not 1. `City.setViewMode`
+shows them in iso only. The PS1 render target has a depth + stencil buffer;
+keep it. A new person-like mesh should use `markPerson` materials.
 
 **Night and weather.** Night is the `Night` lighting preset (`night: true`):
 `setNightGlow(root, on)` makes lamps, signs, shop interiors and lit windows
@@ -229,13 +239,24 @@ decides what players may change.
 
 ## Common tasks
 
+**Every seed must give a really different building.** `params.seed` feeds
+`rng`; the catalogue's 🎲 New look and every generated town rely on it. A
+builder draws from `rng` (never `Math.random`), in this order of importance:
+shape (floors, width / depth used, roof, wings, setbacks), layout (door side
+with `side(rng)`, where signs and displays go), details (awnings, balconies,
+AC units, `frontExtras`), and only then colours. Colour alone reads as "the
+same building". Use the helpers in `src/city/variety.js`: `flatsAbove`
+(flats over a shop), `roofTop` (flat roof with parapet and clutter, or a
+pitched roof), `frontExtras` (bikes, boards, planters, vending machines).
+Check six seeds side by side before committing.
+
 **Add a building.** Write `myBuilding(style, rng, w, d)` (fills a lot w × d,
 faces +z, returns `{ group, footprint, colliders }`) in `shops.js` /
 `civic.js` (reuse `body`, `signboard`, `awning`, `noren`, `upperFloors`,
 `shopWindow`), add it to `SHOP_BUILDINGS` / `CIVIC_BUILDINGS` with label and
 lot size, give it a painted interior (`PAINT` in `interiors.js`). Optionally
 add it to block fills in `layout.js`. It then appears in the Catalogue. Bump
-`VERSION` in `catalog/thumbs.js` if an existing item's look changes (now 3: office facades repainted with light masks).
+`VERSION` in `catalog/thumbs.js` if an existing item's look changes (now 4: buildings vary by seed).
 
 **Add a prop.** Add `{ id, label, variants, colors?, build(params, style) }` to
 a file in `src/props/`, list it in `PROP_GROUPS` (`props/index.js`), add its

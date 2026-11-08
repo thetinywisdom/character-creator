@@ -12,7 +12,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
 - **📦 Catalogue** (home): every item a game can place, in tabs (Buildings,
   Street, Traffic, Extras, Nature, Animals, Vehicles, Areas). Tap one to turn
   it around, try its types, colours and looks, and copy the `createAsset(...)`
-  line that builds it. The cat has Still / Walk / Run.
+  line that builds it. 🎲 New look gives a really different building (shape,
+  height, roof, layout), not just a new colour. The cat has Still / Walk / Run.
 - **👤 Characters**: the character creator (Body, Hair & face, Clothes,
   Accessories; Still / Walk / Run preview). Body types Man, Woman, Boy, Girl,
   Grandpa, Grandma; ready-made Looks in the Clothes tab (office worker,
@@ -22,7 +23,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   cars, motorbikes and cats. 🎲 makes a different town, ☀ changes the time of
   day (at night windows, signs and lamps glow), 🌤 the weather (rain: people
   open umbrellas; snow), 🎥 (or V) switches third person / isometric (Q / E
-  rotate). WASD / arrows, Shift to run, a joystick on touch screens.
+  rotate); in the iso view people behind buildings show as silhouettes (you
+  in yellow). WASD / arrows, Shift to run, a joystick on touch screens.
 
 ## Docs
 

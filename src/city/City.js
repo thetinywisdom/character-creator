@@ -9,6 +9,7 @@ import { buildCity } from './build.js';
 import { JOINT_NAMES, createGait, poseGait, stepGait } from '../anim/gait.js';
 import { Precipitation, lampPools, setNightGlow, setSnowCover, weatherLight } from './atmosphere.js';
 import { giveHeldItem } from '../subjects/human.js';
+import { addSilhouette, markPerson, silhouetteMaterial } from './silhouette.js';
 import { CAT_JOINTS, CAT_RUN_SPEED, CAT_WALK_SPEED, createCatGait, poseCat, stepCatGait } from '../anim/catGait.js';
 
 // The walkable town: a generated city, your character (built from the
@@ -113,13 +114,21 @@ export class City {
     const rng = mulberry32(seed * 31 + 7);
     // each person becomes one skinned mesh (joints kept for the walk), sharing
     // one vertex-colour material: about 2 draw calls a person instead of ~21
-    const personMat = vertexColorMaterial(style);
-    const buildPerson = (p) => {
+    const personMat = markPerson(vertexColorMaterial(style));
+    // see-through silhouettes for the iso view (silhouette.js): the player in a
+    // bright colour so you can always find yourself, everyone else in blue
+    this.silhouettes = [];
+    const silCache = new Map();
+    const silPeople = silhouetteMaterial(0x3a64b8, 0.6), silPlayer = silhouetteMaterial(0xf2b64a, 0.85);
+    const buildPerson = (p, player = false) => {
       const raw = human.build(p, style);
       style.decorate?.(raw);
-      return skinCharacter(raw, LIMBS, personMat);
+      const body = skinCharacter(raw, LIMBS, personMat);
+      const sil = addSilhouette(body, player ? silPlayer : silPeople, silCache);
+      if (sil) this.silhouettes.push(sil);
+      return body;
     };
-    this.player = { body: buildPerson(params.human), root: new THREE.Group(), x: 0, z: 0, heading: 0, speed: 0, gait: createGait() };
+    this.player = { body: buildPerson(params.human, true), root: new THREE.Group(), x: 0, z: 0, heading: 0, speed: 0, gait: createGait() };
     this.player.root.add(this.player.body);
     this.scene.add(this.player.root);
     // start on the sidewalk next to the park (or the first block)
@@ -317,6 +326,8 @@ export class City {
       this.iso.yaw = this.iso.targetYaw = snap;
     }
     this.viewMode = mode;
+    // hidden people show through buildings in the iso view
+    for (const sil of this.silhouettes) sil.visible = mode === 'iso';
     return mode;
   }
 
