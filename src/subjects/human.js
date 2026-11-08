@@ -10,6 +10,7 @@ import { headGeometry } from './human/headShape.js';
 import { OUTERWEAR, buildOuterwear } from './human/outerwear.js';
 import { BACK_ACCESSORIES, BODY_ACCESSORIES, buildBackAccessory, buildBodyAccessory } from './human/accessories.js';
 import { BEARDS, FACE_ACCESSORIES, HEADWEAR, MASKS, MOUSTACHES, buildFaceAccessory, buildFacialHair, buildHeadwear, coversHair, hairUnder } from './human/head.js';
+import { BODY_DEFAULTS, BODY_TYPES, adjust, allowedOptions, applyRules, hiddenControls, isChild } from './human/rules.js';
 import { LEGWEAR, buildBottom, buildLeg, buildSkirt } from './human/legwear.js';
 
 // Human character, assembled from slots: body, hair, top, legwear (more slots
@@ -30,7 +31,7 @@ export const human = {
   isCharacter: true,
   schema: {
     // body
-    bodyType:      { group: 'Body', value: 'Man', options: ['Man', 'Woman'], label: 'Body type' },
+    bodyType:      { group: 'Body', value: 'Man', options: BODY_TYPES, label: 'Body type' },
     headsTall:     { group: 'Body', value: 7.5,   min: 2.5,   max: 7.5,  step: 0.1,   label: 'Heads tall' },
     height:        { group: 'Body', value: 1.6,   min: 1.0,   max: 2.0,  step: 0.01,  label: 'Height (m)' },
     legLength:     { group: 'Body', value: 0.54,  min: 0.35,  max: 0.65, step: 0.01,  label: 'Leg length' },
@@ -77,6 +78,8 @@ export const human = {
     // body types with matching proportions
     Man:       { bodyType: 'Man',   height: 1.78, legLength: 0.54, shoulderWidth: 0.27, hipWidth: 0.18, neckThickness: 0.034, armThickness: 0.029, legThickness: 0.037, headWidth: 0.8 },
     Woman:     { bodyType: 'Woman', height: 1.68, legLength: 0.58, shoulderWidth: 0.22, hipWidth: 0.23, neckThickness: 0.023, armThickness: 0.023, legThickness: 0.033, headWidth: 0.78 },
+    Boy:       { bodyType: 'Boy',  ...BODY_DEFAULTS.Boy },
+    Girl:      { bodyType: 'Girl', ...BODY_DEFAULTS.Girl },
     // overall proportion styles
     Chibi:     { headsTall: 2.6, legLength: 0.42, shoulderWidth: 0.2,  hipWidth: 0.18, neckThickness: 0.04,  armThickness: 0.035, legThickness: 0.045, headWidth: 0.95 },
     Stylized:  { headsTall: 5,   legLength: 0.5,  shoulderWidth: 0.24, hipWidth: 0.19, neckThickness: 0.035, armThickness: 0.03,  legThickness: 0.039, headWidth: 0.85 },
@@ -92,9 +95,14 @@ export const human = {
     do {
       legwearColor = pick(['Denim', 'Denim', 'Navy', 'Black', 'Khaki', 'Gray', 'Brown', ...names(CLOTH_COLORS)]);
     } while (legwearColor === topColor);
+    // about one in six is a child
+    const child = rng() < 0.17;
     const woman = rng() < 0.5;
-    return {
-      bodyType: woman ? 'Woman' : 'Man',
+    const bodyType = child ? (woman ? 'Girl' : 'Boy') : (woman ? 'Woman' : 'Man');
+    const kid = BODY_DEFAULTS[bodyType];
+    const jitter = (v, k) => Math.round(v * (1 + (rng() - 0.5) * k) * 1000) / 1000;
+    const out = {
+      bodyType,
       headsTall: range(7, 7.5, 0.1),
       height: woman ? range(1.5, 1.75, 0.01) : range(1.62, 1.9, 0.01),
       legLength: woman ? range(0.55, 0.6, 0.01) : range(0.5, 0.56, 0.01),
@@ -130,9 +138,31 @@ export const human = {
       moustache: !woman && rng() < 0.3 ? pick(MOUSTACHES.slice(1)) : 'None',
       shoeColor: pick(['Black', 'Brown', 'White', 'Gray', 'Red', 'Navy']),
     };
+    if (child) {
+      // child proportions, a little varied; brighter, simpler outfits
+      for (const k of Object.keys(kid)) out[k] = jitter(kid[k], k === 'height' ? 0.2 : 0.08);
+      out.headsTall = range(5.4, 6.2, 0.1);
+      out.outerwear = rng() < 0.2 ? 'Hoodie' : 'None';
+      out.footwear = 'Shoes';
+      out.mask = 'None';
+      out.backAccessory = rng() < 0.5 ? 'Backpack' : 'None'; // school bags
+    }
+    // the character rules (no bearded women, no skirts on men, ...)
+    return applyRules(out, human.schema);
   },
 
+  // --- character rules (see human/rules.js), used by the control panel ----
+  /** One control changed: switching adult <-> child brings child proportions. */
+  adjust,
+  /** Options of `key` this character can choose from. */
+  allowedOptions: (key, p) => allowedOptions(key, human.schema[key].options, p),
+  /** Controls and groups that don't apply to this character. */
+  hiddenControls,
+  /** Correct `p` in place so every value is allowed. */
+  applyRules: (p) => applyRules(p, human.schema),
+
   build(p, style) {
+    p = applyRules({ ...p }, human.schema); // older saved settings may break a rule
     const root = new THREE.Group();
     root.name = 'human';
     const f = measure(p);

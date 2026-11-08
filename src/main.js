@@ -339,34 +339,63 @@ for (const s of subjects) {
   folders[s.id] = f;
   const p = params[s.id];
   const presetState = { preset: '—' };
+  // Character rules (subjects that have them, e.g. no beards on women): after
+  // any change, fix values that are no longer allowed, narrow each dropdown to
+  // the allowed options and hide controls that don't apply.
+  const ctrls = {};
+  const groups = {};
+  const last = { ...p };
+  const refresh = (key) => {
+    if (key) s.adjust?.(p, key, last[key]);
+    s.applyRules?.(p);
+    if (s.allowedOptions) {
+      for (const [k, c] of Object.entries(ctrls)) {
+        if (!s.schema[k].options) continue;
+        const ok = s.allowedOptions(k, p);
+        if (ok.join('|') !== (c._allowed ?? s.schema[k].options).join('|')) {
+          c._allowed = ok;
+          c.options(ok); // updates the dropdown in place
+        }
+      }
+    }
+    if (s.hiddenControls) {
+      const { keys, groups: hiddenGroups } = s.hiddenControls(p);
+      for (const [k, c] of Object.entries(ctrls)) c.show(!keys.has(k));
+      for (const [name, g] of Object.entries(groups)) g.show(!hiddenGroups.has(name));
+    }
+    Object.assign(last, p);
+    f.controllersRecursive().forEach((c) => c.updateDisplay());
+  };
+  const changed = (key) => { refresh(key); dirty.add(s.id); };
   if (s.presets) {
     f.add(presetState, 'preset', ['—', ...Object.keys(s.presets)]).name('Preset').onChange((name) => {
       if (name === '—') return;
       Object.assign(p, s.presets[name]);
-      f.controllersRecursive().forEach((c) => c.updateDisplay());
+      refresh();
       dirty.add(s.id);
     });
   }
   if (s.randomize) {
     f.add({ randomize: () => {
       Object.assign(p, s.randomize());
-      f.controllersRecursive().forEach((c) => c.updateDisplay());
+      refresh();
       dirty.add(s.id);
     } }, 'randomize').name('Randomize');
   }
-  const groups = {};
   for (const [key, def] of Object.entries(s.schema)) {
     const target = def.group ? (groups[def.group] ??= f.addFolder(def.group)) : f;
     const ctrl = def.options
       ? target.add(p, key, def.options)
       : target.add(p, key, def.min, def.max, def.step);
-    ctrl.name(def.label ?? key).onChange(() => dirty.add(s.id));
+    ctrl.name(def.label ?? key).onChange(() => changed(key));
+    ctrls[key] = ctrl;
   }
   f.add({ reset: () => {
     Object.assign(p, defaultsFor(s));
-    f.controllersRecursive().forEach((c) => c.updateDisplay());
+    refresh();
     dirty.add(s.id);
   } }, 'reset').name('Reset');
+  refresh();
   f.close();
 }
 

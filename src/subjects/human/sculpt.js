@@ -16,8 +16,8 @@ const gauss = (d, s) => Math.exp(-((d / s) ** 2));
 export function sculptTorso(geo, f) {
   const L = f.torsoLen;
   const zones = [];
-  if (!f.woman) {
-    // pecs: two broad, flat masses with a short edge underneath
+  if (!f.woman && !f.child) {
+    // pecs (adults only: children have a soft, flat chest): two broad, flat masses with a short edge underneath
     zones.push({
       sign: 1, yc: 0.74 * L, up: 0.11 * L, down: 0.05 * L,
       amount: f.sw * 0.03, two: true, x0: f.sw * 0.16, sx: f.sw * 0.13, wx: f.sw * 0.3,

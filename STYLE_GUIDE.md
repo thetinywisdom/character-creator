@@ -183,6 +183,29 @@ dressed in the same tones as the street will disappear.
   and away from the knee. Light on purpose (it never fully wraps the knee);
   nothing moves at rest, and only the skirt's few dozen vertices change.
 
+## Character rules
+
+Four body types: **Man, Woman, Boy, Girl**. Children (about 8 years old) are
+~1.27 m and 5.8 heads tall, with short legs, narrow shoulders and a straight,
+soft torso (no waist, no V, no chest sculpting). Switching between an adult
+and a child body type brings the matching proportions.
+
+Options that make sense together (`src/subjects/human/rules.js`, one list used
+by the control panel, the randomizer, the crowd, the city and build()):
+
+1. Women and girls: no beard, no moustache.
+2. Men and boys: no skirt.
+3. Men and boys: no crop tops.
+4. The "Body shape (woman)" controls only show for women.
+5. Neck tie and bow tie only with a shirt (they need a collar).
+6. No facial hair on children, or on child-like proportions (< 4.5 heads tall).
+7. Children don't carry a baby.
+
+The panel hides controls that don't apply and narrows dropdowns to allowed
+options. Anything a change makes invalid falls back to a sensible value: beard
+to None, skirt to trousers, crop top to the matching T-shirt, tie to None.
+About one in six random characters is a child.
+
 ## 3d. Outerwear and accessories
 
 - **Outerwear** is a second, slightly bigger layer that follows the torso
