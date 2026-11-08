@@ -2,6 +2,18 @@
 
 A three.js playground for finding the visual style of a 3D world before building it.
 
+**Phase 3 – walkable city (first version):** press **Walk the city** to walk a
+small Japanese town as your own character (the one set up in the controls):
+a 4 × 3 grid of blocks with houses (gable roofs, block walls), apartment
+blocks with balconies, mixed-use buildings with shops below and vertical
+signboards, glass offices, shops (konbini, ramen with noren and a red lantern,
+café, bakery, bookshop, izakaya), and a park with a playground, benches, trees,
+a toilet hut and cats. Streets have sidewalks, crosswalks, traffic lights,
+utility poles with wires, lamps, vending machines, parked cars and cars
+driving on the left, plus pedestrians walking the sidewalks.
+Controls: WASD / arrows to walk, Shift to run, drag to look, scroll to zoom,
+Esc to leave; on phones an on-screen joystick.
+
 **Phase 2 – street props (done):** Japanese street props in four groups:
 street furniture (bench, street lamp, recycling bins, bollard / guard rail,
 fire hydrant with its 消火栓 sign, red post box, bus stop pole and shelter),
@@ -90,7 +102,9 @@ src/
   viewer/Cell.js     one stage (scene, lights, ground, street backdrop, camera framing)
   viewer/params.js   defaults + saved settings
   props/             furniture.js, traffic.js, vehicles.js, extras.js, index.js
-  lib/               shape helpers, seeded random, sign textures
+  city/              layout.js (town generator), buildings.js, park.js, City.js (walking,
+                     pedestrians, cars, camera), input.js (keys, drag, joystick)
+  lib/               shape helpers, seeded random, sign textures, mesh merging
 ```
 
 Subjects never pick colours or materials themselves. They ask the style for a

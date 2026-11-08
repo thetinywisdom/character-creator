@@ -131,6 +131,29 @@ html, body {
 }
 .cell:hover { border-color: var(--accent); }
 
+#joystick {
+  position: fixed;
+  left: max(24px, env(safe-area-inset-left, 0px));
+  bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+  border: 2px solid var(--line);
+  z-index: 4;
+  touch-action: none;
+  display: grid;
+  place-items: center;
+}
+#joystick[hidden] { display: none; }
+#joystick .knob {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--accent);
+  pointer-events: none;
+}
+
 #toast {
   position: fixed;
   left: 50%;

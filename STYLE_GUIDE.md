@@ -164,6 +164,22 @@ dressed in the same tones as the street will disappear.
   (vending machines, bins, benches) against the buildings, parked cars in the
   lane next to the curb.
 
+## 3f. Buildings and the city
+
+- **Buildings** are boxes with a few strong details, in muted wall colours:
+  houses (2 floors, gable tile roof, low block wall, small balcony), apartment
+  blocks (balcony slab and railing on every floor), mixed-use buildings (shop
+  on the ground floor, windows above, a vertical signboard 縦看板 on the corner),
+  glass offices with concrete floor bands. Floors are 3 m.
+- **Shops** carry a lit signboard with Japanese text, plus their own detail:
+  konbini colour stripes, ramen / izakaya noren and red lantern, café and
+  bakery striped awnings.
+- **Town layout:** 40 m blocks, 9 m roads, 3 m raised sidewalks, buildings
+  facing the street; utility poles and wires on one side of each block, lamps
+  on the other; crosswalks on every intersection arm; traffic drives on the left.
+- **Large flat surfaces are tiled** (about 6 m pieces): PS1 vertex snapping
+  distorts huge polygons.
+
 ## 4. Readability checklist (for any new character)
 
 - [ ] Visible at street distance on the sidewalk, in Day **and** Night lighting

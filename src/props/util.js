@@ -11,6 +11,18 @@ export function box(w, h, d, material, pos = [0, 0, 0], rot = null) {
   return m;
 }
 
+/**
+ * Large flat slab split into tiles. PS1 vertex snapping distorts huge
+ * polygons whose corners are far away (the ground under them shows through),
+ * so roads, sidewalks and lawns are built from ~tile-sized pieces.
+ */
+export function tiledBox(w, h, d, material, pos = [0, 0, 0], tile = 6) {
+  const geo = new THREE.BoxGeometry(w, h, d, Math.max(1, Math.ceil(w / tile)), 1, Math.max(1, Math.ceil(d / tile)));
+  const m = new THREE.Mesh(geo, material);
+  m.position.set(...pos);
+  return m;
+}
+
 /** Vertical cylinder (or cone when rTop != rBottom). */
 export function cyl(rTop, rBottom, h, material, pos = [0, 0, 0], { segments = 12, rot = null, open = false } = {}) {
   const m = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBottom, h, seg(segments, 5), 1, open), material);

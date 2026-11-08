@@ -7,6 +7,8 @@ import { Cell } from './viewer/Cell.js';
 import { defaultsFor, loadParams, saveParams } from './viewer/params.js';
 import { mulberry32 } from './lib/rng.js';
 import { PROP_GROUPS, propSubject } from './props/index.js';
+import { City } from './city/City.js';
+import { CityInput } from './city/input.js';
 import './style.css';
 
 // ---------------------------------------------------------------------------
@@ -22,7 +24,7 @@ const PAGE_BG = new THREE.Color(getComputedStyle(document.documentElement).getPr
 
 const params = loadParams(subjects);
 const state = {
-  view: 'gallery', // 'gallery' | 'props' | 'lineup' | 'crowd' | 'study' | 'focus'
+  view: 'gallery', // 'gallery' | 'props' | 'lineup' | 'crowd' | 'study' | 'focus' | 'city'
   lastGrid: 'gallery', // which grid the inspection view returns to
   crowdSeed: 1,
   focus: null,
@@ -79,6 +81,23 @@ for (const group of PROP_GROUPS) {
   }
 }
 let propsBuilt = false; // built on first visit, to keep start-up fast
+
+// The walkable city: built on first visit (and rebuilt when you return after
+// changing your character), with its own input and camera.
+const joystick = document.querySelector('#joystick');
+const cityInput = new CityInput(canvas, joystick);
+let city = null;
+let cityParamsKey = '';
+function enterCity() {
+  const key = JSON.stringify(params.human);
+  if (!city || key !== cityParamsKey) {
+    const byId = Object.fromEntries(subjects.map((s) => [s.id, s]));
+    city = new City({ style: galleryStyles[0], renderer, human: byId.human, cat: byId.cat, params });
+    city.applyLighting(lightingPresets[state.lighting]);
+    cityParamsKey = key;
+  }
+  setView('city');
+}
 
 let lineupCell = makeLineup();
 function makeLineup() {
@@ -172,6 +191,21 @@ function setView(view) {
     propsBuilt = true;
   }
   state.view = view;
+  const inCity = view === 'city';
+  cityInput.active = inCity;
+  controls.enabled = false;
+  joystick.hidden = !(inCity && (matchMedia('(pointer: coarse)').matches || window.innerWidth < 900));
+  // on phones the panel would cover the Exit button, so hide it in the city
+  if (inCity && window.innerWidth < 700) gui.hide(); else gui.show();
+  if (inCity) {
+    gui.close();
+    grid.hidden = true;
+    propsGrid.hidden = true;
+    backBtn.hidden = false;
+    backBtn.textContent = '← Exit city';
+    hint.textContent = 'WASD / arrows to walk · Shift to run · drag to look · scroll to zoom · Esc to exit';
+    return;
+  }
   const big = view !== 'gallery' && view !== 'props';
   grid.hidden = view !== 'gallery';
   propsGrid.hidden = view !== 'props';
@@ -225,6 +259,7 @@ const viewFolder = gui.addFolder('View');
 const actions = {
   gallery: () => setView('gallery'),
   props: () => setView('props'),
+  city: () => enterCity(),
   lineup: () => setView('lineup'),
   crowd: () => setView('crowd'),
   study: () => setView('study'),
@@ -241,6 +276,7 @@ const actions = {
     subjects.forEach((s) => dirty.add(s.id));
   },
 };
+viewFolder.add(actions, 'city').name('Walk the city');
 viewFolder.add(actions, 'gallery').name('Gallery (style × subject)');
 viewFolder.add(actions, 'props').name('Props gallery (street props)');
 viewFolder.add(actions, 'lineup').name('Street scene (real scale)');
@@ -262,6 +298,7 @@ viewFolder.add(state, 'characterScale', 1, 1.6, 0.05).name('Extra character size
 });
 viewFolder.add(state, 'lighting', Object.keys(lightingPresets)).name('Lighting').onChange((name) => {
   for (const cell of [...galleryCells, ...propCells, lineupCell, crowdCell, studyCell]) cell.applyLighting(lightingPresets[name]);
+  city?.applyLighting(lightingPresets[name]);
 });
 if (styles.length > 1) {
   viewFolder.add(state, 'lineupStyle', Object.fromEntries(styles.map((s) => [s.label, s.id])))
@@ -484,7 +521,12 @@ function loop(time) {
   renderer.clear();
   renderer.setScissorTest(true);
 
-  if (state.view === 'gallery' || state.view === 'props') {
+  if (state.view === 'city' && city) {
+    city.update(dt, cityInput);
+    city.camera.aspect = W / H;
+    city.camera.updateProjectionMatrix();
+    renderCell(city, city.camera, 0, 0, W, H);
+  } else if (state.view === 'gallery' || state.view === 'props') {
     for (const cell of state.view === 'props' ? propCells : galleryCells) {
       const r = cell.el.getBoundingClientRect();
       if (r.bottom < 0 || r.top > H || r.right < 0 || r.left > W || r.width < 2 || r.height < 2) continue;
@@ -517,6 +559,7 @@ Object.assign(window, {
   __cc: {
     params, state, galleryCells, propCells, setView, applyStreet, actions,
     enterProp: (i) => enterFocus(propCells[i]),
+    enterCity, cityInput, getCity: () => city,
     enterFocus: (i) => enterFocus(galleryCells[i]),
     /** Orbit the inspection camera by `az` radians around the subject. */
     orbit: (az) => {

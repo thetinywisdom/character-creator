@@ -5,6 +5,7 @@ import { bench, busStop, postBox, streetLamp, trashBin } from '../props/furnitur
 import { crosswalk, streetSign, trafficLight } from '../props/traffic.js';
 import { bicycle, car } from '../props/vehicles.js';
 import { planter, utilityPole, vendingMachine, wire } from '../props/extras.js';
+import { tiledBox } from '../props/util.js';
 
 // A Cell is one little stage: its own scene, lights, ground and camera,
 // holding one or more subjects rendered in one style. The gallery is a grid
@@ -136,10 +137,8 @@ export class Cell {
     const backZ = bounds.min.z - 2.5; // building line, set back from the subjects
     const walkDepth = bounds.max.z - backZ + 1.5;
 
-    const walk = new THREE.Mesh(new THREE.BoxGeometry(len, 0.15, walkDepth), M('sidewalk'));
-    walk.position.set(0, -0.075, backZ + walkDepth / 2);
-    const road = new THREE.Mesh(new THREE.BoxGeometry(len, 0.02, 7), M('road'));
-    road.position.set(0, -0.15, backZ + walkDepth + 3.5);
+    const walk = tiledBox(len, 0.15, walkDepth, M('sidewalk'), [0, -0.075, backZ + walkDepth / 2]);
+    const road = tiledBox(len, 0.02, 7, M('road'), [0, -0.15, backZ + walkDepth + 3.5]);
     street.add(walk, road);
 
     // buildings: seeded so the street looks the same every time
