@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { signTexture } from '../lib/textures.js';
 import { box, cyl, face } from '../props/util.js';
-import { paintedWindows, shopInterior } from './interiors.js';
+import { paintedWindow, shopWindow } from './interiors.js';
 
 // Japanese city buildings, procedurally built from boxes. Each builder fills
 // a lot of width w (x) and depth d (z), stands on y = 0, is centred on the
@@ -27,13 +27,20 @@ export function gable(length, width, height, material) {
   return new THREE.Mesh(geo, material);
 }
 
-/** A row of windows on the front face of a floor. */
-export function windowRow(g, style, w, y, z, { spacing = 2.2, ww = 1.2, wh = 1.3 } = {}) {
+/**
+ * A row of windows on the front face of a floor. Homes and flats get painted
+ * curtains (some lit, some dark); plain: true keeps plain dark glass.
+ */
+export function windowRow(g, style, w, y, z, { spacing = 2.2, ww = 1.2, wh = 1.3, plain = false } = {}) {
   const glass = style.material('window');
   const n = Math.max(1, Math.floor((w - 1) / spacing));
   for (let i = 0; i < n; i++) {
     const x = -((n - 1) * spacing) / 2 + i * spacing;
-    g.add(box(ww, wh, 0.08, glass, [x, y, z]));
+    if (plain) { g.add(box(ww, wh, 0.08, glass, [x, y, z])); continue; }
+    // which painted window: varies with position, so neighbours differ
+    const v = Math.abs(Math.round(x * 7 + y * 3 + z * 5)) % 4;
+    g.add(paintedWindow(style, v, ww, wh, x, y, z + 0.02));
+    g.add(box(ww + 0.12, 0.08, 0.1, style.material('concrete', 0xb8b4aa), [x, y - wh / 2 - 0.04, z + 0.05])); // sill
   }
 }
 
@@ -58,32 +65,27 @@ function verticalSign(style, rng, height) {
 // Shop fronts (used on their own and as the ground floor of mixed buildings)
 
 const SHOPS = {
-  Konbini: { sign: 'コンビニ', bg: '#ffffff', fg: '#1f4fa8', stripes: [0x2fa36b, 0xf08a2c, 0x1f4fa8], glass: true },
-  Ramen: { sign: 'ラーメン', bg: '#d8302a', fg: '#ffffff', noren: 0x2c3652, lantern: true },
-  Cafe: { sign: 'CAFE', bg: '#5a3a28', fg: '#f4e6c8', awning: [0x2fa36b, 0xf2f2ee], glass: true },
-  Bookshop: { sign: '本 BOOKS', bg: '#1f4fa8', fg: '#ffffff', glass: true },
-  Bakery: { sign: 'パン', bg: '#f2c230', fg: '#5a3a28', awning: [0xd8443c, 0xf2f2ee], glass: true },
-  Izakaya: { sign: '居酒屋', bg: '#2a2a30', fg: '#f2c230', noren: 0x5a3a28, lantern: true },
+  Konbini: { sign: 'コンビニ', bg: '#ffffff', fg: '#1f4fa8', stripes: [0x2fa36b, 0xf08a2c, 0x1f4fa8], glass: true, inside: 'konbini' },
+  Ramen: { sign: 'ラーメン', bg: '#d8302a', fg: '#ffffff', noren: 0x2c3652, lantern: true, inside: 'ramen' },
+  Cafe: { sign: 'CAFE', bg: '#5a3a28', fg: '#f4e6c8', awning: [0x2fa36b, 0xf2f2ee], glass: true, inside: 'cafe' },
+  Bookshop: { sign: '本 BOOKS', bg: '#1f4fa8', fg: '#ffffff', glass: true, inside: 'books' },
+  Bakery: { sign: 'パン', bg: '#f2c230', fg: '#5a3a28', awning: [0xd8443c, 0xf2f2ee], glass: true, inside: 'bakery' },
+  Izakaya: { sign: '居酒屋', bg: '#2a2a30', fg: '#f2c230', noren: 0x5a3a28, lantern: true, inside: 'izakaya' },
 };
 export const SHOP_TYPES = Object.keys(SHOPS);
 
 /**
- * A ground-floor shop front on the +z face, w wide, h tall, at depth z.
- * interior (glass shops only): 'picture' | 'room' | 'shader' | 'hybrid' shows
- * the inside instead of plain glass (see interiors.js).
+ * A ground-floor shop front on the +z face, w wide, h tall, at depth z. The
+ * window shows the shop's painted interior (interiors.js); wooden fronts get
+ * a smaller window beside the door.
  */
-function shopFront(g, style, type, w, h, z, interior = null) {
+function shopFront(g, style, type, w, h, z) {
   const s = SHOPS[type];
-  const glass = style.material('glass', 0x9fc0d8);
-  if (s.glass && interior) {
-    const ow = w * 0.86, oh = h * 0.62;
-    g.add(shopInterior(interior, style, ow, oh, z));
-    // window frame instead of solid glass
-    const fm = style.material('darkMetal', 0x6a6e74);
-    g.add(box(ow + 0.1, 0.1, 0.1, fm, [0, oh + 0.1, z + 0.02]), box(ow + 0.1, 0.1, 0.1, fm, [0, 0.08, z + 0.02]));
-    for (let i = 0; i <= 3; i++) g.add(box(0.07, oh, 0.07, fm, [-ow / 2 + (i * ow) / 3, oh / 2 + 0.1, z + 0.02]));
-  } else if (s.glass) g.add(box(w * 0.86, h * 0.62, 0.06, glass, [0, h * 0.36, z]));
-  else g.add(box(w * 0.86, h * 0.62, 0.06, style.material('wood', 0x5a3a28), [0, h * 0.36, z]));
+  if (s.glass) shopWindow(g, style, s.inside, w * 0.86, h * 0.62, 0, h * 0.36, z + 0.03);
+  else {
+    g.add(box(w * 0.86, h * 0.62, 0.06, style.material('wood', 0x5a3a28), [0, h * 0.36, z]));
+    shopWindow(g, style, s.inside, Math.min(w * 0.4, 2.6), 1.3, -w * 0.2, 1.45, z + 0.06, { mullions: 2, frame: 0x3a2418 });
+  }
   g.add(box(1.0, 2.1, 0.08, style.material('window'), [w * 0.25, 1.05, z + 0.01])); // door
   // signboard across the top
   const tex = signTexture({ lines: [s.sign], bg: s.bg, fg: s.fg, w: 128, h: 32 });
@@ -164,30 +166,16 @@ export function apartment(style, rng, w, d) {
   return { group: g, footprint: { w: bw, d: bd, z: bz } };
 }
 
-export function mixedUse(style, rng, w, d, shopType = pick(rng, SHOP_TYPES), opts = {}) {
+export function mixedUse(style, rng, w, d, shopType = pick(rng, SHOP_TYPES)) {
   const g = new THREE.Group();
   const floors = 3 + Math.floor(rng() * 3);
   const H = floors * FLOOR + 1;
   const bw = w - 0.4, bd = d - 1;
   const bz = -0.5;
+  g.add(box(bw, H, bd, style.material('building', pick(rng, WALLS)), [0, H / 2, bz]));
   const front = bz + bd / 2;
-  const wallM = style.material('building', pick(rng, WALLS));
-  const interior = opts.interior && SHOPS[shopType].glass ? opts.interior : null;
-  const hG = FLOOR + 1; // the shop floor
-  if (interior) {
-    // hollow shop floor: the room behind the glass (3 m) is left open
-    const room = 3;
-    g.add(box(bw, H - hG, bd, wallM, [0, hG + (H - hG) / 2, bz]));
-    g.add(box(bw, hG, bd - room, wallM, [0, hG / 2, bz - room / 2]));
-    for (const sx of [-1, 1]) g.add(box(0.25, hG, room, wallM, [sx * (bw / 2 - 0.125), hG / 2, front - room / 2]));
-    const top = hG - (hG * 0.62 + 0.1); // wall above the window opening
-    g.add(box(bw, top, room, wallM, [0, hG - top / 2, front - room / 2]));
-  } else g.add(box(bw, H, bd, wallM, [0, H / 2, bz]));
-  shopFront(g, style, shopType, bw, hG, front + 0.01, interior);
-  for (let f = 1; f < floors; f++) {
-    if (opts.interior === 'hybrid') paintedWindows(g, style, bw, f * FLOOR + 2.4, front + 0.01, { seed: f });
-    else windowRow(g, style, bw, f * FLOOR + 2.4, front + 0.01, { spacing: 2.4, ww: 1.4, wh: 1.4 });
-  }
+  shopFront(g, style, shopType, bw, FLOOR + 1, front + 0.01);
+  for (let f = 1; f < floors; f++) windowRow(g, style, bw, f * FLOOR + 2.4, front + 0.01, { spacing: 2.4, ww: 1.4, wh: 1.4 });
   // vertical signboard on the front corner
   const sign = verticalSign(style, rng, Math.min(H - 4, 6));
   sign.position.set(bw / 2 - 0.4, FLOOR + 1.2 + Math.min(H - 4, 6) / 2, front + 0.4);
@@ -317,7 +305,7 @@ export function school(style, rng, w, d) {
   const wall = style.material('building', pick(rng, [0xece6d8, 0xe4e2da, 0xd9d4c4]));
   g.add(box(bw, H, bd, wall, [0, H / 2, bz]));
   const front = bz + bd / 2;
-  for (let f = 0; f < floors; f++) windowRow(g, style, bw, f * FLOOR + 1.7, front + 0.01, { spacing: 2.0, ww: 1.5, wh: 1.4 });
+  for (let f = 0; f < floors; f++) windowRow(g, style, bw, f * FLOOR + 1.7, front + 0.01, { spacing: 2.0, ww: 1.5, wh: 1.4, plain: true });
   // clock on a raised centre section
   g.add(box(5, H + 1.6, bd + 0.4, wall, [0, (H + 1.6) / 2, bz]));
   const clock = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.12, 16), style.material('signage', 0xf6f4ee));

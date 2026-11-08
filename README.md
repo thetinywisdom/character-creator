@@ -213,6 +213,14 @@ pharmacy (green cross, shelves of goods with price cards out front), sushi
 front, tiered flower buckets) and fishmonger (blue awning, an ice table of
 fish, stacked boxes, hanging bulbs). Shops and Mixed blocks now use them too.
 
+**Buildings batches 2 and 3 (`src/city/civic.js`):** udon / soba shop, family
+restaurant, takoyaki stand, koban (police box), post office, bank, clinic, fire
+station, karaoke, wooden apartment (アパート with an outside staircase and
+walkway), parking garage, gas station. Udon / soba and takoyaki join the Shops
+blocks, wooden apartments the Houses blocks, karaoke the Downtown blocks; the
+public buildings are placed by hand. **Every shop window shows a painted
+interior** and upstairs windows have painted curtains (see the style guide).
+
 ### City editor
 
 **View → City editor** opens the current town from above. Tools:

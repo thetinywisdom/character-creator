@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { signTexture } from '../lib/textures.js';
 import { box, cyl, face } from '../props/util.js';
 import { FLOOR, WALLS, gable, windowRow } from './buildings.js';
+import { interiorPanel, shopWindow } from './interiors.js';
 
 // Individual shops, each with its own shape and details rather than only a
 // different sign. Every builder fills a lot of width w (x) and depth d (z),
@@ -15,7 +16,7 @@ const hex = (s) => parseInt(s.slice(1), 16);
 // --- shared pieces --------------------------------------------------------------
 
 /** The shop's box: body w × h × bd at the back of the lot. Returns its front z. */
-function body(g, style, w, d, h, wallHex, { depth = 10 } = {}) {
+export function body(g, style, w, d, h, wallHex, { depth = 10 } = {}) {
   const bw = w - 0.4, bd = Math.min(d - 2.2, depth);
   const bz = -d / 2 + bd / 2 + 0.3;
   g.add(box(bw, h, bd, style.material('building', wallHex), [0, h / 2, bz]));
@@ -23,14 +24,14 @@ function body(g, style, w, d, h, wallHex, { depth = 10 } = {}) {
 }
 
 /** A lit signboard across the front at height y. */
-function signboard(g, style, text, bg, fg, w, y, z, h = 0.7) {
+export function signboard(g, style, text, bg, fg, w, y, z, h = 0.7) {
   const tex = signTexture({ lines: [text], bg, fg, w: 128, h: 32 });
   g.add(box(w, h, 0.2, style.material('signage', hex(bg)), [0, y, z + 0.1]));
   g.add(face(w * 0.98, h * 0.94, style.material('light', 0xffffff, tex), [0, y, z + 0.21]));
 }
 
 /** A small sign sticking out from the wall (seen from along the street). */
-function projectingSign(g, style, text, bg, fg, x, y, z, { round = false } = {}) {
+export function projectingSign(g, style, text, bg, fg, x, y, z, { round = false } = {}) {
   const tex = signTexture({ lines: [text], bg, fg, w: 64, h: 64, shape: round ? 'circle' : 'rect' });
   const s = new THREE.Group();
   s.add(box(0.05, 0.05, 0.5, style.material('darkMetal'), [0, 0.42, -0.25]));
@@ -49,7 +50,7 @@ function projectingSign(g, style, text, bg, fg, x, y, z, { round = false } = {})
 }
 
 /** A striped awning sloping out over the front. */
-function awning(g, style, colors, w, y, z, depth = 1.2) {
+export function awning(g, style, colors, w, y, z, depth = 1.2) {
   const n = 8;
   for (let i = 0; i < n; i++) {
     g.add(box(w / n, 0.06, depth, style.material('signage', colors[i % colors.length]),
@@ -58,7 +59,7 @@ function awning(g, style, colors, w, y, z, depth = 1.2) {
 }
 
 /** Noren: cloth strips hanging over a door, with an optional word on them. */
-function noren(g, style, x, y, z, colorHex, text, fg = '#ffffff') {
+export function noren(g, style, x, y, z, colorHex, text, fg = '#ffffff') {
   const n = 3, w = 0.36;
   const tex = text ? signTexture({ lines: [text], bg: `#${colorHex.toString(16).padStart(6, '0')}`, fg, w: 96, h: 48 }) : null;
   for (let i = 0; i < n; i++) {
@@ -68,21 +69,23 @@ function noren(g, style, x, y, z, colorHex, text, fg = '#ffffff') {
 }
 
 /** Upper floors of a shop house: a wall band with a row of windows per floor. */
-function upperFloors(g, style, bw, from, floors, front) {
+export function upperFloors(g, style, bw, from, floors, front) {
   for (let f = 0; f < floors; f++) windowRow(g, style, bw, from + f * FLOOR + 1.6, front + 0.01, { spacing: 2.4, ww: 1.3, wh: 1.2 });
 }
 
 /** An opening in the front: a dark interior box behind a frame, so the inside shows. */
-function openFront(g, style, w, h, z, { frame = 0x3a3a40, interior = 0x4a4c52, mullions = 3 } = {}) {
+export function openFront(g, style, w, h, z, { frame = 0x3a3a40, interior = 0x4a4c52, mullions = 3, inside = null } = {}) {
   const depth = 2.4;
   g.add(box(w, h, depth, style.material('concrete', interior), [0, h / 2 + 0.05, z - depth / 2 - 0.02]));
+  // the painted inside on the back wall of the opening
+  if (inside) g.add(interiorPanel(style, inside, w - 0.1, h - 0.1, 0, h / 2 + 0.05, z - depth + 0.01));
   const fm = style.material('darkMetal', frame);
   g.add(box(w + 0.1, 0.12, 0.12, fm, [0, h + 0.06, z]));
   for (let i = 0; i <= mullions; i++) g.add(box(0.08, h, 0.08, fm, [-w / 2 + (i * w) / mullions, h / 2, z]));
   return { depth };
 }
 
-const solid = (bw, bd, bz) => ({ x: 0, z: bz, hw: bw / 2, hd: bd / 2 });
+export const solid = (bw, bd, bz) => ({ x: 0, z: bz, hw: bw / 2, hd: bd / 2 });
 
 // --- 1. Coin laundromat (コインランドリー) ---------------------------------------
 /** A single-storey laundromat: an open glass front onto a bright room with washers along the back, dryers stacked at one end, a bench. */
@@ -135,11 +138,8 @@ export function kissaten(style, rng, w, d) {
   // wooden ground floor front with small window panes
   const wood = style.material('wood', 0x5a3a28);
   g.add(box(bw, FLOOR, 0.2, wood, [0, FLOOR / 2, front + 0.05]));
-  const glass = style.material('glass', 0xc9b98a); // warm lit interior
   const winW = Math.min(bw * 0.5, 3.4);
-  g.add(box(winW, 1.5, 0.06, glass, [-bw * 0.18, 1.55, front + 0.16]));
-  for (let i = 1; i < 4; i++) g.add(box(0.05, 1.5, 0.08, wood, [-bw * 0.18 - winW / 2 + (i * winW) / 4, 1.55, front + 0.18]));
-  g.add(box(winW, 0.05, 0.08, wood, [-bw * 0.18, 1.55, front + 0.18]));
+  shopWindow(g, style, 'cafe', winW, 1.5, -bw * 0.18, 1.55, front + 0.19, { mullions: 4, frame: 0x3a2418 });
   g.add(box(0.95, 2.1, 0.06, style.material('glass', 0x8a6a48), [bw * 0.28, 1.05, front + 0.16])); // door
   awning(g, style, [0x6a3e24, 0xf2e6cc], bw * 0.9, 2.85, front + 0.15, 1.0);
   signboard(g, style, '喫茶', '#3a2418', '#f2e6cc', bw * 0.6, FLOOR + 0.5, front + 0.05, 0.6);
@@ -164,7 +164,7 @@ export function pharmacy(style, rng, w, d) {
   const g = new THREE.Group();
   const H = 4.4;
   const { bw, bd, bz, front } = body(g, style, w, d, H, 0xf6f6f2, { depth: 10 });
-  g.add(box(bw * 0.86, 2.4, 0.06, style.material('glass', 0xbfd8e6), [0, 1.3, front + 0.02]));
+  shopWindow(g, style, 'drugstore', bw * 0.86, 2.4, 0, 1.3, front + 0.04);
   g.add(box(1.6, 2.3, 0.08, style.material('window'), [bw * 0.28, 1.15, front + 0.05])); // automatic doors
   signboard(g, style, '薬局 ドラッグ', '#2fa36b', '#ffffff', bw * 0.94, H - 0.75, front, 0.9);
   // a lit green cross on the corner
@@ -204,7 +204,7 @@ export function sushi(style, rng, w, d) {
   const dx = bw * 0.15;
   g.add(box(1.5, 2.1, 0.06, style.material('glass', 0xe8d8a8), [dx, 1.05, front + 0.16]));
   for (let i = 0; i < 6; i++) g.add(box(0.04, 2.1, 0.08, light, [dx - 0.75 + (i + 0.5) * 0.25, 1.05, front + 0.19]));
-  g.add(box(1.4, 0.9, 0.06, style.material('wood', 0xb89a68), [-bw * 0.25, 1.4, front + 0.16]));
+  shopWindow(g, style, 'sushi', 1.4, 0.9, -bw * 0.25, 1.4, front + 0.19, { mullions: 2, frame: 0x3a2418 });
   // a short tiled eave (庇) across the front
   const eave = gable(bw + 0.4, 1.6, 0.35, style.material('roof', 0x3a3f44));
   eave.position.set(0, FLOOR - 0.15, front + 0.2);
@@ -235,7 +235,7 @@ export function florist(style, rng, w, d) {
   const g = new THREE.Group();
   const H = FLOOR * 2 + 0.4;
   const { bw, bd, bz, front } = body(g, style, w, d, H, pick(rng, [0xf0efe8, 0xe6d2c8, 0xe8dcc6]), { depth: 9 });
-  openFront(g, style, bw * 0.84, 2.6, front + 0.01, { interior: 0x6a7a5a, mullions: 2 });
+  openFront(g, style, bw * 0.84, 2.6, front + 0.01, { interior: 0x6a7a5a, mullions: 2, inside: 'florist' });
   awning(g, style, [0x3fa65a, 0xf2f2ee], bw * 0.92, 2.9, front + 0.1, 1.2);
   signboard(g, style, 'Flower 花', '#2f7d4f', '#ffffff', bw * 0.7, FLOOR + 0.55, front, 0.7);
   upperFloors(g, style, bw, FLOOR, 1, front);
@@ -267,7 +267,7 @@ export function fishmonger(style, rng, w, d) {
   const g = new THREE.Group();
   const H = FLOOR * 2 + 0.4;
   const { bw, bd, bz, front } = body(g, style, w, d, H, pick(rng, [0xd8d4c8, 0xc9c4b8, 0xe8dcc6]), { depth: 9 });
-  openFront(g, style, bw * 0.88, 2.7, front + 0.01, { interior: 0x5a6068, mullions: 2 });
+  openFront(g, style, bw * 0.88, 2.7, front + 0.01, { interior: 0x5a6068, mullions: 2, inside: 'fish' });
   awning(g, style, [0x1f6fd0, 0xf2f2ee], bw * 0.94, 2.95, front + 0.1, 1.3);
   signboard(g, style, '鮮魚 さかな', '#1f4fa8', '#ffffff', bw * 0.8, FLOOR + 0.55, front, 0.75);
   upperFloors(g, style, bw, FLOOR, 1, front);

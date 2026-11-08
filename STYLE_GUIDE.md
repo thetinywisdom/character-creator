@@ -261,6 +261,19 @@ About one in six random characters is a child.
 - Padded, rounded shapes (`softBox`) instead of plain boxes for bags and carriers.
 - Straps, belts and drawstrings use a dark trim colour.
 
+## 3e-0. Interiors: feel real, not be real
+
+- **Painted interiors:** a shop window shows a small painted picture of the
+  inside (shelves of goods, a fridge wall, a counter and clerk, customers,
+  lights), one per shop type, drawn once on a canvas and shared by every shop
+  of that type (`src/city/interiors.js`). One flat panel per window, no
+  modelled items: a whole town costs almost nothing.
+- **Painted homes:** upper-floor windows show curtains in four looks (lit or
+  dark), varied by position so neighbours differ. Offices and the school keep
+  plain glass.
+- Open-fronted stalls (flower shop, fishmonger) get the picture on the back
+  wall of the opening; the laundromat keeps its modelled machines.
+
 ## 3e. Street props (Japan)
 
 - The city is **Japanese**: red post boxes, red hydrants with a 消火栓 sign,

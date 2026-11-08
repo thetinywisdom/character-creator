@@ -1,24 +1,21 @@
 import * as THREE from 'three';
 import { box } from '../props/util.js';
 
-// Shop interiors seen through the glass, in four ways (compared on the konbini):
-//   'picture' (A)  a painted picture of the inside, flat behind the glass
-//   'room'    (B)  a shallow 3D room: painted shelves, a glowing drinks fridge,
-//                  a counter, ceiling lights (shelf items are painted, not modelled)
-//   'shader'  (C)  one flat window drawn by a shader as a room with depth
-//                  ("interior mapping"), including a layer of shelves and people
-//   'hybrid'       B + simple stand-in people + posters on the glass
-// Upper-floor windows can get painted curtains (paintedWindows).
-// Every texture is drawn once on a canvas and shared by all shops.
+// Painted interiors: what you see through a shop window is a small picture of
+// the inside (shelves, counters, people, lights), drawn once per shop type on
+// a canvas and shared by every shop of that type. It is meant to feel real,
+// not be real: one flat panel per window, no modelled items, so a whole town
+// costs almost nothing. Upper-floor windows get painted curtains the same way.
 
-const C = 128; // cell size of the painted textures
+const W = 256, H = 128;
+const cache = new Map();
 
-function canvas(w, h) {
+function canvas(w = W, h = H) {
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
   return [c, c.getContext('2d')];
 }
-function tex(c) {
+function texture(c) {
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.magFilter = THREE.NearestFilter;
@@ -26,265 +23,282 @@ function tex(c) {
   t.generateMipmaps = false;
   return t;
 }
-const PRODUCTS = ['#d8302a', '#f0b818', '#2a62c8', '#279a4a', '#e8609a', '#ee7a18', '#7a3fbf', '#1fa3a0', '#c8302a'];
-const rnd = (() => { let s = 7; return () => ((s = (s * 16807) % 2147483647) / 2147483647); })();
+// a fixed random sequence, so pictures look the same every visit
+let seed = 7;
+const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const pick = (a) => a[Math.floor(rnd() * a.length)];
+const GOODS = ['#d8302a', '#f0b818', '#2a62c8', '#279a4a', '#e8609a', '#ee7a18', '#7a3fbf', '#1fa3a0', '#c8302a'];
+const TOPS = ['#2a62c8', '#d8302a', '#279a4a', '#f0b818', '#7a3fbf', '#e8609a', '#5a6068', '#f4f4f0'];
+const HAIRS = ['#2a2018', '#1a1a1a', '#5a3a28', '#8a6a48'];
 
-/** Rows of goods on white shelving, filling x, y, w, h. */
-function paintShelves(g, x, y, w, h, rows = 4) {
-  g.fillStyle = '#c8ccd0'; g.fillRect(x, y, w, h);
+// --- painting pieces ----------------------------------------------------------------
+function room(g, wall, floor, ceiling = null) {
+  g.fillStyle = wall; g.fillRect(0, 0, W, H);
+  g.fillStyle = floor; g.fillRect(0, H * 0.82, W, H * 0.18);
+  if (ceiling) { g.fillStyle = ceiling; g.fillRect(0, 0, W, 10); }
+}
+function lights(g, color = '#fffbe6', n = 4, y = 4) {
+  g.fillStyle = color;
+  for (let i = 0; i < n; i++) g.fillRect(14 + i * ((W - 28) / n), y, (W - 28) / n - 18, 5);
+}
+function shelves(g, x, y, w, h, rows = 4, back = '#c8ccd0', edge = '#5a6068', colors = GOODS) {
+  g.fillStyle = back; g.fillRect(x, y, w, h);
   const rh = h / rows;
   for (let r = 0; r < rows; r++) {
-    g.fillStyle = '#5a6068'; g.fillRect(x, y + r * rh + rh - 3, w, 3);  // shelf edge
+    g.fillStyle = edge; g.fillRect(x, y + r * rh + rh - 3, w, 3);
     let px = x + 1;
-    while (px < x + w - 2) {
+    while (px < x + w - 3) {
       const pw = 5 + Math.floor(rnd() * 6);
-      g.fillStyle = PRODUCTS[Math.floor(rnd() * PRODUCTS.length)];
-      g.fillRect(px, y + r * rh + 3 + Math.floor(rnd() * 3), Math.min(pw, x + w - px - 1), rh - 7);
+      g.fillStyle = pick(colors);
+      g.fillRect(px, y + r * rh + 3 + Math.floor(rnd() * 3), Math.min(pw, x + w - px - 2), rh - 7);
       px += pw + 1;
     }
   }
 }
-/** Glowing glass fridge doors full of drinks. */
-function paintFridge(g, x, y, w, h) {
+function books(g, x, y, w, h, rows = 4) {
+  shelves(g, x, y, w, h, rows, '#6a4429', '#3a2418', ['#8a2a22', '#2a4a7a', '#2f6a3a', '#c8a050', '#5a3a68', '#e8dcc0', '#3a3a40']);
+}
+function fridge(g, x, y, w, h) {
   g.fillStyle = '#bfe0f0'; g.fillRect(x, y, w, h);
   const doors = Math.max(2, Math.round(w / 26));
   for (let d = 0; d < doors; d++) {
     const dx = x + (d * w) / doors;
     g.fillStyle = '#4a5864'; g.fillRect(dx, y, 3, h);
     for (let r = 0; r < 5; r++) for (let b = 0; b < 4; b++) {
-      g.fillStyle = PRODUCTS[Math.floor(rnd() * PRODUCTS.length)];
+      g.fillStyle = pick(GOODS);
       g.fillRect(dx + 5 + b * ((w / doors - 7) / 4), y + 5 + r * ((h - 8) / 5), 4, (h - 8) / 5 - 3);
     }
   }
 }
-/** A flat-colour person seen from the front (for painted layers). */
-function paintPerson(g, x, y, h, top, hair = '#2a2018') {
+function counter(g, x, y, w, h, top = '#c9c4b8', front = '#a8a298') {
+  g.fillStyle = front; g.fillRect(x, y, w, h);
+  g.fillStyle = top; g.fillRect(x - 2, y - 4, w + 4, 5);
+}
+/** A person from the front, feet at y, h tall (seated hides the legs). */
+function person(g, x, y, h, top = pick(TOPS), { hair = pick(HAIRS), seated = false, hat = null } = {}) {
   const u = h / 8;
-  g.fillStyle = '#2c3652'; g.fillRect(x - u * 0.9, y - u * 3.6, u * 1.8, u * 3.6);     // legs
-  g.fillStyle = top; g.fillRect(x - u * 1.2, y - u * 6.4, u * 2.4, u * 2.9);           // body
-  g.fillStyle = '#e0b48c'; g.fillRect(x - u * 0.7, y - u * 7.8, u * 1.4, u * 1.5);     // head
-  g.fillStyle = hair; g.fillRect(x - u * 0.75, y - u * 8, u * 1.5, u * 0.6);
+  if (!seated) { g.fillStyle = '#2c3652'; g.fillRect(x - u * 0.9, y - u * 3.6, u * 1.8, u * 3.6); }
+  const by = seated ? y : y - u * 3.5;
+  g.fillStyle = top; g.fillRect(x - u * 1.2, by - u * 2.9, u * 2.4, u * 2.9);
+  g.fillStyle = '#e0b48c'; g.fillRect(x - u * 0.7, by - u * 4.3, u * 1.4, u * 1.5);
+  g.fillStyle = hat ?? hair; g.fillRect(x - u * 0.8, by - u * (hat ? 4.8 : 4.5), u * 1.6, u * (hat ? 1.0 : 0.6));
+}
+function table(g, x, y, w = 34) {
+  g.fillStyle = '#6a4429'; g.fillRect(x - w / 2, y - 22, w, 4);
+  g.fillRect(x - 2, y - 18, 4, 18);
+}
+function stools(g, x0, x1, y, n) {
+  g.fillStyle = '#8a2a22';
+  for (let i = 0; i < n; i++) g.fillRect(x0 + (i * (x1 - x0)) / (n - 1) - 5, y - 12, 10, 4);
+  g.fillStyle = '#3a3a40';
+  for (let i = 0; i < n; i++) g.fillRect(x0 + (i * (x1 - x0)) / (n - 1) - 1, y - 8, 2, 8);
+}
+function poster(g, x, y, w, h, bg, lines = 3, fg = '#ffffff') {
+  g.fillStyle = bg; g.fillRect(x, y, w, h);
+  g.fillStyle = fg;
+  for (let i = 0; i < lines; i++) g.fillRect(x + 3, y + 4 + i * ((h - 6) / lines), w - 6, 2);
 }
 
-let shared = null;
-/** All painted textures (made once). */
-export function konbiniTextures() {
-  if (shared) return shared;
-  // shelves and fridge faces for the 3D room (B / hybrid)
-  const [sc, sg] = canvas(C, C / 2); paintShelves(sg, 0, 0, C, C / 2, 4);
-  const [fc, fg] = canvas(C, C / 2); paintFridge(fg, 0, 0, C, C / 2);
-  // room atlas for the shader (C): back, left, right / floor, ceiling, middle layer
-  const [ac, a] = canvas(C * 3, C * 2);
-  paintFridge(a, 0, 0, C, C);                                         // back: drinks fridge
-  paintShelves(a, C, 0, C, C, 5);                                     // left wall: shelves
-  a.fillStyle = '#f4f4f0'; a.fillRect(C * 2, 0, C, C);                // right wall: counter, posters
-  a.fillStyle = '#d8d4cc'; a.fillRect(C * 2, C * 0.55, C, C * 0.45);
-  a.fillStyle = '#3f7fd6'; a.fillRect(C * 2 + 20, C * 0.2, 30, 40);
-  a.fillStyle = '#f2c230'; a.fillRect(C * 2 + 70, C * 0.25, 34, 30);
-  a.fillStyle = '#d8dad8'; a.fillRect(0, C, C, C);                    // floor tiles
-  a.fillStyle = '#c8cac8';
-  for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) if ((i + j) % 2) a.fillRect(i * 16, C + j * 16, 16, 16);
-  a.fillStyle = '#f8f8f4'; a.fillRect(C, C, C, C);                    // ceiling with light panels
-  a.fillStyle = '#ffffff';
-  for (let i = 0; i < 3; i++) { a.fillStyle = '#fffbe6'; a.fillRect(C + 14 + i * 38, C + 20, 22, 88); }
-  a.clearRect(C * 2, C, C, C);                                        // middle layer: a shelf row and people (transparent around)
-  paintShelves(a, C * 2 + 8, C + C * 0.62, C - 16, C * 0.38, 2);
-  paintPerson(a, C * 2 + 30, C * 2 - 2, C * 0.62, '#d8443c');
-  paintPerson(a, C * 2 + 96, C * 2 - 2, C * 0.58, '#3fa65a', '#5a3a28');
-  // painted picture of the whole interior (A)
-  const [pc, p] = canvas(C * 2, C);
-  p.fillStyle = '#f4f4f0'; p.fillRect(0, 0, C * 2, C);
-  p.fillStyle = '#fffbe6'; for (let i = 0; i < 4; i++) p.fillRect(14 + i * 62, 6, 40, 6);   // ceiling lights
-  paintFridge(p, 16, 18, C * 2 - 32, C * 0.42);                                               // fridge wall at the back
-  p.fillStyle = '#d8dad8'; p.fillRect(0, C * 0.8, C * 2, C * 0.2);                            // floor
-  paintShelves(p, 30, C * 0.5, C * 1.1, C * 0.36, 2);                                          // a shelf row
-  p.fillStyle = '#c9c4b8'; p.fillRect(C * 1.45, C * 0.56, C * 0.5, C * 0.3);                  // counter
-  paintPerson(p, C * 1.7, C * 0.62, C * 0.36, '#3f7fd6');                                      // clerk behind it
-  paintPerson(p, C * 0.62, C * 0.94, C * 0.55, '#d8443c');                                     // a shopper
-  // painted upper-floor windows: curtains in a few colours, lit or dark
-  const [wc, w] = canvas(C * 2, C / 2);
-  const CURTAINS = [['#e8d8a8', true], ['#a8c4d8', false], ['#e6b8b8', true], ['#c8d8b0', false]];
-  CURTAINS.forEach(([col, lit], i) => {
-    const x = i * (C / 2);
-    w.fillStyle = lit ? '#fff2c8' : '#4a5664'; w.fillRect(x, 0, C / 2, C / 2);
-    w.fillStyle = col; w.fillRect(x, 0, C / 2 * 0.32, C / 2); w.fillRect(x + C / 2 * 0.68, 0, C / 2 * 0.32, C / 2);
-    w.fillStyle = 'rgba(0,0,0,0.25)'; w.fillRect(x, 0, C / 2, 3); w.fillRect(x + C / 4 - 1, 0, 2, C / 2);
-  });
-  // window posters for the konbini glass
-  const [oc, o] = canvas(64, 32);
-  o.fillStyle = '#f2c230'; o.fillRect(0, 0, 30, 32); o.fillStyle = '#d8443c'; o.font = 'bold 14px sans-serif'; o.fillText('SALE', 1, 20);
-  o.fillStyle = '#3f7fd6'; o.fillRect(34, 0, 30, 32); o.fillStyle = '#fff'; o.font = 'bold 11px sans-serif'; o.fillText('おにぎり', 34, 20);
-  shared = { shelf: tex(sc), fridge: tex(fc), atlas: tex(ac), picture: tex(pc), windows: tex(wc), posters: tex(oc) };
-  return shared;
-}
+// --- the shop pictures ---------------------------------------------------------------
+const PAINT = {
+  konbini(g) {
+    room(g, '#e8eae6', '#d0d2d0'); lights(g);
+    fridge(g, 12, 16, W - 24, 52);
+    shelves(g, 24, 70, 130, 36, 2);
+    counter(g, 170, 76, 74, 30);
+    person(g, 205, 76, 40, '#2a62c8');
+    person(g, 80, 122, 58, pick(TOPS));
+    poster(g, 172, 20, 30, 22, '#f0b818', 2, '#d8302a');
+  },
+  drugstore(g) {
+    room(g, '#eef0ec', '#d4d6d2'); lights(g, '#ffffff', 5);
+    shelves(g, 8, 14, 110, 92, 5); shelves(g, 130, 14, 80, 92, 5);
+    g.fillStyle = '#279a4a'; g.fillRect(40, 8, 40, 10); g.fillRect(150, 8, 40, 10); // aisle signs
+    counter(g, 214, 70, 40, 36, '#e8e8e4', '#279a4a');
+    person(g, 70, 122, 58);
+  },
+  cafe(g) {
+    room(g, '#c9a978', '#7a5232', '#5a3a28');
+    g.fillStyle = '#ffd890'; for (let i = 0; i < 3; i++) g.fillRect(40 + i * 80, 10, 10, 10);  // pendant lights
+    counter(g, 150, 62, 100, 44, '#3a2418', '#5a3a28');
+    g.fillStyle = '#c8ccd0'; g.fillRect(180, 40, 22, 22);                                           // coffee machine
+    shelves(g, 160, 18, 84, 18, 1, '#5a3a28', '#3a2418', ['#f4f4f0', '#e8dcc0', '#c8a050']);
+    person(g, 214, 62, 34, '#f4f4f0');
+    table(g, 50, 112); person(g, 34, 108, 40, pick(TOPS), { seated: true }); person(g, 68, 108, 40, pick(TOPS), { seated: true });
+    table(g, 118, 112);
+  },
+  bakery(g) {
+    room(g, '#f2e2c4', '#c8a878'); lights(g, '#fff2c8', 3);
+    shelves(g, 10, 14, W - 20, 40, 2, '#a87a48', '#6a4429', ['#c88a40', '#a86a2a', '#e8c080', '#d8a050']);
+    g.fillStyle = '#e8eef0'; g.fillRect(20, 72, 150, 34);                                            // display case
+    g.fillStyle = '#c88a40'; for (let i = 0; i < 9; i++) g.fillRect(28 + i * 16, 82, 12, 8);
+    g.fillStyle = '#a86a2a'; for (let i = 0; i < 9; i++) g.fillRect(30 + i * 16, 94, 10, 7);
+    person(g, 200, 106, 54, '#f4f4f0', { hat: '#f4f4f0' });
+  },
+  books(g) {
+    room(g, '#e8dcc6', '#8a6a48'); lights(g, '#fff2c8', 3);
+    books(g, 6, 12, 120, 94, 5); books(g, 134, 12, 116, 94, 5);
+    person(g, 120, 124, 60);
+  },
+  ramen(g) {
+    room(g, '#e8d8b0', '#6a4429');
+    for (let i = 0; i < 6; i++) poster(g, 10 + i * 40, 8, 32, 26, i % 2 ? '#f4ecd8' : '#d8302a', 3, i % 2 ? '#2a2018' : '#ffffff'); // menu boards
+    g.fillStyle = '#c8ccd0'; g.fillRect(40, 44, 60, 18);                                              // pots
+    person(g, 150, 76, 40, '#f4f4f0', { hat: '#f4f4f0' });
+    counter(g, 0, 76, W, 30, '#a87a48', '#6a4429');
+    stools(g, 30, 226, 122, 6);
+    person(g, 70, 100, 40, pick(TOPS), { seated: true });
+  },
+  izakaya(g) {
+    room(g, '#5a3a28', '#3a2418', '#2a1810');
+    g.fillStyle = '#e0402f'; for (let i = 0; i < 4; i++) g.fillRect(30 + i * 60, 10, 14, 18);        // red lanterns
+    shelves(g, 30, 34, 196, 26, 1, '#3a2418', '#2a1810', ['#2f6a3a', '#8a6a48', '#e8dcc0', '#3a5a8a']); // bottles
+    counter(g, 0, 78, W, 28, '#a87a48', '#6a4429');
+    person(g, 70, 102, 40, pick(TOPS), { seated: true }); person(g, 110, 102, 40, pick(TOPS), { seated: true });
+    person(g, 190, 78, 40, '#2a2a30', { hat: '#f4f4f0' });
+  },
+  sushi(g) {
+    room(g, '#efe4cc', '#8a6a48');
+    g.fillStyle = '#e8eef0'; g.fillRect(20, 58, 216, 14);                                            // fish case
+    g.fillStyle = '#d8302a'; for (let i = 0; i < 10; i++) g.fillRect(26 + i * 21, 61, 12, 7);
+    person(g, 128, 58, 40, '#f4f4f0', { hat: '#f4f4f0' });
+    counter(g, 0, 74, W, 32, '#d8c498', '#a87a48');
+    person(g, 60, 100, 40, pick(TOPS), { seated: true }); person(g, 190, 100, 40, pick(TOPS), { seated: true });
+  },
+  udon(g) {
+    room(g, '#efe4cc', '#a87a48');
+    g.fillStyle = '#c8a050'; for (let i = 0; i < 9; i++) g.fillRect(12 + i * 27, 8, 20, 30);         // wooden menu tags
+    g.fillStyle = '#2a2018'; for (let i = 0; i < 9; i++) g.fillRect(19 + i * 27, 12, 6, 22);
+    table(g, 60, 112, 50); table(g, 170, 112, 50);
+    person(g, 44, 108, 40, pick(TOPS), { seated: true }); person(g, 186, 108, 40, pick(TOPS), { seated: true });
+  },
+  family(g) {
+    room(g, '#f2e6cc', '#c8b898'); lights(g, '#fff6d8', 5);
+    for (let i = 0; i < 3; i++) {
+      const x = 20 + i * 82;
+      g.fillStyle = '#d8302a'; g.fillRect(x, 64, 60, 42);                                            // booth seats
+      g.fillStyle = '#f4f4f0'; g.fillRect(x + 6, 82, 48, 5);                                          // table
+      person(g, x + 18, 92, 40, pick(TOPS), { seated: true }); person(g, x + 42, 92, 40, pick(TOPS), { seated: true });
+    }
+  },
+  takoyaki(g) {
+    room(g, '#f2e2c4', '#a87a48');
+    for (let i = 0; i < 4; i++) poster(g, 14 + i * 60, 8, 48, 24, i % 2 ? '#f0b818' : '#d8302a', 2);
+    person(g, 128, 96, 60, '#d8302a', { hat: '#f4f4f0' });
+    g.fillStyle = '#2a2a30'; g.fillRect(40, 96, 176, 14);                                            // the griddle
+    g.fillStyle = '#c88a40'; for (let i = 0; i < 12; i++) g.fillRect(46 + i * 14, 99, 8, 6);
+  },
+  bank(g) {
+    room(g, '#e4e6e8', '#b8bcc0'); lights(g);
+    counter(g, 0, 70, W, 36, '#f4f4f0', '#8a99a8');
+    for (let i = 0; i < 3; i++) person(g, 50 + i * 75, 70, 38, '#2c3652');
+    g.fillStyle = '#2c3652'; for (let i = 0; i < 3; i++) g.fillRect(30 + i * 75, 18, 40, 10);         // window numbers
+    g.fillStyle = '#6a7a8a'; g.fillRect(20, 110, 216, 8);                                             // waiting chairs
+  },
+  post(g) {
+    room(g, '#f4f4f0', '#c8ccd0'); lights(g);
+    for (let i = 0; i < 4; i++) poster(g, 16 + i * 60, 14, 44, 30, i % 2 ? '#e84a2a' : '#2a62c8', 3);
+    counter(g, 0, 72, W, 34, '#f4f4f0', '#e84a2a');
+    person(g, 70, 72, 38, '#2a62c8'); person(g, 170, 72, 38, '#2a62c8');
+    person(g, 120, 124, 56);
+  },
+  clinic(g) {
+    room(g, '#e8f2ec', '#c8d8cc'); lights(g, '#ffffff', 3);
+    counter(g, 140, 68, 110, 38, '#f4f4f0', '#9ac8a8');
+    person(g, 190, 68, 38, '#f4f4f0');
+    g.fillStyle = '#6a9a7a'; g.fillRect(10, 100, 110, 8);                                            // waiting bench
+    person(g, 40, 104, 40, pick(TOPS), { seated: true }); person(g, 90, 104, 40, pick(TOPS), { seated: true });
+    poster(g, 30, 20, 40, 30, '#279a4a', 3);
+  },
+  koban(g) {
+    room(g, '#eef0ec', '#b8bcc0');
+    g.fillStyle = '#e8dcc0'; g.fillRect(150, 14, 90, 56);                                            // map on the wall
+    g.fillStyle = '#9ab8d8'; g.fillRect(160, 30, 70, 6); g.fillRect(190, 14, 6, 56);
+    g.fillStyle = '#8a8e94'; g.fillRect(30, 76, 120, 30);                                            // desk
+    person(g, 90, 76, 42, '#2c3a5a', { hat: '#2c3a5a' });
+  },
+  florist(g) {
+    room(g, '#dde8d0', '#8a7a5a');
+    for (let r = 0; r < 3; r++) for (let i = 0; i < 12; i++) {
+      g.fillStyle = '#3a7a3a'; g.fillRect(8 + i * 20, 20 + r * 30, 16, 12);
+      g.fillStyle = pick(['#d8302a', '#f0b818', '#e8609a', '#f4f4f0', '#7a3fbf', '#ee7a18']);
+      g.fillRect(10 + i * 20, 16 + r * 30, 12, 8);
+    }
+    person(g, 200, 122, 56, '#279a4a');
+  },
+  fish(g) {
+    room(g, '#f4f8fa', '#b8c4cc'); lights(g, '#ffffff', 3);
+    g.fillStyle = '#d8e4ea'; g.fillRect(0, 60, W, 46);
+    g.fillStyle = '#8a99a8'; for (let i = 0; i < 14; i++) g.fillRect(8 + i * 18, 70 + (i % 2) * 14, 14, 6);
+    person(g, 160, 60, 40, '#f4f4f0', { hat: '#2a62c8' });
+  },
+  karaoke(g) {
+    room(g, '#2a1840', '#1a1028');
+    g.fillStyle = '#e8609a'; g.fillRect(0, 12, W, 6);
+    g.fillStyle = '#1fa3a0'; g.fillRect(0, 22, W, 4);
+    for (let i = 0; i < 3; i++) poster(g, 20 + i * 76, 32, 56, 36, ['#e8609a', '#f0b818', '#1fa3a0'][i], 3);
+    counter(g, 120, 78, 120, 28, '#e8609a', '#3a2858');
+    person(g, 180, 78, 38, '#f4f4f0');
+    person(g, 60, 122, 56);
+  },
+  office(g) {
+    room(g, '#e4e6e8', '#b8bcc0'); lights(g);
+    for (let i = 0; i < 4; i++) { g.fillStyle = '#8a8e94'; g.fillRect(14 + i * 60, 80, 46, 26); person(g, 37 + i * 60, 80, 34, '#f4f4f0'); }
+  },
+};
+export const INTERIORS = Object.keys(PAINT);
 
-// --- A: painted picture -----------------------------------------------------------
-function picture(style, w, h, z) {
-  const t = konbiniTextures();
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), style.material('signage', 0xffffff, t.picture));
-  m.position.set(0, h / 2 + 0.1, z - 0.05);
-  return m;
-}
-
-// --- B: shallow 3D room -------------------------------------------------------------
-function room(style, w, h, z, depth) {
-  const t = konbiniTextures();
-  const g = new THREE.Group();
-  const wall = style.material('light', 0xe2e4e0);
-  const back = z - depth;
-  g.add(box(w, h, 0.05, wall, [0, h / 2, back]));                                  // back wall
-  for (const sx of [-1, 1]) g.add(box(0.05, h, depth, wall, [sx * w / 2, h / 2, z - depth / 2]));
-  g.add(box(w, 0.05, depth, style.material('concrete', 0xd8dad8), [0, 0.03, z - depth / 2]));        // floor
-  g.add(box(w, 0.05, depth, wall, [0, h, z - depth / 2]));                         // ceiling
-  for (let i = 0; i < 3; i++) g.add(box(w * 0.7, 0.04, 0.25, style.material('light', 0xfffbe6), [0, h - 0.04, back + depth * (0.2 + i * 0.3)]));
-  // drinks fridge along the back wall (glowing)
-  const fridge = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.9, 1.9), style.material('signage', 0xffffff, t.fridge));
-  fridge.position.set(0, 1.05, back + 0.06);
-  g.add(fridge);
-  // a shelf unit across the middle, painted goods on both faces
-  const shelfW = w * 0.55, sz = back + depth * 0.45;
-  g.add(box(shelfW, 1.45, 0.5, style.material('metal', 0xe8e8e4), [-w * 0.15, 0.72, sz]));
-  for (const s of [1, -1]) {
-    const f = new THREE.Mesh(new THREE.PlaneGeometry(shelfW * 0.98, 1.35), style.material('signage', 0xffffff, t.shelf));
-    f.position.set(-w * 0.15, 0.72, sz + s * 0.26);
-    if (s < 0) f.rotation.y = Math.PI;
-    g.add(f);
+/** The shared painted texture of an interior kind. */
+export function interiorTexture(kind) {
+  if (!cache.has(kind)) {
+    const [c, g] = canvas();
+    seed = 7 + kind.length * 131; // each kind always paints the same
+    (PAINT[kind] ?? PAINT.office)(g);
+    cache.set(kind, texture(c));
   }
-  // counter with a register by the door side
-  g.add(box(w * 0.28, 1.0, 0.6, style.material('concrete', 0xc9c4b8), [w * 0.32, 0.5, back + depth * 0.4]));
-  g.add(box(0.35, 0.3, 0.3, style.material('darkMetal'), [w * 0.3, 1.15, back + depth * 0.4]));
-  // a low magazine rack under the window
-  const mag = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.5, 0.6), style.material('signage', 0xffffff, t.shelf));
-  mag.position.set(-w * 0.18, 0.45, z - 0.35);
-  mag.rotation.y = Math.PI; // faces into the room; its back reads as the rack from outside
-  g.add(mag, box(w * 0.5, 0.75, 0.3, style.material('metal', 0xd8d8d0), [-w * 0.18, 0.38, z - 0.25]));
-  return g;
-}
-
-// --- simple stand-in people (about 150 triangles each) ------------------------------------
-const FIG_TOPS = [0x3f7fd6, 0xd8443c, 0x3fa65a, 0xf2c230, 0x8a55c9];
-export function simpleFigure(style, { top = 0x3f7fd6, hair = 0x2a2018, skin = 0xe0b48c, legs = 0x2c3652, height = 1.65 } = {}) {
-  const g = new THREE.Group();
-  const s = height / 1.65;
-  const m = (role, c) => style.material(role, c);
-  g.add(box(0.3 * s, 0.78 * s, 0.18 * s, m('clothAlt', legs), [0, 0.39 * s, 0]));
-  g.add(box(0.4 * s, 0.6 * s, 0.24 * s, m('cloth', top), [0, 1.08 * s, 0]));
-  for (const sx of [-1, 1]) g.add(box(0.09 * s, 0.55 * s, 0.1 * s, m('cloth', top), [sx * 0.25 * s, 1.08 * s, 0]));
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.12 * s, 6, 4), m('skin', skin));
-  head.position.y = 1.5 * s;
-  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.13 * s, 6, 3, 0, Math.PI * 2, 0, Math.PI / 2), m('hair', hair));
-  cap.position.y = 1.52 * s;
-  g.add(head, cap);
-  return g;
-}
-
-// --- C: interior-mapping shader -------------------------------------------------------
-// The window is one quad. Its uv is in metres inside the window (x from -w/2
-// to w/2, y from 0 to h) and `roomSize` holds (w, h, depth); its normal points
-// out to the street. Both survive merging meshes, so many windows can share
-// one draw call. The shader casts the view ray into a box room behind the glass
-// and paints the wall it hits from the atlas; a middle layer adds a shelf row
-// and two people for depth.
-let shaderMat = null;
-function interiorMaterial() {
-  if (shaderMat) return shaderMat;
-  shaderMat = new THREE.ShaderMaterial({
-    uniforms: { atlas: { value: konbiniTextures().atlas } },
-    vertexShader: /* glsl */`
-      attribute vec3 roomSize;
-      varying vec3 vWorld; varying vec3 vNormal; varying vec2 vRoom; varying vec3 vSize;
-      void main() {
-        vec4 w = modelMatrix * vec4(position, 1.0);
-        vWorld = w.xyz;
-        vNormal = normalize(mat3(modelMatrix) * normal);
-        vRoom = uv; vSize = roomSize;
-        gl_Position = projectionMatrix * viewMatrix * w;
-      }`,
-    fragmentShader: /* glsl */`
-      uniform sampler2D atlas;
-      varying vec3 vWorld; varying vec3 vNormal; varying vec2 vRoom; varying vec3 vSize;
-      vec4 cell(float cx, float cy, vec2 uv) { return texture2D(atlas, vec2((cx + clamp(uv.x, 0.0, 1.0)) / 3.0, (cy + clamp(uv.y, 0.0, 1.0)) / 2.0)); }
-      void main() {
-        vec3 n = normalize(vNormal);
-        vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), n));
-        vec3 d = normalize(vWorld - cameraPosition);
-        vec3 r = vec3(dot(d, right), d.y, -dot(d, n)); // into the room: +z
-        float W = vSize.x, H = vSize.y, D = vSize.z;
-        vec3 p = vec3(vRoom.x, vRoom.y, 0.0);
-        float tx = ((r.x > 0.0 ? W * 0.5 : -W * 0.5) - p.x) / r.x;
-        float ty = ((r.y > 0.0 ? H : 0.0) - p.y) / r.y;
-        float tz = D / max(r.z, 1e-4);
-        float t = min(tx, min(ty, tz));
-        vec3 h = p + r * t;
-        vec4 col;
-        if (t == tz) col = cell(0.0, 1.0, vec2((h.x + W * 0.5) / W, 1.0 - h.y / H));                 // back
-        else if (t == tx) col = r.x < 0.0 ? cell(1.0, 1.0, vec2(h.z / D, 1.0 - h.y / H)) : cell(2.0, 1.0, vec2(1.0 - h.z / D, 1.0 - h.y / H)); // sides
-        else col = r.y < 0.0 ? cell(0.0, 0.0, vec2((h.x + W * 0.5) / W, h.z / D)) : cell(1.0, 0.0, vec2((h.x + W * 0.5) / W, h.z / D)); // floor, ceiling
-        // middle layer half way in: a shelf row and people
-        float tm = (D * 0.45) / max(r.z, 1e-4);
-        if (tm < t) {
-          vec3 m = p + r * tm;
-          vec4 mid = cell(2.0, 0.0, vec2((m.x + W * 0.5) / W, 1.0 - m.y / H));
-          if (abs(m.x) < W * 0.5 && m.y > 0.0 && m.y < H && mid.a > 0.5) col = mid;
-        }
-        gl_FragColor = vec4(col.rgb, 1.0);
-        #include <colorspace_fragment>
-      }`,
-  });
-  shaderMat.userData.keepAttributes = ['uv', 'roomSize']; // survive mesh merging
-  return shaderMat;
-}
-function shaderWindow(w, h, z, depth) {
-  const geo = new THREE.PlaneGeometry(w, h);
-  const pos = geo.attributes.position, uv = geo.attributes.uv;
-  for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getX(i), pos.getY(i) + h / 2); // metres in the window
-  geo.setAttribute('roomSize', new THREE.Float32BufferAttribute(new Array(pos.count).fill(0).flatMap(() => [w, h, depth]), 3));
-  const m = new THREE.Mesh(geo, interiorMaterial());
-  m.position.set(0, h / 2 + 0.1, z - 0.02);
-  return m;
+  return cache.get(kind);
 }
 
 /**
- * The inside of a shop front: kind 'picture' | 'room' | 'shader' | 'hybrid'.
- * w × h is the window opening at depth z (the glass line); depth is how far
- * the room goes back.
+ * A painted interior behind a window: a w × h panel at (x, y-centre, z),
+ * facing +z. Set it just behind the window frame.
  */
-export function shopInterior(kind, style, w, h, z, depth = 3) {
-  const g = new THREE.Group();
-  if (kind === 'picture') g.add(picture(style, w, h, z));
-  if (kind === 'shader') g.add(shaderWindow(w, h, z, depth));
-  if (kind === 'room' || kind === 'hybrid') g.add(room(style, w, h + 0.4, z, depth));
-  if (kind === 'hybrid') {
-    // a clerk behind the counter and two shoppers
-    const clerk = simpleFigure(style, { top: 0x3f7fd6 });
-    clerk.position.set(w * 0.32, 0, z - depth + depth * 0.4 - 0.55);
-    const a = simpleFigure(style, { top: FIG_TOPS[1], hair: 0x5a3a28, height: 1.58 });
-    a.position.set(-w * 0.3, 0, z - depth * 0.3);
-    a.rotation.y = Math.PI * 0.8;
-    const b = simpleFigure(style, { top: FIG_TOPS[2] });
-    b.position.set(0.1, 0, z - depth * 0.75);
-    b.rotation.y = Math.PI;
-    g.add(clerk, a, b);
-    // posters stuck on the glass
-    const poster = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.5), style.material('light', 0xffffff, konbiniTextures().posters));
-    poster.position.set(-w * 0.32, h * 0.72, z + 0.01);
-    g.add(poster);
-  }
-  return g;
+export function interiorPanel(style, kind, w, h, x, y, z) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), style.material('signage', 0xffffff, interiorTexture(kind)));
+  m.position.set(x, y, z);
+  return m;
 }
 
-/** Painted upper-floor windows (curtains, some lit): a row like windowRow, from one shared texture. */
-export function paintedWindows(g, style, w, y, z, { spacing = 2.4, ww = 1.4, wh = 1.4, seed = 1 } = {}) {
-  const t = konbiniTextures().windows;
-  const n = Math.max(1, Math.floor((w - 1) / spacing));
-  for (let i = 0; i < n; i++) {
-    const v = (seed * 7 + i * 3) % 4; // which of the 4 painted variants
-    const geo = new THREE.PlaneGeometry(ww, wh);
-    const uv = geo.attributes.uv;
-    for (let k = 0; k < uv.count; k++) uv.setX(k, (v + uv.getX(k)) / 4);
-    const m = new THREE.Mesh(geo, style.material('light', 0xffffff, t));
-    m.position.set(-((n - 1) * spacing) / 2 + i * spacing, y, z + 0.02);
-    g.add(m);
-    g.add(box(ww + 0.12, 0.1, 0.12, style.material('concrete', 0xb8b4aa), [m.position.x, y - wh / 2 - 0.05, z + 0.05])); // sill
-  }
+/** A shop window: the painted inside plus a thin frame with mullions. */
+export function shopWindow(g, style, kind, w, h, x, y, z, { mullions = 3, frame = 0x6a6e74 } = {}) {
+  g.add(interiorPanel(style, kind, w, h, x, y, z - 0.03));
+  const fm = style.material('darkMetal', frame);
+  g.add(box(w + 0.1, 0.09, 0.09, fm, [x, y + h / 2, z]), box(w + 0.1, 0.09, 0.09, fm, [x, y - h / 2, z]));
+  for (let i = 0; i <= mullions; i++) g.add(box(0.07, h, 0.07, fm, [x - w / 2 + (i * w) / mullions, y, z]));
+}
+
+// --- painted upper-floor windows ---------------------------------------------------------
+let curtains = null;
+function curtainTexture() {
+  if (curtains) return curtains;
+  const [c, w] = canvas(W, 64);
+  const VARIANTS = [['#e8d8a8', true], ['#a8c4d8', false], ['#e6b8b8', true], ['#c8d8b0', false]];
+  VARIANTS.forEach(([col, lit], i) => {
+    const x = i * 64;
+    w.fillStyle = lit ? '#fff2c8' : '#4a5664'; w.fillRect(x, 0, 64, 64);
+    w.fillStyle = col; w.fillRect(x, 0, 20, 64); w.fillRect(x + 44, 0, 20, 64);
+    w.fillStyle = 'rgba(0,0,0,0.3)'; w.fillRect(x, 0, 64, 3); w.fillRect(x + 31, 0, 2, 64);
+  });
+  curtains = texture(c);
+  return curtains;
+}
+
+/** One painted window (variant 0..3: curtain colour, lit or dark) of ww × wh at (x, y, z). */
+export function paintedWindow(style, variant, ww, wh, x, y, z) {
+  const geo = new THREE.PlaneGeometry(ww, wh);
+  const uv = geo.attributes.uv;
+  for (let k = 0; k < uv.count; k++) uv.setX(k, (variant + uv.getX(k)) / 4);
+  const m = new THREE.Mesh(geo, style.material('light', 0xffffff, curtainTexture()));
+  m.position.set(x, y, z);
+  return m;
 }
