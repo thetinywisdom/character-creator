@@ -139,12 +139,15 @@ export function buildHair(f, style, material, { underHat = false } = {}) {
         thick: (d) => R * 0.12 + R * 0.16 * smooth(0.1, -0.7, d.y) }));
       break;
     case 'medium · curtains':
-      // middle part with a high hairline; two curtains framing the face
-      g.add(medium(() => 0, [0.55, 0.12, -0.62, -0.78]), backPanel(f, material, shoulder + R * 0.2));
-      for (const sx of [-1, 1]) {
-        g.add(ellipsoid(1, [rx * 0.36, R * 0.3, rz * 0.4], material, { position: [sx * rx * 0.42, R * 0.6, rz * 0.5], rotation: [0.3, 0, sx * 0.5], segments: 12 }));
-        g.add(ellipsoid(1, [rx * 0.3, R * 0.68, rz * 0.32], material, { position: [sx * rx * 0.72, -R * 0.08, rz * 0.5], rotation: [0, 0, sx * 0.15], segments: 12 }));
-      }
+      // Curtain bangs: parted high in the middle of the forehead, the hairline
+      // sweeps down at both sides toward the cheekbones, with extra fullness
+      // along those sweeps so they frame the face. All grown from the head.
+      g.add(scalp(f, material, { line: [0.55, -0.12, -0.62, -0.78], edge: 0.1, underHat,
+        thick: (d) => {
+          const a = Math.abs(azimuth(d));
+          return R * 0.13 + R * 0.04 * smooth(0, -0.6, d.y)
+            + R * 0.16 * gauss(a - 0.62, 0.32) * gauss(d.y - 0.18, 0.32);
+        } }), backPanel(f, material, shoulder + R * 0.2));
       break;
     case 'medium · wavy': {
       g.add(medium());
@@ -158,14 +161,32 @@ export function buildHair(f, style, material, { underHat = false } = {}) {
       break;
     }
     case 'medium · shag': {
-      g.add(medium((d) => R * 0.06), backPanel(f, material, shoulder + R * 0.5, 1.1));
-      for (let i = 0; i < 9; i++) {
-        const a = -2.4 + i * 0.6; // angle round the head, 0 = back
-        const dir = new THREE.Vector3(Math.sin(a), -0.7, -Math.cos(a)).normalize();
-        const t = new THREE.Mesh(new THREE.ConeGeometry(R * 0.2, R * 0.55, seg(6, 4)), material);
-        t.position.set(Math.sin(a) * rx * 1.1, -R * 0.35, -Math.cos(a) * rz * 1.1);
-        t.quaternion.setFromUnitVectors(UP, dir);
-        g.add(t);
+      // Shag: choppy layers stepping down the head, ragged tips pointing down
+      // round the sides and back (never sticking out sideways or over the
+      // face), and a wispy, choppy fringe.
+      g.add(scalp(f, material, { line: [0.36, 0.0, -0.6, -0.75], edge: 0.1, underHat,
+        thick: (d) => R * 0.15 + R * 0.06 * (0.5 + 0.5 * Math.cos(d.y * 13)) * smooth(0.45, 0, d.y) }),
+      backPanel(f, material, shoulder + R * 0.45, 1.1));
+      if (!underHat) {
+        // ragged tips along the lower edge, sides and back only
+        for (let i = 0; i < 9; i++) {
+          const az = THREE.MathUtils.lerp(1.6, Math.PI * 2 - 1.6, i / 8); // behind the ears: skips the face
+          const sx = Math.sin(az), sz = Math.cos(az);
+          const y = -R * (0.55 + 0.12 * (i % 2));
+          const t = new THREE.Mesh(new THREE.ConeGeometry(R * 0.16, R * 0.42, seg(5, 4)), material);
+          t.position.set(sx * rx * 1.08, y, sz * rz * 1.08);
+          t.rotation.x = Math.PI; // point down
+          t.rotation.z = -sx * 0.25; // and a little outward
+          g.add(t);
+        }
+        // wispy fringe: short pieces hanging over the forehead
+        for (let i = 0; i < 5; i++) {
+          const az = THREE.MathUtils.lerp(-0.55, 0.55, i / 4);
+          const t = new THREE.Mesh(new THREE.ConeGeometry(R * 0.12, R * 0.34, seg(5, 4)), material);
+          t.position.set(Math.sin(az) * rx * 0.95, R * (0.42 - 0.04 * (i % 2)), Math.cos(az) * rz * 1.0);
+          t.rotation.x = Math.PI - 0.35; // hanging down, tips slightly forward
+          g.add(t);
+        }
       }
       break;
     }
