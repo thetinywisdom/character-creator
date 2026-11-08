@@ -234,7 +234,7 @@ function loft(stations0, sides = 10, between = 2) {
   for (let i = 0; i < stations.length - 1; i++) {
     for (let k = 0; k < sides; k++) {
       const a = ring(i, k), b = ring(i, k + 1), c = ring(i + 1, k), d = ring(i + 1, k + 1);
-      idx.push(a, c, b, b, c, d);
+      idx.push(a, b, c, b, d, c); // wound so the faces point outward (inside-out showed the body see-through)
     }
   }
   // caps: a point just past each end
@@ -243,8 +243,8 @@ function loft(stations0, sides = 10, between = 2) {
   const s1 = pos.length / 3; pos.push(0, last[1], last[0] + last[3] * 0.4);
   const lastRing = stations.length - 1;
   for (let k = 0; k < sides; k++) {
-    idx.push(s0, ring(0, k), ring(0, k + 1));
-    idx.push(s1, ring(lastRing, k + 1), ring(lastRing, k));
+    idx.push(s0, ring(0, k + 1), ring(0, k));
+    idx.push(s1, ring(lastRing, k), ring(lastRing, k + 1));
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
