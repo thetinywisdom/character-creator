@@ -70,27 +70,55 @@ export const azimuth = (d) => Math.atan2(d.x, d.z);
  * A shell grown from part of the head surface.
  *  include(d)   -> true for directions the shell covers
  *  thickness(d) -> outward offset in metres at direction d
+ *  edge(d)      -> optional: how far d is above a hairline-like border (see
+ *                  aboveHairline). When given, the border is clean: triangles
+ *                  that cross it are kept and their outside corners are slid
+ *                  up onto the border, instead of leaving a stair-stepped edge
+ *                  made of whole triangles. Hats need this; hair and beards
+ *                  fade to nothing at the edge and do not.
  */
-export function headShell(f, include, thickness) {
+export function headShell(f, include, thickness, edge = null) {
   const g = headGeometry(f, true);
   const pos = g.attributes.position;
   const nrm = g.attributes.normal;
   const sphere = sphereGeo(true).attributes.position; // same topology: the unit directions
   const dirs = [];
-  const d = new THREE.Vector3();
-  for (let i = 0; i < pos.count; i++) {
-    d.fromBufferAttribute(sphere, i);
-    dirs.push(d.clone());
-    const t = thickness(d);
-    pos.setXYZ(i, pos.getX(i) + nrm.getX(i) * t, pos.getY(i) + nrm.getY(i) * t, pos.getZ(i) + nrm.getZ(i) * t);
-  }
-  // keep only the triangles whose centre is inside the covered region
+  for (let i = 0; i < pos.count; i++) dirs.push(new THREE.Vector3().fromBufferAttribute(sphere, i));
+  const inside = dirs.map((d) => (edge ? edge(d) > 0 : include(d)));
+
+  // keep only the triangles in the covered region
   const idx = g.index.array;
   const keep = [];
   const c = new THREE.Vector3();
   for (let k = 0; k < idx.length; k += 3) {
-    c.copy(dirs[idx[k]]).add(dirs[idx[k + 1]]).add(dirs[idx[k + 2]]).normalize();
-    if (include(c)) keep.push(idx[k], idx[k + 1], idx[k + 2]);
+    const [a, b, e] = [idx[k], idx[k + 1], idx[k + 2]];
+    if (edge) {
+      if (!(inside[a] || inside[b] || inside[e])) continue;
+      c.copy(dirs[a]).add(dirs[b]).add(dirs[e]).normalize();
+      if (!include(c) && !(inside[a] && inside[b] && inside[e]) && edge(c) < -0.02) continue;
+    } else {
+      c.copy(dirs[a]).add(dirs[b]).add(dirs[e]).normalize();
+      if (!include(c)) continue;
+    }
+    keep.push(a, b, e);
+  }
+
+  // slide the outside corners of border triangles up onto the border
+  if (edge) {
+    const used = new Set(keep);
+    for (const i of used) {
+      if (inside[i]) continue;
+      const d = dirs[i];
+      const y = Math.min(0.999, d.y - edge(d) + 0.002);
+      const k = Math.sqrt(1 - y * y) / Math.max(1e-6, Math.hypot(d.x, d.z));
+      d.set(d.x * k, y, d.z * k);
+      const [x, Y, z] = shapeHead(d.x, d.y, d.z);
+      pos.setXYZ(i, x * f.rx, Y * f.ry, z * f.rz);
+    }
+  }
+  for (let i = 0; i < pos.count; i++) {
+    const t = thickness(dirs[i]);
+    pos.setXYZ(i, pos.getX(i) + nrm.getX(i) * t, pos.getY(i) + nrm.getY(i) * t, pos.getZ(i) + nrm.getZ(i) * t);
   }
   g.setIndex(keep);
   g.computeVertexNormals();

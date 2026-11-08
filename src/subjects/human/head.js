@@ -1,15 +1,16 @@
 import * as THREE from 'three';
-import { capsuleBetween, ellipsoid, seg, surfaceZ } from '../../lib/shapes.js';
-import { azimuth, headShell, smooth } from './headShape.js';
+import { capsuleBetween, ellipsoid, seg } from '../../lib/shapes.js';
+import { aboveHairline, azimuth, headShell, shapeHead, smooth } from './headShape.js';
 
 // Head items: headwear, face accessories and facial hair. Built in head-local
 // space (head centre at the origin, face toward +z). Everything is chunkier
 // than real life on purpose so it still reads on a tiny character.
 
 export const HEADWEAR = ['None', 'Cap', 'Cap (backwards)', 'Beanie', 'Fedora', 'Headphones', 'Helmet'];
-export const FACE_ACCESSORIES = ['None', 'Glasses', 'Sunglasses', 'Flu mask'];
-export const BEARDS = ['None', 'Short', 'Long', 'Goatee'];
-export const MOUSTACHES = ['None', 'Classic', 'Handlebar', 'Thin'];
+export const FACE_ACCESSORIES = ['None', 'Glasses', 'Sunglasses'];
+export const MASKS = ['None', 'Flu mask'];
+export const BEARDS = ['None', 'Stubble', 'Short', 'Full', 'Long', 'Goatee', 'Pointed goatee', 'Chin strap', 'Mutton chops'];
+export const MOUSTACHES = ['None', 'Classic', 'Thin', 'Handlebar', 'Walrus', 'Horseshoe'];
 
 // Hats that cover the top of the head squash tall hairstyles underneath.
 const COVERS_HAIR = new Set(['Cap', 'Cap (backwards)', 'Beanie', 'Fedora', 'Helmet']);
@@ -57,14 +58,21 @@ export function buildHeadwear(f, kind, material, hair) {
       break;
     }
     case 'Beanie': {
-      const tilt = new THREE.Group();
-      tilt.rotation.x = -0.25;
-      // one clean rounded dome pulled down over the ears, with a small pom-pom
-      const dome = new THREE.Mesh(new THREE.SphereGeometry(1, seg(24), seg(12, 5), 0, Math.PI * 2, 0, Math.PI * 0.6), material);
-      dome.scale.set(rx * 1.15, ry * 1.1, rz * 1.17);
-      const pom = ellipsoid(R * 0.17, [1, 1, 1], material, { position: [0, ry * 1.12, 0], segments: 10 });
-      tilt.add(dome, pom);
-      g.add(tilt);
+      // Knit hat grown from the head shape: pulled down to the brow, over the
+      // ears and to the nape, a thicker folded cuff at the edge, a little
+      // slouch on top and a pom-pom.
+      const line = [0.36, 0.14, -0.16, -0.55];
+      const thick = (d) => {
+        const a = aboveHairline(d, line);
+        const lip = 0.4 + 0.6 * smooth(0, 0.03, a);     // rounded edge
+        const cuff = 1 - smooth(0.2, 0.23, a);          // folded band
+        const slouch = smooth(0.5, 1, d.y) * (0.6 + 0.4 * smooth(0.3, -0.6, d.z)); // a bit baggy toward the back
+        return R * lip * (0.06 + 0.06 * cuff) + R * 0.04 * slouch;
+      };
+      const above = (d) => aboveHairline(d, line);
+      g.add(new THREE.Mesh(headShell(f, (d) => above(d) > 0, thick, above), material));
+      const top = shapeHead(0, 1, 0)[1] * ry + thick(new THREE.Vector3(0, 1, 0));
+      g.add(ellipsoid(R * 0.24, [1, 0.85, 1], material, { position: [0, top + R * 0.2, -R * 0.04], segments: 10 }));
       break;
     }
     case 'Fedora': {
@@ -97,16 +105,38 @@ export function buildHeadwear(f, kind, material, hair) {
       break;
     }
     case 'Helmet': {
-      const tilt = new THREE.Group();
-      tilt.rotation.x = -0.2;
-      const dome = new THREE.Mesh(new THREE.SphereGeometry(1, seg(24), seg(12, 5), 0, Math.PI * 2, 0, Math.PI * 0.6), material);
-      dome.scale.set(rx * 1.27, ry * 1.22, rz * 1.27);
-      // a dark visor just in front of the dome's lower front edge
-      const visor = brim(R * 0.5, R * 0.09, f.mats.band);
-      visor.position.set(0, R * 0.02, rz * 1.12);
-      visor.rotation.x = -0.1;
-      tilt.add(dome, visor);
-      g.add(tilt);
+      // Bicycle helmet: an open shell grown from the head shape, sitting on
+      // the forehead and above the ears (the face stays open), ribbed on top
+      // with dark vents, a short peak and chin straps.
+      const line = [0.5, 0.3, 0.02, -0.28];
+      const ridge = (d) => smooth(-0.3, 0.3, Math.cos(d.x * Math.PI * 3.2)) * smooth(0.35, 0.7, d.y);
+      const base = (d) => {
+        const a = aboveHairline(d, line);
+        // rounded lip, thicker crown, a slight tail at the back
+        return R * (0.06 + smooth(0, 0.08, a) * (0.11 + 0.05 * smooth(-0.2, -0.85, d.z) * smooth(-0.3, 0.2, d.y)));
+      };
+      const above = (d) => aboveHairline(d, line);
+      const inside = (d) => above(d) > 0;
+      g.add(new THREE.Mesh(headShell(f, inside, (d) => base(d) + R * 0.06 * ridge(d), above), material));
+      // vents: the floor of the grooves between the ribs, in a dark colour
+      g.add(new THREE.Mesh(headShell(f,
+        (d) => inside(d) && d.y > 0.5 && ridge(d) < 0.12 && Math.abs(d.x) < 0.75 && aboveHairline(d, line) > 0.12,
+        (d) => base(d) + R * 0.012), f.mats.band));
+      // peak over the forehead
+      const y0 = line[0] + 0.03;
+      const [, py, pz] = shapeHead(0, y0, Math.sqrt(1 - y0 * y0));
+      const peak = brim(R * 0.45, R * 0.07, material);
+      peak.position.set(0, py * ry + R * 0.03, pz * rz);
+      peak.scale.z = 0.85;
+      peak.rotation.x = 0.25;
+      g.add(peak);
+      // straps from in front of the ears, down under the chin
+      const chin = [0, -ry * 0.98, rz * 0.32];
+      for (const sx of [-1, 1]) {
+        const dx = sx * Math.sin(1.45), dz = Math.cos(1.45);
+        const [ex, ey, ez] = shapeHead(dx * 0.995, 0.1, dz * 0.995);
+        g.add(capsuleBetween([ex * rx * 1.04, ey * ry, ez * rz * 1.04], chin, R * 0.025, f.mats.band, 6));
+      }
       break;
     }
     default:
@@ -156,43 +186,102 @@ export function buildFaceAccessory(f, kind, mats) {
 }
 
 // ---------------------------------------------------------------------------
+/**
+ * A patch of facial hair grown from the head shape.
+ *  inside(d) -> how far inside the patch d is (radians-ish, <= 0 = outside)
+ *  thick(d)  -> thickness in metres; it fades to nothing over `edge` at the
+ *               border so the hair blends into the skin.
+ */
+function facePatch(f, material, inside, thick, edge = 0.06) {
+  return new THREE.Mesh(headShell(f, (d) => inside(d) > 0,
+    (d) => thick(d) * smooth(0, edge, inside(d))), material);
+}
+
+// Regions on the head (d on the unit sphere, +z face, d.y -1 chin .. 1 crown).
+// Each returns a "distance inside" so patches can share soft edges.
+const absAz = (d) => Math.abs(azimuth(d));
+const band = (v, lo, hi) => Math.min(v - lo, hi - v);
+// the jaw from ear to ear: up to `top` on the cheeks, but only below the
+// lower lip at the front (no mouth is drawn, so a beard over it reads as a mask)
+const jaw = (top = -0.2) => (d) => {
+  const t = top + (-0.5 - top) * smooth(0.75, 0.25, absAz(d));
+  return Math.min(1.78 - absAz(d), t - d.y);
+};
+const chinPatch = (w, top) => (d) => Math.min(w - absAz(d), top - d.y, d.z + 0.2);
+const lip = (w, lo, hi) => (d) => Math.min(w - absAz(d), band(d.y, lo, hi), d.z);
+const chinBulge = (d, depth) => depth * smooth(-0.5, -0.95, d.y) * smooth(-0.3, 0.6, d.z);
+
 export function buildFacialHair(f, beard, moustache, material) {
   const g = new THREE.Group();
   g.name = 'facialHair';
-  const { R, rx, ry, rz } = f;
+  const { R } = f;
+  const add = (...a) => g.add(facePatch(f, material, ...a));
 
-  if (beard === 'Short' || beard === 'Long') {
-    // jaw and chin, from ear to ear, grown from the head shape (fuller at the chin)
-    g.add(new THREE.Mesh(headShell(f,
-      (d) => Math.abs(azimuth(d)) < 1.75 && d.y < -0.2,
-      (d) => R * 0.04 + R * 0.06 * smooth(-0.25, -0.85, d.y)), material));
-  }
-  if (beard === 'Long') {
-    const hang = new THREE.Mesh(new THREE.ConeGeometry(R * 0.44, R * 0.9, seg(8, 5)), material);
-    hang.rotation.x = Math.PI - 0.2; // tip down, slightly forward
-    hang.scale.z = 0.6;
-    hang.position.set(0, -ry * 1.1, rz * 0.45);
-    g.add(hang);
-  }
-  if (beard === 'Goatee') {
-    const y = -ry * 0.8;
-    g.add(ellipsoid(R * 0.3, [1, 1.35, 0.85], material, { position: [0, y, surfaceZ(0, y, rx, ry, rz) + R * 0.06], segments: 10 }));
+  switch (beard) {
+    case 'Stubble':
+      // a thin shadow over the jaw, cheeks and upper lip
+      add(jaw(-0.12), () => R * 0.018, 0.08);
+      break;
+    case 'Short':
+      add(jaw(-0.2), (d) => R * 0.04 + chinBulge(d, R * 0.05));
+      break;
+    case 'Full':
+      // up the cheeks, bushy, a rounded chin
+      add(jaw(-0.05), (d) => R * 0.07 + R * 0.03 * smooth(-0.1, -0.5, d.y) + chinBulge(d, R * 0.12), 0.1);
+      break;
+    case 'Long':
+      // full beard whose chin hangs well down onto the chest
+      add(jaw(-0.05), (d) => R * 0.07 + R * 0.03 * smooth(-0.1, -0.5, d.y)
+        + R * 0.9 * smooth(-0.55, -0.95, d.y) * smooth(-0.2, 0.5, d.z) * smooth(1.2, 0.2, absAz(d)), 0.1);
+      break;
+    case 'Goatee':
+      add(chinPatch(0.5, -0.5), (d) => R * 0.05 + chinBulge(d, R * 0.07));
+      break;
+    case 'Pointed goatee':
+      // narrow, coming to a point below the chin
+      add(chinPatch(0.38, -0.55), (d) => R * 0.04
+        + R * 0.3 * smooth(-0.7, -1, d.y) * smooth(0.35, 0, absAz(d)) * smooth(-0.2, 0.5, d.z), 0.05);
+      break;
+    case 'Chin strap':
+      // a narrow line along the jaw from ear to ear
+      add((d) => Math.min(jaw(-0.2)(d), Math.max(absAz(d) - 1.45, -0.62 - d.y)),
+        () => R * 0.045, 0.04);
+      break;
+    case 'Mutton chops':
+      // big sideburns down the cheeks, the chin left bare
+      add((d) => Math.min(band(absAz(d), 0.75, 1.78), band(d.y, -0.72, 0.05)),
+        (d) => R * 0.08 + R * 0.04 * smooth(-0.1, -0.5, d.y), 0.08);
+      break;
+    default:
+      break;
   }
 
-  if (moustache !== 'None' && moustache) {
-    const y = -R * 0.36;
-    const z = surfaceZ(0, y, rx, ry, rz) + R * 0.06;
-    const thin = moustache === 'Thin';
-    // oversized so it reads at a distance (style guide)
-    g.add(ellipsoid(R * 0.3, [1.7, thin ? 0.32 : 0.55, 0.65], material, { position: [0, y, z], segments: 10 }));
-    if (moustache === 'Handlebar') {
-      for (const sx of [-1, 1]) {
-        const tip = new THREE.Mesh(new THREE.ConeGeometry(R * 0.09, R * 0.38, seg(6, 4)), material);
-        tip.position.set(sx * R * 0.5, y + R * 0.1, z - R * 0.08);
-        tip.rotation.z = -sx * 0.7; // curls up and out
-        g.add(tip);
-      }
+  // Moustaches sit on the upper lip (about d.y -0.42 .. -0.28 at the front)
+  switch (moustache) {
+    case 'Classic':
+      add(lip(0.58, -0.47, -0.26), (d) => R * 0.08 * smooth(0.6, 0.15, absAz(d)) + R * 0.025, 0.05);
+      break;
+    case 'Thin':
+      add(lip(0.5, -0.42, -0.29), () => R * 0.04, 0.03);
+      break;
+    case 'Handlebar': {
+      // the ends sweep up and out
+      const up = (d) => 0.14 * smooth(0.35, 0.75, absAz(d));
+      add((d) => Math.min(0.76 - absAz(d), band(d.y - up(d), -0.46, -0.28), d.z),
+        (d) => R * 0.065 * smooth(0.78, 0.2, absAz(d)) + R * 0.025, 0.04);
+      break;
     }
+    case 'Walrus':
+      // bushy, drooping over the mouth
+      add(lip(0.62, -0.56, -0.24), (d) => R * 0.1 + R * 0.04 * smooth(-0.3, -0.5, d.y), 0.06);
+      break;
+    case 'Horseshoe':
+      // over the lip and straight down both sides of the mouth to the jaw
+      add((d) => Math.max(lip(0.55, -0.43, -0.28)(d),
+        Math.min(band(absAz(d), 0.36, 0.62), band(d.y, -0.88, -0.3), d.z)), () => R * 0.065, 0.04);
+      break;
+    default:
+      break;
   }
   return g;
 }

@@ -156,11 +156,18 @@ dressed in the same tones as the street will disappear.
   squash tall hairstyles: under them an afro, bun, spiky or curly style becomes
   short, a mohawk disappears, medium and long hair still show below. Headphones
   sit over any hair and widen for big hair.
-- **Face accessories:** glasses, sunglasses, flu mask (oversized lenses and
-  frames).
-- **Facial hair:** beard (short, long, goatee) and moustache (classic,
-  handlebar, thin) are separate slots that combine; both use the hair colour
-  and are oversized.
+- **Hats follow the head:** the beanie (pulled down to the brow and over the
+  ears, folded cuff, slight slouch, pom-pom) and the helmet (an open bicycle
+  helmet: ribbed shell with dark vents, a short peak and chin straps, face
+  left open) are shells grown from the head shape with a clean, smooth edge.
+- **Face accessories:** glasses or sunglasses, and a flu mask in its own slot,
+  so a mask and glasses can be worn together. A mask hides the beard and
+  moustache under it.
+- **Facial hair:** beard (stubble, short, full, long, goatee, pointed goatee,
+  chin strap, mutton chops) and moustache (classic, thin, handlebar, walrus,
+  horseshoe) are separate slots that combine. All grow from the head shape
+  (like hair) and use the hair colour. The beard keeps clear of the mouth area
+  at the front: the face has no mouth, and a beard over it reads as a mask.
 
 ## 3d. Outerwear and accessories
 
@@ -170,9 +177,14 @@ dressed in the same tones as the street will disappear.
   hoodie is closed, with the hood folded on the upper back.
 - **One back item** (backpack, angel wings, evil wings) and **one body item**
   (fanny pack, neck tie, bow tie, baby carrier). Wings are deliberately big:
-  they are silhouette items. The baby is just a round head in the carrier.
+  they are silhouette items, and flap slowly and gently all the time (a little
+  faster when running). The baby is just a round head in the carrier.
+- **Everything worn sits on the real body shape:** straps, ties, plackets and
+  packs are placed on the sculpted torso surface (measured, chest and back
+  included), never on a plain cylinder. A tie drapes straight down off the
+  chest; a pack or carrier rests on the furthest point of the back or front.
 - **Backpack:** a padded, rounded pack (domed top, thinner at the top, flat side
-  against the back) with a darker front pocket, zipper line and top handle;
+  against the back) with a darker front pocket and a top handle;
   straps run from the top of the pack over the shoulder, down the chest, under
   the arm and back to the bottom, joined by a chest strap.
 - **Baby carrier:** a soft padded panel, wider at the seat, with a thick waist

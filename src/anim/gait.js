@@ -26,7 +26,7 @@ import * as THREE from 'three';
 // Sources for the shapes of the curves: standard sagittal-plane gait data
 // (e.g. Perry & Burnfield; Winter), see README.
 
-export const JOINT_NAMES = ['spine', 'head', 'legL', 'legR', 'shinL', 'shinR', 'footL', 'footR', 'armL', 'armR', 'foreL', 'foreR'];
+export const JOINT_NAMES = ['spine', 'head', 'legL', 'legR', 'shinL', 'shinR', 'footL', 'footR', 'armL', 'armR', 'foreL', 'foreR', 'wingL', 'wingR'];
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
@@ -241,4 +241,18 @@ function poseSkate(body, g) {
 export function poseGait(body, g, style = 'natural') {
   if (style === 'skate') poseSkate(body, g);
   else poseNatural(body, g);
+  flapWings(body, g);
+}
+
+/** Wings beat slowly and gently all the time, a little faster when running. */
+function flapWings(body, g) {
+  const j = jointsOf(body);
+  for (const [name, sx] of [['wingL', -1], ['wingR', 1]]) {
+    const w = j[name];
+    if (!w) continue;
+    const base = w.userData.restY ??= w.rotation.y;
+    const beat = Math.sin(g.t * (1.8 + 1.2 * g.run));
+    w.rotation.y = base + sx * (0.2 + 0.14 * beat); // folds back, then opens out
+    w.rotation.z = sx * 0.05 * beat;                // tips lift a touch on the way out
+  }
 }

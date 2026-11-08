@@ -9,7 +9,7 @@ import { FOOTWEAR } from './human/footwear.js';
 import { headGeometry } from './human/headShape.js';
 import { OUTERWEAR, buildOuterwear } from './human/outerwear.js';
 import { BACK_ACCESSORIES, BODY_ACCESSORIES, buildBackAccessory, buildBodyAccessory } from './human/accessories.js';
-import { BEARDS, FACE_ACCESSORIES, HEADWEAR, MOUSTACHES, buildFaceAccessory, buildFacialHair, buildHeadwear, coversHair, hairUnder } from './human/head.js';
+import { BEARDS, FACE_ACCESSORIES, HEADWEAR, MASKS, MOUSTACHES, buildFaceAccessory, buildFacialHair, buildHeadwear, coversHair, hairUnder } from './human/head.js';
 import { LEGWEAR, buildBottom, buildLeg, buildSkirt } from './human/legwear.js';
 
 // Human character, assembled from slots: body, hair, top, legwear (more slots
@@ -54,8 +54,10 @@ export const human = {
     // head items
     headwear:      { group: 'Head', value: 'None', options: HEADWEAR, label: 'Headwear' },
     headwearColor: { group: 'Head', value: 'Red', options: names(CLOTH_COLORS), label: 'Headwear colour' },
-    faceAccessory: { group: 'Head', value: 'None', options: FACE_ACCESSORIES, label: 'Face accessory' },
-    accessoryColor:{ group: 'Head', value: 'Black', options: names(CLOTH_COLORS), label: 'Frame / mask colour' },
+    faceAccessory: { group: 'Head', value: 'None', options: FACE_ACCESSORIES, label: 'Glasses' },
+    accessoryColor:{ group: 'Head', value: 'Black', options: names(CLOTH_COLORS), label: 'Frame colour' },
+    mask:          { group: 'Head', value: 'None', options: MASKS, label: 'Mask' },
+    maskColor:     { group: 'Head', value: 'White', options: names(CLOTH_COLORS), label: 'Mask colour' },
     // accessories
     backAccessory: { group: 'Accessories', value: 'None', options: BACK_ACCESSORIES, label: 'On the back' },
     backColor:     { group: 'Accessories', value: 'Orange', options: names(CLOTH_COLORS), label: 'Backpack colour' },
@@ -116,6 +118,8 @@ export const human = {
       headwearColor: pick(names(CLOTH_COLORS)),
       faceAccessory: rng() < 0.3 ? pick(FACE_ACCESSORIES.slice(1)) : 'None',
       accessoryColor: pick(['Black', 'Black', 'Brown', 'White', 'Red', 'Blue']),
+      mask: rng() < 0.12 ? 'Flu mask' : 'None',
+      maskColor: pick(['White', 'White', 'White', 'Black', 'Blue']),
       outerwear: rng() < 0.3 ? pick(OUTERWEAR.slice(1)) : 'None',
       outerwearColor: pick(names(CLOTH_COLORS)),
       backAccessory: rng() < 0.25 ? pick(['Backpack', 'Backpack', 'Backpack', 'Angel wings', 'Evil wings']) : 'None',
@@ -142,7 +146,7 @@ export const human = {
       accent: style.material('accent', accentFor(p.topColor)),
       headwear: style.material('cloth', CLOTH_COLORS[p.headwearColor]),
       frame: style.material('accent', CLOTH_COLORS[p.accessoryColor]),
-      mask: style.material('cloth', CLOTH_COLORS[p.accessoryColor]),
+      mask: style.material('cloth', CLOTH_COLORS[p.maskColor ?? p.accessoryColor] ?? CLOTH_COLORS[p.accessoryColor]),
       lens: style.material('accent', 0x16161c),
       band: style.material('accent', CLOTH_COLORS.Black),
       outer: style.material('cloth', CLOTH_COLORS[p.outerwearColor]),
@@ -200,9 +204,14 @@ export const human = {
     f.hood = p.outerwear === 'Hoodie'; // long hair lies over the folded hood
     const hair = hairUnder(p.headwear, p.hair);
     head.add(buildHair(f, hair, mats.hair, { underHat: coversHair(p.headwear) }));
-    head.add(buildFacialHair(f, p.beard, p.moustache, mats.hair));
+    // older saves kept the mask in the glasses slot
+    const mask = p.faceAccessory === 'Flu mask' ? 'Flu mask' : (p.mask ?? 'None');
+    const eyewear = p.faceAccessory === 'Flu mask' ? 'None' : p.faceAccessory;
+    // a mask covers the lower face: the beard and moustache are hidden under it
+    if (mask === 'None') head.add(buildFacialHair(f, p.beard, p.moustache, mats.hair));
     head.add(buildHeadwear(f, p.headwear, mats.headwear, hair));
-    head.add(buildFaceAccessory(f, p.faceAccessory, mats));
+    head.add(buildFaceAccessory(f, eyewear, mats));
+    head.add(buildFaceAccessory(f, mask, mats)); // worn together with glasses
     upper.add(head);
 
     return root;

@@ -48,6 +48,11 @@ export function buildArm(f, sx, top, mats, sleeveFor, outer = null) {
     const t = 0.6;
     arm.add(taperBetween(O, elbow.clone().multiplyScalar(t).toArray(), f.shoulderR * 1.06,
       THREE.MathUtils.lerp(f.shoulderR, f.elbowR, t) * 1.2, mats.top));
+  } else if (sleeve === 'none') {
+    // bare shoulder: a skin cap over the corner of the torso, so the top's
+    // shoulder edge doesn't poke out past the arm
+    arm.add(taperBetween(O, elbow.clone().multiplyScalar(0.3).toArray(), f.shoulderR * 1.08,
+      THREE.MathUtils.lerp(f.shoulderR, f.elbowR, 0.3) * 1.04, mats.skin));
   } else if (sleeve === 'long') {
     arm.add(taperBetween(O, E, f.shoulderR * 1.06, f.elbowR * 1.15, mats.top));
     fore.add(taperBetween([0, 0, 0], W, f.elbowR * 1.15, f.wristR * 1.2, mats.top));

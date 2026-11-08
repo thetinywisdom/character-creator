@@ -71,9 +71,14 @@ export function buildTorso(f, spec, mats) {
     collar.scale.y = 0.8;
     collar.position.y = f.shoulderY - L * 0.02;
     torso.add(collar);
-    const front = f.torsoR(L * 0.5) * f.depthAt(L * 0.5);
-    const placket = new THREE.Mesh(new THREE.BoxGeometry(f.sw * 0.1, L * 0.82, f.armR * 0.6), mats.accent);
-    placket.position.set(0, f.hipY + L * 0.44, front + f.armR * 0.15);
+    // the button strip follows the shirt front (over the chest, in at the waist)
+    const surf = torsoSurface(f);
+    const samples = [];
+    for (let i = 0; i <= 16; i++) {
+      const y = THREE.MathUtils.lerp(0.13, 0.9, i / 16) * L;
+      samples.push({ y: f.hipY + y, z: surf.front(0, y) - 0.003, w: f.sw * 0.1 });
+    }
+    const placket = ribbon(samples, f.armR * 0.35, mats.accent);
     torso.add(placket);
   }
   return torso;
@@ -105,4 +110,71 @@ function chest(f, L, bands) {
   mesh.position.set(0, f.hipY + y, f.torsoR(y) * f.depthAt(y) - D * 0.2);
   mesh.name = 'chest';
   return mesh;
+}
+
+// ---------------------------------------------------------------------------
+/**
+ * The real (sculpted) torso surface, for anything that has to sit on it:
+ * plackets, ties, straps, packs. Measured by casting rays at the same torso
+ * the tops are made of, so chest, back and hips are all taken into account.
+ *   front(x, y) / back(x, y): z of the surface at torso-local height y
+ *   frontMax(y0, y1, x): the furthest-forward point over a height range
+ *     (what hangs or rests on the chest touches only there)
+ *   backMin(y0, y1, x): likewise for the back
+ */
+export function torsoSurface(f) {
+  if (f._surface) return f._surface;
+  const mesh = band(f, f.torsoBottom, f.torsoLen, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+  mesh.position.y = 0; // torso-local heights
+  mesh.updateMatrixWorld(true);
+  const rc = new THREE.Raycaster();
+  const o = new THREE.Vector3(), dir = new THREE.Vector3();
+  const cast = (x, y, s) => {
+    const yy = Math.min(f.torsoLen * 0.995, Math.max(f.torsoBottom + 1e-3, y));
+    rc.set(o.set(x, yy, s * 2), dir.set(0, 0, -s));
+    const hit = rc.intersectObject(mesh)[0];
+    if (hit) return hit.point.z;
+    return s * f.torsoR(yy) * f.depthAt(yy) * Math.sqrt(Math.max(0, 1 - (x / f.torsoR(yy)) ** 2));
+  };
+  const front = (x, y) => cast(x, y, 1);
+  const back = (x, y) => cast(x, y, -1);
+  const range = (y0, y1, fn, pick) => {
+    let v = fn(y0);
+    for (let i = 1; i <= 12; i++) v = pick(v, fn(y0 + ((y1 - y0) * i) / 12));
+    return v;
+  };
+  f._surface = {
+    front, back,
+    frontMax: (y0, y1, x = 0) => range(y0, y1, (y) => front(x, y), Math.max),
+    backMin: (y0, y1, x = 0) => range(y0, y1, (y) => back(x, y), Math.min),
+  };
+  return f._surface;
+}
+
+/**
+ * A flat ribbon (placket, tie blade, strap) lofted through samples
+ * {x, y, z, w} — centre and width — with thickness t, built out from z
+ * toward +z (or -z with dir = -1). Heights are torso-local.
+ */
+export function ribbon(samples, t, material, dir = 1) {
+  // faces are wound for samples running top to bottom
+  if (samples.length > 1 && samples[0].y < samples.at(-1).y) samples = [...samples].reverse();
+  const pos = [];
+  const quad = (a, b, c, d) => pos.push(...a, ...b, ...c, ...a, ...c, ...d);
+  const corners = samples.map(({ x = 0, y, z, w }) => [
+    [x - w / 2, y, z], [x + w / 2, y, z], [x + w / 2, y, z + dir * t], [x - w / 2, y, z + dir * t]]);
+  for (let i = 0; i < corners.length - 1; i++) {
+    const [a, b] = [corners[i], corners[i + 1]];
+    for (let k = 0; k < 4; k++) {
+      const k2 = (k + 1) % 4;
+      if (dir > 0) quad(a[k], a[k2], b[k2], b[k]); else quad(a[k], b[k], b[k2], a[k2]);
+    }
+  }
+  const cap = (c, flip) => (flip ? quad(c[0], c[1], c[2], c[3]) : quad(c[0], c[3], c[2], c[1]));
+  cap(corners[0], dir > 0);
+  cap(corners.at(-1), dir < 0);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.computeVertexNormals();
+  return new THREE.Mesh(geo, material);
 }
