@@ -13,6 +13,7 @@ import { saveFile, openTextFile } from './lib/saveFile.js';
 import { generateCityData } from './city/layout.js';
 import { validateCity } from './city/format.js';
 import { CATALOG } from './catalog/index.js';
+import { Editor } from './editor/Editor.js';
 import { RUN_SPEED, WALK_SPEED, createGait, poseGait, stepGait } from './anim/gait.js';
 import './style.css';
 
@@ -96,6 +97,34 @@ const cityInput = new CityInput(canvas, joystick);
 let city = null;
 let cityParamsKey = '';
 let cityData = null; // a loaded city file; null = the generated sample town
+// The city editor: built on first use, edits the current town's city file.
+let editor = null;
+async function loadCityFile() {
+  const text = await openTextFile('.json,application/json');
+  if (text == null) return null;
+  let data;
+  try { data = JSON.parse(text); } catch { toast('That file is not JSON'); return null; }
+  const problems = validateCity(data, CATALOG).filter((p) => !p.startsWith('unknown asset'));
+  if (problems.length) { toast(`Not a city file: ${problems.join(', ')}`); return null; }
+  return data;
+}
+function enterEditor() {
+  if (!editor) {
+    editor = new Editor({
+      style: galleryStyles[0], canvas,
+      data: cityData ?? city?.layout.data ?? generateCityData(),
+      callbacks: {
+        onSave: async (data) => { if (!(await saveFile(`${(data.meta?.name ?? 'city').replace(/\W+/g, '-').toLowerCase()}.json`, JSON.stringify(data, null, 1)))) toast('City not saved'); },
+        onLoad: loadCityFile,
+        onSample: () => generateCityData(),
+        onWalk: (data) => { cityData = data; city = null; enterCity(); walkedFromEditor = true; },
+      },
+    });
+    editor.frameAll();
+  }
+  setView('editor');
+}
+
 function enterCity() {
   const key = JSON.stringify(params.human);
   if (!city || key !== cityParamsKey) {
@@ -182,9 +211,12 @@ controls.enabled = false;
 
 const backBtn = document.querySelector('#back');
 const hint = document.querySelector('#hint');
-backBtn.addEventListener('click', () => setView(state.lastGrid));
+// leaving the city goes back to the editor when the walk started there
+let walkedFromEditor = false;
+const goBack = () => setView(state.view === 'city' && walkedFromEditor ? 'editor' : state.lastGrid);
+backBtn.addEventListener('click', goBack);
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && state.view !== state.lastGrid) setView(state.lastGrid);
+  if (e.key === 'Escape' && state.view !== state.lastGrid) goBack();
 });
 
 function enterFocus(cell) {
@@ -199,6 +231,21 @@ function setView(view) {
     propsBuilt = true;
   }
   state.view = view;
+  editor?.show(view === 'editor');
+  if (view !== 'city') walkedFromEditor = view === 'editor' ? walkedFromEditor : false;
+  if (view === 'editor') {
+    cityInput.active = false;
+    controls.enabled = false;
+    joystick.hidden = true;
+    gui.close();
+    if (window.innerWidth < 700) gui.hide(); else gui.show();
+    grid.hidden = true;
+    propsGrid.hidden = true;
+    backBtn.hidden = false;
+    backBtn.textContent = '← Exit editor';
+    hint.textContent = 'Paint blocks · place and move things · drag with two fingers or the right button to pan · scroll or pinch to zoom';
+    return;
+  }
   const inCity = view === 'city';
   cityInput.active = inCity;
   controls.enabled = false;
@@ -270,24 +317,23 @@ const actions = {
   city: () => enterCity(),
   /** Save the current town as a city file (JSON). */
   saveCity: async () => {
-    const data = city?.layout.data ?? cityData ?? generateCityData();
+    const data = (state.view === 'editor' && editor?.data) || city?.layout.data || cityData || generateCityData();
     const ok = await saveFile(`${(data.meta?.name ?? 'city').replace(/\W+/g, '-').toLowerCase()}.json`, JSON.stringify(data, null, 1));
     if (!ok) toast('City not saved');
   },
   /** Load a city file and walk it. */
   loadCity: async () => {
-    const text = await openTextFile('.json,application/json');
-    if (text == null) return;
-    let data;
-    try { data = JSON.parse(text); } catch { return toast('That file is not JSON'); }
-    const problems = validateCity(data, CATALOG).filter((p) => !p.startsWith('unknown asset'));
-    if (problems.length) return toast(`Not a city file: ${problems.join(', ')}`);
+    const data = await loadCityFile();
+    if (!data) return;
     cityData = data;
+    if (editor) { editor.selected = null; editor.setData(data); editor.frameAll(); }
     city = null; // rebuild from the new file
     enterCity();
   },
   /** Back to the generated sample town. */
   sampleCity: () => { cityData = null; city = null; enterCity(); },
+  /** Open the city editor on the current town. */
+  editor: () => enterEditor(),
   lineup: () => setView('lineup'),
   crowd: () => setView('crowd'),
   study: () => setView('study'),
@@ -304,6 +350,7 @@ const actions = {
     subjects.forEach((s) => dirty.add(s.id));
   },
 };
+viewFolder.add(actions, 'editor').name('City editor');
 viewFolder.add(actions, 'city').name('Walk the city');
 viewFolder.add(actions, 'saveCity').name('Save city file (JSON)');
 viewFolder.add(actions, 'loadCity').name('Load city file (JSON)');
@@ -591,7 +638,10 @@ function loop(time) {
   renderer.clear();
   renderer.setScissorTest(true);
 
-  if (state.view === 'city' && city) {
+  if (state.view === 'editor' && editor) {
+    editor.updateCamera(W / H);
+    renderCell(editor, editor.camera, 0, 0, W, H);
+  } else if (state.view === 'city' && city) {
     city.playerGait = state.cityGait === 'Roller skate' ? 'skate' : 'natural';
     city.update(dt, cityInput);
     city.camera.aspect = W / H;
@@ -632,7 +682,7 @@ Object.assign(window, {
   __cc: {
     params, state, galleryCells, propCells, setView, applyStreet, actions,
     enterProp: (i) => enterFocus(propCells[i]),
-    enterCity, cityInput, getCity: () => city, viewerGait,
+    enterCity, cityInput, getCity: () => city, viewerGait, enterEditor, getEditor: () => editor,
     enterFocus: (i) => enterFocus(galleryCells[i]),
     /** Orbit the inspection camera by `az` radians around the subject. */
     orbit: (az) => {

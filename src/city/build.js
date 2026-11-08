@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { CATALOG } from '../catalog/index.js';
 import { tiledBox } from '../props/util.js';
 import { gridGeometry, validateCity } from './format.js';
+import { roadNetwork } from './layout.js';
 
 // Turns a city file (see format.js) into a scene plus everything the game
 // needs: colliders, pedestrian loops, a car loop, the park area and a ground
@@ -22,6 +23,18 @@ function placeCollider(c, x, z, rot) {
   };
 }
 
+/** Build one city object (asset + placement), or null for an unknown asset. */
+export function buildObject(o, style) {
+  const asset = CATALOG[o.asset];
+  if (!asset) return null;
+  const obj = asset.build({ ...asset.params, ...o.params }, style);
+  obj.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0);
+  obj.rotation.y = (o.rot ?? 0) * D2R;
+  obj.userData.asset = o.asset;
+  obj.userData.cityObject = o; // the city-file entry it was built from
+  return obj;
+}
+
 export function buildCity(data, style) {
   const problems = validateCity(data, CATALOG);
   if (problems.some((p) => !p.startsWith('unknown asset'))) throw new Error(`Bad city file: ${problems.join(', ')}`);
@@ -36,9 +49,19 @@ export function buildCity(data, style) {
   const blocks = [];
   let parkRect = null;
 
-  // road surface everywhere, plus a grass verge beyond the town
+  // grass everywhere; roads run round every block and join up by themselves
   g.add(tiledBox(X + 60, 0.1, Z + 60, style.material('grass', 0x6f9a52), [0, -CURB_H - 0.06, 0], 8));
-  g.add(tiledBox(X, 0.02, Z, style.material('road'), [0, -CURB_H, 0]));
+  const roadMat = style.material('road');
+  const { hSeg, vSeg, nodeArms } = roadNetwork(grid, data.blocks ?? []);
+  const nodeX = (i) => -X / 2 + ROAD / 2 + i * (BLOCK + ROAD);
+  const nodeZ = (j) => -Z / 2 + ROAD / 2 + j * (BLOCK + ROAD);
+  for (let j = 0; j <= grid.rows; j++) {
+    for (let i = 0; i <= grid.cols; i++) {
+      if (Object.values(nodeArms(i, j)).some(Boolean)) g.add(tiledBox(ROAD, 0.02, ROAD, roadMat, [nodeX(i), -CURB_H, nodeZ(j)]));
+      if (i < grid.cols && hSeg(i, j)) g.add(tiledBox(BLOCK, 0.02, ROAD, roadMat, [nodeX(i) + (ROAD + BLOCK) / 2, -CURB_H, nodeZ(j)]));
+      if (j < grid.rows && vSeg(i, j)) g.add(tiledBox(ROAD, 0.02, BLOCK, roadMat, [nodeX(i), -CURB_H, nodeZ(j) + (ROAD + BLOCK) / 2]));
+    }
+  }
 
   for (const b of data.blocks ?? []) {
     const r = blockRect(b.col, b.row);
@@ -56,23 +79,28 @@ export function buildCity(data, style) {
 
   // everything placed in the town
   for (const o of data.objects ?? []) {
-    const asset = CATALOG[o.asset];
-    if (!asset) continue;
-    const obj = asset.build({ ...asset.params, ...o.params }, style);
-    const rot = (o.rot ?? 0) * D2R;
-    obj.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0);
-    obj.rotation.y = rot;
-    obj.userData.asset = o.asset;
+    const obj = buildObject(o, style);
+    if (!obj) continue;
     g.add(obj);
-    for (const c of obj.userData.colliders ?? []) colliders.push(placeCollider(c, o.x ?? 0, o.z ?? 0, rot));
+    for (const c of obj.userData.colliders ?? []) colliders.push(placeCollider(c, o.x ?? 0, o.z ?? 0, obj.rotation.y));
   }
 
-  // a ring road loop for moving cars (left-hand traffic)
-  const ring = ROAD / 2;
-  const carLoop = [[-X / 2 + ring, -Z / 2 + ring], [X / 2 - ring, -Z / 2 + ring], [X / 2 - ring, Z / 2 - ring], [-X / 2 + ring, Z / 2 - ring]];
+  // car routes: round each block in the lane next to it, with the block on
+  // the driver's left (Japan drives on the left)
+  const e = ROAD / 4;
+  const carLoops = blocks.map((b) => [[b.x0 - e, b.z0 - e], [b.x0 - e, b.z1 + e], [b.x1 + e, b.z1 + e], [b.x1 + e, b.z0 - e]]);
+  const carLoop = carLoops[0] ?? null;
+  // where the player starts: the sidewalk south of the park, else of the first block
+  const startBlock = blocks.find((b) => b.type === 'park') ?? blocks[0];
+  const start = startBlock ? { x: (startBlock.x0 + startBlock.x1) / 2, z: startBlock.z1 - WALK / 2 } : { x: 0, z: 0 };
+  // somewhere for cats to wander: the park, else the first block's sidewalk
+  if (!parkRect && blocks[0]) {
+    const b = blocks[0];
+    parkRect = { x0: b.x0 + 1, x1: b.x1 - 1, z0: b.z0 + 1, z1: b.z0 + WALK - 1 };
+  }
 
   const inBlock = (x, z) => blocks.some((b) => x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1);
   const groundHeight = (x, z) => (inBlock(x, z) ? 0 : -CURB_H);
 
-  return { group: g, colliders, walkLoops, carLoop, parkRect, groundHeight, size: { X, Z }, blocks, data };
+  return { group: g, colliders, walkLoops, carLoop, carLoops, parkRect, start, groundHeight, size: { X, Z }, blocks, data };
 }

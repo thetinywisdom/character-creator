@@ -74,13 +74,13 @@ export class City {
     this.player = { body: buildPerson(params.human), root: new THREE.Group(), x: 0, z: 0, heading: 0, speed: 0, gait: createGait() };
     this.player.root.add(this.player.body);
     this.scene.add(this.player.root);
-    // start on the sidewalk next to the park
-    const pr = city.parkRect;
-    this.player.x = (pr.x0 + pr.x1) / 2;
-    this.player.z = pr.z1 + 2.5; // the sidewalk ring of the park block
+    // start on the sidewalk next to the park (or the first block)
+    this.player.x = city.start.x;
+    this.player.z = city.start.z;
+    const pr = city.parkRect ?? { x0: -1, x1: 1, z0: -1, z1: 1 };
 
     this.npcs = [];
-    for (let i = 0; i < npcCount; i++) {
+    for (let i = 0; i < (city.walkLoops.length ? npcCount : 0); i++) {
       const loop = city.walkLoops[Math.floor(rng() * city.walkLoops.length)];
       const { lengths, total } = loopLengths(loop);
       const npc = {
@@ -112,13 +112,15 @@ export class City {
 
     // a few cars driving round the ring road (on the left, Japanese style)
     this.cars = [];
-    const ring = loopLengths(city.carLoop);
     const kinds = ['Kei car', 'Sedan', 'Taxi', 'Minivan', 'Kei car'];
     const colors = ['White', 'Red', undefined, 'Blue', 'Yellow'];
-    for (let i = 0; i < kinds.length; i++) {
+    const loops = city.carLoops ?? (city.carLoop ? [city.carLoop] : []);
+    for (let i = 0; i < kinds.length && loops.length; i++) {
+      const loop = loops[(i * 7) % loops.length]; // spread over the blocks
+      const ring = loopLengths(loop);
       const obj = mergeByMaterial(car.build({ variant: kinds[i], color: colors[i] }, style));
       this.scene.add(obj);
-      this.cars.push({ obj, s: (i / kinds.length) * ring.total, speed: 7 + rng() * 3, ...ring, loop: city.carLoop });
+      this.cars.push({ obj, s: rng() * ring.total, speed: 7 + rng() * 3, ...ring, loop });
     }
     setDetail(1);
 
@@ -208,7 +210,7 @@ export class City {
     }
 
     // --- cats: wander between random points in the park ----------------------
-    const pr = this.layout.parkRect;
+    const pr = this.layout.parkRect ?? { x0: -1, x1: 1, z0: -1, z1: 1 };
     for (const c of this.cats) {
       if (c.wait > 0) { c.wait -= dt; continue; }
       if (!c.tx) { c.tx = pr.x0 + Math.random() * (pr.x1 - pr.x0); c.tz = pr.z0 + Math.random() * (pr.z1 - pr.z0); }

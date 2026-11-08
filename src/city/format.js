@@ -12,16 +12,19 @@
 //     "sidewalk": 3,                // sidewalk ring inside each block
 //     "curb": 0.12                  // sidewalks are this much above the road
 //   },
-//   "blocks": [                     // one per block, row by row
-//     { "col": 0, "row": 0, "type": "residential" }   // residential | mixed |
-//   ],                                                 // shops | downtown | park
+//   "blocks": [                     // the blocks that exist (a missing cell is
+//                                   // open ground; roads run round every block)
+//     { "col": 0, "row": 0, "type": "residential", "seed": 12345 }
+//   ],                              // type: residential | mixed | shops |
+//                                   // downtown | park | plaza
 //   "objects": [                    // everything placed in the town
 //     {
 //       "asset": "building.house",  // an id from the asset catalogue
 //       "params": { "w": 10, "d": 12, "seed": 42 },   // overrides its defaults
 //       "x": -60.5, "z": -40, "y": 0,                 // position (y optional)
-//       "rot": 180                  // turn around y, degrees (0 = facing +z)
-//     }
+//       "rot": 180,                 // turn around y, degrees (0 = facing +z)
+//       "group": "block:0,0"        // optional: generated with block (col,row)
+//     }                             // or "streets"; no group = placed by hand
 //   ]
 // }
 //
@@ -32,7 +35,7 @@
 export const FORMAT = 'tiny-city';
 export const VERSION = 1;
 
-export const BLOCK_TYPES = ['residential', 'mixed', 'shops', 'downtown', 'park'];
+export const BLOCK_TYPES = ['residential', 'mixed', 'shops', 'downtown', 'park', 'plaza'];
 
 /** World extent of a grid, and the corners of block (col, row). */
 export function gridGeometry(grid) {

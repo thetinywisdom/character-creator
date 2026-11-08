@@ -105,7 +105,8 @@ games; mobile via three.js wrapped with Capacitor)
 | Step | Status |
 |---|---|
 | A. Foundation: asset catalogue, city file format, generator / builder split, save & load | ✅ |
-| B. City editor (touch-friendly): paint roads, place assets, fill blocks, undo, walk it | next |
+| B. City editor (touch-friendly): paint blocks (roads join up), place / move / turn / delete assets, undo, grid size, save / load, walk it | ✅ |
+| (next) Content in batches, driven by what's missing while building | next |
 | C. Mobile performance: instancing, chunks, simpler distant people, phone frame budget | |
 | D. Game library: `loadCity(json)`, `createCharacter(params)`, walk / traffic data | |
 | E. Capacitor test shell (iOS + Android) | |
@@ -125,7 +126,8 @@ src/
   viewer/params.js   defaults + saved settings
   props/             furniture.js, traffic.js, vehicles.js, extras.js, index.js
   catalog/index.js   the asset catalogue: every placeable asset behind one interface
-  city/              format.js (city file format), build.js (city file -> scene),
+  editor/Editor.js   the city editor (top-down view, tools, touch + mouse input, toolbar)
+  city/              format.js (city file format), build.js (city file -> scene), edit.js (editing operations),
                      layout.js (town generator -> city file), buildings.js, park.js,
                      City.js (walking, pedestrians, cars, camera), input.js (keys, drag, joystick)
   anim/gait.js       procedural walk / run cycle
@@ -164,3 +166,28 @@ used by other projects. Three pieces:
 In the viewer: **View → Save city file** downloads the current town,
 **Load city file** walks any city file, and **Back to the sample town** returns
 to the generated town. Unknown assets in a file are skipped with a warning.
+
+### City editor
+
+**View → City editor** opens the current town from above. Tools:
+
+- **Blocks:** tap or drag over cells to paint them Houses, Mixed, Shops,
+  Downtown, Park or Plaza, or Erase them back to open ground. Each block
+  fills itself (buildings, shop fronts, poles, lamps, a parked car). Roads run
+  round every block and join up by themselves, and intersections get
+  crosswalks, traffic lights or signs depending on how many roads meet.
+  Painting a block the same type again gives it a new layout.
+- **Place:** pick any catalogue asset (with its variant and colour), turn it,
+  and tap the map. Things snap to 0.5 m.
+- **Select:** tap something to select it, drag to move, **Turn** (R) or
+  **Delete**. Moving or turning a generated thing makes it hand-placed, so
+  repainting its block leaves it alone.
+- **Undo / redo** (Ctrl+Z / Ctrl+Shift+Z); a whole drag is one step.
+- **☰:** grid size (up to 12 × 12), new empty town, sample town, save and
+  load city files, fit view.
+- **Walk it:** walk the town you built (people, cars and cats included);
+  Exit city returns to the editor.
+
+Mouse: right or middle button pans, the wheel zooms. Touch: two fingers pan
+and pinch to zoom. The editing operations live in `src/city/edit.js`; each
+returns a new city and shares unchanged objects with the old one.
