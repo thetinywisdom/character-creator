@@ -65,7 +65,8 @@ src/props/             street props (furniture, traffic, vehicles, extras, japan
 src/editor/            Editor.js, thumbs.js (palette pictures, cached), towns.js (IndexedDB),
                        TownsPanel.js (My towns)
 src/creator/Creator.js character creator panel
-src/lib/               shapes, merge (merge by material), rng, textures (sign canvases), saveFile
+src/lib/               shapes, merge (merge by material), skin (one skinned mesh per person),
+                       rng, textures (sign canvases), saveFile
 ```
 
 ## Core concepts
@@ -105,7 +106,14 @@ Never mutate a city object in place.
 **Merging.** The walkable city is merged into one mesh per material
 (`src/lib/merge.js`). Shared materials = few draw calls. Custom attributes are
 stripped unless the material lists them in `userData.keepAttributes`.
-Characters keep their joints (`JOINT_NAMES` in `anim/gait.js`) as separate groups.
+In Walk mode each person is turned into ONE skinned mesh (`src/lib/skin.js`):
+every part is bound rigidly to the joint it hangs from (`JOINT_NAMES` in
+`anim/gait.js` + `head`), its material colour baked into a vertex colour, and
+all people share one vertex-colour material, about 2 draw calls a person. The
+joints stay, so `poseGait` animates them as before. Textured or transparent
+parts and the skirt (which deforms itself) stay separate meshes. A person
+must therefore not rely on per-part materials in Walk mode (no per-frame
+material changes; textures on clothing would need their own mesh).
 
 **Determinism.** Buildings, blocks, parks and textures are seeded
 (`mulberry32`). The same city file always rebuilds the same town.

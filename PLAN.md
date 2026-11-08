@@ -45,6 +45,7 @@ edit; that is not this tool's job.
 8. **Content**: shrine, school, nature tab (incl. cherry blossom), Japanese street props; sailor uniform, gakuran, yukata, apron, hand items; 18 new buildings (laundromat, kissaten, pharmacy, sushi, florist, fishmonger, udon / soba, family restaurant, takoyaki, koban, post office, bank, clinic, fire station, karaoke, wooden apartment, parking garage, gas station).
 9. **Making it feel alive**: painted shop interiors for every shop type, painted curtains upstairs, painted office facades, apartment balconies with laundry, roof clutter, rooftop signs.
 10. **Isometric camera** in Walk mode (switch with third person; zoom, rotate).
+11. **Cheaper walking people**: each person is one skinned mesh with vertex colours sharing one material: ~2 draw calls instead of ~21; a sample town went from 925 to 298 meshes (−68%).
 
 ## Next (suggested order)
 
@@ -59,7 +60,6 @@ edit; that is not this tool's job.
 
 ## Known issues and small ideas
 
-- Walking people cost about 21 draw calls each (two-thirds of a town's draw calls): merge each into about 5 parts.
 - Shop sign text looks faded in the PS1 look; could be made stronger across all shops.
 - The third-person camera cannot look up at tall buildings (the iso view covers this).
 - Nothing stops things being placed on top of each other in the editor.

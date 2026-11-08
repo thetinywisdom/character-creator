@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { setDetail } from '../lib/shapes.js';
 import { mergeByMaterial } from '../lib/merge.js';
+import { skinCharacter, vertexColorMaterial } from '../lib/skin.js';
 import { mulberry32 } from '../lib/rng.js';
 import { car } from '../props/vehicles.js';
 import { generateCityData } from './layout.js';
@@ -66,10 +67,13 @@ export class City {
 
     // --- characters -----------------------------------------------------------
     const rng = mulberry32(seed * 31 + 7);
+    // each person becomes one skinned mesh (joints kept for the walk), sharing
+    // one vertex-colour material: about 2 draw calls a person instead of ~21
+    const personMat = vertexColorMaterial(style);
     const buildPerson = (p) => {
       const raw = human.build(p, style);
       style.decorate?.(raw);
-      return mergeByMaterial(raw, LIMBS);
+      return skinCharacter(raw, LIMBS, personMat);
     };
     this.player = { body: buildPerson(params.human), root: new THREE.Group(), x: 0, z: 0, heading: 0, speed: 0, gait: createGait() };
     this.player.root.add(this.player.body);
