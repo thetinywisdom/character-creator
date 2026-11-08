@@ -45,6 +45,55 @@ export function band(f, y0, y1, material, { inflate = 0, gap = 0 } = {}) {
   return mesh;
 }
 
+/** The collar band: a thin wall round the neck, open at the front. */
+function collarBand(f, material) {
+  const rIn = f.neckR * 1.08, rOut = f.neckR * 1.22, h = Math.min(f.neckR * 0.65, 0.032); // thick necks get no taller band
+  const profile = [[rIn, 0], [rOut, 0], [rOut, h], [rIn, h * 0.9], [rIn, 0]].map(([x, y]) => new THREE.Vector2(x, y));
+  const open = 0.9; // gap at the throat (radians)
+  const geo = new THREE.LatheGeometry(profile, seg(16, 10), open / 2, Math.PI * 2 - open);
+  // tallest at the back, lower toward the throat where it turns into the flaps
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const front = Math.max(0, Math.cos(Math.atan2(pos.getX(i), pos.getZ(i)))); // 1 at the front
+    pos.setY(i, pos.getY(i) * (1 - 0.55 * front));
+  }
+  geo.computeVertexNormals();
+  const band = new THREE.Mesh(geo, material);
+  band.position.y = f.shoulderY - f.torsoLen * 0.02;
+  band.scale.z = 0.95;
+  return band;
+}
+
+/**
+ * One collar flap: a thin triangle laid on the chest, from the side of the
+ * neck down to a point, its inner edge running to the throat.
+ */
+function collarFlap(f, surf, sx, material) {
+  const L = f.torsoLen;
+  const pts = [
+    [sx * f.neckR * 1.2, L * 0.985], // at the band, beside the neck
+    [sx * (f.neckR * 1.15 + f.sw * 0.07), L * 0.82], // the point, down and out
+    [sx * f.neckR * 0.25, L * 0.92], // inner corner, near the throat
+  ];
+  // lifted where it folds over at the neck, lying flat at the point; thick
+  // enough to cast an edge, since it is the same colour as the shirt
+  const lift = [f.neckR * 0.55, f.neckR * 0.2, f.neckR * 0.45];
+  const lo = pts.map(([x, y], i) => [x, f.hipY + y, surf.front(x, y) + 0.003 + lift[i] * 0.4]);
+  const hi = pts.map(([x, y], i) => [x, f.hipY + y, surf.front(x, y) + 0.003 + lift[i]]);
+  const pos = [];
+  const tri = (a, b, c) => pos.push(...a, ...b, ...c);
+  const flip = sx < 0;
+  if (flip) { tri(hi[0], hi[2], hi[1]); tri(lo[0], lo[1], lo[2]); } else { tri(hi[0], hi[1], hi[2]); tri(lo[0], lo[2], lo[1]); }
+  for (let i = 0; i < 3; i++) {
+    const j = (i + 1) % 3;
+    if (flip) { tri(lo[i], hi[j], hi[i]); tri(lo[i], lo[j], hi[j]); } else { tri(lo[i], hi[i], hi[j]); tri(lo[i], hi[j], lo[j]); }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.computeVertexNormals();
+  return new THREE.Mesh(geo, material);
+}
+
 export function buildTorso(f, spec, mats) {
   const L = f.torsoLen;
   const torso = new THREE.Group();
@@ -61,18 +110,13 @@ export function buildTorso(f, spec, mats) {
 
 
   if (spec.collar) {
-    // a chunky collar ring in the shirt's own colour, and a row of small
-    // round buttons down the front (a dark strip read as a tie)
-    const collar = new THREE.Mesh(
-      new THREE.TorusGeometry(f.neckR * 1.55, f.neckR * 0.6, seg(6), seg(14)),
-      mats.top,
-    );
-    collar.rotation.x = Math.PI / 2;
-    collar.scale.y = 0.8;
-    collar.position.y = f.shoulderY - L * 0.02;
-    torso.add(collar);
-    // buttons sit on the shirt front, each facing out along the surface
+    // a shirt collar in the shirt's own colour: a thin band standing round
+    // the back and sides of the neck, open at the throat, and two pointed
+    // flaps folded down onto the chest (a plain ring read as a dog collar)
     const surf = torsoSurface(f);
+    torso.add(collarBand(f, mats.top));
+    for (const sx of [-1, 1]) torso.add(collarFlap(f, surf, sx, mats.top));
+    // buttons sit on the shirt front, each facing out along the surface
     const r = f.sw * 0.03; // oversized so they still read when tiny
     const disc = new THREE.CylinderGeometry(r, r, r * 0.5, seg(10, 6));
     const up = new THREE.Vector3(0, 1, 0), n = new THREE.Vector3();
