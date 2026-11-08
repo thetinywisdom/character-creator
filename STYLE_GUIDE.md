@@ -374,9 +374,10 @@ About one in six random characters is a child.
   loafing and sleeping fold them under the body instead of swinging them
   out stiff. **Coats** are painted from the palette per square face (never per triangle:
   that gives zig-zag edges), so pattern edges run straight along the body's
-  rings or round; calico patches are round blobs:
-  solid, tabby (stripes, light paws), calico (white with apricot and charcoal
-  patches), tuxedo (charcoal with white chest, belly and paws), bicolour
+  rings or round; calico (the owner's pick) is a mostly white cat with a split apricot /
+  charcoal cap on the head, one charcoal patch on the back and an apricot
+  tail. Patterns:
+  solid, tabby (stripes, light paws), calico (mostly white, split cap, one back patch), tuxedo (charcoal with white chest, belly and paws), bicolour
   (colour on top, white below), points (pale body, dark ears, face, paws and
   tail); inner ears blush. Tails long, curled over the back, or a short bob;
   ears pointed, tufted (dark tips) or folded; short or long (fluffy, with a

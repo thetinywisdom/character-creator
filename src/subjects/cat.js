@@ -130,8 +130,9 @@ export const cat = {
       const e = p.earSize * hs;
       const eh = (folded ? 0.5 : 0.85) * R * p.earSize, er_ = 0.62 * R * p.earSize; // big, wide triangles
       const ear = new THREE.Group();
-      ear.position.set(sx * R * 0.55, R * 0.72, -R * 0.05); // upright at the top corners
-      ear.rotation.set(folded ? 1.1 : -0.05, 0, -sx * 0.22);
+      // base sunk into the skull and tilted out, so the ear grows from the head
+      ear.position.set(sx * R * 0.5, R * 0.52, -R * 0.05);
+      ear.rotation.set(folded ? 1.1 : -0.05, 0, -sx * 0.38);
       const outer = part(new THREE.Mesh(new THREE.ConeGeometry(er_, eh, 3), M), 'ear');
       outer.position.y = eh / 2;
       outer.rotation.y = Math.PI; // a flat face toward the front
@@ -281,19 +282,6 @@ function paintCoat(root, p, style, m) {
   const base = CAT_FUR[p.furColor] ?? CAT_FUR.Ginger;
   const pat = p.pattern ?? 'Solid';
   const dark = darker(base), light = lighter(base);
-  // calico patches: seeded round blobs along the back, one on the head, one on the tail
-  const seedStr = `${p.furColor}${p.tailType}${p.earType}`;
-  let sd = [...seedStr].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
-  const rnd = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
-  const patches = [];
-  const zs = [m.tailBase.z + m.bodyR * 0.5, (m.tailBase.z + m.zf) / 2, m.zf];
-  zs.forEach((z, i) => {
-    const sx = rnd() < 0.5 ? -1 : 1;
-    patches.push({ c: new THREE.Vector3(sx * m.bodyR * (0.3 + rnd() * 0.5), m.bodyY + m.bodyR * (0.5 + rnd() * 0.4), z + (rnd() - 0.5) * m.bodyR),
-      r: m.bodyR * (1.0 + rnd() * 0.4), col: i % 2 ? PALETTE.Charcoal : PALETTE.Apricot });
-  });
-  patches.push({ c: new THREE.Vector3((rnd() - 0.5) * m.hr, m.headY + m.hr * 0.7, m.muzzleZ - m.hr * 1.2), r: m.hr * 0.9, col: rnd() < 0.5 ? PALETTE.Apricot : PALETTE.Charcoal });
-  patches.push({ c: m.tailBase.clone().add(new THREE.Vector3(0, 0.02, -0.12)), r: 0.09, col: PALETTE.Charcoal });
   const colourOf = (partName0, P) => {
     // the torso and head are single shapes: find the chest, muzzle and cheeks by position
     let partName = partName0;
@@ -312,11 +300,16 @@ function paintCoat(root, p, style, m) {
         if (low) return light;
         return Math.sin(P.z * 52) > 0.3 ? dark : base; // stripes follow the body's rings
       case 'Calico': {
-        if (low || partName === 'paw' || partName === 'muzzle' || partName === 'chest' || partName === 'ruff') return WHITE;
-        if (partName === 'leg' && P.y < m.legH * 0.7) return WHITE;
-        // round patches (a few blobs on the back, head and tail), white elsewhere
-        for (const q of patches) if (P.distanceTo(q.c) < q.r) return q.col;
-        return WHITE;
+        const white = low || ['paw', 'muzzle', 'ruff'].includes(partName) || (partName === 'chest' && P.y < m.bodyY + m.bodyR * 0.3)
+          || (partName === 'cheek') || (partName === 'leg' && P.y < m.legH * 0.8);
+        if (white) return WHITE;
+        // the owner's pick ("mostly white"): a white cat with a split apricot /
+        // charcoal cap on the head, one charcoal patch on the back, an apricot tail
+        const OR = PALETTE.Apricot, BK = PALETTE.Charcoal;
+        if (partName === 'head' || partName === 'ear' || partName === 'tuft') return P.y > m.headY - m.hr * 0.15 ? (P.x < 0 ? BK : OR) : WHITE;
+        if (partName === 'tail') return OR;
+        if (partName === 'tailTip') return BK;
+        return P.distanceTo(new THREE.Vector3(m.bodyR * 0.25, m.bodyY + m.bodyR, (m.tailBase.z + m.zf) / 2)) < m.bodyR * 1.15 ? BK : WHITE;
       }
       case 'Tuxedo':
         if (partName === 'paw' || partName === 'muzzle' || partName === 'ruff') return WHITE;
