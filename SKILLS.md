@@ -189,12 +189,13 @@ for any new painted window texture. `setSnowCover(root, on)` whitens roles
 (ground, grass, roof, leaf, ...). Both change shared materials, so apply them
 per scene and switch them off when leaving (the viewer does this for snow).
 Rain and snow are faked around the camera, not a box in the world
-(`Precipitation.update(dt, camera, { pixels })`, called after the camera
-moves): drawn on top, always covering the view, no edges. Sizes and density
-stay real-world (0.5 m streaks, 8 cm flakes): zoomed in you see a few big
-drops, zoomed out many small ones. In third person each drop has its own
-distance (2–28 m). Don't scale them to the screen: zoomed in it hides
-everything.
+(`Precipitation.update(dt, camera, { pixels, distance })`, called after the
+camera moves): one layer drawn on top, always covering the view, no edges.
+Sizes and density are real-world for the view at the player (0.5 m streaks,
+8 cm flakes; iso: the orthographic view size, third person: the view size
+at the camera's distance to the player), so both cameras behave the same:
+zoomed in, a few big drops; zoomed out, many small ones. Don't scale them to
+the screen: zoomed in it hides everything.
 
 **No coplanar surfaces.** Two surfaces facing the same way must be ≥ 2 cm
 apart or they flicker on phones. Keep the 24-bit depth buffer in `ps1.js`.

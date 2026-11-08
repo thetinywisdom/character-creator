@@ -88,14 +88,14 @@ export function weatherLight(preset, weather) {
  * the world: it always covers the whole view, it has no edges, and it is
  * drawn on top (depthTest off), so buildings never hide it. Sizes and
  * densities are in metres, like real rain:
- *  - iso (orthographic): drops sit on a plane in front of the camera; the
- *    number shown follows the visible area (zoomed in: a few real-size drops
- *    and flakes; zoomed out: the whole view covered with small ones).
- *  - third person: each drop has its own distance (2–28 m) inside the view,
- *    so near drops look big and far ones small.
+ *  drops sit on one plane in front of the camera, sized in metres for the
+ *  view at the player: iso uses the orthographic view size, third person the
+ *  view size at the camera's distance to the player. The number shown
+ *  follows that visible area (zoomed in: a few real-size drops and flakes;
+ *  zoomed out: the whole view covered with small ones). Same logic for both.
  *
- *   precip.update(dt, camera, { pixels })   // after the camera moved;
- *                                           // pixels = low-res picture height
+ *   precip.update(dt, camera, { pixels, distance })   // after the camera moved;
+ *     pixels = low-res picture height, distance = camera to player (third person)
  */
 const REF_AREA = 1536; // view area (m²) at the default iso zoom, where all drops show
 export class Precipitation {
@@ -112,46 +112,37 @@ export class Precipitation {
     const common = { transparent: true, depthTest: false, depthWrite: false };
     this.object = rain
       ? new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0xb8c8dc, opacity: 0.55, ...common }))
-      : new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, sizeAttenuation: true, ...common }));
+      : new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 1, sizeAttenuation: false, ...common }));
     this.object.frustumCulled = false;
     this.object.renderOrder = 20; // after everything, on top
     this.t = 0;
   }
 
-  update(dt, camera, { pixels = 300 } = {}) {
+  update(dt, camera, { pixels = 300, distance = 6 } = {}) {
     this.t += dt;
     const rain = this.kind === 'Rain';
     const ortho = camera.isOrthographicCamera;
     const fall = rain ? 14 : 1.1; // m/s
-    let shown = this.count, halfH = 1, halfW = 1;
-    if (ortho) {
-      halfH = (camera.top - camera.bottom) / 2 / camera.zoom;
-      halfW = (camera.right - camera.left) / 2 / camera.zoom;
-      shown = Math.min(this.count, Math.max(40, Math.round((this.count * 4 * halfW * halfH) / REF_AREA)));
-    }
-    const tanH = ortho ? 0 : Math.tan((camera.fov * Math.PI) / 360);
+    // the view's half size in metres where the player is
+    const halfH = ortho ? (camera.top - camera.bottom) / 2 / camera.zoom : Math.tan((camera.fov * Math.PI) / 360) * distance;
+    const halfW = ortho ? (camera.right - camera.left) / 2 / camera.zoom : halfH * camera.aspect;
+    const depth = ortho ? camera.near + 1 : distance;
+    const shown = Math.min(this.count, Math.max(40, Math.round((this.count * 4 * halfW * halfH) / REF_AREA)));
     const p = this.pos;
     for (let i = 0; i < shown; i++) {
       const sd = this.seeds[i];
-      // this drop's distance and the view's half size there
-      const dist = ortho ? camera.near + 1 : 2 + 26 * sd[4];
-      const hH = ortho ? halfH : tanH * dist, hW = ortho ? halfW : hH * camera.aspect;
-      sd[1] -= (fall * sd[2] * (rain ? 1 : 0.85) * dt) / hH;
+      sd[1] -= (fall * sd[2] * (rain ? 1 : 0.85) * dt) / halfH;
       if (sd[1] < -1.05) { sd[1] += 2.1; sd[0] = Math.random() * 2 - 1; }
-      let x = sd[0] * hW;
+      let x = sd[0] * halfW;
       if (!rain) x += Math.sin(this.t * 0.8 + sd[3]) * 0.4; // snow drifts
-      const y = sd[1] * hH;
-      if (rain) p.set([x, y, -dist, x + 0.06, y + 0.5, -dist], i * 6);
-      else p.set([x, y, -dist], i * 3);
+      const y = sd[1] * halfH;
+      if (rain) p.set([x, y, -depth, x + 0.06, y + 0.5, -depth], i * 6);
+      else p.set([x, y, -depth], i * 3);
     }
     this.object.geometry.setDrawRange(0, shown * (rain ? 2 : 1));
     this.object.geometry.attributes.position.needsUpdate = true;
-    if (!rain) {
-      const m = this.object.material;
-      if (m.sizeAttenuation === ortho) { m.sizeAttenuation = !ortho; m.needsUpdate = true; }
-      // iso: an 8 cm flake in pixels of the low-res picture; third person: 5 cm in the world
-      m.size = ortho ? Math.max(1, (0.08 * pixels) / (2 * halfH)) : 0.05;
-    }
+    // an 8 cm flake, in pixels of the low-res picture
+    if (!rain) this.object.material.size = Math.max(1, (0.08 * pixels) / (2 * halfH));
     // ride along with the camera
     this.object.position.copy(camera.position);
     this.object.quaternion.copy(camera.quaternion);

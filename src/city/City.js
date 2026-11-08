@@ -493,7 +493,7 @@ export class City {
     );
     this.isoCamera.lookAt(tx, ty, tz);
     // rain / snow: a layer in front of whichever camera is in use
-    this.precip?.update(dt, this.activeCamera, { pixels: this.renderer.domElement.clientHeight / (this.style.pixelScale || 1) });
+    this.precip?.update(dt, this.activeCamera, { pixels: this.renderer.domElement.clientHeight / (this.style.pixelScale || 1), distance: this.cam.dist });
     // shadows cover more ground when the iso view is zoomed out
     const reach = this.viewMode === 'iso' ? Math.max(30, this.iso.zoom * 2.2) : 30;
     const sc = this.key.shadow.camera;
