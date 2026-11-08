@@ -79,6 +79,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 31. **Natural cat shape**: rebuilt after the owner's reference as continuous flat-shaded lofted shapes (torso + neck, head), big triangle ears, slim legs, a low tail; patterns paint in bands.
 
+32. **Cute cats that fold their legs**: elbow and hock joints so sit / loaf / sleep tuck the legs under; cuter proportions (bigger head, shorter round body, shorter legs).
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.

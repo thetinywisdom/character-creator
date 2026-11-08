@@ -367,7 +367,11 @@ About one in six random characters is a child.
   thick neck); the head is a compact rounded wedge with wide cheeks and a
   short muzzle (never a long snout; no eyes or face); big wide triangle
   ears; long slim legs (back legs bent at the hock); the tail hangs back
-  from the rump and lifts at the tip. **Coats** are painted per face from the palette, in crisp blocks:
+  from the rump and lifts at the tip. **Cute first:** a big head, a short
+  round body, short legs (a natural cat reads stiff and sad when tiny).
+  Legs have two joints (shoulder / hip and elbow / hock), so sitting,
+  loafing and sleeping fold them under the body instead of swinging them
+  out stiff. **Coats** are painted per face from the palette, in crisp blocks:
   solid, tabby (stripes, light paws), calico (white with apricot and charcoal
   patches), tuxedo (charcoal with white chest, belly and paws), bicolour
   (colour on top, white below), points (pale body, dark ears, face, paws and

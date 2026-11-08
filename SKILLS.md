@@ -160,7 +160,7 @@ defaults. `params.variant` picks from `variants`, `params.color` from
 buildings, street, traffic, extras, nature, animals, vehicles, areas.
 `animated: 'cat'` marks items with joints (`animal.cat`: pose it with
 `poseCat`, `anim/catGait.js`; resting poses via `gait.pose = 'sit' |
-'loaf' | 'sleep'`). Cats take `pattern`, `tailType`, `earType` and `coat`
+'loaf' | 'sleep'`; joints legF*/legB* plus lowF*/lowB* elbows and hocks). Cats take `pattern`, `tailType`, `earType` and `coat`
 (`cat.randomize()` for a random one); coats are painted per face as vertex
 colours, which `lib/skin.js` keeps when it makes the city's skinned mesh.
 `options: { param: [values] }` on a catalogue asset adds chips in the viewer. Trees (`nature.tree`) come in 11 presets

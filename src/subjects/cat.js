@@ -38,10 +38,10 @@ export const cat = {
   // drawn 1.5x real size so it reads from across a street (style guide §5)
   exaggeration: 1.5,
   schema: {
-    bodyLength: { value: 0.42, min: 0.25, max: 0.6,  step: 0.01, label: 'Body length (m)' },
+    bodyLength: { value: 0.34, min: 0.22, max: 0.6,  step: 0.01, label: 'Body length (m)' },
     chubbiness: { value: 1,    min: 0.7,  max: 1.6,  step: 0.01, label: 'Chubbiness' },
-    legLength:  { value: 0.17, min: 0.08, max: 0.24, step: 0.005, label: 'Leg length (m)' },
-    headSize:   { value: 1,    min: 0.7,  max: 1.5,  step: 0.01, label: 'Head size' },
+    legLength:  { value: 0.13, min: 0.08, max: 0.24, step: 0.005, label: 'Leg length (m)' },
+    headSize:   { value: 1.05, min: 0.7,  max: 1.5,  step: 0.01, label: 'Head size' },
     earSize:    { value: 1,    min: 0.5,  max: 1.8,  step: 0.01, label: 'Ear size' },
     tailLength: { value: 0.34, min: 0.1,  max: 0.5,  step: 0.01, label: 'Tail length (m)' },
     tailUp:     { value: 0.3,  min: 0,    max: 1,    step: 0.01, label: 'Tail raise' },
@@ -53,10 +53,10 @@ export const cat = {
     coat:       { value: 'Short', options: CAT_COATS, label: 'Coat' },
   },
   presets: {
-    Housecat: { bodyLength: 0.42, chubbiness: 1,    legLength: 0.17, headSize: 1,    earSize: 1,   tailLength: 0.34 },
-    Kitten:   { bodyLength: 0.28, chubbiness: 0.9,  legLength: 0.1,  headSize: 1.35, earSize: 1.3, tailLength: 0.2 },
+    Housecat: { bodyLength: 0.34, chubbiness: 1.05, legLength: 0.13, headSize: 1.05, earSize: 1,   tailLength: 0.3 },
+    Kitten:   { bodyLength: 0.28, chubbiness: 0.95, legLength: 0.09, headSize: 1.3,  earSize: 1.25, tailLength: 0.2 },
     Chonk:    { bodyLength: 0.45, chubbiness: 1.55, legLength: 0.1,  headSize: 1.05, earSize: 0.8, tailLength: 0.26 },
-    Lanky:    { bodyLength: 0.55, chubbiness: 0.75, legLength: 0.23, headSize: 0.9,  earSize: 1.45, tailLength: 0.45 },
+    Lanky:    { bodyLength: 0.5,  chubbiness: 0.8,  legLength: 0.19, headSize: 0.95, earSize: 1.35, tailLength: 0.42 },
   },
 
   /** A random cat (for the city): pattern, colour, tail, ears, coat. */
@@ -80,17 +80,17 @@ export const cat = {
     const M = style.material('fur', 0xffffff); // replaced by the painted coat at the end
 
     const L = p.bodyLength, c = p.chubbiness, legLen = p.legLength, hs = p.headSize;
-    const g = 0.08 * c * fluff;                 // girth
+    const g = 0.085 * c * fluff;                // girth: a little round
     const yc = legLen + g * 0.95;               // the torso's centre line
 
     // --- torso + neck: one lofted shape [z (× L), y offset, half width, half height]
     const torso = [
       [-0.5, 0.012, 0.5, 0.55],   // rump
-      [-0.42, 0.02, 0.95, 0.98],  // haunches, the back highest here
-      [-0.25, 0.014, 0.86, 0.86],
-      [-0.05, 0.01, 0.78, 0.74],  // the waist, tucked up, the back dipping a little
-      [0.14, -0.004, 0.9, 0.96],
-      [0.3, -0.014, 1.0, 1.14],   // a deep chest
+      [-0.42, 0.02, 1.0, 1.02],   // round haunches, the back highest here
+      [-0.25, 0.014, 0.96, 0.96],
+      [-0.05, 0.01, 0.9, 0.88],   // a soft waist (round reads cute)
+      [0.14, -0.004, 0.98, 1.02],
+      [0.3, -0.014, 1.04, 1.14],  // a deep chest
       [0.42, 0.004, 0.86, 1.0],   // shoulders
       [0.49, 0.035, 0.74, 0.82],  // base of the neck
       [0.545, 0.07, 0.64, 0.66],  // a short, thick neck
@@ -101,7 +101,7 @@ export const cat = {
     // --- head: the skull, wide cheeks, a short muzzle -----------------------
     const head = new THREE.Group();
     head.name = 'head';
-    head.position.set(0, neck[1] + 0.032 * hs, neck[0] + 0.028 * hs);
+    head.position.set(0, neck[1] + 0.04 * hs, neck[0] + 0.03 * hs);
     root.add(head);
     // compact and round: a short muzzle, wide cheeks (not a dog's long snout)
     const skull = [
@@ -111,7 +111,7 @@ export const cat = {
       [0.019, -0.008, 0.04, 0.033],
       [0.03, -0.014, 0.025, 0.021],  // muzzle
       [0.036, -0.016, 0.011, 0.01],
-    ].map(([z, y, w, h]) => [z * hs * 1.22, y * hs * 1.22, w * hs * 1.22 * fluff ** 0.5, h * hs * 1.22]);
+    ].map(([z, y, w, h]) => [z * hs * 1.45, y * hs * 1.45, w * hs * 1.45 * fluff ** 0.5, h * hs * 1.45]); // a big head reads cute
     head.add(part(new THREE.Mesh(loft(skull, 10), M), 'head'));
     if (fluff > 1) root.add(part(ellipsoid(g * 0.95, [1.15, 0.85, 0.8], M, { position: [0, neck[1] - g * 0.35, neck[0] - g * 0.2], segments: 10 }), 'ruff'));
 
@@ -119,9 +119,9 @@ export const cat = {
     for (const sx of [-1, 1]) {
       const folded = p.earType === 'Folded';
       const e = p.earSize * hs;
-      const eh = (folded ? 0.03 : 0.056) * e, er_ = 0.028 * e; // big, wide triangles
+      const eh = (folded ? 0.036 : 0.06) * e, er_ = 0.033 * e; // big, wide triangles
       const ear = new THREE.Group();
-      ear.position.set(sx * 0.033 * hs, 0.044 * hs, -0.008 * hs);
+      ear.position.set(sx * 0.04 * hs, 0.052 * hs, -0.01 * hs);
       ear.rotation.set(folded ? 1.1 : -0.12, 0, -sx * 0.28);
       const outer = part(new THREE.Mesh(new THREE.ConeGeometry(er_, eh, 3), M), 'ear');
       outer.position.y = eh / 2;
@@ -151,20 +151,20 @@ export const cat = {
         leg.name = `leg${which}${sx < 0 ? 'R' : 'L'}`;
         leg.position.set(sx * g * 0.52, topY, z);
         const foot = [0, -legH + legR * 0.5, which === 'F' ? 0.004 : -0.012];
-        if (which === 'F') {
-          // upper and lower leg, tapering to the paw, nearly straight
-          const elbow = [0, -legH * 0.45, -0.006];
-          leg.add(part(taper([0, g * 0.2, 0], elbow, legR * 1.3, legR, 6), 'leg'));
-          leg.add(part(taper(elbow, foot, legR, legR * 0.78, 6), 'leg'));
-        } else {
-          // a strong thigh back to the hock, then the slim lower leg
-          const hock = [0, -legH * 0.62, -0.05 * (L / 0.42)];
-          leg.add(part(taper([0, g * 0.25, 0.01], hock, legR * 1.7, legR * 0.9, 6), 'leg'));
-          leg.add(part(taper(hock, foot, legR * 0.9, legR * 0.75, 6), 'leg'));
-        }
-        const paw = part(new THREE.Mesh(new THREE.BoxGeometry(legR * 1.6, legR * 0.8, legR * 2.2), M), 'paw');
-        paw.position.set(0, -legH + legR * 0.4, foot[2] + legR * 0.4);
-        leg.add(paw);
+        // the lower leg hangs from its own joint (low**: elbow in front, hock
+        // behind), so poses can fold the legs instead of swinging them stiff
+        const knee = which === 'F' ? [0, -legH * 0.45, -0.006] : [0, -legH * 0.58, -0.04 * (L / 0.42)];
+        if (which === 'F') leg.add(part(taper([0, g * 0.2, 0], knee, legR * 1.35, legR, 6), 'leg'));
+        else leg.add(part(taper([0, g * 0.25, 0.01], knee, legR * 1.75, legR * 0.95, 6), 'leg'));
+        const low = new THREE.Group();
+        low.name = `low${which}${sx < 0 ? 'R' : 'L'}`;
+        low.position.set(...knee);
+        const rel = (q) => [q[0] - knee[0], q[1] - knee[1], q[2] - knee[2]];
+        low.add(part(taper([0, 0, 0], rel(foot), legR * (which === 'F' ? 1 : 0.95), legR * 0.78, 6), 'leg'));
+        const paw = part(new THREE.Mesh(new THREE.BoxGeometry(legR * 1.7, legR * 0.85, legR * 2.3), M), 'paw');
+        paw.position.set(...rel([0, -legH + legR * 0.42, foot[2] + legR * 0.45]));
+        low.add(paw);
+        leg.add(low);
         root.add(leg);
       }
     }
@@ -196,11 +196,11 @@ export const cat = {
     root.add(tail);
 
     // measurements the poses and the coat need
-    root.userData.cat = { legH, topY, bodyY: yc, bodyR: g, L, hr: 0.055 * hs };
+    root.userData.cat = { legH, topY, bodyY: yc, bodyR: g, L, hr: 0.065 * hs };
     root.updateMatrixWorld(true);
     paintCoat(root, p, style, {
-      bodyY: yc, bodyR: g, zf: 0.22 * L, legH, headY: head.position.y, hr: 0.055 * hs,
-      muzzleZ: head.position.z + 0.026 * hs, tailBase: pts[0],
+      bodyY: yc, bodyR: g, zf: 0.22 * L, legH, headY: head.position.y, hr: 0.065 * hs,
+      muzzleZ: head.position.z + 0.032 * hs, tailBase: pts[0],
     });
     return root;
   },

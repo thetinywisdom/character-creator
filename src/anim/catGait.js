@@ -13,7 +13,7 @@
 //        half a cycle later; the body rocks nose-up / nose-down and lifts off
 //        the ground between bounds; the tail streams out behind.
 
-export const CAT_JOINTS = ['legFL', 'legFR', 'legBL', 'legBR', 'head', 'tail'];
+export const CAT_JOINTS = ['legFL', 'legFR', 'legBL', 'legBR', 'lowFL', 'lowFR', 'lowBL', 'lowBR', 'head', 'tail'];
 export const CAT_WALK_SPEED = 0.8; // m/s (for a cat drawn 1.5x)
 export const CAT_RUN_SPEED = 3.2;
 
@@ -37,9 +37,10 @@ export function createCatGait(phase = 0) {
 //  sleep: loaf rolled a little onto one side, head down and turned, tail
 //         wrapped round further
 export const CAT_POSES = {
-  sit:   { y: -0.22, rx: -0.6, rz: 0, legF: 0.6, legB: -1.05, head: 0.45, headY: 0, tailX: -0.6, tailY: 0.9 },
-  loaf:  { y: -0.82, rx: 0.02, rz: 0, legF: 1.45, legB: -1.45, head: 0.12, headY: 0, tailX: -1.35, tailY: 1.9 },
-  sleep: { y: -0.88, rx: 0.02, rz: 0.32, legF: 1.3, legB: -1.3, head: 0.55, headY: 0.85, tailX: -1.35, tailY: 1.9 },
+  // legF / legB: shoulder / hip; lowF / lowB: elbow / hock (the legs fold, not swing stiff)
+  sit:   { y: -0.42, rx: -0.85, rz: 0, legF: 0.85, lowF: 0, legB: -0.7, lowB: 2.6, head: 0.65, headY: 0, tailX: -0.5, tailY: 1.2 },
+  loaf:  { y: -0.86, rx: 0.02, rz: 0, legF: 1.1, lowF: -2.5, legB: -1.3, lowB: 2.7, head: 0.1, headY: 0, tailX: -1.35, tailY: 1.9 },
+  sleep: { y: -0.9, rx: 0.02, rz: 0.3, legF: 1.0, lowF: -2.3, legB: -1.2, lowB: 2.6, head: 0.55, headY: 0.85, tailX: -1.35, tailY: 1.9 },
 };
 
 /** Advance the cycle for a cat moving at `speed` m/s. */
@@ -104,6 +105,7 @@ export function poseCat(body, g) {
   // blend toward a resting pose
   const P = CAT_POSES[g.pose], w = g.poseW ?? 0;
   body.rotation.z = 0;
+  for (const n of ['lowFL', 'lowFR', 'lowBL', 'lowBR']) if (j[n]) j[n].rotation.x = 0;
   if (!P || w < 0.001) return;
   const legH = body.userData.cat?.legH ?? 0.13;
   const breathe = g.pose === 'sleep' ? 0.004 * Math.sin(g.t * 1.4) : 0;
@@ -111,10 +113,13 @@ export function poseCat(body, g) {
   body.rotation.x = lerp(body.rotation.x, P.rx, w);
   body.rotation.z = P.rz * w;
   for (const name of ['legFL', 'legFR', 'legBL', 'legBR']) {
-    const leg = j[name];
-    if (!leg) continue;
-    leg.rotation.x = lerp(leg.rotation.x, name.startsWith('legF') ? P.legF : P.legB, w);
-    leg.position.y = lerp(leg.position.y, leg.userData.restY, w);
+    const leg = j[name], low = j[name.replace('leg', 'low')];
+    const front = name.startsWith('legF');
+    if (leg) {
+      leg.rotation.x = lerp(leg.rotation.x, front ? P.legF : P.legB, w);
+      leg.position.y = lerp(leg.position.y, leg.userData.restY, w);
+    }
+    if (low) low.rotation.x = (front ? P.lowF : P.lowB) * w;
   }
   if (j.head) {
     j.head.rotation.x = lerp(j.head.rotation.x, P.head, w);
