@@ -65,6 +65,11 @@ vertices and dithered colour, but with a clear sky, vivid characters on a calmer
 city, 1-pixel outlines and blob shadows so tiny characters stay easy to spot.
 The rules are in **[STYLE_GUIDE.md](STYLE_GUIDE.md)**.
 
+**Docs:** [PLAN.md](PLAN.md) (goals, decisions, done and next),
+[SKILLS.md](SKILLS.md) (how the tool works and how to extend it, for agents
+and people), [STYLE_GUIDE.md](STYLE_GUIDE.md) (the look). Agents: see
+[CLAUDE.md](CLAUDE.md); all docs are updated with every change.
+
 ## Using the app
 
 The bar at the top has three modes:
