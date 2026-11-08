@@ -8,7 +8,9 @@ import { taperBetween } from '../../lib/shapes.js';
 /** Elbow and wrist points in arm-local space (shoulder at the origin). */
 function joints(f, sx) {
   const upper = f.armLen * 0.42; // the pivot sits lower now, so the upper arm is a bit shorter
-  const fore = f.armLen - upper - f.handR * 1.6;
+  // forearm ends at the wrist; the hand box (about 2.1 × handR long) hangs
+  // below it, so leave room for it or the forearm reads like a long pole
+  const fore = f.armLen - upper - f.handR * 1.6 - f.handR * 2.1;
   const elbow = new THREE.Vector3(0, -upper, 0);
   // forearm tilts forward (bend) and a touch outward
   const dir = new THREE.Vector3(sx * Math.sin(f.elbowBend * 0.4), -1, Math.sin(f.elbowBend)).normalize();
