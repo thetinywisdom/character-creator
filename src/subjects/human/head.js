@@ -204,14 +204,14 @@ const band = (v, lo, hi) => Math.min(v - lo, hi - v);
 // the jaw from ear to ear: up to `top` on the cheeks, but only below the
 // lower lip at the front (no mouth is drawn, so a beard over it reads as a mask)
 const jaw = (top = -0.2) => (d) => {
-  const t = top + (-0.5 - top) * smooth(0.75, 0.25, absAz(d));
+  const t = top + (-0.56 - top) * smooth(0.75, 0.25, absAz(d));
   return Math.min(1.78 - absAz(d), t - d.y);
 };
 const chinPatch = (w, top) => (d) => Math.min(w - absAz(d), top - d.y, d.z + 0.2);
 const lip = (w, lo, hi) => (d) => Math.min(w - absAz(d), band(d.y, lo, hi), d.z);
 const chinBulge = (d, depth) => depth * smooth(-0.5, -0.95, d.y) * smooth(-0.3, 0.6, d.z);
 
-export function buildFacialHair(f, beard, moustache, material) {
+export function buildFacialHair(f, beard, moustache, material, stubbleMaterial = material) {
   const g = new THREE.Group();
   g.name = 'facialHair';
   const { R } = f;
@@ -219,19 +219,20 @@ export function buildFacialHair(f, beard, moustache, material) {
 
   switch (beard) {
     case 'Stubble':
-      // a thin shadow over the jaw, cheeks and upper lip
-      add(jaw(-0.12), () => R * 0.018, 0.08);
+      // a thin shadow over the jaw and cheeks, in a colour between skin and
+      // hair (like hair seen through the skin), so it reads as stubble
+      g.add(facePatch(f, stubbleMaterial, jaw(-0.3), () => R * 0.012, 0.06));
       break;
     case 'Short':
-      add(jaw(-0.2), (d) => R * 0.04 + chinBulge(d, R * 0.05));
+      add(jaw(-0.36), (d) => R * 0.04 + chinBulge(d, R * 0.05));
       break;
     case 'Full':
       // up the cheeks, bushy, a rounded chin
-      add(jaw(-0.05), (d) => R * 0.07 + R * 0.03 * smooth(-0.1, -0.5, d.y) + chinBulge(d, R * 0.12), 0.1);
+      add(jaw(-0.25), (d) => R * 0.07 + R * 0.03 * smooth(-0.3, -0.6, d.y) + chinBulge(d, R * 0.12), 0.1);
       break;
     case 'Long':
       // full beard whose chin hangs well down onto the chest
-      add(jaw(-0.05), (d) => R * 0.07 + R * 0.03 * smooth(-0.1, -0.5, d.y)
+      add(jaw(-0.25), (d) => R * 0.07 + R * 0.03 * smooth(-0.3, -0.6, d.y)
         + R * 0.9 * smooth(-0.55, -0.95, d.y) * smooth(-0.2, 0.5, d.z) * smooth(1.2, 0.2, absAz(d)), 0.1);
       break;
     case 'Goatee':
@@ -244,7 +245,7 @@ export function buildFacialHair(f, beard, moustache, material) {
       break;
     case 'Chin strap':
       // a narrow line along the jaw from ear to ear
-      add((d) => Math.min(jaw(-0.2)(d), Math.max(absAz(d) - 1.45, -0.62 - d.y)),
+      add((d) => Math.min(jaw(-0.36)(d), Math.max(absAz(d) - 1.45, -0.62 - d.y)),
         () => R * 0.045, 0.04);
       break;
     case 'Mutton chops':
@@ -265,10 +266,22 @@ export function buildFacialHair(f, beard, moustache, material) {
       add(lip(0.5, -0.42, -0.29), () => R * 0.04, 0.03);
       break;
     case 'Handlebar': {
-      // the ends sweep up and out
-      const up = (d) => 0.14 * smooth(0.35, 0.75, absAz(d));
-      add((d) => Math.min(0.76 - absAz(d), band(d.y - up(d), -0.46, -0.28), d.z),
-        (d) => R * 0.065 * smooth(0.78, 0.2, absAz(d)) + R * 0.025, 0.04);
+      // a full moustache over the lip, then each end narrows and curls up the
+      // cheek: a chain of shrinking beads laid on the face surface
+      add(lip(0.55, -0.46, -0.27), (d) => R * 0.075 * smooth(0.6, 0.2, absAz(d)) + R * 0.025, 0.04);
+      const curl = [[0.48, -0.4, 0.065], [0.58, -0.4, 0.058], [0.68, -0.36, 0.05], [0.75, -0.29, 0.042], [0.77, -0.21, 0.034]];
+      const onFace = (az, y, out) => {
+        const h = Math.sqrt(1 - y * y);
+        const [x, Y, z] = shapeHead(Math.sin(az) * h, y, Math.cos(az) * h);
+        const n = new THREE.Vector3(x * f.rx, Y * f.ry, z * f.rz);
+        return n.addScaledVector(n.clone().normalize(), out).toArray();
+      };
+      for (const sx of [-1, 1]) {
+        for (let i = 0; i < curl.length - 1; i++) {
+          const [a0, y0, r0] = curl[i], [a1, y1, r1] = curl[i + 1];
+          g.add(capsuleBetween(onFace(sx * a0, y0, R * r0), onFace(sx * a1, y1, R * r1), R * (r0 + r1) * 0.5, material, 6));
+        }
+      }
       break;
     }
     case 'Walrus':

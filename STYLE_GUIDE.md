@@ -166,8 +166,12 @@ dressed in the same tones as the street will disappear.
 - **Facial hair:** beard (stubble, short, full, long, goatee, pointed goatee,
   chin strap, mutton chops) and moustache (classic, thin, handlebar, walrus,
   horseshoe) are separate slots that combine. All grow from the head shape
-  (like hair) and use the hair colour. The beard keeps clear of the mouth area
-  at the front: the face has no mouth, and a beard over it reads as a mask.
+  (like hair) and use the hair colour. Beards start low (below the cheekbones,
+  and below the lower lip at the front) so the moustache area stays free and a
+  moustache always reads on its own. Stubble is a thin shadow in a colour half
+  way between skin and hair, so it looks like hair seen through the skin, not a
+  full beard. The handlebar is a full moustache whose ends narrow and curl up
+  the cheeks.
 
 ## 3d. Outerwear and accessories
 

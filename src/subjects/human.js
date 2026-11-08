@@ -140,6 +140,8 @@ export const human = {
     const mats = {
       skin: style.material('skin', SKIN_TONES[p.skin]),
       hair: style.material('hair', HAIR_COLORS[p.hairColor]),
+      // stubble: hair seen through the skin, so a shadow between the two colours
+      stubble: style.material('skin', new THREE.Color(SKIN_TONES[p.skin]).lerp(new THREE.Color(HAIR_COLORS[p.hairColor]), 0.5).getHex()),
       top: style.material('cloth', CLOTH_COLORS[p.topColor]),
       legwear: style.material('clothAlt', CLOTH_COLORS[p.legwearColor]),
       shoe: style.material('shoe', CLOTH_COLORS[p.shoeColor]),
@@ -208,7 +210,7 @@ export const human = {
     const mask = p.faceAccessory === 'Flu mask' ? 'Flu mask' : (p.mask ?? 'None');
     const eyewear = p.faceAccessory === 'Flu mask' ? 'None' : p.faceAccessory;
     // a mask covers the lower face: the beard and moustache are hidden under it
-    if (mask === 'None') head.add(buildFacialHair(f, p.beard, p.moustache, mats.hair));
+    if (mask === 'None') head.add(buildFacialHair(f, p.beard, p.moustache, mats.hair, mats.stubble));
     head.add(buildHeadwear(f, p.headwear, mats.headwear, hair));
     head.add(buildFaceAccessory(f, eyewear, mats));
     head.add(buildFaceAccessory(f, mask, mats)); // worn together with glasses
