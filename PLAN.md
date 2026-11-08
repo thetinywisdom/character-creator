@@ -77,6 +77,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 30. **Better cats**: new shape (chest, waist, haunches, neck, cheeks, jointed legs), coat patterns from the palette (solid, tabby, calico, tuxedo, bicolour, points), tail types (long, curled, bobtail), ear types (pointed, tufted, folded), long fluffy coat, resting poses (sit, loaf, sleep); city cats each look different and rest when they stop.
 
+31. **Natural cat shape**: rebuilt after the owner's reference as continuous flat-shaded lofted shapes (torso + neck, head), big triangle ears, slim legs, a low tail; patterns paint in bands.
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.
