@@ -1,17 +1,13 @@
-import * as THREE from 'three';
 import { mulberry32 } from '../lib/rng.js';
-import { apartment, house, mixedUse, office, shop } from './buildings.js';
-import { park } from './park.js';
-import { busStop, postBox, streetLamp, trashBin } from '../props/furniture.js';
-import { crosswalk, streetSign, trafficLight } from '../props/traffic.js';
-import { bicycle, car } from '../props/vehicles.js';
-import { planter, utilityPole, vendingMachine, wire } from '../props/extras.js';
-import { box, tiledBox } from '../props/util.js';
+import { FORMAT, VERSION, gridGeometry } from './format.js';
+import { buildCity } from './build.js';
 
 // A small Japanese town: a grid of blocks separated by roads. Each block has
-// a raised sidewalk ring and a type that decides its buildings. Returns the
-// static scene (to be merged), colliders, sidewalk loops for pedestrians, a
-// road loop for cars, the park area and a ground-height function.
+// a raised sidewalk ring and a type that decides its buildings.
+//
+// generateCityData(seed) writes the town as a city file (see format.js):
+// plain JSON, no 3D. buildCity() (build.js) turns any city file into the
+// scene. generateCity(style, seed) does both, for convenience.
 
 export const ROAD = 9;      // road width (two lanes)
 export const BLOCK = 40;    // block size including its sidewalk
@@ -31,58 +27,42 @@ const LOT = {
   downtown: { min: 12, max: 17, depth: 13 },
 };
 
-function pickBuilder(type, rng, corner) {
+/** Which building asset (and shop type) goes on a lot. */
+function pickBuilding(type, rng, corner) {
   const r = rng();
-  if (type === 'residential') return r < 0.62 ? house : apartment;
-  if (type === 'shops') return corner ? 'Konbini' : r < 0.6 ? shop : mixedUse;
-  if (type === 'downtown') return r < 0.6 ? office : mixedUse;
-  return r < 0.7 ? mixedUse : r < 0.85 ? shop : apartment;
+  if (type === 'residential') return { asset: r < 0.62 ? 'building.house' : 'building.apartment' };
+  if (type === 'shops') return corner ? { asset: 'building.shop', shopType: 'Konbini' } : { asset: r < 0.6 ? 'building.shop' : 'building.mixedUse' };
+  if (type === 'downtown') return { asset: r < 0.6 ? 'building.office' : 'building.mixedUse' };
+  return { asset: r < 0.7 ? 'building.mixedUse' : r < 0.85 ? 'building.shop' : 'building.apartment' };
 }
 
-export function generateCity(style, seed = 3) {
+const rotOf = (out) => Math.round(Math.atan2(out[0], out[1]) * 180 / Math.PI);
+const r2 = (v) => Math.round(v * 100) / 100;
+
+/** A whole town as a city file (JSON-ready object). */
+export function generateCityData(seed = 3) {
   const rng = mulberry32(seed * 9973 + 1);
-  const g = new THREE.Group();
-  const colliders = [];
-  const walkLoops = [];
-  const nz = TYPES.length, nx = TYPES[0].length;
-  const X = nx * BLOCK + (nx + 1) * ROAD;
-  const Z = nz * BLOCK + (nz + 1) * ROAD;
+  const seedOf = () => Math.floor(rng() * 1e9);
+  const grid = { cols: TYPES[0].length, rows: TYPES.length, block: BLOCK, road: ROAD, sidewalk: WALK, curb: CURB_H };
+  const { X, Z, blockRect } = gridGeometry(grid);
+  const objects = [];
   const blocks = [];
-  let parkRect = null;
-
-  // road surface everywhere, plus a grass verge beyond the town
-  g.add(tiledBox(X + 60, 0.1, Z + 60, style.material('grass', 0x6f9a52), [0, -CURB_H - 0.06, 0], 8));
-  g.add(tiledBox(X, 0.02, Z, style.material('road'), [0, -CURB_H, 0]));
-
-  const addCollider = (x, z, hw, hd) => colliders.push({ x, z, hw, hd });
-
-  /** Place a building / prop built facing +z, so it faces `out` (unit x or z). */
-  const place = (obj, x, z, out) => {
-    obj.position.set(x, 0, z);
-    obj.rotation.y = Math.atan2(out[0], out[1]);
-    g.add(obj);
-    return obj;
+  /** Place an asset at x, z facing `out` (unit x or z), optionally at height y. */
+  const place = (asset, params, x, z, out, y) => {
+    const o = { asset, params, x: r2(x), z: r2(z), rot: rotOf(out) };
+    if (y) o.y = y;
+    objects.push(o);
   };
 
-  for (let j = 0; j < nz; j++) {
-    for (let i = 0; i < nx; i++) {
-      const type = TYPES[j][i];
-      const x0 = -X / 2 + ROAD + i * (BLOCK + ROAD), z0 = -Z / 2 + ROAD + j * (BLOCK + ROAD);
-      const x1 = x0 + BLOCK, z1 = z0 + BLOCK;
+  for (let row = 0; row < grid.rows; row++) {
+    for (let col = 0; col < grid.cols; col++) {
+      const type = TYPES[row][col];
+      blocks.push({ col, row, type });
+      const { x0, x1, z0, z1 } = blockRect(col, row);
       const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
-      blocks.push({ x0, x1, z0, z1, type });
-      // raised sidewalk slab (the whole block; buildings sit on it)
-      g.add(tiledBox(BLOCK, CURB_H, BLOCK, style.material('sidewalk'), [cx, -CURB_H / 2, cz]));
-      // pedestrians walk a loop in the middle of the sidewalk
-      const o = 1.5;
-      walkLoops.push([[x0 + o, z0 + o], [x1 - o, z0 + o], [x1 - o, z1 - o], [x0 + o, z1 - o]]);
 
       if (type === 'park') {
-        const p = park(style, rng, BLOCK - WALK * 2, BLOCK - WALK * 2);
-        p.group.position.set(cx, 0, cz);
-        g.add(p.group);
-        for (const c of p.colliders) addCollider(c.x + cx, c.z + cz, c.hw, c.hd);
-        parkRect = { x0: x0 + WALK + 1, x1: x1 - WALK - 1, z0: z0 + WALK + 1, z1: z1 - WALK - 1 };
+        place('area.park', { w: BLOCK - WALK * 2, d: BLOCK - WALK * 2, seed: seedOf() }, cx, cz, [0, 1]);
         continue;
       }
 
@@ -96,31 +76,24 @@ export function generateCity(style, seed = 3) {
           let w = spec.min + rng() * (spec.max - spec.min);
           if (inner1 - x - w < spec.min * 0.8) w = inner1 - x; // last lot takes the rest
           const corner = x === inner0 && side === 'south';
-          const builder = pickBuilder(type, rng, corner);
-          const b = typeof builder === 'string' ? shop(style, rng, w, D, builder) : builder(style, rng, w, D);
+          const pick = pickBuilding(type, rng, corner);
           const out = side === 'north' ? [0, -1] : [0, 1];
           const lz = side === 'north' ? z0 + WALK + D / 2 : z1 - WALK - D / 2;
-          place(b.group, x + w / 2, lz, out);
-          // collider: footprint rotated into the world (north side is flipped)
-          const fz = side === 'north' ? lz - b.footprint.z : lz + b.footprint.z;
-          addCollider(x + w / 2, fz, b.footprint.w / 2, b.footprint.d / 2);
-          // a vending machine or planter in front of some buildings
+          place(pick.asset, { w: r2(w), d: D, seed: seedOf(), ...(pick.shopType ? { shopType: pick.shopType } : {}) }, x + w / 2, lz, out);
+          // a vending machine, planter or bicycle in front of some buildings
           const r = rng();
           const frontZ = side === 'north' ? z0 + WALK + 0.1 : z1 - WALK - 0.1;
           const fwd = side === 'north' ? -0.5 : 0.5;
           if (r < 0.25 && w > 8) {
-            const vm = vendingMachine.build({ variant: ['White', 'Red', 'Blue'][Math.floor(rng() * 3)] }, style);
-            place(vm, x + w - 1.2, frontZ + fwd * 0.9, out);
-            addCollider(x + w - 1.2, frontZ + fwd * 0.9, 0.55, 0.45);
+            place('prop.vendingMachine', { variant: ['White', 'Red', 'Blue'][Math.floor(rng() * 3)] }, x + w - 1.2, frontZ + fwd * 0.9, out);
           } else if (r < 0.4) {
-            place(planter.build({ variant: 'Potted plant' }, style), x + 0.8, frontZ + fwd * 0.6, out);
+            place('prop.planter', { variant: 'Potted plant' }, x + 0.8, frontZ + fwd * 0.6, out);
           } else if (r < 0.48) {
-            place(bicycle.build({ color: ['White', 'Gray', 'Blue', 'Red'][Math.floor(rng() * 4)] }, style), x + w - 1, frontZ + fwd * 0.9, [1, 0]);
+            place('vehicle.bicycle', { color: ['White', 'Gray', 'Blue', 'Red'][Math.floor(rng() * 4)] }, x + w - 1, frontZ + fwd * 0.9, [1, 0]);
           }
-          if (builder === 'Konbini') {
-            place(postBox.build({}, style), x + w + 0.2, frontZ + fwd * 1.0, out);
-            addCollider(x + w + 0.2, frontZ + fwd * 1.0, 0.25, 0.25);
-            place(trashBin.build({ variant: 'Recycling station' }, style), x + 2, frontZ + fwd * 0.8, out);
+          if (pick.shopType === 'Konbini') {
+            place('prop.postBox', {}, x + w + 0.2, frontZ + fwd * 1.0, out);
+            place('prop.trashBin', { variant: 'Recycling station' }, x + 2, frontZ + fwd * 0.8, out);
           }
           x += w;
         }
@@ -128,111 +101,80 @@ export function generateCity(style, seed = 3) {
       for (const side of ['west', 'east']) {
         const w = BLOCK - WALK * 2 - D * 2; // the gap between the two rows
         if (w < 6) continue;
-        const builder = pickBuilder(type, rng, false);
-        const b = typeof builder === 'string' ? shop(style, rng, w, D, builder) : builder(style, rng, w, D);
+        const pick = pickBuilding(type, rng, false);
         const out = side === 'west' ? [-1, 0] : [1, 0];
         const lx = side === 'west' ? x0 + WALK + D / 2 : x1 - WALK - D / 2;
-        place(b.group, lx, cz, out);
-        const fx = side === 'west' ? lx - b.footprint.z : lx + b.footprint.z;
-        addCollider(fx, cz, b.footprint.d / 2, b.footprint.w / 2);
+        place(pick.asset, { w: r2(w), d: D, seed: seedOf(), ...(pick.shopType ? { shopType: pick.shopType } : {}) }, lx, cz, out);
       }
-      // ground inside the block, between the building rows
-      g.add(tiledBox(BLOCK - WALK * 2 - 0.2, 0.02, BLOCK - WALK * 2 - D * 2, style.material('concrete', 0x9c9a92), [cx, 0.01, cz]));
+      // paving inside the block, between the building rows
+      place('ground.paving', { w: BLOCK - WALK * 2 - 0.2, d: BLOCK - WALK * 2 - D * 2 }, cx, cz, [0, 1]);
     }
   }
 
   // --- curbside props along every block: utility poles + wires (north and
   // west edges), street lamps (south and east edges)
-  for (const b of blocks) {
+  for (const b of blocks.map((b) => blockRect(b.col, b.row))) {
     const curb = 0.45;
     const poles = [];
     for (let x = b.x0 + 4; x <= b.x1 - 4; x += 16) {
-      place(utilityPole.build({ variant: poles.length % 2 ? 'Plain' : 'With transformer' }, style), x, b.z0 + curb, [0, -1]);
-      addCollider(x, b.z0 + curb, 0.2, 0.2);
+      place('prop.utilityPole', { variant: poles.length % 2 ? 'Plain' : 'With transformer' }, x, b.z0 + curb, [0, -1]);
       poles.push(x);
     }
     for (let k = 0; k < poles.length - 1; k++) {
       for (const [dx, y] of [[-0.6, 8.7], [0.6, 8.7], [0, 7.9]]) {
-        g.add(wire([poles[k] + dx, y, b.z0 + curb], [poles[k + 1] + dx, y, b.z0 + curb], style, 0.5));
+        objects.push({ asset: 'line.wire', params: { a: [r2(poles[k] + dx), y, r2(b.z0 + curb)], b: [r2(poles[k + 1] + dx), y, r2(b.z0 + curb)], sag: 0.5 }, x: 0, z: 0, rot: 0 });
       }
     }
-    for (let z = b.z0 + 12; z <= b.z1 - 8; z += 16) {
-      place(utilityPole.build({ variant: 'Plain' }, style), b.x0 + curb, z, [-1, 0]);
-      addCollider(b.x0 + curb, z, 0.2, 0.2);
-    }
-    for (let x = b.x0 + 12; x <= b.x1 - 8; x += 16) {
-      place(streetLamp.build({ variant: 'Single' }, style), x, b.z1 - curb, [0, 1]);
-      addCollider(x, b.z1 - curb, 0.15, 0.15);
-    }
-    for (let z = b.z0 + 6; z <= b.z1 - 6; z += 16) {
-      place(streetLamp.build({ variant: 'Single' }, style), b.x1 - curb, z, [1, 0]);
-      addCollider(b.x1 - curb, z, 0.15, 0.15);
-    }
+    for (let z = b.z0 + 12; z <= b.z1 - 8; z += 16) place('prop.utilityPole', { variant: 'Plain' }, b.x0 + curb, z, [-1, 0]);
+    for (let x = b.x0 + 12; x <= b.x1 - 8; x += 16) place('prop.streetLamp', { variant: 'Single' }, x, b.z1 - curb, [0, 1]);
+    for (let z = b.z0 + 6; z <= b.z1 - 6; z += 16) place('prop.streetLamp', { variant: 'Single' }, b.x1 - curb, z, [1, 0]);
   }
 
   // --- intersections: crosswalks on every arm, traffic lights on two corners
+  const nx = grid.cols, nz = grid.rows;
   for (let j = 0; j <= nz; j++) {
     for (let i = 0; i <= nx; i++) {
       const xi = -X / 2 + ROAD / 2 + i * (BLOCK + ROAD);
       const zi = -Z / 2 + ROAD / 2 + j * (BLOCK + ROAD);
       const off = ROAD / 2 + 2.3;
-      const top = -CURB_H + 0.001;
+      const top = r2(-CURB_H + 0.001);
       const arms = [];
-      if (i > 0) arms.push([xi - off, zi, 0]);            // arm crossing the road toward -x
-      if (i < nx) arms.push([xi + off, zi, 0]);
-      if (j > 0) arms.push([xi, zi - off, Math.PI / 2]);
-      if (j < nz) arms.push([xi, zi + off, Math.PI / 2]);
-      for (const [x, z, ry] of arms) {
-        const cw = crosswalk.build({}, style, { length: ROAD });
-        cw.position.set(x, top, z);
-        cw.rotation.y = ry;
-        g.add(cw);
-      }
+      if (i > 0) arms.push([xi - off, zi, [0, 1]]);            // arm crossing the road toward -x
+      if (i < nx) arms.push([xi + off, zi, [0, 1]]);
+      if (j > 0) arms.push([xi, zi - off, [1, 0]]);
+      if (j < nz) arms.push([xi, zi + off, [1, 0]]);
+      for (const [x, z, out] of arms) place('prop.crosswalk', { length: ROAD }, x, z, out, top);
       const interior = i > 0 && i < nx && j > 0 && j < nz;
       if (interior) {
         const c = ROAD / 2 + 0.6;
-        const t1 = trafficLight.build({ variant: 'Car signal' }, style);
-        place(t1, xi + c, zi - c, [0, 1]);
-        const t2 = trafficLight.build({ variant: 'Car signal' }, style);
-        place(t2, xi - c, zi + c, [0, -1]);
-        for (const [x, z] of [[xi + c, zi - c], [xi - c, zi + c]]) addCollider(x, z, 0.2, 0.2);
-        const ped = trafficLight.build({ variant: 'Pedestrian signal' }, style);
-        place(ped, xi + c, zi + c, [-1, 0]);
-        addCollider(xi + c, zi + c, 0.2, 0.2);
+        place('prop.trafficLight', { variant: 'Car signal' }, xi + c, zi - c, [0, 1]);
+        place('prop.trafficLight', { variant: 'Car signal' }, xi - c, zi + c, [0, -1]);
+        place('prop.trafficLight', { variant: 'Pedestrian signal' }, xi + c, zi + c, [-1, 0]);
       } else if ((i + j) % 2 === 0) {
-        const s = streetSign.build({ variant: (i + j) % 4 === 0 ? 'Stop' : 'Speed limit' }, style);
-        place(s, xi + ROAD / 2 + 0.6, zi + ROAD / 2 + 0.6, [0, 1]);
+        place('prop.streetSign', { variant: (i + j) % 4 === 0 ? 'Stop' : 'Speed limit' }, xi + ROAD / 2 + 0.6, zi + ROAD / 2 + 0.6, [0, 1]);
       }
     }
   }
 
-  // --- a bus stop and a few street-name signs
-  const b0 = blocks[1];
-  place(busStop.build({ variant: 'Shelter' }, style), (b0.x0 + b0.x1) / 2, b0.z1 - 1.2, [0, 1]);
-  addCollider((b0.x0 + b0.x1) / 2, b0.z1 - 1.6, 1.6, 0.7);
-  place(streetSign.build({ variant: 'Street name' }, style), b0.x1 - 1, b0.z1 - 0.5, [0, 1]);
+  // --- a bus stop and a street-name sign
+  const b0 = blockRect(blocks[1].col, blocks[1].row);
+  place('prop.busStop', { variant: 'Shelter' }, (b0.x0 + b0.x1) / 2, b0.z1 - 1.2, [0, 1]);
+  place('prop.streetSign', { variant: 'Street name' }, b0.x1 - 1, b0.z1 - 0.5, [0, 1]);
 
   // --- parked cars along some curbs (Japan: they drive on the left)
   const kinds = ['Kei car', 'Sedan', 'Minivan', 'Kei car'];
   const colors = ['White', 'Gray', 'Black', 'Blue', 'Red', 'White'];
-  for (const b of blocks) {
+  for (const b of blocks.map((b) => blockRect(b.col, b.row))) {
     if (rng() < 0.5) continue;
     const x = b.x0 + 8 + rng() * (BLOCK - 16);
-    const c = car.build({ variant: kinds[Math.floor(rng() * kinds.length)], color: colors[Math.floor(rng() * colors.length)] }, style);
-    c.position.set(x, -CURB_H, b.z1 + 1.4);
-    c.rotation.y = Math.PI / 2; // facing east: the left (kerb-side) lane for eastbound traffic
-    g.add(c);
-    addCollider(x, b.z1 + 1.4, 2.3, 0.9);
+    // facing east: the left (kerb-side) lane for eastbound traffic
+    place('vehicle.car', { variant: kinds[Math.floor(rng() * kinds.length)], color: colors[Math.floor(rng() * colors.length)] }, x, b.z1 + 1.4, [1, 0], -CURB_H);
   }
 
-  // --- a ring road loop for moving cars (left-hand traffic, clockwise lane)
-  const ring = ROAD / 2;
-  const carLoop = [
-    [-X / 2 + ring, -Z / 2 + ring], [X / 2 - ring, -Z / 2 + ring], [X / 2 - ring, Z / 2 - ring], [-X / 2 + ring, Z / 2 - ring],
-  ];
+  return { format: FORMAT, version: VERSION, meta: { name: 'Sample town', seed }, grid, blocks, objects };
+}
 
-  const inBlock = (x, z) => blocks.some((b) => x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1);
-  const groundHeight = (x, z) => (inBlock(x, z) ? 0 : -CURB_H);
-
-  return { group: g, colliders, walkLoops, carLoop, parkRect, groundHeight, size: { X, Z }, blocks };
+/** Generate a town and build it (the scene plus colliders, loops, ...). */
+export function generateCity(style, seed = 3) {
+  return buildCity(generateCityData(seed), style);
 }
