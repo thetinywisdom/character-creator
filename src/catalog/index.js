@@ -55,7 +55,7 @@ const PROP_COLLIDERS = {
   utilityPole: { hw: 0.2, hd: 0.2 },
   car: { 'Kei car': { hw: 0.74, hd: 1.7 }, Sedan: { hw: 0.89, hd: 2.35 }, Hatchback: { hw: 0.86, hd: 2.0 }, Minivan: { hw: 0.86, hd: 2.35 }, Taxi: { hw: 0.85, hd: 2.2 }, 'Sports car': { hw: 0.79, hd: 1.98 }, Bus: { hw: 1.25, hd: 5.25 } },
   bicycle: { hw: 0.3, hd: 0.85 },
-  scooter: { hw: 0.35, hd: 1.0 },
+  scooter: { '50cc': { hw: 0.45, hd: 0.95 }, Delivery: { hw: 0.45, hd: 0.95 }, 'Step-through': { hw: 0.35, hd: 1.0 }, Motorcycle: { hw: 0.4, hd: 1.1 }, 'Mini scooter': { hw: 0.25, hd: 0.65 } },
   planter: { 'Planter box': { hw: 0.7, hd: 0.25 }, 'Potted plant': { hw: 0.22, hd: 0.22 } },
   cone: { Cone: { hw: 0.18, hd: 0.18 }, Barrier: { hw: 1.1, hd: 0.18 } },
   bollard: { Bollard: { hw: 0.08, hd: 0.08 }, 'Guard rail': { hw: 1.0, hd: 0.06 } },
@@ -118,7 +118,7 @@ const propAssets = PROP_GROUPS.flatMap((group) => group.props.map((prop) => ({
   category: group.label === 'Vehicles' ? 'vehicle' : 'prop',
   variants: prop.variants,
   colors: prop.colors,
-  params: { variant: prop.variants[0], ...(prop.colors ? { color: prop.colors[0] } : {}) },
+  params: { variant: prop.variants[0], ...(prop.colors && !prop.ownColors ? { color: prop.colors[0] } : {}) },
   size: PROP_SIZES[prop.id] ?? [1, 1],
   build(p, style) {
     const obj = prop.build(p, style, p); // crosswalk reads p.length

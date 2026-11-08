@@ -272,70 +272,164 @@ export const bicycle = {
 export const scooter = {
   id: 'scooter',
   label: 'Motorbike',
-  // 50cc: a small step-through scooter; Delivery: the same with a big box on
-  // the back; Step-through: the classic moped with leg shields and a front
-  // basket; Motorcycle: a naked road bike (tank, engine, exhaust)
-  variants: ['50cc', 'Delivery', 'Step-through', 'Motorcycle'],
+  // 50cc / Delivery: the three-wheeled delivery scooter (one wheel in front,
+  //   two close together behind, a flat floor, a windscreen, racks front and
+  //   back); Delivery is the same with boxes on the racks
+  // Step-through: the classic business moped (white leg shield, a coloured
+  //   body under the seat, big spoked wheels, a chrome rack and exhaust)
+  // Motorcycle: a 1980s sport tourer (half fairing with a screen, a long
+  //   seat and tail, the engine showing, cast wheels)
+  // Mini scooter: a tiny folding scooter (a box-shaped body, small wheels, a
+  //   tall handlebar stem, a little seat on top)
+  variants: ['50cc', 'Delivery', 'Step-through', 'Motorcycle', 'Mini scooter'],
   colors: VEHICLE_COLORS,
+  ownColors: true, // each variant has its own default colour (no colour = that one)
   build({ variant = '50cc', color }, style) {
+    const DEFAULT = { '50cc': 'White', Delivery: 'White', 'Step-through': 'Green', Motorcycle: 'Black', 'Mini scooter': 'Yellow' };
+    const paint = style.material('paint', CLOTH_COLORS[color ?? DEFAULT[variant]] ?? 0xf2efe8);
+    const M = {
+      paint,
+      white: style.material('paint', 0xf2efe8),
+      tire: style.material('tire'),
+      dark: style.material('darkMetal', 0x2f3236),
+      metal: style.material('metal', 0xcfccc4),
+      seat: style.material('tire', 0x2f3236),
+      light: style.material('light', 0xf2efe8),
+      tail: style.material('light', 0xc99c98),
+      amber: style.material('light', 0xdcb08c),
+      glass: style.material('glass', 0x9fb6cc),
+    };
     const g = new THREE.Group();
-    const paint = style.material('paint', CLOTH_COLORS[color] ?? 0xd8443c);
-    const tire = style.material('tire');
-    const metal = style.material('metal');
-    const dark = style.material('darkMetal');
+    const poly = (pts) => new THREE.Shape(pts.map(([z, y]) => new THREE.Vector2(z, y)));
+    const wheelAt = (z, r, w, x = 0, hub = M.dark, spokes = false) => {
+      g.add(wheel(r, w, M.tire, [x, r, z], 16));
+      g.add(wheel(r * (spokes ? 0.86 : 0.62), w + 0.01, spokes ? M.metal : hub, [x, r, z], 16));
+      if (spokes) g.add(wheel(r * 0.8, w + 0.02, M.dark, [x, r, z]), wheel(r * 0.22, w + 0.03, M.metal, [x, r, z]));
+    };
+    const fork = (top, bottom, x = 0.08, mat = M.metal) => { for (const sx of [-1, 1]) g.add(capsuleBetween([sx * x, top[1], top[0]], [sx * x, bottom[1], bottom[0]], 0.025, mat, 5)); };
+    const fender = (z, r, from, to, w, mat) => {
+      // an arc over a wheel (angles in radians, 0 = forward)
+      const sh = new THREE.Shape();
+      sh.absarc(0, 0, r + 0.06, from, to, false);
+      sh.absarc(0, 0, r + 0.02, to, from, true);
+      const m = extrude(sh, w, mat, 0);
+      m.position.set(0, r, z);
+      g.add(m);
+    };
+    const handlebar = (z, y, w = 0.32) => g.add(capsuleBetween([-w, y, z], [w, y, z], 0.018, M.dark, 5));
+    const mirror = (z, y, sx) => {
+      g.add(capsuleBetween([sx * 0.22, y, z], [sx * 0.26, y + 0.22, z], 0.008, M.metal, 4));
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.02, 8), M.metal);
+      m.rotation.x = Math.PI / 2; // a round mirror facing back at the rider
+      m.position.set(sx * 0.26, y + 0.24, z);
+      g.add(m);
+    };
+
     if (variant === 'Motorcycle') {
-      const r = 0.3;
-      g.add(wheel(r, 0.13, tire, [0, r, 0.72]));
-      g.add(wheel(r, 0.15, tire, [0, r, -0.72]));
-      // engine block between the wheels, tank on top, seat behind it
-      g.add(box(0.3, 0.32, 0.5, dark, [0, 0.42, 0.02]));
-      const tank = softBox(0.34, 0.24, 0.5, paint, { round: 0.4 });
-      tank.position.set(0, 0.86, 0.22);
-      g.add(tank);
-      g.add(box(0.26, 0.1, 0.58, tire, [0, 0.84, -0.32], [0.08, 0, 0]));       // seat
-      g.add(box(0.2, 0.14, 0.4, paint, [0, 0.78, -0.62], [0.2, 0, 0]));        // tail
-      g.add(capsuleBetween([0, 0.62, -0.35], [0, r, -0.72], 0.03, metal, 5));  // swingarm
-      g.add(capsuleBetween([0, 1.0, 0.5], [0, r, 0.72], 0.03, metal, 5));      // forks
-      g.add(capsuleBetween([-0.34, 1.06, 0.46], [0.34, 1.06, 0.46], 0.022, dark, 5)); // bars
-      g.add(cyl(0.08, 0.08, 0.08, style.material('light'), [0, 0.98, 0.62], { rot: [Math.PI / 2, 0, 0] })); // round headlight
-      g.add(capsuleBetween([0.18, 0.34, 0.2], [0.2, 0.42, -0.8], 0.045, metal, 6)); // exhaust
+      wheelAt(0.74, 0.31, 0.13, 0, style.material('paint', 0xc99c98));
+      wheelAt(-0.74, 0.31, 0.15, 0, style.material('paint', 0xc99c98));
+      // tank, fairing, seat base and tail as one side outline
+      // (the bodywork stays above the wheels: they show in full, like a real bike)
+      g.add(extrude(poly([[-1.08, 0.86], [-0.95, 0.98], [-0.62, 0.92], [-0.1, 0.92], [0.02, 1.06], [0.36, 1.09], [0.56, 1.12], [0.8, 1.04], [0.96, 0.84], [0.86, 0.7], [0.55, 0.72], [0.3, 0.8], [-0.15, 0.7], [-0.45, 0.72], [-0.98, 0.8]]), 0.34, paint, 0.03));
+      g.add(extrude(poly([[-0.88, 0.96], [-0.68, 1.04], [-0.1, 0.98], [-0.05, 0.92], [-0.88, 0.92]]), 0.3, M.seat, 0.02)); // seat
+      g.add(extrude(poly([[0.45, 0.62], [0.5, 0.42], [0.35, 0.3], [0.0, 0.3], [-0.05, 0.42], [0.3, 0.66]]), 0.3, style.material('paint', 0x6f747a), 0.02)); // grey belly pan under the engine
+      g.add(extrude(poly([[0.56, 1.12], [0.66, 1.36], [0.72, 1.34], [0.8, 1.04]]), 0.3, M.glass, 0)); // screen
+      g.add(box(0.28, 0.32, 0.42, M.dark, [0, 0.5, 0.05]));                                    // engine
+      for (let k = 0; k < 3; k++) g.add(box(0.3, 0.025, 0.3, M.dark, [0, 0.64 + k * 0.05, 0.12]));
+      g.add(capsuleBetween([0.12, 0.34, 0.1], [0.14, 0.42, -0.85], 0.055, M.dark, 6));        // silencer
+      fork([0.62, 1.04], [0.74, 0.31]);
+      g.add(capsuleBetween([0, 0.5, -0.1], [0, 0.31, -0.74], 0.03, M.metal, 5));              // swingarm
+      g.add(capsuleBetween([0, 0.78, -0.45], [0, 0.4, -0.6], 0.03, M.dark, 5));               // rear shock
+      fender(0.74, 0.31, Math.PI * 0.2, Math.PI * 0.75, 0.14, paint);
+      g.add(box(0.2, 0.08, 0.05, M.light, [0, 0.9, 0.96]));                                    // headlight
+      g.add(box(0.18, 0.06, 0.04, M.tail, [0, 0.92, -1.08]));
+      for (const sx of [-1, 1]) g.add(box(0.06, 0.04, 0.04, M.amber, [sx * 0.2, 0.92, 0.8]));
+      g.add(box(0.36, 0.02, 0.9, style.material('paint', 0xc99c98), [0, 0.92, 0.12]));        // a pinstripe
+      handlebar(0.5, 1.08, 0.28);
+      for (const sx of [-1, 1]) g.add(box(0.08, 0.06, 0.05, M.dark, [sx * 0.24, 1.16, 0.72])); // fairing mirrors
+      g.userData.size = { hw: 0.4, hd: 1.1 };
       return g;
     }
-    const r = 0.22;
-    g.add(wheel(r, 0.1, tire, [0, r, 0.6]));
-    g.add(wheel(r, 0.1, tire, [0, r, -0.6]));
+
     if (variant === 'Step-through') {
-      // a backbone frame low between the wheels, leg shields, a front basket
-      g.add(capsuleBetween([0, 0.82, 0.48], [0, 0.4, 0.05], 0.05, paint, 6));
-      g.add(capsuleBetween([0, 0.4, 0.05], [0, 0.55, -0.4], 0.06, paint, 6));
-      g.add(box(0.36, 0.5, 0.06, paint, [0, 0.55, 0.36], [-0.25, 0, 0]));       // leg shields
-      g.add(box(0.26, 0.12, 0.48, paint, [0, 0.58, -0.45]));                    // side covers
-      g.add(box(0.26, 0.08, 0.5, tire, [0, 0.7, -0.4]));                        // seat
-      g.add(box(0.36, 0.05, 0.36, dark, [0, 0.74, -0.85]));                     // rear rack
-      g.add(capsuleBetween([0, 1.02, 0.5], [0, r, 0.6], 0.025, metal, 5));       // forks
-      g.add(capsuleBetween([-0.3, 1.06, 0.48], [0.3, 1.06, 0.48], 0.022, metal, 5));
-      g.add(box(0.12, 0.09, 0.05, style.material('light'), [0, 0.98, 0.58]));
-      g.add(box(0.32, 0.2, 0.26, dark, [0, 0.94, 0.72]));                       // basket
+      wheelAt(0.62, 0.3, 0.09, 0, M.dark, true);
+      wheelAt(-0.6, 0.3, 0.1, 0, M.dark, true);
+      // the coloured body under the seat, over the back wheel
+      g.add(extrude(poly([[-1.0, 0.56], [-0.98, 0.78], [-0.3, 0.82], [-0.05, 0.74], [0.02, 0.46], [-0.22, 0.4], [-0.32, 0.58], [-0.86, 0.6]]), 0.3, paint, 0.03));
+      // the white leg shield, sweeping down from the steering head to the floor
+      g.add(extrude(poly([[0.02, 0.3], [0.2, 0.28], [0.44, 0.98], [0.34, 1.04], [0.14, 0.62], [0.0, 0.48]]), 0.4, M.white, 0.03));
+      g.add(box(0.3, 0.13, 0.56, M.seat, [0, 0.9, -0.38]));                                   // seat
+      g.add(box(0.34, 0.03, 0.46, M.metal, [0, 0.86, -0.82]));                                 // chrome rack
+      g.add(box(0.2, 0.18, 0.26, M.metal, [0, 0.32, 0.0]));                                    // engine
+      g.add(capsuleBetween([-0.14, 0.24, 0.1], [-0.14, 0.3, -0.95], 0.04, M.metal, 6));        // chrome exhaust
+      fork([0.42, 1.0], [0.62, 0.3], 0.07, paint);
+      fender(0.62, 0.3, Math.PI * 0.1, Math.PI * 0.9, 0.14, paint);                           // the big front mudguard
+      // headlight in a cowl on the handlebar, round mirror on a stalk
+      g.add(box(0.2, 0.16, 0.16, paint, [0, 1.08, 0.44]));
+      const hl = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.04, 10), M.light);
+      hl.rotation.x = Math.PI / 2;
+      hl.position.set(0, 1.08, 0.53);
+      g.add(hl);
+      handlebar(0.42, 1.12, 0.3);
+      mirror(0.4, 1.12, -1);
+      for (const sx of [-1, 1]) g.add(box(0.06, 0.05, 0.05, M.amber, [sx * 0.14, 1.1, 0.52]));
+      g.add(box(0.12, 0.08, 0.05, M.tail, [0, 0.76, -1.02]));
+      g.userData.size = { hw: 0.35, hd: 1.0 };
       return g;
     }
-    // body: rear cowl under the seat, low floorboard, front shield
-    const cowl = softBox(0.4, 0.42, 0.8, paint, { round: 0.35 });
-    cowl.position.set(0, 0.5, -0.38);
-    g.add(cowl);
-    g.add(box(0.3, 0.08, 0.5, paint, [0, 0.3, 0.12]));
-    g.add(box(0.42, 0.7, 0.12, paint, [0, 0.62, 0.45], [-0.2, 0, 0]));
-    g.add(box(0.3, 0.08, 0.6, tire, [0, 0.75, -0.4])); // seat
-    g.add(cyl(0.03, 0.03, 0.4, metal, [0, 0.95, 0.52], { rot: [-0.25, 0, 0] }));
-    g.add(capsuleBetween([-0.3, 1.13, 0.47], [0.3, 1.13, 0.47], 0.025, dark, 5));
-    g.add(box(0.14, 0.1, 0.05, style.material('light'), [0, 1.0, 0.58]));
-    if (variant === 'Delivery') {
-      // a big delivery box on a rack, in the bike's colour with a white lid
-      g.add(box(0.5, 0.06, 0.5, dark, [0, 0.82, -0.78]));
-      g.add(box(0.48, 0.4, 0.46, paint, [0, 1.05, -0.78]));
-      g.add(box(0.5, 0.05, 0.48, style.material('paint', 0xf2f2ee), [0, 1.27, -0.78]));
-    } else {
-      g.add(box(0.36, 0.26, 0.32, dark, [0, 0.92, -0.75])); // rear box
+
+    if (variant === 'Mini scooter') {
+      // small wheels showing under the box: the front one ahead of it on a short fork
+      wheelAt(0.66, 0.17, 0.1);
+      wheelAt(-0.36, 0.17, 0.1);
+      // the box body: a rounded rectangle up off the ground
+      g.add(extrude(poly([[-0.56, 0.38], [-0.56, 0.7], [0.48, 0.7], [0.54, 0.64], [0.54, 0.44], [0.48, 0.38]]), 0.3, paint, 0.03));
+      g.add(box(0.32, 0.07, 0.9, M.dark, [0, 0.6, -0.03]));                                    // dark side strip (handles)
+      g.add(box(0.3, 0.14, 0.42, M.dark, [0, 0.3, -0.3]));                                     // engine under the back
+      g.add(box(0.2, 0.06, 0.3, M.seat, [0, 0.8, -0.3]));                                      // seat
+      g.add(box(0.04, 0.08, 0.04, M.dark, [0, 0.74, -0.3]));
+      fork([0.5, 0.62], [0.66, 0.17], 0.05, M.dark);
+      g.add(capsuleBetween([0, 0.68, 0.5], [0, 1.14, 0.42], 0.022, M.dark, 5));                // handlebar stem
+      handlebar(0.42, 1.14, 0.2);
+      g.add(box(0.1, 0.08, 0.06, M.light, [0, 1.02, 0.47]));
+      g.add(box(0.1, 0.06, 0.03, M.amber, [0, 0.6, -0.58]));
+      fender(0.66, 0.17, Math.PI * 0.15, Math.PI * 0.85, 0.1, M.dark);
+      mirror(0.44, 1.14, -1);
+      g.userData.size = { hw: 0.25, hd: 0.7 };
+      return g;
     }
+
+    // 50cc / Delivery: the three-wheeled delivery scooter
+    wheelAt(0.62, 0.2, 0.1);
+    for (const sx of [-1, 1]) wheelAt(-0.56, 0.2, 0.11, sx * 0.24);
+    g.add(extrude(poly([[0.18, 0.26], [0.42, 0.28], [0.58, 1.0], [0.48, 1.06], [0.3, 0.5], [0.18, 0.4]]), 0.4, paint, 0.03)); // leg shield
+    g.add(box(0.36, 0.06, 0.62, M.dark, [0, 0.3, -0.04]));                                     // floor deck
+    g.add(extrude(poly([[-0.9, 0.36], [-0.9, 0.62], [-0.3, 0.66], [-0.16, 0.5], [-0.22, 0.32]]), 0.42, paint, 0.03)); // rear body
+    const pod = softBox(0.78, 0.26, 0.62, paint, { round: 0.4 });                             // fender pod over the back wheels
+    pod.position.set(0, 0.36, -0.56);
+    g.add(pod);
+    g.add(box(0.32, 0.1, 0.48, M.seat, [0, 0.72, -0.42]));                                    // seat
+    g.add(box(0.42, 0.03, 0.42, M.metal, [0, 0.78, -0.8]));                                   // rear rack
+    g.add(box(0.32, 0.03, 0.26, M.metal, [0, 0.74, 0.72]));                                   // front rack
+    fork([0.52, 0.95], [0.62, 0.2], 0.06, M.dark);
+    g.add(extrude(poly([[0.5, 1.1], [0.56, 1.42], [0.62, 1.4], [0.6, 1.08]]), 0.36, M.glass, 0)); // windscreen
+    handlebar(0.48, 1.08, 0.3);
+    g.add(box(0.14, 0.1, 0.05, M.light, [0, 0.92, 0.58]));
+    for (const sx of [-1, 1]) {
+      g.add(box(0.06, 0.05, 0.05, M.amber, [sx * 0.18, 1.0, 0.56]));
+      g.add(box(0.06, 0.08, 0.04, M.tail, [sx * 0.3, 0.52, -0.9]));
+    }
+    mirror(0.46, 1.08, -1);
+    mirror(0.46, 1.08, 1);
+    if (variant === 'Delivery') {
+      // cardboard boxes strapped to both racks
+      const card = style.material('cloth', 0xd8caa8), strap = M.dark;
+      g.add(box(0.46, 0.4, 0.42, card, [0, 1.0, -0.8]));
+      g.add(box(0.47, 0.41, 0.04, strap, [0, 1.0, -0.72]), box(0.47, 0.41, 0.04, strap, [0, 1.0, -0.88]));
+      g.add(box(0.32, 0.24, 0.24, card, [0, 0.88, 0.72]));
+      g.add(box(0.33, 0.25, 0.03, strap, [0, 0.88, 0.72]));
+    }
+    g.userData.size = { hw: 0.45, hd: 0.95 };
     return g;
   },
 };

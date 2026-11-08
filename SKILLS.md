@@ -134,7 +134,9 @@ src/lib/               shapes, merge (one mesh per material), skin (one skinned 
 muted darks; no bright colours. The style snaps material colours
 (`snapColor`) and painted canvases (`paletteCanvas`, already called for
 signs, interiors and facades); call `paletteCanvas` on any new painted
-texture. Skin is the only exception. See STYLE_GUIDE.md §2.
+texture. Skin is the only exception. Buildings are stricter: the
+`building`, `buildingAlt`, `roof`, `concrete` and `wood` roles snap to
+`BUILDING_PALETTE` (greys, brick, wood browns only). See STYLE_GUIDE.md §2.
 
 **Style by role.** Models never pick materials directly; they ask
 `style.material(role, color?, map?)` with roles like `skin`, `cloth`, `hair`,
@@ -160,7 +162,9 @@ buildings, street, traffic, extras, nature, animals, vehicles, areas.
 `poseCat`, `anim/catGait.js`). Trees (`nature.tree`) come in 11 presets
 (oak, lollipop, pine, old giant, cherry blossom, Japanese maple, ginkgo,
 zelkova, black pine, weeping willow, bamboo); motorbikes
-(`vehicle.scooter`) in 50cc, Delivery, Step-through and Motorcycle; cars
+(`vehicle.scooter`) in 50cc and Delivery (three-wheelers), Step-through,
+Motorcycle and Mini scooter (each with its own default colour when no
+`color` is given); cars
 (`vehicle.car`) in Kei car, Sedan, Hatchback, Minivan, Taxi, Sports car and
 Bus. Cars are built from a side profile extruded across the width (`CARS`
 in `props/vehicles.js`: `body` and `glass` outlines, axle and door positions);
@@ -290,7 +294,7 @@ faces +z, returns `{ group, footprint, colliders }`) in `shops.js` /
 `shopWindow`), add it to `SHOP_BUILDINGS` / `CIVIC_BUILDINGS` with label and
 lot size, give it a painted interior (`PAINT` in `interiors.js`). Optionally
 add it to block fills in `layout.js`. It then appears in the Catalogue. Bump
-`VERSION` in `catalog/thumbs.js` if an existing item's look changes (now 6: dressed backs).
+`VERSION` in `catalog/thumbs.js` if an existing item's look changes (now 8: building colours, motorbikes).
 
 **Add a prop.** Add `{ id, label, variants, colors?, build(params, style) }` to
 a file in `src/props/`, list it in `PROP_GROUPS` (`props/index.js`), add its

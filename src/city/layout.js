@@ -120,8 +120,8 @@ export function blockObjects(grid, block) {
           place('vehicle.bicycle', { color: ['White', 'Gray', 'Blue', 'Red'][Math.floor(rng() * 4)] }, x + w - 1, frontZ + fwd * 0.9, [1, 0]);
         } else if (r < 0.55) {
           // a parked motorbike (a delivery scooter outside food shops)
-          const variant = pick.shopType ? 'Delivery' : ['50cc', 'Step-through', 'Motorcycle'][Math.floor(rng() * 3)];
-          place('vehicle.scooter', { variant, color: ['Red', 'White', 'Black', 'Blue', 'Green'][Math.floor(rng() * 5)] }, x + w - 1.2, frontZ + fwd * 1.0, [1, 0]);
+          const variant = pick.shopType ? 'Delivery' : ['50cc', 'Step-through', 'Motorcycle', 'Mini scooter'][Math.floor(rng() * 4)];
+          place('vehicle.scooter', { variant, color: { '50cc': 'White', Delivery: 'White', 'Step-through': 'Green', Motorcycle: 'Black', 'Mini scooter': 'Yellow' }[variant] }, x + w - 1.2, frontZ + fwd * 1.0, [1, 0]);
         }
         if (pick.shopType === 'Konbini') {
           place('prop.postBox', {}, x + w + 0.2, frontZ + fwd * 1.0, out);

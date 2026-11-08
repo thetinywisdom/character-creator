@@ -19,6 +19,7 @@ games), 🏙 City (walk a generated sample town to experiment).
 | Area | Decision |
 |---|---|
 | Look | PS1 (low-res pixels, dither, outlines) in one muted / pastel palette |
+| Building colour | Walls, roofs, concrete and wood: greys, brick and wood browns only (natural colours, as in Japanese townscape rules) |
 | Colour | One palette (greyscale muted and off-white, pastels, a few muted darks), no bright colours; enforced in code (every colour and painted texture is snapped to it; skin excepted) |
 | Setting | A small Japanese town; cars drive on the left; Japanese signs |
 | Characters | Realistic proportions, no faces, tiny in the city; body types Man, Woman, Boy, Girl, each with a default design; builds Skinny / Normal / Bulky / Fat; the cat drawn 1.5× |
@@ -71,6 +72,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 27. **Lively backs and sides**: every building's bare back and side walls get windows (lit at night), AC units, back doors, drain pipes and fire escapes, found automatically (`city/backs.js`).
 
 28. **The palette**: one muted / pastel palette (27 colours, Catalogue 🎨 Palette tab); every material and painted texture snapped to it; clothes and hair lists remapped; readable sign text; sign faces no longer washed out by day.
+
+29. **Natural building colours and real motorbikes**: buildings snap to greys, brick and wood browns only; motorbikes rebuilt from the owner's references (three-wheeled 50cc / delivery scooter, step-through moped, 1980s sport tourer, new mini folding scooter).
 
 ## Next (only when the owner asks)
 

@@ -41,6 +41,7 @@ the Catalogue's 🎨 Palette tab):
 | Greyscale | Off white `#f2efe8`, Paper `#e4e0d6`, Light gray `#cfccc4`, Stone `#b3b0a8`, Gray `#918f8a`, Slate `#6f747a`, Charcoal `#4a4d52`, Ink `#2f3236` |
 | Pastels | Blush `#e8c8c4`, Dusty rose `#c99c98`, Peach `#ecccb0`, Apricot `#dcb08c`, Butter `#ece0aa`, Sand `#d8caa8`, Sage `#b6c6a6`, Mint `#c4dccf`, Seafoam `#9fbfb6`, Sky `#bcd2e0`, Powder blue `#9fb6cc`, Lavender `#c9c2dc`, Lilac `#a99dbf` |
 | Muted darks | Moss `#8aa082`, Denim `#7d93ab`, Navy `#56647a`, Tan `#b89e80`, Cocoa `#8a7462`, Walnut `#66584c` |
+| Buildings only | Brick `#9e6c60` |
 
 **How it is enforced:** every material colour is snapped to the nearest
 palette colour in the style (`snapColor`: loud colours are tamed first, so a
@@ -50,6 +51,12 @@ shop interiors, curtains, office facades) is snapped pixel by pixel
 palette. **Skin tones are the one exception** (kept natural). Light masks for
 night glow are not snapped (they are not seen as colours).
 
+- **Buildings are stricter** (like Japanese townscape rules that keep
+  colours natural): walls, roofs, concrete and wood use only the greyscale,
+  **Brick** `#9e6c60` and the wood browns (Tan, Cocoa, Walnut). No yellow,
+  pink, blue or green buildings. Signs, awnings, noren and shop goods keep
+  the pastels. Enforced: the `building`, `buildingAlt`, `roof`, `concrete`
+  and `wood` roles snap to `BUILDING_PALETTE`.
 - **Sky:** the palette's Sky `#bcd2e0`.
 - **Signs:** the text is always readable: if the snapped text and board are
   too close in lightness, the text becomes Ink or Off white. Sign faces glow
@@ -337,9 +344,19 @@ About one in six random characters is a child.
   lamp), sports car (small 1970s fastback coupé: long bonnet, round lamps,
   chrome bumpers and sill line, fender mirrors), city bus (window band,
   doors on the left, lit destination sign). No brand logos.
-- **Motorbikes:** 50cc scooter, delivery scooter (big box in the bike's colour
-  with a white lid), step-through moped (leg shields, front basket), naked
-  motorcycle (tank, black engine block, round headlight, exhaust).
+- **Motorbikes** (no logos), each with its own default colour:
+  - *50cc / Delivery:* the three-wheeled delivery scooter: one small wheel in
+    front, two close together behind under a rounded pod, a tall leg shield
+    with a windscreen, a flat floor, racks front and back (Delivery: strapped
+    cardboard boxes on both). White.
+  - *Step-through:* the classic business moped: white leg shield sweeping
+    down to the floor, a coloured body under the seat, big spoked wheels, a
+    big front mudguard, a chrome rack and exhaust, a round mirror. Green.
+  - *Motorcycle:* a 1980s sport tourer: half fairing with a screen, tank,
+    long seat and tail, the engine and a grey belly pan showing, cast wheels
+    with coloured rims, a pinstripe. Black.
+  - *Mini scooter:* a tiny folding scooter: a box body up on small wheels, a
+    dark side strip, a tall handlebar stem, a little seat on top. Yellow.
 - **Cat:** walks with the cat's lateral sequence (feet a quarter cycle apart),
   head nodding, tail held up and swaying; runs with a bounding gallop (front
   pair, then back pair), the body rocking and the tail lowered behind.

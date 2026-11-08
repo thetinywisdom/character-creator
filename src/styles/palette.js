@@ -112,7 +112,16 @@ export const PALETTE = {
   Tan: 0xb89e80,
   Cocoa: 0x8a7462,
   Walnut: 0x66584c,
+  // building exception: brick
+  Brick: 0x9e6c60,
 };
+
+// Buildings follow a stricter rule (as Japanese townscape guidelines keep
+// colours natural): greys and off-whites only, plus brick and wood browns.
+// No yellow, pink, blue or green walls or roofs.
+export const BUILDING_PALETTE = ['Off white', 'Paper', 'Light gray', 'Stone', 'Gray', 'Slate', 'Charcoal', 'Ink', 'Brick', 'Tan', 'Cocoa', 'Walnut'];
+/** Material roles that count as "the building" (walls, roofs, wood, concrete). */
+export const BUILDING_ROLES = new Set(['building', 'buildingAlt', 'roof', 'concrete', 'wood']);
 
 // sRGB hex -> CIE Lab (for "nearest colour as the eye sees it")
 function lab(hex) {
@@ -123,23 +132,29 @@ function lab(hex) {
   return [116 * k(y) - 16, 500 * (k(x) - k(y)), 200 * (k(y) - k(z))];
 }
 const PAL = Object.values(PALETTE).map((h) => [h, lab(h)]);
-const snapCache = new Map();
+const PAL_BUILDING = BUILDING_PALETTE.map((n) => [PALETTE[n], lab(PALETTE[n])]);
+const snapCache = new Map(), snapBuildingCache = new Map();
 
-/** The palette colour nearest to `hex` (bright colours are tamed first, so a red sign becomes dusty rose, not grey). */
-export function snapColor(hex) {
+/**
+ * The palette colour nearest to `hex` (bright colours are tamed first, so a
+ * red sign becomes dusty rose, not grey). building: true snaps to the
+ * building palette (greys, brick, wood browns).
+ */
+export function snapColor(hex, { building = false } = {}) {
   hex &= 0xffffff;
-  if (snapCache.has(hex)) return snapCache.get(hex);
+  const cache = building ? snapBuildingCache : snapCache;
+  if (cache.has(hex)) return cache.get(hex);
   let [L, a, b] = lab(hex);
   // tame: cut the colourfulness, keep the hue, so loud colours land on their pastel
   const c = Math.hypot(a, b), max = 22;
   if (c > max) { a *= max / c; b *= max / c; }
   L = Math.max(22, Math.min(95, L));
   let best = PAL[0][0], bd = Infinity;
-  for (const [h, [l2, a2, b2]] of PAL) {
+  for (const [h, [l2, a2, b2]] of building ? PAL_BUILDING : PAL) {
     const d = (L - l2) ** 2 * 0.6 + (a - a2) ** 2 + (b - b2) ** 2;
     if (d < bd) { bd = d; best = h; }
   }
-  snapCache.set(hex, best);
+  cache.set(hex, best);
   return best;
 }
 

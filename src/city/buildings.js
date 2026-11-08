@@ -8,7 +8,8 @@ import { FACADES, roofClutter, roofSign, sideWindows, wrapFacades } from './faca
 // a lot of width w (x) and depth d (z), stands on y = 0, is centred on the
 // lot and faces +z (the street). Real-world sizes in metres.
 
-export const WALLS = [0xe8dcc6, 0xf0efe8, 0xc9c4b8, 0xd8c3a5, 0xb9c3c9, 0xe6d2c8, 0xa89a88];
+// natural wall colours only (the building palette): off-whites, greys, brick, wood
+export const WALLS = [0xf2efe8, 0xe4e0d6, 0xcfccc4, 0xb3b0a8, 0x918f8a, 0x9e6c60, 0xb89e80];
 export const FLOOR = 3;
 
 import { car } from '../props/vehicles.js';
