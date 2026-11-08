@@ -9,7 +9,7 @@ import { buildCity } from './build.js';
 import { JOINT_NAMES, createGait, poseGait, stepGait } from '../anim/gait.js';
 import { Precipitation, lampPools, setNightGlow, setSnowCover, weatherLight } from './atmosphere.js';
 import { giveHeldItem } from '../subjects/human.js';
-import { addSilhouette, markPerson, silhouetteMaterial } from './silhouette.js';
+import { addObjectSilhouette, addSilhouette, markPerson, silhouetteMaterial } from './silhouette.js';
 import { CAT_JOINTS, CAT_RUN_SPEED, CAT_WALK_SPEED, createCatGait, poseCat, stepCatGait } from '../anim/catGait.js';
 
 // The walkable town: a generated city, your character (built from the
@@ -120,7 +120,7 @@ export class City {
     // bright colour so you can always find yourself, everyone else in blue
     this.silhouettes = [];
     const silCache = new Map();
-    const silPeople = silhouetteMaterial(0x3a64b8, 0.6), silPlayer = silhouetteMaterial(0xf2b64a, 0.85);
+    const silPeople = silhouetteMaterial(0x3a64b8, 0.7), silPlayer = silhouetteMaterial(0xf2b64a, 0.85);
     const buildPerson = (p, player = false) => {
       const raw = human.build(p, style);
       style.decorate?.(raw);
@@ -165,6 +165,8 @@ export class City {
       const raw = cat.build({ ...params.cat }, style);
       // one skinned mesh per cat, joints kept for the walk / run (anim/catGait.js)
       const body = skinCharacter(raw, new Set(CAT_JOINTS), personMat);
+      const catSil = addSilhouette(body, silPeople, silCache);
+      if (catSil) this.silhouettes.push(catSil);
       const root = new THREE.Group();
       root.scale.setScalar(cat.exaggeration ?? 1);
       root.add(body);
@@ -174,15 +176,19 @@ export class City {
 
     // a few cars driving round the ring road (on the left, Japanese style)
     this.cars = [];
-    const kinds = ['Kei car', 'Sedan', 'Taxi', 'Minivan', 'Kei car'];
-    const colors = ['White', 'Red', undefined, 'Blue', 'Yellow'];
+    const kinds = ['Kei car', 'Sedan', 'Taxi', 'Minivan', 'Hatchback', 'Bus', 'Sports car', 'Kei car'];
+    const colors = ['White', 'Red', undefined, 'Blue', 'Gray', 'White', 'Yellow', 'Green'];
+    const silCars = silhouetteMaterial(0x3a64b8, 0.65);
     const loops = city.carLoops ?? (city.carLoop ? [city.carLoop] : []);
     for (let i = 0; i < kinds.length && loops.length; i++) {
       const loop = loops[(i * 7) % loops.length]; // spread over the blocks
       const ring = loopLengths(loop);
-      const obj = mergeByMaterial(car.build({ variant: kinds[i], color: colors[i] }, style));
+      const built = car.build({ variant: kinds[i], color: colors[i] }, style);
+      const obj = mergeByMaterial(built);
+      this.silhouettes.push(...addObjectSilhouette(obj, silCars, silCache));
       this.scene.add(obj);
-      this.cars.push({ obj, s: rng() * ring.total, speed: 7 + rng() * 3, ...ring, loop });
+      const bus = kinds[i] === 'Bus';
+      this.cars.push({ obj, size: built.userData.size ?? { hw: 0.9, hd: 2.3 }, s: rng() * ring.total, speed: bus ? 5 + rng() : 7 + rng() * 3, ...ring, loop });
     }
     setDetail(1);
 
@@ -281,7 +287,7 @@ export class City {
     const fx = car.fx ?? 0, fz = car.fz ?? 1;
     const dx = pos.x - x, dz = pos.z - z;
     const along = dx * fx + dz * fz, side = dx * fz - dz * fx; // car space
-    const HW = 0.9, HD = 2.3;
+    const HW = car.size?.hw ?? 0.9, HD = car.size?.hd ?? 2.3;
     if (Math.abs(side) > HW + r || Math.abs(along) > HD + r) return;
     const ca = Math.max(-HD, Math.min(HD, along)), cs = Math.max(-HW, Math.min(HW, side));
     let oa = along - ca, os = side - cs;
@@ -453,14 +459,16 @@ export class City {
       c.wait ??= 0;
       let blocked = false;
       if (c.fx !== undefined) {
-        const ahead = (o, car = false) => {
+        // look ahead from this vehicle's nose (buses are long), plus the other vehicle's half length
+        const nose = c.size.hd;
+        const ahead = (o, other = null) => {
           const dx = o.x - c.obj.position.x, dz = o.z - c.obj.position.z;
           const along = dx * c.fx + dz * c.fz, side = Math.abs(dx * c.fz - dz * c.fx);
-          return along > 0.5 && along < (car ? 6.5 : 5) && side < (car ? 1.4 : 1.3);
+          return along > 0.5 && along < nose + (other ? 4.2 + other.size.hd : 2.7) && side < (other ? 1.4 : 1.3);
         };
         if (ahead(p)) blocked = true;
         for (const n of this.npcs) if (n.pos && ahead(n.pos)) blocked = true;
-        if (c.wait < 3) for (const o of this.cars) if (o !== c && ahead(o.obj.position, true)) blocked = true;
+        if (c.wait < 3) for (const o of this.cars) if (o !== c && ahead(o.obj.position, o)) blocked = true;
       }
       c.wait = blocked ? c.wait + dt : 0;
       c.speed += ((blocked ? 0 : c.cruise) - c.speed) * Math.min(1, dt * (blocked ? 6 : 1.5));

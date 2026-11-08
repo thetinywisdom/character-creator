@@ -330,6 +330,14 @@ About one in six random characters is a child.
   one button); straw hat (wide brim, red band); flat cap.
 - **Looks** are clothes-only presets (office worker, police officer, delivery
   worker, summer stroll, rainy day, coffee run, on the phone).
+- **Cars** look like real cars, not toys: built from a side silhouette with
+  wheel arches, a cabin narrower than the body, painted roof and pillars,
+  door lines and handles, bumpers, lights and mirrors. Kei car (tall 4-seat
+  box), sedan, hatchback, 6-seat minivan (sliding door), taxi (tall and
+  upright, short sloping nose, square back, fender mirrors, deep navy, roof
+  lamp), sports car (small 1970s fastback coupé: long bonnet, round lamps,
+  chrome bumpers and sill line, fender mirrors), city bus (window band,
+  doors on the left, lit destination sign). No brand logos.
 - **Motorbikes:** 50cc scooter, delivery scooter (big box in the bike's colour
   with a white lid), step-through moped (leg shields, front basket), naked
   motorcycle (tank, black engine block, round headlight, exhaust).
@@ -371,8 +379,9 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   the door and displays on either side, awnings and signs in a few schemes,
   bikes / boards / planters out front. Colour changes alone don't count.
 - **Iso view: see-through people.** People behind buildings show as flat
-  silhouettes, blue at 60% (the player yellow at 85%), so nobody is lost
-  behind a building.
+  silhouettes, blue (the player yellow), so nobody is lost behind a
+  building; the same for cats, cars and buses. Each silhouette is one even
+  flat tint.
 
 - **Buildings** are boxes with a few strong details, in muted wall colours:
   houses (2 floors, gable tile roof, low block wall, small balcony), apartment

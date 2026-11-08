@@ -52,7 +52,7 @@ const PROP_COLLIDERS = {
   vendingMachine: { hw: 0.55, hd: 0.45 },
   phoneBooth: { hw: 0.5, hd: 0.5 },
   utilityPole: { hw: 0.2, hd: 0.2 },
-  car: { hw: 0.9, hd: 2.3 },
+  car: { 'Kei car': { hw: 0.74, hd: 1.7 }, Sedan: { hw: 0.89, hd: 2.35 }, Hatchback: { hw: 0.86, hd: 2.0 }, Minivan: { hw: 0.86, hd: 2.35 }, Taxi: { hw: 0.85, hd: 2.2 }, 'Sports car': { hw: 0.79, hd: 1.98 }, Bus: { hw: 1.25, hd: 5.25 } },
   bicycle: { hw: 0.3, hd: 0.85 },
   scooter: { hw: 0.35, hd: 1.0 },
   planter: { 'Planter box': { hw: 0.7, hd: 0.25 }, 'Potted plant': { hw: 0.22, hd: 0.22 } },

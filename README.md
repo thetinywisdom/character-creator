@@ -20,11 +20,11 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   police officer, delivery worker, ...). **⬇ JSON** saves the character as a
   file, **⬆** opens one. Games may use these characters, or not.
 - **🏙 City**: walk a generated sample town as your character, with people,
-  cars, motorbikes and cats. 🎲 makes a different town, ☀ changes the time of
+  cars, buses, motorbikes and cats. 🎲 makes a different town, ☀ changes the time of
   day (at night windows, signs and lamps glow), 🌤 the weather (rain: people
   open umbrellas; snow), 🎥 (or V) switches third person / isometric (Q / E
-  rotate); in the iso view people behind buildings show as silhouettes (you
-  in yellow). WASD / arrows, Shift to run, a joystick on touch screens.
+  rotate); in the iso view people, cats and cars behind buildings show as
+  silhouettes (you in yellow). WASD / arrows, Shift to run, a joystick on touch screens.
 
 ## Docs
 

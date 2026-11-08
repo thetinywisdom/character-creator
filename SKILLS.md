@@ -151,7 +151,12 @@ buildings, street, traffic, extras, nature, animals, vehicles, areas.
 `poseCat`, `anim/catGait.js`). Trees (`nature.tree`) come in 11 presets
 (oak, lollipop, pine, old giant, cherry blossom, Japanese maple, ginkgo,
 zelkova, black pine, weeping willow, bamboo); motorbikes
-(`vehicle.scooter`) in 50cc, Delivery, Step-through and Motorcycle.
+(`vehicle.scooter`) in 50cc, Delivery, Step-through and Motorcycle; cars
+(`vehicle.car`) in Kei car, Sedan, Hatchback, Minivan, Taxi, Sports car and
+Bus. Cars are built from a side profile extruded across the width (`CARS`
+in `props/vehicles.js`: `body` and `glass` outlines, axle and door positions);
+add a car by adding an outline there. `CAR_SIZES` gives each one's half
+sizes for collisions and braking.
 
 **Town JSON** (`src/city/format.js`): `{ format: 'tiny-city', version: 1,
 meta, grid: { cols, rows, block: 40, road: 6, sidewalk: 3, curb: 0.12 },
@@ -172,13 +177,17 @@ pedestrians sidestep; cars brake for things ahead. A new item needs a collider.
 (`src/lib/skin.js`, about 2 draw calls a person). Prefer painted textures over
 many small meshes ("feel real, not be real").
 
-**See-through people.** In the iso view, people hidden by buildings show as
-flat silhouettes (blue; the player yellow), `src/city/silhouette.js`. Every
+**See-through movers.** In the iso view, everything that moves (people,
+cats, cars, buses) shows as a flat silhouette when hidden by a building
+(blue; the player yellow), `src/city/silhouette.js`: `addSilhouette` for
+skinned people and cats, `addObjectSilhouette` for rigid things like cars.
+A new moving thing in the city needs one. Every
 style material writes stencil 0, a person's materials stencil 1
 (`markPerson`), and a copy of each skinned person is drawn last with
 `depthFunc: GreaterDepth` where the stencil is not 1. `City.setViewMode`
 shows them in iso only. The PS1 render target has a depth + stencil buffer;
-keep it. A new person-like mesh should use `markPerson` materials.
+keep it. A silhouette pixel is drawn once (it marks the stencil), so overlapping
+parts tint evenly.
 
 **Night and weather.** Night is the `Night` lighting preset (`night: true`):
 `setNightGlow(root, on)` makes lamps, signs, shop interiors and lit windows
@@ -264,7 +273,7 @@ faces +z, returns `{ group, footprint, colliders }`) in `shops.js` /
 `shopWindow`), add it to `SHOP_BUILDINGS` / `CIVIC_BUILDINGS` with label and
 lot size, give it a painted interior (`PAINT` in `interiors.js`). Optionally
 add it to block fills in `layout.js`. It then appears in the Catalogue. Bump
-`VERSION` in `catalog/thumbs.js` if an existing item's look changes (now 4: buildings vary by seed).
+`VERSION` in `catalog/thumbs.js` if an existing item's look changes (now 5: new cars).
 
 **Add a prop.** Add `{ id, label, variants, colors?, build(params, style) }` to
 a file in `src/props/`, list it in `PROP_GROUPS` (`props/index.js`), add its

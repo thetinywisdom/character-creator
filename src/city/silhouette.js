@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-// See-through silhouettes: people hidden behind buildings are drawn as a flat
+// See-through silhouettes: people, cats and vehicles hidden behind buildings are drawn as a flat
 // tinted shape (used in the iso view, where buildings hide the street).
 //
 // How: every style material writes stencil 0 where it is drawn (ps1.js), a
@@ -35,7 +35,9 @@ export function silhouetteMaterial(color, opacity = 0.7) {
     stencilFunc: THREE.NotEqualStencilFunc,
     stencilFail: THREE.KeepStencilOp,
     stencilZFail: THREE.KeepStencilOp,
-    stencilZPass: THREE.KeepStencilOp,
+    // mark the pixel once drawn, so overlapping parts (a car's body and
+    // wheels) tint it only once: an even, flat silhouette
+    stencilZPass: THREE.ReplaceStencilOp,
   });
 }
 
@@ -66,4 +68,26 @@ export function addSilhouette(root, material, cache = new Map()) {
   sil.name = 'silhouette';
   skinned.parent.add(sil);
   return sil;
+}
+
+/**
+ * The same for a rigid moving thing (a car, a bus): every opaque mesh under
+ * `root` gets person-marking copies of its materials (so it never tints
+ * itself) and a silhouette twin sharing its geometry. Returns the twins.
+ */
+export function addObjectSilhouette(root, material, cache = new Map()) {
+  const twins = [];
+  const meshes = [];
+  root.traverse((o) => { if (o.isMesh && !o.material.transparent) meshes.push(o); });
+  for (const o of meshes) {
+    if (!cache.has(o.material)) cache.set(o.material, markPerson(o.material.clone()));
+    o.material = cache.get(o.material);
+    const twin = new THREE.Mesh(o.geometry, material);
+    twin.renderOrder = 10;
+    twin.visible = false;
+    twin.name = 'silhouette';
+    o.add(twin); // same place as the original
+    twins.push(twin);
+  }
+  return twins;
 }

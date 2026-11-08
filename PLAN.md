@@ -64,6 +64,9 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 24. **Rain and snow as a camera layer**: they were a box following the player (its edges showed and buildings hid it); now faked around the camera (drawn on top, covering the whole view) with real-world sizes and density, so zooming in stays clear (a screen-sized version hid everything when zoomed in); third person uses the same logic, sized for the view at the player.
 
+25. **Real car shapes**: cars rebuilt from side profiles (wheel arches, cabin, pillars, bumpers, lights, mirrors): kei car, sedan, hatchback, minivan, taxi (modern tall Japanese taxi), sports car (1970s fastback coupé), city bus; buses join the traffic; per-vehicle sizes for collisions and braking.
+26. **Silhouettes for everything that moves**: cats, cars and buses also show through buildings in the iso view; silhouettes are an even flat tint.
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.
