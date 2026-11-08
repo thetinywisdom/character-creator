@@ -82,18 +82,29 @@ export function buildBottom(f, mats) {
   return mesh;
 }
 
-/** A flared skirt hanging from just above the hips to about knee height. */
+/**
+ * A flared skirt hanging from just above the hips to about knee height.
+ * A group named 'skirt' (kept as its own mesh when bodies are merged) holding
+ * the cloth, with a few rings from waist to hem so it can stretch: each frame
+ * anim/skirt.js pushes the hem out and up over the knees (see stretchSkirt).
+ */
 export function buildSkirt(f, mats) {
   const L = f.torsoLen;
   const topY = L * 0.14;
   const len = L * 0.14 + f.legLen * 0.42;
-  const pts = [
-    new THREE.Vector2(f.hx + f.thighR * 2.1, topY - len),
-    new THREE.Vector2(f.torsoR(topY) * 1.04, topY),
-  ];
-  const skirt = new THREE.Mesh(new THREE.LatheGeometry(pts, seg(24)), mats.legwear);
-  skirt.position.y = f.hipY;
-  skirt.scale.z = 0.8;
+  const top = new THREE.Vector2(f.torsoR(topY) * 1.04, topY);
+  const hem = new THREE.Vector2(f.hx + f.thighR * 2.1, topY - len);
+  const rings = 4; // waist, two in between, hem
+  const pts = [];
+  // listed bottom to top: the lathe's faces then point outward
+  for (let i = 0; i < rings; i++) pts.push(hem.clone().lerp(top, i / (rings - 1)));
+  const cloth = new THREE.Mesh(new THREE.LatheGeometry(pts, seg(24)), mats.legwear);
+  cloth.scale.z = 0.8;
+  const skirt = new THREE.Group();
   skirt.name = 'skirt';
+  skirt.position.y = f.hipY;
+  skirt.add(cloth);
+  // what the stretch needs: knee size, waist and hem heights, hem radius (skirt space)
+  skirt.userData.stretch = { kneeR: f.kneeR, top: topY, hem: hem.y, hemR: hem.x };
   return skirt;
 }

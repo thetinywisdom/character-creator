@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { stretchSkirt } from './skirt.js';
 
 // Procedural walk / run for the human rig.
 //
@@ -26,7 +27,7 @@ import * as THREE from 'three';
 // Sources for the shapes of the curves: standard sagittal-plane gait data
 // (e.g. Perry & Burnfield; Winter), see README.
 
-export const JOINT_NAMES = ['spine', 'head', 'legL', 'legR', 'shinL', 'shinR', 'footL', 'footR', 'armL', 'armR', 'foreL', 'foreR', 'wingL', 'wingR'];
+export const JOINT_NAMES = ['spine', 'head', 'legL', 'legR', 'shinL', 'shinR', 'footL', 'footR', 'armL', 'armR', 'foreL', 'foreR', 'wingL', 'wingR', 'skirt'];
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
@@ -242,6 +243,8 @@ export function poseGait(body, g, style = 'natural') {
   if (style === 'skate') poseSkate(body, g);
   else poseNatural(body, g);
   flapWings(body, g);
+  const j = jointsOf(body);
+  if (j.skirt) stretchSkirt(j.skirt, [j.shinL, j.shinR]);
 }
 
 /** Wings beat slowly and gently all the time, a little faster when running. */

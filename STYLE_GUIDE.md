@@ -177,6 +177,11 @@ dressed in the same tones as the street will disappear.
   twists with the hips. The part of each thigh the skirt covers is drawn in
   the skirt colour (an old low-poly trick), so a leg swinging out of the rigid
   skirt reads as fabric stretched over the thigh, not a bare leg poking through.
+  On top of that, a light stretch (`anim/skirt.js`, reusable for any skirt
+  built the same way): each frame the hem is pushed out to clear each knee
+  and lifted when a knee rises above it, fading to nothing toward the waist
+  and away from the knee. Light on purpose (it never fully wraps the knee);
+  nothing moves at rest, and only the skirt's few dozen vertices change.
 
 ## 3d. Outerwear and accessories
 
