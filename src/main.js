@@ -16,7 +16,7 @@ import { Creator } from './creator/Creator.js';
 import { RUN_SPEED, WALK_SPEED, createGait, poseGait, stepGait } from './anim/gait.js';
 import { CAT_RUN_SPEED, CAT_WALK_SPEED, createCatGait, poseCat, stepCatGait } from './anim/catGait.js';
 import { saveFile, openTextFile } from './lib/saveFile.js';
-import { CLOTH_COLORS } from './styles/palette.js';
+import { CLOTH_COLORS, PALETTE } from './styles/palette.js';
 import './style.css';
 
 // Tiny City Builder: a viewer for the foundation that games are built on.
@@ -56,7 +56,7 @@ let reframe = true;
 // ---------------------------------------------------------------------------
 // 📦 Catalogue
 // ---------------------------------------------------------------------------
-const TABS = [['all', 'All'], ['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['nature', 'Nature'], ['animals', 'Animals'], ['vehicles', 'Vehicles'], ['areas', 'Areas']];
+const TABS = [['palette', '🎨 Palette'], ['all', 'All'], ['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['nature', 'Nature'], ['animals', 'Animals'], ['vehicles', 'Vehicles'], ['areas', 'Areas']];
 const catalogEl = document.querySelector('#catalog');
 const itemEl = document.querySelector('#item');
 const items = ASSETS.filter((a) => a.group);
@@ -67,12 +67,23 @@ let itemCell = null;
 function renderCatalog() {
   const tabs = catalogEl.querySelector('.cat-tabs');
   tabs.replaceChildren(...TABS.map(([k, l]) => {
-    const b = Object.assign(document.createElement('button'), { textContent: `${l} ${k === 'all' ? items.length : items.filter((a) => a.group === k).length}` });
+    const b = Object.assign(document.createElement('button'), { textContent: k === 'palette' ? l : `${l} ${k === 'all' ? items.length : items.filter((a) => a.group === k).length}` });
     b.classList.toggle('on', k === catTab);
     b.onclick = () => { catTab = k; renderCatalog(); };
     return b;
   }));
   const grid = catalogEl.querySelector('.cat-grid');
+  if (catTab === 'palette') {
+    // the colour palette everything snaps to (styles/palette.js)
+    grid.replaceChildren(...Object.entries(PALETTE).map(([name, hex]) => {
+      const card = document.createElement('div');
+      card.className = 'cat-card pal-card';
+      const h = `#${hex.toString(16).padStart(6, '0')}`;
+      card.append(Object.assign(document.createElement('i'), { style: `background:${h}` }), Object.assign(document.createElement('b'), { textContent: name }), Object.assign(document.createElement('code'), { textContent: h }));
+      return card;
+    }));
+    return;
+  }
   grid.replaceChildren(...items.filter((a) => catTab === 'all' || a.group === catTab).map((a) => {
     const card = document.createElement('button');
     card.className = 'cat-card';

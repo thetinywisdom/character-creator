@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { roleColor } from './palette.js';
+import { roleColor, snapColor } from './palette.js';
 
 // PS1 low-poly – the look of 1990s console 3D:
 //  - very few polygons (detail multiplier)
@@ -86,12 +86,15 @@ export function createPs1Style({
           ? new THREE.Color(groundColor)
           : roleColor(role, { color: baseColor, toward: 0x808080, amount: muted });
         const vivid = CHARACTER_ROLES.has(role) || VIVID_ROLES.has(role);
-        if (map) color = new THREE.Color(baseColor ?? 0xffffff); // textures keep their own colours
+        if (map) color = new THREE.Color(baseColor ?? 0xffffff); // textures keep their own colours (already on the palette)
         else if (vivid && characterBoost) adjust(color, characterBoost);
         else if (!vivid && environment) adjust(color, environment);
+        // THE PALETTE: every colour snaps to it (skin keeps its natural tones)
+        if (!map && role !== 'skin') color.setHex(snapColor(color.getHex()));
         // Lambert = simple diffuse lighting, close to the period's Gouraud shading
         const m = new THREE.MeshLambertMaterial({ color, map });
-        if (role === 'light') { m.emissive = color.clone(); m.emissiveIntensity = 0.55; }
+        // lamps glow a little by day; a sign face (a texture) barely, or its text washes out (full glow at night: atmosphere.js)
+        if (role === 'light') { m.emissive = color.clone(); m.emissiveIntensity = map ? 0.12 : 0.55; }
         m.onBeforeCompile = (shader) => {
           shader.uniforms.snapRes = snapRes;
           shader.vertexShader = 'uniform vec2 snapRes;\n' + shader.vertexShader.replace(
@@ -146,11 +149,12 @@ export function createPs1Style({
 export const ps1Clear = createPs1Style({
   id: 'ps1-clear',
   label: 'PS1 · Bright + clear',
-  background: 0x86c8ef,
-  groundColor: 0xc2beb2,
+  background: 0xbcd2e0, // the palette's Sky
+  groundColor: 0xcfccc4,
   muted: 0,
-  characterBoost: { saturate: 1.35 },
-  environment: { saturate: 0.55, lighten: 0.15 },
+  // no saturation boosts: everything snaps to the muted / pastel palette
+  characterBoost: null,
+  environment: null,
   hemi: [0xeaf6ff, 0x6b6456, 1.7],
   key: [0xfff6e6, 2.4],
   pixelSize: 2,

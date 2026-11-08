@@ -9,7 +9,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
 
 `npm install && npm run dev` opens a viewer with three modes:
 
-- **📦 Catalogue** (home): every item a game can place, in tabs (Buildings,
+- **📦 Catalogue** (home): the 🎨 colour palette everything uses, and every
+  item a game can place, in tabs (Buildings,
   Street, Traffic, Extras, Nature, Animals, Vehicles, Areas). Tap one to turn
   it around, try its types, colours and looks, and copy the `createAsset(...)`
   line that builds it. 🎲 New look gives a really different building (shape,

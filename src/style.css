@@ -180,3 +180,6 @@ html, body {
 @media (max-width: 760px), (orientation: portrait) and (max-width: 1100px) {
   #item { left: 8px; right: 8px; width: auto; top: auto; height: 50vh; }
 }
+
+.pal-card { cursor: default; }
+.pal-card i { display: block; width: 100%; aspect-ratio: 1.6; border-radius: 6px; }

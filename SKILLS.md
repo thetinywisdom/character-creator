@@ -129,6 +129,13 @@ src/lib/               shapes, merge (one mesh per material), skin (one skinned 
 
 ## The rules (keep them in any game)
 
+**The palette is a rule.** Every colour is snapped to `PALETTE`
+(`src/styles/palette.js`): muted greys and off-whites, soft pastels, a few
+muted darks; no bright colours. The style snaps material colours
+(`snapColor`) and painted canvases (`paletteCanvas`, already called for
+signs, interiors and facades); call `paletteCanvas` on any new painted
+texture. Skin is the only exception. See STYLE_GUIDE.md §2.
+
 **Style by role.** Models never pick materials directly; they ask
 `style.material(role, color?, map?)` with roles like `skin`, `cloth`, `hair`,
 `building`, `concrete`, `wood`, `glass`, `signage`, `light`, `metal`. Vivid

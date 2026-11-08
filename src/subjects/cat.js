@@ -6,7 +6,7 @@ import { capsuleBetween, ellipsoid, seg } from '../lib/shapes.js';
 // head, tail.
 
 // fur colours (furLight is the paws and inner ears)
-export const CAT_FUR = { Ginger: 0xe8913f, Gray: 0x8c8c90, Black: 0x2e2e33, White: 0xeeeae2, Brown: 0x7a5a40, Cream: 0xe6cfa2 };
+export const CAT_FUR = { Ginger: 0xdcb08c, Gray: 0x918f8a, Black: 0x4a4d52, White: 0xf2efe8, Brown: 0x8a7462, Cream: 0xecccb0 }; // palette colours
 
 export const cat = {
   id: 'cat',

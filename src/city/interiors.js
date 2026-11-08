@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { paletteCanvas } from '../styles/palette.js';
 import { box } from '../props/util.js';
 
 // Painted interiors: what you see through a shop window is a small picture of
@@ -15,7 +16,8 @@ function canvas(w = W, h = H) {
   c.width = w; c.height = h;
   return [c, c.getContext('2d')];
 }
-function texture(c) {
+function texture(c, { mask = false } = {}) {
+  if (!mask) paletteCanvas(c); // painted pictures use the palette (light masks don't)
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.magFilter = THREE.NearestFilter;
@@ -305,7 +307,7 @@ function curtainTexture() {
     m.fillStyle = i === 3 ? '#000' : '#ffd890'; m.fillRect(x + 20, 3, 24, 61); // one variant stays dark
   });
   curtains = texture(c);
-  curtains.userData.glowMap = texture(mc);
+  curtains.userData.glowMap = texture(mc, { mask: true });
   return curtains;
 }
 

@@ -26,42 +26,40 @@ spot the characters.**
 | Blob shadows | **On for characters**: soft dark disc under people and animals | Reads even when the real shadow is lost |
 | Geometry detail | **0.3×** the smooth segment counts | Low-poly everywhere |
 
-## 2. Colour
+## 2. Colour: the palette (a rule)
 
-Colour has a **hierarchy**: characters are vivid, the city is calm.
+**Everything uses one palette** (`PALETTE` in `src/styles/palette.js`, also in
+the Catalogue's 🎨 Palette tab):
 
-- **Characters** (skin, clothes, hair, fur): saturation boosted **×1.35**.
-- **Environment** (buildings, ground, trees, road): saturation **×0.55** and lightened
-  **15%** toward white.
-- **Sky**: clear blue `#86c8ef`.
+- **Greyscale:** muted and monotone, greys and off-whites.
+- **Pastels:** soft, a little dusty.
+- **A few muted darks** for contrast (roads, trousers, leaves, wood).
+- **No bright or shocking colours.** No saturated reds, pure yellows, neon.
 
-Final colours per role (as rendered by the style):
+| Group | Colours |
+|---|---|
+| Greyscale | Off white `#f2efe8`, Paper `#e4e0d6`, Light gray `#cfccc4`, Stone `#b3b0a8`, Gray `#918f8a`, Slate `#6f747a`, Charcoal `#4a4d52`, Ink `#2f3236` |
+| Pastels | Blush `#e8c8c4`, Dusty rose `#c99c98`, Peach `#ecccb0`, Apricot `#dcb08c`, Butter `#ece0aa`, Sand `#d8caa8`, Sage `#b6c6a6`, Mint `#c4dccf`, Seafoam `#9fbfb6`, Sky `#bcd2e0`, Powder blue `#9fb6cc`, Lavender `#c9c2dc`, Lilac `#a99dbf` |
+| Muted darks | Moss `#8aa082`, Denim `#7d93ab`, Navy `#56647a`, Tan `#b89e80`, Cocoa `#8a7462`, Walnut `#66584c` |
 
-| Role | Used for | Colour |
-|---|---|---|
-| `skin` | faces, arms, hands | `#fac089` |
-| `cloth` | shirts, tops | `#0078dd` |
-| `clothAlt` | trousers | `#213157` |
-| `shoe` | shoes | `#713803` |
-| `hair` | hair | `#3d2119` |
-| `fur` | cat body | `#ee8c00` |
-| `furLight` | paws, inner ears | `#fff0db` |
-| `bark` | tree trunks, branches | `#9e7e6d` |
-| `leaf` | foliage | `#88ba7e` |
-| `road` | asphalt | `#7c7e85` |
-| `sidewalk` | pavement | `#c4c0b9` |
-| `building` / `buildingAlt` | walls | `#cda692` / `#aab5c2` |
-| `window` | window bands | `#717a89` |
-| `ground` | open ground | `#cac8c3` |
+**How it is enforced:** every material colour is snapped to the nearest
+palette colour in the style (`snapColor`: loud colours are tamed first, so a
+red sign becomes dusty rose, not grey), and every painted texture (signs,
+shop interiors, curtains, office facades) is snapped pixel by pixel
+(`paletteCanvas`). A model can ask for any colour and still lands on the
+palette. **Skin tones are the one exception** (kept natural). Light masks for
+night glow are not snapped (they are not seen as colours).
 
-Base colours live in `src/styles/palette.js`; the style applies the hierarchy on top.
-
-**Character colours come from curated lists** in the same file, so crowds stay
-harmonious: 6 skin tones (`SKIN_TONES`), 8 hair colours (`HAIR_COLORS`, including
-pink and blue) and 15 clothing colours (`CLOTH_COLORS`). Each item picks its own
-colour from these lists; the style still applies the character saturation boost.
-**New characters should use saturated, contrasting clothing colours**: a character
-dressed in the same tones as the street will disappear.
+- **Sky:** the palette's Sky `#bcd2e0`.
+- **Signs:** the text is always readable: if the snapped text and board are
+  too close in lightness, the text becomes Ink or Off white. Sign faces glow
+  only a little by day (or the text washes out) and fully at night.
+- **Characters** pick from `CLOTH_COLORS` / `HAIR_COLORS`: the same names as
+  before (saved characters still work), now palette colours (Red = Dusty
+  rose, Blue = Powder blue, Yellow = Butter, Black = Ink, ...). Characters
+  stand out by value contrast (light top, dark trousers) and their outline,
+  not by loud colour.
+- To add a colour, add it to `PALETTE` (and keep it muted or pastel).
 
 ## 3. Modelling rules
 

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { paletteCanvas } from '../styles/palette.js';
 import { signTexture } from '../lib/textures.js';
 import { box, cyl, face } from '../props/util.js';
 import { paintedWindow } from './interiors.js';
@@ -69,6 +70,7 @@ function officeTexture(kind) {
     }
     g.fillStyle = 'rgba(0,0,0,0.15)'; g.fillRect(0, f * fh + fh - 1, 128, 1);                // floor line
   }
+  paletteCanvas(c);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping;

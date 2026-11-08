@@ -18,7 +18,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 | Area | Decision |
 |---|---|
-| Look | PS1 · Bright + clear (low-res pixels, dither, outlines, vivid characters on a calmer city). Other styles were explored and removed |
+| Look | PS1 (low-res pixels, dither, outlines) in one muted / pastel palette |
+| Colour | One palette (greyscale muted and off-white, pastels, a few muted darks), no bright colours; enforced in code (every colour and painted texture is snapped to it; skin excepted) |
 | Setting | A small Japanese town; cars drive on the left; Japanese signs |
 | Characters | Realistic proportions, no faces, tiny in the city; body types Man, Woman, Boy, Girl, each with a default design; builds Skinny / Normal / Bulky / Fat; the cat drawn 1.5× |
 | Character rules | Body types Man, Woman, Boy, Girl, Grandpa, Grandma; no facial hair on women / children; no skirts or crop tops on men / boys; ties need a shirt; sailor uniform for women / girls, gakuran for men / boys; children don't carry babies; yukata hides legwear; no school uniforms on grandparents |
@@ -69,6 +70,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 27. **Lively backs and sides**: every building's bare back and side walls get windows (lit at night), AC units, back doors, drain pipes and fire escapes, found automatically (`city/backs.js`).
 
+28. **The palette**: one muted / pastel palette (27 colours, Catalogue 🎨 Palette tab); every material and painted texture snapped to it; clothes and hair lists remapped; readable sign text; sign faces no longer washed out by day.
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.
@@ -80,7 +83,6 @@ Ideas, not commitments. The owner decides what to add.
 
 ## Known issues and small ideas
 
-- Shop sign text looks faded in the PS1 look; could be made stronger across all shops.
 - The third-person camera cannot look up at tall buildings (the iso view covers this).
 
 ## Open questions for the owner

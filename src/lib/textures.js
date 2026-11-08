@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { paletteCanvas, snapColor } from '../styles/palette.js';
 
 // Small canvas textures for sign faces and shop signs. Low resolution with
 // hard (nearest) filtering so text looks like a 90s console texture.
@@ -13,6 +14,15 @@ export function signTexture({ lines = [], bg = '#ffffff', fg = '#000000', border
   shape = 'rect', w = 64, h = 64, font = 'bold', vertical = false }) {
   const key = JSON.stringify(arguments[0]);
   if (cache.has(key)) return cache.get(key);
+  // palette colours, and text that always stands out from its board: if the
+  // snapped colours are too close in lightness, the text goes dark (Ink) or light (Off white)
+  const hexOf = (css) => parseInt(css.slice(1, 7).padEnd(6, '0'), 16);
+  const lum = (h) => (((h >> 16) & 255) * 0.299 + ((h >> 8) & 255) * 0.587 + (h & 255) * 0.114) / 255;
+  const css = (h) => `#${h.toString(16).padStart(6, '0')}`;
+  const b0 = snapColor(hexOf(bg)), f0 = snapColor(hexOf(fg));
+  bg = css(b0);
+  fg = Math.abs(lum(b0) - lum(f0)) >= 0.35 ? css(f0) : lum(b0) > 0.5 ? '#2f3236' : '#f2efe8';
+  if (border) border = css(snapColor(hexOf(border)));
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
   const g = c.getContext('2d');
@@ -51,6 +61,7 @@ export function signTexture({ lines = [], bg = '#ffffff', fg = '#000000', border
       lines.forEach((t, i) => g.fillText(t, w / 2, top + i * size * 1.1, w * 0.9));
     }
   }
+  paletteCanvas(c); // signs use the palette too
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.magFilter = THREE.NearestFilter;
