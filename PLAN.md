@@ -67,6 +67,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 25. **Real car shapes**: cars rebuilt from side profiles (wheel arches, cabin, pillars, bumpers, lights, mirrors): kei car, sedan, hatchback, minivan, taxi (modern tall Japanese taxi), sports car (1970s fastback coupé), city bus; buses join the traffic; per-vehicle sizes for collisions and braking.
 26. **Silhouettes for everything that moves**: cats, cars and buses also show through buildings in the iso view; silhouettes are an even flat tint.
 
+27. **Lively backs and sides**: every building's bare back and side walls get windows (lit at night), AC units, back doors, drain pipes and fire escapes, found automatically (`city/backs.js`).
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.

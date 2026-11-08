@@ -6,6 +6,7 @@ import { CIVIC_BUILDINGS } from '../city/civic.js';
 const EXTRA_BUILDINGS = { ...SHOP_BUILDINGS, ...CIVIC_BUILDINGS };
 import { tree } from '../subjects/tree.js';
 import { CAT_FUR, cat } from '../subjects/cat.js';
+import { dressBacks } from '../city/backs.js';
 import { bush } from '../props/extras.js';
 import { park } from '../city/park.js';
 import { PROP_GROUPS } from '../props/index.js';
@@ -74,6 +75,8 @@ const BUILDERS = { house, apartment, mixedUse, shop, office, shrine, school, ...
 const BUILDING_LABELS = { house: 'House', apartment: 'Apartment block', mixedUse: 'Shop with flats above', shop: 'Shop', office: 'Office building', shrine: 'Shrine', school: 'School' };
 const BUILDING_SIZES = { shrine: [18, 26], school: [34, 34], ...Object.fromEntries(Object.entries(EXTRA_BUILDINGS).map(([k, [, , w, d]]) => [k, [w, d]])) };
 Object.entries(EXTRA_BUILDINGS).forEach(([k, [, label]]) => { BUILDING_LABELS[k] = label; });
+// buildings whose back and sides get dressed (not open structures or grounds)
+const BARE_OK = new Set(Object.keys(BUILDERS).filter((k) => !['shrine', 'school', 'parkingGarage', 'gasStation'].includes(k)));
 const buildingAssets = Object.entries(BUILDERS).map(([key, fn]) => ({
   id: `building.${key}`,
   label: BUILDING_LABELS[key],
@@ -84,6 +87,9 @@ const buildingAssets = Object.entries(BUILDERS).map(([key, fn]) => ({
   build(p, style) {
     const b = fn(style, mulberry32(p.seed ?? 1), p.w, p.d, p.shopType ?? undefined, p);
     const fp = b.footprint;
+    // windows, AC units, back doors and fire escapes on the bare back and sides (backs.js)
+    const backs = BARE_OK.has(key) ? dressBacks(b.group, style, mulberry32((p.seed ?? 1) * 7 + 3)) : [];
+    if (backs.length) b.colliders = [...(b.colliders ?? [{ x: 0, z: fp.z, hw: fp.w / 2, hd: fp.d / 2 }]), ...backs];
     // builders with several solid parts list them; otherwise the footprint is solid
     return withColliders(b.group, b.colliders ?? [{ x: 0, z: fp.z, hw: fp.w / 2, hd: fp.d / 2 }]);
   },

@@ -113,6 +113,8 @@ src/city/interiors.js  painted shop interiors and curtains
 src/city/facades.js    painted office facades, roof clutter, roof signs
 src/city/City.js       walkable town: player, people, cars, cats, collisions, cameras,
                        setWeather('Clear'|'Rain'|'Snow'), night via applyLighting
+src/city/backs.js      dresses bare backs and sides of every building (windows, AC units,
+                       back door, drain pipe, emergency stairs), found with rays
 src/city/variety.js    shared building variety: flatsAbove, roofTop, frontExtras, side, pick, between
 src/city/silhouette.js see-through people in the iso view (stencil + GreaterDepth copy)
 src/city/atmosphere.js night glow (setNightGlow), snow cover (setSnowCover), rain / snow
@@ -267,13 +269,21 @@ same building". Use the helpers in `src/city/variety.js`: `flatsAbove`
 pitched roof), `frontExtras` (bikes, boards, planters, vending machines).
 Check six seeds side by side before committing.
 
+**Backs and sides are dressed automatically.** After a building is built,
+`dressBacks` (`city/backs.js`, called in the catalogue) feels its walls with
+rays and adds curtained windows (lit at night), AC units, a back door, a
+drain pipe and, on 3+ floors, a steel emergency staircase to the back and
+sides, only on bare `building`-role walls (painted facades and other roles
+are left alone). A builder only needs to detail its street front. Open
+structures are skipped (`BARE_OK` in `catalog/index.js`).
+
 **Add a building.** Write `myBuilding(style, rng, w, d)` (fills a lot w × d,
 faces +z, returns `{ group, footprint, colliders }`) in `shops.js` /
 `civic.js` (reuse `body`, `signboard`, `awning`, `noren`, `upperFloors`,
 `shopWindow`), add it to `SHOP_BUILDINGS` / `CIVIC_BUILDINGS` with label and
 lot size, give it a painted interior (`PAINT` in `interiors.js`). Optionally
 add it to block fills in `layout.js`. It then appears in the Catalogue. Bump
-`VERSION` in `catalog/thumbs.js` if an existing item's look changes (now 5: new cars).
+`VERSION` in `catalog/thumbs.js` if an existing item's look changes (now 6: dressed backs).
 
 **Add a prop.** Add `{ id, label, variants, colors?, build(params, style) }` to
 a file in `src/props/`, list it in `PROP_GROUPS` (`props/index.js`), add its

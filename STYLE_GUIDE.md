@@ -378,6 +378,10 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   clutter (stair hut, tank, AC units, laundry pole) or pitched tile roofs,
   the door and displays on either side, awnings and signs in a few schemes,
   bikes / boards / planters out front. Colour changes alone don't count.
+- **No dead walls.** Backs and sides have windows with curtains in floor rows
+  (some small, a few blank), AC units, a back door with a canopy and a bin,
+  a drain pipe, and on taller buildings a grey steel fire escape with a
+  landing and door per floor. At night these windows light up too.
 - **Iso view: see-through people.** People behind buildings show as flat
   silhouettes, blue (the player yellow), so nobody is lost behind a
   building; the same for cats, cars and buses. Each silhouette is one even
