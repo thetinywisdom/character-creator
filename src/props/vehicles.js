@@ -402,7 +402,8 @@ export const scooter = {
     // 50cc / Delivery: the three-wheeled delivery scooter
     wheelAt(0.62, 0.2, 0.1);
     for (const sx of [-1, 1]) wheelAt(-0.56, 0.2, 0.11, sx * 0.24);
-    g.add(extrude(poly([[0.18, 0.26], [0.42, 0.28], [0.58, 1.0], [0.48, 1.06], [0.3, 0.5], [0.18, 0.4]]), 0.4, paint, 0.03)); // leg shield
+    // leg shield: rises from the front wheel and leans back toward the rider
+    g.add(extrude(poly([[0.2, 0.3], [0.56, 0.32], [0.42, 1.0], [0.3, 1.06], [0.24, 0.6], [0.16, 0.42]]), 0.4, paint, 0.03));
     g.add(box(0.36, 0.06, 0.62, M.dark, [0, 0.3, -0.04]));                                     // floor deck
     g.add(extrude(poly([[-0.9, 0.36], [-0.9, 0.62], [-0.3, 0.66], [-0.16, 0.5], [-0.22, 0.32]]), 0.42, paint, 0.03)); // rear body
     const pod = softBox(0.78, 0.26, 0.62, paint, { round: 0.4 });                             // fender pod over the back wheels
@@ -411,16 +412,16 @@ export const scooter = {
     g.add(box(0.32, 0.1, 0.48, M.seat, [0, 0.72, -0.42]));                                    // seat
     g.add(box(0.42, 0.03, 0.42, M.metal, [0, 0.78, -0.8]));                                   // rear rack
     g.add(box(0.32, 0.03, 0.26, M.metal, [0, 0.74, 0.72]));                                   // front rack
-    fork([0.52, 0.95], [0.62, 0.2], 0.06, M.dark);
-    g.add(extrude(poly([[0.5, 1.1], [0.56, 1.42], [0.62, 1.4], [0.6, 1.08]]), 0.36, M.glass, 0)); // windscreen
-    handlebar(0.48, 1.08, 0.3);
-    g.add(box(0.14, 0.1, 0.05, M.light, [0, 0.92, 0.58]));
+    fork([0.42, 0.95], [0.62, 0.2], 0.06, M.dark);
+    g.add(extrude(poly([[0.34, 1.1], [0.28, 1.42], [0.34, 1.44], [0.44, 1.08]]), 0.36, M.glass, 0)); // windscreen, leaning back too
+    handlebar(0.34, 1.1, 0.3);
+    g.add(box(0.14, 0.1, 0.05, M.light, [0, 0.9, 0.5]));
     for (const sx of [-1, 1]) {
-      g.add(box(0.06, 0.05, 0.05, M.amber, [sx * 0.18, 1.0, 0.56]));
+      g.add(box(0.06, 0.05, 0.05, M.amber, [sx * 0.18, 0.98, 0.47]));
       g.add(box(0.06, 0.08, 0.04, M.tail, [sx * 0.3, 0.52, -0.9]));
     }
-    mirror(0.46, 1.08, -1);
-    mirror(0.46, 1.08, 1);
+    mirror(0.34, 1.1, -1);
+    mirror(0.34, 1.1, 1);
     if (variant === 'Delivery') {
       // cardboard boxes strapped to both racks
       const card = style.material('cloth', 0xd8caa8), strap = M.dark;
