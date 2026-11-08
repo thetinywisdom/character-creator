@@ -227,6 +227,16 @@ About one in six random characters is a child.
   five small round buttons in a contrast colour, laid on the shirt surface (a
   continuous dark strip read as a tie).
 
+- **Uniforms and robes:** sailor uniform (セーラー服: navy collar flap on the
+  back with a white trim line, navy V on the front, red scarf bow; women and
+  girls), gakuran (学ラン: closed stand-up collar, five gold buttons; men and
+  boys), yukata (浴衣: robe to the ankles, crossed front left over right with a
+  contrasting edge, wide sleeves, obi sash in the legwear colour with a bow at
+  the back; legs drawn in the robe colour, like the skirt trick).
+- **Apron:** a bib apron on the chest, tied at the waist, hanging to mid thigh.
+- **In the hand** (right hand, swings with the arm): shopping bag, briefcase,
+  closed umbrella carried point-down.
+
 ## 3d. Outerwear and accessories
 
 - **Outerwear** is a second, slightly bigger layer that follows the torso

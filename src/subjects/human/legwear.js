@@ -14,7 +14,8 @@ export function buildLeg(f, kind, mats, sx, footwear = 'Shoes') {
   leg.position.set(sx * f.hx, f.hipY, 0);
   const ankle = -f.legLen + f.footH;
   const knee = -f.legLen * 0.48;
-  const legMat = kind === 'Trousers' ? mats.legwear : mats.skin;
+  // a robe covers the whole leg in its colour, so a striding leg reads as cloth
+  const legMat = kind === 'Robe' ? mats.top : kind === 'Trousers' ? mats.legwear : mats.skin;
   const side = sx < 0 ? 'R' : 'L';
   // knees and feet sit a little closer to the centre than the hips
   const inX = -sx * f.hx * f.kneeIn;
@@ -71,17 +72,18 @@ export function buildLeg(f, kind, mats, sx, footwear = 'Shoes') {
  * the cloth, with a few rings from waist to hem so it can stretch: each frame
  * anim/skirt.js pushes the hem out and up over the knees (see stretchSkirt).
  */
-export function buildSkirt(f, mats) {
+export function buildSkirt(f, mats, { robe = false } = {}) {
   const L = f.torsoLen;
-  const topY = L * 0.14;
-  const len = L * 0.14 + f.legLen * 0.42;
+  // robe (yukata): from the waist to the ankles, straight and narrow
+  const topY = robe ? L * 0.3 : L * 0.14;
+  const len = robe ? topY + f.legLen * 0.9 : L * 0.14 + f.legLen * 0.42;
   const top = new THREE.Vector2(f.torsoR(topY) * 1.04, topY);
-  const hem = new THREE.Vector2(f.hx + f.thighR * 2.1, topY - len);
+  const hem = new THREE.Vector2(f.hx + f.thighR * (robe ? 1.5 : 2.1), topY - len);
   const rings = 4; // waist, two in between, hem
   const pts = [];
   // listed bottom to top: the lathe's faces then point outward
   for (let i = 0; i < rings; i++) pts.push(hem.clone().lerp(top, i / (rings - 1)));
-  const cloth = new THREE.Mesh(new THREE.LatheGeometry(pts, seg(24)), mats.legwear);
+  const cloth = new THREE.Mesh(new THREE.LatheGeometry(pts, seg(24)), robe ? mats.top : mats.legwear);
   cloth.scale.z = 0.8;
   const skirt = new THREE.Group();
   skirt.name = 'skirt';

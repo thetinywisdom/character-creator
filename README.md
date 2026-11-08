@@ -201,6 +201,10 @@ gate), each also a block type; a **Nature** palette tab (trees: oak, round,
 pine, old giant, cherry blossom; flower beds; bushes); Japanese street props
 (stone lantern, red or white paper lantern, sandwich board, bike rack).
 
+**Content added in batch 4a (people):** sailor uniform, gakuran and yukata
+tops; an apron; things carried in the hand (shopping bag, briefcase, closed
+umbrella), which swing with the walk.
+
 ### City editor
 
 **View → City editor** opens the current town from above. Tools:

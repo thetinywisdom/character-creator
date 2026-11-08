@@ -4,7 +4,8 @@ import { CLOTH_COLORS, HAIR_COLORS, SKIN_TONES } from '../styles/palette.js';
 import { measure } from './human/frame.js';
 import { HAIRSTYLES, LONG_STYLES, MEDIUM_STYLES, SHORT_STYLES, buildHair } from './human/hair.js';
 import { TOPS, buildTorso } from './human/tops.js';
-import { buildArm } from './human/arms.js';
+import { buildArm, handGrip } from './human/arms.js';
+import { HAND_ITEMS, buildHandItem } from './human/handheld.js';
 import { FOOTWEAR } from './human/footwear.js';
 import { headGeometry } from './human/headShape.js';
 import { OUTERWEAR, buildOuterwear } from './human/outerwear.js';
@@ -63,6 +64,8 @@ export const human = {
     backColor:     { group: 'Accessories', value: 'Orange', options: names(CLOTH_COLORS), label: 'Backpack colour' },
     bodyAccessory: { group: 'Accessories', value: 'None', options: BODY_ACCESSORIES, label: 'On the body' },
     bodyAccessoryColor: { group: 'Accessories', value: 'Red', options: names(CLOTH_COLORS), label: 'Accessory colour' },
+    handItem:      { group: 'Accessories', value: 'None', options: HAND_ITEMS, label: 'In the hand' },
+    handItemColor: { group: 'Accessories', value: 'Brown', options: names(CLOTH_COLORS), label: 'Hand item colour' },
     // clothes
     top:           { group: 'Clothes', value: 'T-shirt', options: names(TOPS), label: 'Top' },
     topColor:      { group: 'Clothes', value: 'Blue', options: names(CLOTH_COLORS), label: 'Top colour' },
@@ -130,6 +133,8 @@ export const human = {
       backColor: pick(names(CLOTH_COLORS)),
       bodyAccessory: rng() < 0.25 ? pick(BODY_ACCESSORIES.slice(1)) : 'None',
       bodyAccessoryColor: pick(names(CLOTH_COLORS)),
+      handItem: rng() < 0.14 ? pick(HAND_ITEMS.slice(1)) : 'None',
+      handItemColor: pick(['Brown', 'Black', 'White', 'Navy', 'Red', 'Khaki']),
       beard: !woman && rng() < 0.35 ? pick(BEARDS.slice(1)) : 'None',
       moustache: !woman && rng() < 0.3 ? pick(MOUSTACHES.slice(1)) : 'None',
       shoeColor: pick(['Black', 'Brown', 'White', 'Gray', 'Red', 'Navy']),
@@ -154,6 +159,8 @@ export const human = {
   allowedOptions: (key, p) => allowedOptions(key, human.schema[key].options, p),
   /** Controls and groups that don't apply to this character. */
   hiddenControls,
+  /** A control's label for this character (a yukata's obi uses the legwear colour). */
+  labelFor: (key, p) => (key === 'legwearColor' && p.top === 'Yukata' ? 'Obi colour' : undefined),
   /** Correct `p` in place so every value is allowed. */
   applyRules: (p) => applyRules(p, human.schema),
 
@@ -184,6 +191,13 @@ export const human = {
       bodyAcc: style.material('cloth', CLOTH_COLORS[p.bodyAccessoryColor]),
       trim: style.material('accent', 0x2a2a30),           // straps, belts, strings
       wings: style.material('accent', p.backAccessory === 'Evil wings' ? 0x3a1424 : 0xf4f4f0),
+      handItem: style.material('cloth', CLOTH_COLORS[p.handItemColor] ?? CLOTH_COLORS.Brown),
+      // uniform and robe details
+      sailorCollar: style.material('cloth', 0x2c3652),
+      sailorTrim: style.material('cloth', 0xf2f2ee),
+      sailorScarf: style.material('accent', 0xd8443c),
+      gold: style.material('accent', 0xd9b44a),
+      obi: style.material('clothAlt', CLOTH_COLORS[p.legwearColor]), // a yukata's sash uses the legwear colour
     };
     f.mats = mats;
 
@@ -213,12 +227,23 @@ export const human = {
     upper.add(neck);
 
     // --- legs (pivot at hip, for later animation) ------------------------
-    for (const sx of [-1, 1]) root.add(buildLeg(f, p.legwear, mats, sx, p.footwear));
+    const robe = top.yukata; // a yukata reaches the ankles; legwear doesn't show
+    for (const sx of [-1, 1]) root.add(buildLeg(f, robe ? 'Robe' : p.legwear, mats, sx, p.footwear));
     // the skirt hangs from the spine joint, so it leans and twists with the hips
-    if (p.legwear === 'Skirt') upper.add(buildSkirt(f, mats));
+    if (robe) upper.add(buildSkirt(f, mats, { robe: true }));
+    else if (p.legwear === 'Skirt') upper.add(buildSkirt(f, mats));
 
     // --- arms (pivot at shoulder) ----------------------------------------
-    for (const sx of [-1, 1]) upper.add(buildArm(f, sx, top, mats, (t) => t.sleeve, hasOuter ? mats.outer : null));
+    for (const sx of [-1, 1]) {
+      const arm = buildArm(f, sx, top, mats, (t) => t.sleeve, hasOuter ? mats.outer : null);
+      // something carried in the right hand swings with the forearm
+      if (sx < 0) {
+        const { grip, dir } = handGrip(f, sx);
+        const item = buildHandItem(f, p.handItem, mats.handItem, grip, dir);
+        if (item) arm.getObjectByName('foreR').add(item);
+      }
+      upper.add(arm);
+    }
 
     // --- accessories -------------------------------------------------------
     upper.add(buildBackAccessory(f, p.backAccessory, mats));

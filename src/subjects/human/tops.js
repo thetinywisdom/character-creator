@@ -16,6 +16,10 @@ export const TOPS = {
   'Tank top':               { sleeve: 'none' },
   'Crop top':               { sleeve: 'short', crop: true },
   'Crop top (long sleeve)': { sleeve: 'long', crop: true },
+  // school uniforms and a summer robe
+  'Sailor uniform':         { sleeve: 'long', sailor: true },
+  'Gakuran':                { sleeve: 'long', gakuran: true },
+  'Yukata':                 { sleeve: 'wide', yukata: true },
 };
 
 /** One horizontal slice of the torso, from y0 to y1 (torso-local metres). */
@@ -45,17 +49,18 @@ export function band(f, y0, y1, material, { inflate = 0, gap = 0 } = {}) {
   return mesh;
 }
 
-/** The collar band: a thin wall round the neck, open at the front. */
-function collarBand(f, material) {
-  const rIn = f.neckR * 1.08, rOut = f.neckR * 1.22, h = Math.min(f.neckR * 0.65, 0.032); // thick necks get no taller band
+/** The collar band: a thin wall round the neck, open at the front (open = 0: closed). */
+function collarBand(f, material, { open = 0.9, height = Math.min(f.neckR * 0.65, 0.032), taper = 0.55 } = {}) {
+  const rIn = f.neckR * 1.08, rOut = f.neckR * 1.22, h = height; // thick necks get no taller band
   const profile = [[rIn, 0], [rOut, 0], [rOut, h], [rIn, h * 0.9], [rIn, 0]].map(([x, y]) => new THREE.Vector2(x, y));
-  const open = 0.9; // gap at the throat (radians)
-  const geo = new THREE.LatheGeometry(profile, seg(16, 10), open / 2, Math.PI * 2 - open);
+  const geo = open > 0
+    ? new THREE.LatheGeometry(profile, seg(16, 10), open / 2, Math.PI * 2 - open)
+    : new THREE.LatheGeometry(profile, seg(16, 10));
   // tallest at the back, lower toward the throat where it turns into the flaps
   const pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i++) {
     const front = Math.max(0, Math.cos(Math.atan2(pos.getX(i), pos.getZ(i)))); // 1 at the front
-    pos.setY(i, pos.getY(i) * (1 - 0.55 * front));
+    pos.setY(i, pos.getY(i) * (1 - taper * front));
   }
   geo.computeVertexNormals();
   const band = new THREE.Mesh(geo, material);
@@ -105,9 +110,15 @@ export function buildTorso(f, spec, mats) {
   const start = f.torsoBottom / L; // 0, or below the hip line for women
   const bands = spec.crop
     ? [[start, 0.16, mats.legwear], [0.16, 0.5, mats.skin], [0.5, 1, mats.top]]
-    : [[start, HIP, mats.legwear], [HIP, 1, mats.top]];
+    : spec.yukata
+      ? [[start, 1, mats.top]] // a robe: no trousers showing at the hips
+      : [[start, HIP, mats.legwear], [HIP, 1, mats.top]];
   for (const [a, b, m] of bands) torso.add(band(f, a * L, b * L, m));
 
+
+  if (spec.sailor) sailorDetails(f, torso, mats);
+  if (spec.gakuran) gakuranDetails(f, torso, mats);
+  if (spec.yukata) yukataDetails(f, torso, mats);
 
   if (spec.collar) {
     // a shirt collar in the shirt's own colour: a thin band standing round
@@ -133,6 +144,90 @@ export function buildTorso(f, spec, mats) {
     }
   }
   return torso;
+}
+
+// ---------------------------------------------------------------------------
+// Uniform and robe details, laid on the torso surface
+
+/** A strip on the front (dir 1) or back (dir -1) through points [x, y] (torso-local). */
+function surfaceStrip(f, pts, w, t, material, dir = 1, steps = 10) {
+  const surf = torsoSurface(f);
+  const samples = [];
+  for (let k = 0; k < pts.length - 1; k++) {
+    for (let i = 0; i <= steps; i++) {
+      if (k > 0 && i === 0) continue;
+      const u = i / steps;
+      const x = pts[k][0] + (pts[k + 1][0] - pts[k][0]) * u;
+      const y = pts[k][1] + (pts[k + 1][1] - pts[k][1]) * u;
+      const z = dir > 0 ? surf.front(x, y) - 0.002 : surf.back(x, y) + 0.002;
+      samples.push({ x, y: f.hipY + y, z, w });
+    }
+  }
+  return ribbon(samples, t, material, dir);
+}
+
+const NAVY = 0x2c3652;
+
+/** Sailor uniform (セーラー服): a big navy collar on the back, navy V lapels, a red bow. */
+function sailorDetails(f, torso, mats) {
+  const L = f.torsoLen;
+  const collar = mats.sailorCollar;
+  // the square flap on the back
+  torso.add(surfaceStrip(f, [[0, L * 0.985], [0, L * 0.66]], f.sw * 0.62, f.neckR * 0.12, collar, -1));
+  // white trim line across its bottom edge
+  torso.add(surfaceStrip(f, [[0, L * 0.69], [0, L * 0.675]], f.sw * 0.6, f.neckR * 0.16, mats.sailorTrim, -1, 2));
+  // the V on the front: from each shoulder down to the bow
+  for (const sx of [-1, 1]) {
+    torso.add(surfaceStrip(f, [[sx * f.sw * 0.2, L * 0.97], [sx * f.sw * 0.04, L * 0.7]], f.sw * 0.11, f.neckR * 0.12, collar, 1));
+  }
+  // the scarf bow where the V meets
+  const surf = torsoSurface(f);
+  const y = L * 0.69, z = surf.front(0, y) + f.neckR * 0.2;
+  for (const sx of [-1, 1]) {
+    const wing = new THREE.Mesh(new THREE.ConeGeometry(f.sw * 0.07, f.sw * 0.14, 3), mats.sailorScarf);
+    wing.rotation.z = sx * Math.PI / 2;
+    wing.scale.z = 0.4;
+    wing.position.set(sx * f.sw * 0.07, f.hipY + y, z);
+    torso.add(wing);
+  }
+  torso.add(surfaceStrip(f, [[0, L * 0.68], [0, L * 0.52]], f.sw * 0.07, f.neckR * 0.18, mats.sailorScarf, 1, 4)); // tails
+}
+
+/** Gakuran (学ラン): a closed stand-up collar and a row of gold buttons. */
+function gakuranDetails(f, torso, mats) {
+  const L = f.torsoLen;
+  torso.add(collarBand(f, mats.top, { open: 0.12, height: Math.min(f.neckR * 0.9, 0.04), taper: 0 }));
+  const surf = torsoSurface(f);
+  const r = f.sw * 0.034;
+  const disc = new THREE.CylinderGeometry(r, r, r * 0.6, seg(10, 6));
+  const up = new THREE.Vector3(0, 1, 0), n = new THREE.Vector3();
+  for (let i = 0; i < 5; i++) {
+    const y = THREE.MathUtils.lerp(0.2, 0.86, i / 4) * L;
+    const dy = L * 0.02;
+    n.set(0, -(surf.front(0, y + dy) - surf.front(0, y - dy)) / (2 * dy), 1).normalize();
+    const b = new THREE.Mesh(disc, mats.gold);
+    b.quaternion.setFromUnitVectors(up, n);
+    b.position.set(0, f.hipY + y, surf.front(0, y)).addScaledVector(n, r * 0.2);
+    torso.add(b);
+  }
+}
+
+/**
+ * Yukata (浴衣): the front crosses left over right (the edge runs from the
+ * neck down to the wearer's right side) with a contrasting collar band along
+ * it, and a wide obi sash round the waist.
+ */
+function yukataDetails(f, torso, mats) {
+  const L = f.torsoLen;
+  // the top panel's edge (wearer's right = -x), and the bit of the under panel at the neck
+  torso.add(surfaceStrip(f, [[f.neckR * 0.9, L * 0.99], [-f.hw * 0.32, L * 0.44]], f.sw * 0.08, f.neckR * 0.1, mats.accent, 1, 14));
+  torso.add(surfaceStrip(f, [[-f.neckR * 0.9, L * 0.99], [-f.neckR * 0.1, L * 0.8]], f.sw * 0.07, f.neckR * 0.06, mats.accent, 1, 6));
+  // obi: a wide band round the waist, a little proud of the robe, with a bow at the back
+  torso.add(band(f, L * 0.28, L * 0.47, mats.obi, { inflate: f.sw * 0.02 }));
+  const surf = torsoSurface(f);
+  const bow = new THREE.Mesh(new THREE.BoxGeometry(f.sw * 0.42, L * 0.14, f.sw * 0.1), mats.obi);
+  bow.position.set(0, f.hipY + L * 0.4, surf.back(0, L * 0.4) - f.sw * 0.07);
+  torso.add(bow);
 }
 
 // ---------------------------------------------------------------------------

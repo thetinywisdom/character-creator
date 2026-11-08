@@ -18,6 +18,12 @@ function joints(f, sx) {
   return { elbow, wrist, dir };
 }
 
+/** Where the right hand grips things, in forearm (fore joint) space, and the forearm direction. */
+export function handGrip(f, sx) {
+  const { elbow, wrist, dir } = joints(f, sx);
+  return { grip: wrist.clone().sub(elbow).addScaledVector(dir, f.handR * 1.5), dir };
+}
+
 /** outer: material of a jacket/hoodie/cardigan, whose long sleeves go over everything. */
 export function buildArm(f, sx, top, mats, sleeveFor, outer = null) {
   const arm = new THREE.Group();
@@ -53,6 +59,11 @@ export function buildArm(f, sx, top, mats, sleeveFor, outer = null) {
     // shoulder edge doesn't poke out past the arm
     arm.add(taperBetween(O, elbow.clone().multiplyScalar(0.3).toArray(), f.shoulderR * 1.08,
       THREE.MathUtils.lerp(f.shoulderR, f.elbowR, 0.3) * 1.04, mats.skin));
+  } else if (sleeve === 'wide') {
+    // yukata: a wide sleeve hanging open below the elbow
+    arm.add(taperBetween(O, E, f.shoulderR * 1.12, f.elbowR * 2.3, mats.top));
+    const W2 = wrist.clone().sub(elbow).multiplyScalar(0.55).toArray();
+    fore.add(taperBetween([0, 0, 0], W2, f.elbowR * 2.3, f.elbowR * 2.1, mats.top));
   } else if (sleeve === 'long') {
     arm.add(taperBetween(O, E, f.shoulderR * 1.06, f.elbowR * 1.15, mats.top));
     fore.add(taperBetween([0, 0, 0], W, f.elbowR * 1.15, f.wristR * 1.2, mats.top));

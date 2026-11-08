@@ -6,7 +6,7 @@ import { ribbon, torsoSurface } from './tops.js';
 // baby carrier). One item per slot. Built in body space; oversized where small.
 
 export const BACK_ACCESSORIES = ['None', 'Backpack', 'Angel wings', 'Evil wings'];
-export const BODY_ACCESSORIES = ['None', 'Fanny pack', 'Neck tie', 'Bow tie', 'Baby carrier'];
+export const BODY_ACCESSORIES = ['None', 'Fanny pack', 'Neck tie', 'Bow tie', 'Baby carrier', 'Apron'];
 
 /**
  * Front / back surface of the sculpted torso at torso-local height y (and
@@ -168,6 +168,36 @@ export function buildBodyAccessory(f, kind, mats) {
     const tip = L * 0.07; // pointed end
     samples.push({ y: f.hipY + y1 - tip, z: zMax + 0.001, w: f.sw * 0.01 });
     g.add(knot, ribbon(samples, f.sw * 0.025, m));
+  } else if (kind === 'Apron') {
+    // a bib apron: on the chest, tied at the waist, hanging to mid thigh
+    const surf = torsoSurface(f);
+    const waist = L * 0.36;
+    const samples = [];
+    let zHang = -Infinity;
+    for (let i = 0; i <= 20; i++) {
+      const y = THREE.MathUtils.lerp(L * 0.8, -f.legLen * 0.32, i / 20);
+      let z;
+      if (y >= waist) z = surf.front(0, y);
+      else {
+        // below the ties it hangs: as far forward as the belly / hips below
+        zHang = Math.max(zHang, surf.front(0, Math.max(y, f.torsoBottom + 0.001)));
+        z = zHang + f.sw * 0.02;
+      }
+      const w = y >= waist ? f.sw * 0.44 : f.hw * 0.95;
+      samples.push({ y: f.hipY + y, z: z + 0.002, w });
+    }
+    g.add(ribbon(samples, f.sw * 0.015, m));
+    // neck strap and waist ties
+    const r = f.armR * 0.18;
+    const topZ = surf.front(0, L * 0.8) + 0.004;
+    for (const sx of [-1, 1]) {
+      g.add(capsuleBetween([sx * f.sw * 0.2, f.hipY + L * 0.8, topZ], [sx * f.neckR * 1.15, f.shoulderY + f.neckLen * 0.2, 0], r, m, 5));
+    }
+    const belt = new THREE.Mesh(new THREE.TorusGeometry(f.torsoR(waist) * 1.03, r, 4, seg(18, 10)), m);
+    belt.rotation.x = Math.PI / 2;
+    belt.scale.y = f.depthAt(waist);
+    belt.position.y = f.hipY + waist;
+    g.add(belt);
   } else if (kind === 'Bow tie') {
     const y = f.shoulderY - L * 0.04;
     const z = frontAt(f, L * 0.96, 0.012);

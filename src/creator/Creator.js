@@ -116,7 +116,7 @@ export class Creator {
     for (const [key, def] of Object.entries(schema)) {
       const tab = TAB_OF[key] ?? GROUP_TAB[def.group] ?? 'body';
       if (tab !== this.tab || hidden.keys.has(key) || hidden.groups.has(def.group)) continue;
-      const s = section(def.label ?? key);
+      const s = section(this.subject.labelFor?.(key, p) ?? def.label ?? key);
       if (def.options) {
         const allowed = this.subject.allowedOptions?.(key, p) ?? def.options;
         const row = s.appendChild(Object.assign(document.createElement('div'), { className: 'cr-chips' }));

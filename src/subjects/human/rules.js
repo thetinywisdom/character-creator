@@ -9,6 +9,8 @@
 //  5. Neck tie / bow tie only with a shirt (it needs a collar)
 //  6. No facial hair on children, or on child-like proportions (< 4.5 heads tall)
 //  7. Children don't carry a baby
+//  8. Sailor uniform for women and girls, gakuran for men and boys
+//  9. A yukata reaches the ankles: no legwear choice (its colour is the obi's)
 //
 // Anything a rule no longer allows falls back to a sensible value: a beard to
 // None, a skirt to trousers, a crop top to the matching T-shirt, a tie to None.
@@ -35,7 +37,7 @@ export function allowedOptions(key, all, p) {
     case 'legwear':
       return isMale(p) ? all.filter((o) => o !== 'Skirt') : all;
     case 'top':
-      return isMale(p) ? all.filter((o) => !(o in CROP)) : all;
+      return isMale(p) ? all.filter((o) => !(o in CROP) && o !== 'Sailor uniform') : all.filter((o) => o !== 'Gakuran');
     case 'bodyAccessory':
       return all.filter((o) => !(TIES.includes(o) && !SHIRTS.includes(p.top))
         && !(o === 'Baby carrier' && isChild(p)));
@@ -48,6 +50,8 @@ export function allowedOptions(key, all, p) {
 export function hiddenControls(p) {
   const keys = new Set();
   if (!canHaveFacialHair(p)) keys.add('beard').add('moustache');
+  if (p.top === 'Yukata') keys.add('legwear');
+  if (!p.handItem || p.handItem === 'None') keys.add('handItemColor');
   const groups = new Set();
   if (p.bodyType !== 'Woman') groups.add('Body shape (woman)');
   return { keys, groups };
