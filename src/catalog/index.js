@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mulberry32 } from '../lib/rng.js';
 import { apartment, house, mixedUse, office, school, shop, shrine } from '../city/buildings.js';
+import { SHOP_BUILDINGS } from '../city/shops.js';
 import { tree } from '../subjects/tree.js';
 import { bush } from '../props/extras.js';
 import { park } from '../city/park.js';
@@ -59,9 +60,10 @@ const withColliders = (obj, colliders) => {
 // --- buildings ---------------------------------------------------------------
 // Builders fill a lot of width w and depth d (facing the street, +z). The seed
 // makes the same settings always give the same building.
-const BUILDERS = { house, apartment, mixedUse, shop, office, shrine, school };
+const BUILDERS = { house, apartment, mixedUse, shop, office, shrine, school, ...Object.fromEntries(Object.entries(SHOP_BUILDINGS).map(([k, [fn]]) => [k, fn])) };
 const BUILDING_LABELS = { house: 'House', apartment: 'Apartment block', mixedUse: 'Shop with flats above', shop: 'Shop', office: 'Office building', shrine: 'Shrine', school: 'School' };
-const BUILDING_SIZES = { shrine: [18, 26], school: [34, 34] };
+const BUILDING_SIZES = { shrine: [18, 26], school: [34, 34], ...Object.fromEntries(Object.entries(SHOP_BUILDINGS).map(([k, [, , w, d]]) => [k, [w, d]])) };
+Object.entries(SHOP_BUILDINGS).forEach(([k, [, label]]) => { BUILDING_LABELS[k] = label; });
 const buildingAssets = Object.entries(BUILDERS).map(([key, fn]) => ({
   id: `building.${key}`,
   label: BUILDING_LABELS[key],

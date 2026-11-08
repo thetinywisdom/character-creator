@@ -6,13 +6,13 @@ import { box, cyl, face } from '../props/util.js';
 // a lot of width w (x) and depth d (z), stands on y = 0, is centred on the
 // lot and faces +z (the street). Real-world sizes in metres.
 
-const WALLS = [0xe8dcc6, 0xf0efe8, 0xc9c4b8, 0xd8c3a5, 0xb9c3c9, 0xe6d2c8, 0xa89a88];
-const FLOOR = 3;
+export const WALLS = [0xe8dcc6, 0xf0efe8, 0xc9c4b8, 0xd8c3a5, 0xb9c3c9, 0xe6d2c8, 0xa89a88];
+export const FLOOR = 3;
 
 const pick = (rng, arr) => arr[Math.floor(rng() * arr.length)];
 
 /** Triangular prism (a gable roof) along x: width across z, height up. */
-function gable(length, width, height, material) {
+export function gable(length, width, height, material) {
   const hw = width / 2, hl = length / 2;
   const v = [
     [-hl, 0, -hw], [hl, 0, -hw], [hl, 0, hw], [-hl, 0, hw], [-hl, height, 0], [hl, height, 0],
@@ -27,7 +27,7 @@ function gable(length, width, height, material) {
 }
 
 /** A row of windows on the front face of a floor. */
-function windowRow(g, style, w, y, z, { spacing = 2.2, ww = 1.2, wh = 1.3 } = {}) {
+export function windowRow(g, style, w, y, z, { spacing = 2.2, ww = 1.2, wh = 1.3 } = {}) {
   const glass = style.material('window');
   const n = Math.max(1, Math.floor((w - 1) / spacing));
   for (let i = 0; i < n; i++) {

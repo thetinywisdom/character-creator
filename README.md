@@ -205,6 +205,14 @@ pine, old giant, cherry blossom; flower beds; bushes); Japanese street props
 tops; an apron; things carried in the hand (shopping bag, briefcase, closed
 umbrella), which swing with the walk.
 
+**Buildings batch 1 (individual shops, `src/city/shops.js`):** coin laundromat
+(open glass front, washers and dryers inside, a bench), café / kissaten
+(wooden small-paned front, awning, round COFFEE sign, a table outside),
+pharmacy (green cross, shelves of goods with price cards out front), sushi
+(tiled eave, lattice door, すし noren, fish sign, bamboo), flower shop (open
+front, tiered flower buckets) and fishmonger (blue awning, an ice table of
+fish, stacked boxes, hanging bulbs). Shops and Mixed blocks now use them too.
+
 ### City editor
 
 **View → City editor** opens the current town from above. Tools:

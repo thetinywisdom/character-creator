@@ -781,7 +781,7 @@ Object.assign(window, {
   __cc: {
     params, state, galleryCells, propCells, setView, applyStreet, actions,
     enterProp: (i) => enterFocus(propCells[i]),
-    enterCity, cityInput, getCity: () => city, viewerGait, enterEditor, getEditor: () => editor,
+    enterCity, cityInput, getCity: () => city, viewerGait, enterEditor, getEditor: () => editor, CATALOG,
     enterFocus: (i) => enterFocus(galleryCells[i]),
     /** Orbit the inspection camera by `az` radians around the subject. */
     orbit: (az) => {

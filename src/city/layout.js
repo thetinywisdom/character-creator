@@ -27,12 +27,20 @@ const LOT = {
   downtown: { min: 12, max: 17, depth: 13 },
 };
 
+// individual shops (city/shops.js) that blocks fill themselves with
+const NEW_SHOPS = ['laundromat', 'kissaten', 'pharmacy', 'sushi', 'florist', 'fishmonger'];
+
 /** Which building asset (and shop type) goes on a lot. */
 function pickBuilding(type, rng, corner) {
   const r = rng();
   if (type === 'residential') return { asset: r < 0.62 ? 'building.house' : 'building.apartment' };
-  if (type === 'shops') return corner ? { asset: 'building.shop', shopType: 'Konbini' } : { asset: r < 0.6 ? 'building.shop' : 'building.mixedUse' };
+  if (type === 'shops') {
+    if (corner) return { asset: 'building.shop', shopType: 'Konbini' };
+    if (r < 0.45) return { asset: `building.${NEW_SHOPS[Math.floor(rng() * NEW_SHOPS.length)]}` };
+    return { asset: r < 0.75 ? 'building.shop' : 'building.mixedUse' };
+  }
   if (type === 'downtown') return { asset: r < 0.6 ? 'building.office' : 'building.mixedUse' };
+  if (r < 0.2) return { asset: `building.${NEW_SHOPS[Math.floor(rng() * NEW_SHOPS.length)]}` };
   return { asset: r < 0.7 ? 'building.mixedUse' : r < 0.85 ? 'building.shop' : 'building.apartment' };
 }
 
