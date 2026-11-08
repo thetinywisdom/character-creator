@@ -344,8 +344,6 @@ export class City {
   }
 
   update(dt, input) {
-    // rain / snow fall around the player
-    this.precip?.update(dt, this.player.root.position);
     const look = input.takeLook();
     if (this.viewMode === 'iso') {
       // drag turns the view freely, wheel / pinch zooms; Q / E (rotateIso) turn it 90° smoothly
@@ -493,6 +491,8 @@ export class City {
       tz + Math.cos(this.iso.yaw) * Math.cos(ip) * D,
     );
     this.isoCamera.lookAt(tx, ty, tz);
+    // rain / snow: a layer in front of whichever camera is in use
+    this.precip?.update(dt, this.activeCamera, { distance: this.cam.dist });
     // shadows cover more ground when the iso view is zoomed out
     const reach = this.viewMode === 'iso' ? Math.max(30, this.iso.zoom * 2.2) : 30;
     const sc = this.key.shadow.camera;

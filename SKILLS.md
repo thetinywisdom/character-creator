@@ -116,7 +116,7 @@ src/city/City.js       walkable town: player, people, cars, cats, collisions, ca
 src/city/variety.js    shared building variety: flatsAbove, roofTop, frontExtras, side, pick, between
 src/city/silhouette.js see-through people in the iso view (stencil + GreaterDepth copy)
 src/city/atmosphere.js night glow (setNightGlow), snow cover (setSnowCover), rain / snow
-                       particles (Precipitation), lamp light pools, weatherLight
+                       screen layer (Precipitation), lamp light pools, weatherLight
 src/city/input.js      keyboard, drag, pinch and on-screen joystick
 src/props/             street props (furniture, traffic, vehicles, extras, japan)
 src/creator/Creator.js the character creator panel (viewer only)
@@ -188,7 +188,10 @@ texture that should only partly glow carries a light mask in
 for any new painted window texture. `setSnowCover(root, on)` whitens roles
 (ground, grass, roof, leaf, ...). Both change shared materials, so apply them
 per scene and switch them off when leaving (the viewer does this for snow).
-Rain and snow particles follow a point (`Precipitation.update(dt, centre)`).
+Rain and snow are a layer in front of the camera, not a box in the world
+(`Precipitation.update(dt, camera, { distance })`, called after the camera
+moves): particles live in screen space, so nothing hides them and there are
+no edges; their size follows the zoom (softly, a square root).
 
 **No coplanar surfaces.** Two surfaces facing the same way must be ≥ 2 cm
 apart or they flicker on phones. Keep the 24-bit depth buffer in `ps1.js`.
