@@ -1,18 +1,20 @@
 import * as THREE from 'three';
 import { capsuleBetween, seg } from '../../lib/shapes.js';
-import { band } from './tops.js';
+import { band, torsoSurface } from './tops.js';
 
 // Outerwear: a second, slightly bigger layer over the torso (it follows the
 // same profile and sculpting, so it fits both body types), plus thicker long
 // sleeves (see arms.js). Cardigan and jacket are open at the front so the top
 // shows; the hoodie is closed.
 
-export const OUTERWEAR = ['None', 'Cardigan', 'Jacket', 'Hoodie'];
+export const OUTERWEAR = ['None', 'Cardigan', 'Jacket', 'Hoodie', 'Suit jacket'];
 
 const SPECS = {
   Cardigan: { inflate: 0.012, gap: 0.9 },
   Jacket:   { inflate: 0.022, gap: 0.5, collar: true },
   Hoodie:   { inflate: 0.026, gap: 0, hood: true },
+  // closed below the chest, open in a V above it (shirt and tie show), lapels
+  'Suit jacket': { inflate: 0.016, gap: 0, suit: true },
 };
 
 export function buildOuterwear(f, kind, mats) {
@@ -22,6 +24,23 @@ export function buildOuterwear(f, kind, mats) {
   if (!spec) return g;
   const L = f.torsoLen;
   const m = mats.outer;
+  if (spec.suit) {
+    // closed body up to the chest, then the V opening; a bit longer at the hips
+    g.add(band(f, Math.min(f.torsoBottom, -0.06 * L), L * 0.6, m, { inflate: spec.inflate }));
+    g.add(band(f, L * 0.6, L * 0.975, m, { inflate: spec.inflate, gap: 1.0 }));
+    // lapels: a strip down each side of the V, standing a little proud
+    const surf = torsoSurface(f);
+    for (const sx of [-1, 1]) {
+      g.add(lapel(f, surf, sx, m, spec.inflate));
+    }
+    // one button where the V closes
+    const by = L * 0.55;
+    const btn = new THREE.Mesh(new THREE.CylinderGeometry(f.sw * 0.028, f.sw * 0.028, 0.008, seg(8, 6)), mats.trim);
+    btn.rotation.x = Math.PI / 2;
+    btn.position.set(0, f.hipY + by, surf.front(0, by) + spec.inflate + 0.006);
+    g.add(btn);
+    return g;
+  }
   g.add(band(f, Math.max(f.torsoBottom, -0.02 * L), L * 0.975, m, { inflate: spec.inflate, gap: spec.gap }));
 
   if (spec.collar) {
@@ -51,4 +70,15 @@ export function buildOuterwear(f, kind, mats) {
     }
   }
   return g;
+}
+
+/** A suit lapel: a flat wedge from the shoulder down to where the jacket closes. */
+function lapel(f, surf, sx, material, inflate) {
+  const L = f.torsoLen;
+  const top = [sx * f.neckR * 1.3, L * 0.96], bottom = [sx * f.sw * 0.02, L * 0.56], outer = [sx * f.sw * 0.2, L * 0.8];
+  const pt = ([x, y], out = 0.008) => new THREE.Vector3(x, f.hipY + y, surf.front(x, y) + inflate + out);
+  const a = pt(top), b = pt(bottom), c = pt(outer);
+  const geo = new THREE.BufferGeometry().setFromPoints(sx > 0 ? [a, b, c] : [a, c, b]);
+  geo.computeVertexNormals();
+  return new THREE.Mesh(geo, material);
 }

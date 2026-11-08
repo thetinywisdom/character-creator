@@ -20,6 +20,8 @@ export const TOPS = {
   'Sailor uniform':         { sleeve: 'long', sailor: true },
   'Gakuran':                { sleeve: 'long', gakuran: true },
   'Yukata':                 { sleeve: 'wide', yukata: true },
+  // a light blue shirt under a navy vest with a gold badge
+  'Police uniform':         { sleeve: 'long', collar: true, police: true },
 };
 
 /** One horizontal slice of the torso, from y0 to y1 (torso-local metres). */
@@ -119,6 +121,7 @@ export function buildTorso(f, spec, mats) {
   if (spec.sailor) sailorDetails(f, torso, mats);
   if (spec.gakuran) gakuranDetails(f, torso, mats);
   if (spec.yukata) yukataDetails(f, torso, mats);
+  if (spec.police) policeDetails(f, torso, mats);
 
   if (spec.collar) {
     // a shirt collar in the shirt's own colour: a thin band standing round
@@ -228,6 +231,17 @@ function yukataDetails(f, torso, mats) {
   const bow = new THREE.Mesh(new THREE.BoxGeometry(f.sw * 0.42, L * 0.14, f.sw * 0.1), mats.obi);
   bow.position.set(0, f.hipY + L * 0.4, surf.back(0, L * 0.4) - f.sw * 0.07);
   torso.add(bow);
+}
+
+/** Police uniform: a navy vest over the shirt (open at the front), a gold badge on the chest. */
+function policeDetails(f, torso, mats) {
+  const L = f.torsoLen;
+  torso.add(band(f, L * 0.1, L * 0.86, mats.sailorCollar, { inflate: f.sw * 0.014, gap: 0.55 }));
+  const surf = torsoSurface(f);
+  const y = L * 0.72, x = f.sw * 0.17;
+  const badge = new THREE.Mesh(new THREE.BoxGeometry(f.sw * 0.07, f.sw * 0.09, f.sw * 0.02), mats.gold);
+  badge.position.set(x, f.hipY + y, surf.front(x, y) + f.sw * 0.03);
+  torso.add(badge);
 }
 
 // ---------------------------------------------------------------------------

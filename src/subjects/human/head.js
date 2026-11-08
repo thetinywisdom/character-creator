@@ -6,14 +6,14 @@ import { aboveHairline, azimuth, headShell, shapeHead, smooth } from './headShap
 // space (head centre at the origin, face toward +z). Everything is chunkier
 // than real life on purpose so it still reads on a tiny character.
 
-export const HEADWEAR = ['None', 'Cap', 'Cap (backwards)', 'Beanie', 'Fedora', 'Headphones', 'Helmet'];
+export const HEADWEAR = ['None', 'Cap', 'Cap (backwards)', 'Beanie', 'Fedora', 'Headphones', 'Helmet', 'Straw hat', 'Flat cap', 'Police cap'];
 export const FACE_ACCESSORIES = ['None', 'Glasses', 'Sunglasses'];
 export const MASKS = ['None', 'Flu mask'];
 export const BEARDS = ['None', 'Stubble', 'Short', 'Full', 'Long', 'Goatee', 'Pointed goatee', 'Chin strap', 'Mutton chops'];
 export const MOUSTACHES = ['None', 'Classic', 'Thin', 'Handlebar', 'Walrus', 'Horseshoe'];
 
 // Hats that cover the top of the head squash tall hairstyles underneath.
-const COVERS_HAIR = new Set(['Cap', 'Cap (backwards)', 'Beanie', 'Fedora', 'Helmet']);
+const COVERS_HAIR = new Set(['Cap', 'Cap (backwards)', 'Beanie', 'Fedora', 'Helmet', 'Straw hat', 'Flat cap', 'Police cap']);
 const UNDER_HAT = { bald: 'bald', short: 'short', medium: 'medium', long: 'long', bun: 'short',
   spiky: 'short', mohawk: 'bald', curly: 'short', afro: 'short',
   'short · buzz cut': 'short · buzz cut', 'short · undercut': 'short · buzz cut',
@@ -89,6 +89,55 @@ export function buildHeadwear(f, kind, material, hair) {
       band.scale.z = rz / rx;
       hat.add(b, crown, band);
       g.add(hat);
+      break;
+    }
+    case 'Straw hat': {
+      // a wide, flat brim and a low round crown with a red band (麦わら帽子)
+      const hat = new THREE.Group();
+      hat.position.y = R * 0.42;
+      hat.rotation.x = -0.06;
+      const b = new THREE.Mesh(new THREE.CylinderGeometry(rx * 2.5, rx * 2.6, R * 0.05, seg(20)), material);
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(1, seg(16), seg(8, 4), 0, Math.PI * 2, 0, Math.PI / 2), material);
+      crown.scale.set(rx * 1.05, R * 0.62, rz * 1.05);
+      const band = new THREE.Mesh(new THREE.CylinderGeometry(rx * 1.07, rx * 1.09, R * 0.16, seg(16)), f.mats.sailorScarf);
+      band.position.y = R * 0.1;
+      band.scale.z = rz / rx;
+      hat.add(b, crown, band);
+      g.add(hat);
+      break;
+    }
+    case 'Flat cap': {
+      // a soft, flat cap sloping down to a short brim (an older man's hat)
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(1, seg(20), seg(10, 4), 0, Math.PI * 2, 0, Math.PI / 2), material);
+      crown.scale.set(rx * 1.16, ry * 0.62, rz * 1.22);
+      crown.position.set(0, R * 0.2, rz * 0.06);
+      crown.rotation.x = 0.12;
+      const b = brim(R * 0.55, R * 0.06, material);
+      b.position.set(0, R * 0.16, rz * 0.82);
+      b.scale.z = 0.7;
+      b.rotation.x = 0.2;
+      g.add(crown, b);
+      break;
+    }
+    case 'Police cap': {
+      // a peaked cap: a stiff round top wider than the band, a black peak,
+      // a dark band and a gold badge at the front
+      const cap = new THREE.Group();
+      cap.position.y = R * 0.32;
+      const band = new THREE.Mesh(new THREE.CylinderGeometry(rx * 1.08, rx * 1.08, R * 0.32, seg(16)), f.mats.band);
+      band.scale.z = rz / rx;
+      const top = new THREE.Mesh(new THREE.CylinderGeometry(rx * 1.32, rx * 1.1, R * 0.26, seg(16)), material);
+      top.position.y = R * 0.28;
+      top.scale.z = rz / rx;
+      const peak = brim(R * 0.62, R * 0.05, f.mats.band);
+      peak.position.set(0, -R * 0.12, rz * 0.95);
+      peak.scale.z = 0.75;
+      peak.rotation.x = 0.35;
+      const badge = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.12, R * 0.12, R * 0.04, seg(8, 6)), f.mats.gold);
+      badge.rotation.x = Math.PI / 2;
+      badge.position.set(0, R * 0.2, rz * 1.18);
+      cap.add(band, top, peak, badge);
+      g.add(cap);
       break;
     }
     case 'Headphones': {

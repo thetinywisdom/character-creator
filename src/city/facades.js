@@ -33,6 +33,11 @@ function officeTexture(kind) {
   const g = c.getContext('2d');
   seed = 11 + kind.length * 97;
   g.fillStyle = S.wall; g.fillRect(0, 0, 128, 128);
+  // night light mask (atmosphere.js): lit offices glow, plus some with blinds
+  const mc = document.createElement('canvas');
+  mc.width = 128; mc.height = 128;
+  const m = mc.getContext('2d');
+  m.fillStyle = '#000'; m.fillRect(0, 0, 128, 128);
   const bw = 32, fh = 32;
   for (let f = 0; f < 4; f++) {
     const floorLit = rnd() < 0.6;
@@ -44,12 +49,14 @@ function officeTexture(kind) {
       if (floorLit && r < 0.75) {
         // a lit office: ceiling light strip, a desk row, a person or two
         g.fillStyle = '#f2ecd8'; g.fillRect(wx, wy, ww, wh);
+        m.fillStyle = '#fff4d8'; m.fillRect(wx, wy, ww, wh);
         g.fillStyle = '#fffbe6'; g.fillRect(wx + 2, wy + 1, ww - 4, 2);
         g.fillStyle = '#8a8e94'; g.fillRect(wx, wy + wh - 6, ww, 3);
         if (rnd() < 0.6) { g.fillStyle = pickR(['#2a62c8', '#f4f4f0', '#2c3652', '#7a3fbf']); g.fillRect(wx + 4 + rnd() * (ww - 10), wy + wh - 13, 4, 7); g.fillStyle = '#e0b48c'; g.fillRect(wx + 5 + rnd() * (ww - 10), wy + wh - 16, 3, 3); }
       } else if (r < 0.88) {
         // blinds down
         g.fillStyle = '#d8d8d0'; g.fillRect(wx, wy, ww, wh);
+        if (rnd() < 0.5) { m.fillStyle = '#806c48'; m.fillRect(wx, wy, ww, wh); }
         g.fillStyle = '#b8b8b0'; for (let k = 2; k < wh; k += 3) g.fillRect(wx, wy + k, ww, 1);
       } else {
         // dark, with a sky reflection
@@ -68,6 +75,12 @@ function officeTexture(kind) {
   t.magFilter = THREE.NearestFilter;
   t.minFilter = THREE.NearestFilter;
   t.generateMipmaps = false;
+  const glow = new THREE.CanvasTexture(mc);
+  glow.colorSpace = THREE.SRGBColorSpace;
+  glow.wrapS = glow.wrapT = THREE.RepeatWrapping;
+  glow.magFilter = glow.minFilter = THREE.NearestFilter;
+  glow.generateMipmaps = false;
+  t.userData.glowMap = glow;
   cache.set(kind, t);
   return t;
 }

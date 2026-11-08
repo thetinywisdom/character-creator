@@ -242,9 +242,35 @@ function poseSkate(body, g) {
 export function poseGait(body, g, style = 'natural') {
   if (style === 'skate') poseSkate(body, g);
   else poseNatural(body, g);
+  poseHold(body, body.userData.hold ?? {});
   flapWings(body, g);
   const j = jointsOf(body);
   if (j.skirt) stretchSkirt(j.skirt, [j.shinL, j.shinR]);
+}
+
+/**
+ * Pose kept on top of the walk: a grandparent's stoop (body.userData.stoop,
+ * radians forward at the hips, the head tilted back up) and the arms holding
+ * something (hold = HOLD_POSES entry in subjects/human/handheld.js:
+ * armR / foreR / armL / foreL x angles, armRz turns the right arm inward).
+ * Called after the walk pose each frame (and once by human.build).
+ */
+export function poseHold(body, hold) {
+  const j = jointsOf(body);
+  const stoop = body.userData.stoop ?? 0;
+  if (stoop) {
+    if (j.spine) j.spine.rotation.x += stoop;
+    if (j.head) j.head.rotation.x -= stoop * 0.7;
+  }
+  for (const name of ['armR', 'foreR', 'armL', 'foreL']) {
+    const o = j[name];
+    if (!o || hold[name] === undefined) continue;
+    o.rotation.x = hold[name];
+    if (name === 'armR' && hold.armRz) {
+      o.userData.baseZ ??= o.rotation.z;
+      o.rotation.z = o.userData.baseZ + hold.armRz;
+    }
+  }
 }
 
 /** Wings beat slowly and gently all the time, a little faster when running. */

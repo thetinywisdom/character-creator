@@ -10,16 +10,19 @@ agents to build games on. **Agents: read `SKILLS.md`.**
 `npm install && npm run dev` opens a viewer with three modes:
 
 - **📦 Catalogue** (home): every item a game can place, in tabs (Buildings,
-  Street, Traffic, Extras, Nature, Vehicles, Areas). Tap one to turn it
-  around, try its types, colours and looks, and copy the `createAsset(...)`
-  line that builds it.
+  Street, Traffic, Extras, Nature, Animals, Vehicles, Areas). Tap one to turn
+  it around, try its types, colours and looks, and copy the `createAsset(...)`
+  line that builds it. The cat has Still / Walk / Run.
 - **👤 Characters**: the character creator (Body, Hair & face, Clothes,
-  Accessories; Still / Walk / Run preview). **⬇ JSON** saves the character as
-  a file, **⬆** opens one. Games may use these characters, or not.
+  Accessories; Still / Walk / Run preview). Body types Man, Woman, Boy, Girl,
+  Grandpa, Grandma; ready-made Looks in the Clothes tab (office worker,
+  police officer, delivery worker, ...). **⬇ JSON** saves the character as a
+  file, **⬆** opens one. Games may use these characters, or not.
 - **🏙 City**: walk a generated sample town as your character, with people,
-  cars and cats. 🎲 makes a different town, ☀ changes the time of day, 🎥 (or
-  V) switches third person / isometric (Q / E rotate). WASD / arrows, Shift to
-  run, a joystick on touch screens.
+  cars, motorbikes and cats. 🎲 makes a different town, ☀ changes the time of
+  day (at night windows, signs and lamps glow), 🌤 the weather (rain: people
+  open umbrellas; snow), 🎥 (or V) switches third person / isometric (Q / E
+  rotate). WASD / arrows, Shift to run, a joystick on touch screens.
 
 ## Docs
 

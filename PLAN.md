@@ -21,13 +21,14 @@ games), 🏙 City (walk a generated sample town to experiment).
 | Look | PS1 · Bright + clear (low-res pixels, dither, outlines, vivid characters on a calmer city). Other styles were explored and removed |
 | Setting | A small Japanese town; cars drive on the left; Japanese signs |
 | Characters | Realistic proportions, no faces, tiny in the city; body types Man, Woman, Boy, Girl, each with a default design; builds Skinny / Normal / Bulky / Fat; the cat drawn 1.5× |
-| Character rules | No facial hair on women / children; no skirts or crop tops on men / boys; ties need a shirt; sailor uniform for women / girls, gakuran for men / boys; children don't carry babies; yukata hides legwear |
+| Character rules | Body types Man, Woman, Boy, Girl, Grandpa, Grandma; no facial hair on women / children; no skirts or crop tops on men / boys; ties need a shirt; sailor uniform for women / girls, gakuran for men / boys; children don't carry babies; yukata hides legwear; no school uniforms on grandparents |
 | Character creator | Viewer tool for exploring characters and exporting their JSON; using the characters is optional for games |
 | Output | Reusable modules + SKILLS.md. Towns are generated (or written as town JSON) by each game; characters can be exported as JSON |
 | Detail | "Feel real, not be real": painted shop interiors, curtains and office facades instead of modelled items |
 | App | A viewer only: Catalogue (home) / Characters / City. No city editor, no saved towns, no developer panel (removed: over-complicated) |
 | Platforms | Games: web + iOS / Android via three.js wrapped with Capacitor; glTF export as a backup for other engines |
 | Buildings | Shops and food places join block fills; public buildings (koban, post office, bank, clinic, fire station, parking, gas station) are placed by games |
+| Atmosphere | Night, rain and snow are cheap: shared-material glow with painted light masks, particles that follow the player; no real extra lights |
 | Cameras | The city switches between third person and isometric |
 | Streets | Roads are 6 m (two narrow lanes), so towns feel small enough to explore; no cars parked at the kerb |
 
@@ -52,15 +53,19 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 17. **Simplified to a foundation + viewer**: removed the city editor, My towns / autosave, town save / open, the developer panel and lil-gui. The app is now Catalogue / Characters (⬇ JSON export, ⬆ import) / City. Shared PS1 render step moved to `src/render/ps1.js`. SKILLS.md rewritten for game-building agents.
 
+18. **Cat animation**: walk (lateral sequence) and run (bounding gallop), head and tail; city cats wander and sometimes dash; the cat is in the catalogue (Animals) with Still / Walk / Run and fur colours.
+19. **People content**: Grandpa and Grandma body types (stoop, slow walk, walking stick); suit jacket, police uniform; straw hat, flat cap, police cap; held items with arm poses (open umbrella, phone, ice cream, coffee cup, boxes in both arms); a Looks row (office worker, police officer, delivery worker, ...); motorbikes (delivery scooter, step-through moped, motorcycle) parked round town.
+20. **More trees**: Japanese maple, ginkgo, zelkova, black pine, weeping willow, bamboo (parks and shrine groves use them).
+21. **Atmosphere**: lit night (windows, signs, shop interiors, lamps and light pools, via light masks, no real lights), rain (streaks, darker light, people open umbrellas), snow (flakes, white ground, roofs and trees). City buttons ☀ (time of day) and 🌤 (weather).
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.
 
-1. **More people content**: elderly body type, office suit, umbrella and phone poses.
-2. **More town content**: shopping arcade, train station, temple, more shop types.
-3. **Atmosphere**: night with lit windows and signs, rain, cherry blossom season.
-4. **Freer layouts** (town JSON version 2): curved / narrow roads, rivers, train tracks.
-5. **First game hand-off**: when a game starts, note in SKILLS.md what it needed and missed.
+1. **More town content**: shopping arcade, train station, temple, more shop types.
+2. **Atmosphere extras**: puddles and wet reflections, falling cherry petals, a day / night cycle over time.
+3. **Freer layouts** (town JSON version 2): curved / narrow roads, rivers, train tracks.
+4. **First game hand-off**: when a game starts, note in SKILLS.md what it needed and missed.
 
 ## Known issues and small ideas
 

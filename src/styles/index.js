@@ -14,5 +14,5 @@ export const styles = [ps1Clear];
 export const lightingPresets = {
   Day:    { keyColor: 0xffffff, key: 1,    dir: [0.5, 1, 0.6],   hemi: 1,    tint: null,     tintAmount: 0 },
   Sunset: { keyColor: 0xffaa66, key: 1.1,  dir: [1, 0.32, 0.25], hemi: 0.6,  tint: 0xf0a070, tintAmount: 0.35 },
-  Night:  { keyColor: 0x9db3ff, key: 0.45, dir: [-0.4, 1, 0.35], hemi: 0.45, tint: 0x10173a, tintAmount: 0.75 },
+  Night:  { keyColor: 0x9db3ff, key: 0.35, dir: [-0.4, 1, 0.35], hemi: 0.3, tint: 0x10173a, tintAmount: 0.75, night: true },
 };

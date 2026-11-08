@@ -291,14 +291,21 @@ let curtains = null;
 function curtainTexture() {
   if (curtains) return curtains;
   const [c, w] = canvas(W, 64);
+  // night light mask (atmosphere.js): the room glows between the curtains;
+  // at night the dark rooms light up too (people come home), the curtains glow dimly
+  const [mc, m] = canvas(W, 64);
+  m.fillStyle = '#000'; m.fillRect(0, 0, W, 64);
   const VARIANTS = [['#e8d8a8', true], ['#a8c4d8', false], ['#e6b8b8', true], ['#c8d8b0', false]];
   VARIANTS.forEach(([col, lit], i) => {
     const x = i * 64;
     w.fillStyle = lit ? '#fff2c8' : '#4a5664'; w.fillRect(x, 0, 64, 64);
     w.fillStyle = col; w.fillRect(x, 0, 20, 64); w.fillRect(x + 44, 0, 20, 64);
     w.fillStyle = 'rgba(0,0,0,0.3)'; w.fillRect(x, 0, 64, 3); w.fillRect(x + 31, 0, 2, 64);
+    m.fillStyle = '#5a4a30'; m.fillRect(x, 0, 64, 64);
+    m.fillStyle = i === 3 ? '#000' : '#ffd890'; m.fillRect(x + 20, 3, 24, 61); // one variant stays dark
   });
   curtains = texture(c);
+  curtains.userData.glowMap = texture(mc);
   return curtains;
 }
 

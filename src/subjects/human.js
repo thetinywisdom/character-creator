@@ -5,13 +5,15 @@ import { measure } from './human/frame.js';
 import { HAIRSTYLES, LONG_STYLES, MEDIUM_STYLES, SHORT_STYLES, buildHair } from './human/hair.js';
 import { TOPS, buildTorso } from './human/tops.js';
 import { buildArm, handGrip } from './human/arms.js';
-import { HAND_ITEMS, buildHandItem } from './human/handheld.js';
+import { HAND_ITEMS, HOLD_POSES, buildHandItem } from './human/handheld.js';
 import { FOOTWEAR } from './human/footwear.js';
 import { headGeometry } from './human/headShape.js';
 import { OUTERWEAR, buildOuterwear } from './human/outerwear.js';
 import { BACK_ACCESSORIES, BODY_ACCESSORIES, buildBackAccessory, buildBodyAccessory } from './human/accessories.js';
 import { BEARDS, FACE_ACCESSORIES, HEADWEAR, MASKS, MOUSTACHES, buildFaceAccessory, buildFacialHair, buildHeadwear, coversHair, hairUnder } from './human/head.js';
-import { BODY_DEFAULTS, BODY_TYPES, BUILDS, adjust, allowedOptions, applyRules, hiddenControls, isChild } from './human/rules.js';
+import { BODY_DEFAULTS, BODY_TYPES, BUILDS, OUTFITS, adjust, allowedOptions, applyRules, hiddenControls, isChild, isElderly } from './human/rules.js';
+import { poseHold } from '../anim/gait.js';
+import { mergeByMaterial } from '../lib/merge.js';
 import { LEGWEAR, buildLeg, buildSkirt } from './human/legwear.js';
 
 // Human character, assembled from slots: body, hair, top, legwear (more slots
@@ -82,7 +84,11 @@ export const human = {
     Woman: { bodyType: 'Woman', ...BODY_DEFAULTS.Woman },
     Boy:   { bodyType: 'Boy',   ...BODY_DEFAULTS.Boy },
     Girl:  { bodyType: 'Girl',  ...BODY_DEFAULTS.Girl },
+    Grandpa: { bodyType: 'Grandpa', ...BODY_DEFAULTS.Grandpa },
+    Grandma: { bodyType: 'Grandma', ...BODY_DEFAULTS.Grandma },
   },
+  /** Ready-made looks (clothes only), see rules.js OUTFITS. */
+  outfits: OUTFITS,
 
   /** A random but believable character (realistic proportions, varied outfit). */
   randomize(rng = Math.random) {
@@ -95,8 +101,9 @@ export const human = {
     } while (legwearColor === topColor);
     // about one in six is a child
     const child = rng() < 0.17;
+    const old = !child && rng() < 0.14; // and about one in eight is a grandparent
     const woman = rng() < 0.5;
-    const bodyType = child ? (woman ? 'Girl' : 'Boy') : (woman ? 'Woman' : 'Man');
+    const bodyType = child ? (woman ? 'Girl' : 'Boy') : old ? (woman ? 'Grandma' : 'Grandpa') : (woman ? 'Woman' : 'Man');
     const kid = BODY_DEFAULTS[bodyType];
     const jitter = (v, k) => Math.round(v * (1 + (rng() - 0.5) * k) * 1000) / 1000;
     const out = {
@@ -147,6 +154,18 @@ export const human = {
       out.footwear = 'Shoes';
       out.mask = 'None';
       out.backAccessory = rng() < 0.5 ? 'Backpack' : 'None'; // school bags
+    }
+    if (old) {
+      // grandparent proportions and a quieter look, often a walking stick
+      for (const k of Object.keys(kid)) if (typeof kid[k] === 'number') out[k] = jitter(kid[k], k === 'height' ? 0.08 : 0.06);
+      out.hairColor = pick(['Gray', 'Gray', 'White', 'White', 'Black']);
+      if (out.hair === 'mohawk' || out.hair === 'spiky' || out.hair.includes('twin')) out.hair = woman ? 'bun' : 'short';
+      out.topColor = pick(['White', 'Khaki', 'Gray', 'Brown', 'Navy', 'Light blue', 'Purple']);
+      out.outerwear = rng() < 0.5 ? 'Cardigan' : 'None';
+      out.headwear = rng() < 0.35 ? (woman ? 'Straw hat' : pick(['Flat cap', 'Flat cap', 'Fedora'])) : 'None';
+      out.backAccessory = 'None';
+      out.handItem = rng() < 0.4 ? 'Walking stick' : rng() < 0.3 ? 'Shopping bag' : 'None';
+      out.handItemColor = 'Brown';
     }
     // the character rules (no bearded women, no skirts on men, ...)
     return applyRules(out, human.schema);
@@ -213,6 +232,8 @@ export const human = {
     const upper = new THREE.Group();
     upper.position.y = -f.hipY;
     spine.add(upper);
+    // grandparents stand with a gentle stoop (kept while walking, anim/gait.js)
+    if (isElderly(p)) root.userData.stoop = 0.2;
 
     // --- torso + neck ----------------------------------------------------
     upper.add(buildTorso(f, top, mats));
@@ -234,16 +255,21 @@ export const human = {
     else if (p.legwear === 'Skirt') upper.add(buildSkirt(f, mats));
 
     // --- arms (pivot at shoulder) ----------------------------------------
+    let held = null;
     for (const sx of [-1, 1]) {
       const arm = buildArm(f, sx, top, mats, (t) => t.sleeve, hasOuter ? mats.outer : null);
       // something carried in the right hand swings with the forearm
       if (sx < 0) {
         const { grip, dir } = handGrip(f, sx);
-        const item = buildHandItem(f, p.handItem, mats.handItem, grip, dir);
-        if (item) arm.getObjectByName('foreR').add(item);
+        const item = buildHandItem(f, p.handItem, mats.handItem, grip, dir, style);
+        if (item && !item.userData.upright) arm.getObjectByName('foreR').add(item);
+        else if (item) held = { item, grip, fore: arm.getObjectByName('foreR') };
       }
       upper.add(arm);
     }
+    // a held item (open umbrella, phone, ...): pose the arms, then fix the
+    // item to the forearm upright, as it sits in that pose (HOLD_POSES)
+    if (held && HOLD_POSES[p.handItem]) placeHeld(root, held.fore, held.item, held.grip, HOLD_POSES[p.handItem]);
 
     // --- accessories -------------------------------------------------------
     upper.add(buildBackAccessory(f, p.backAccessory, mats));
@@ -266,10 +292,49 @@ export const human = {
     head.add(buildFaceAccessory(f, eyewear, mats));
     head.add(buildFaceAccessory(f, mask, mats)); // worn together with glasses
     upper.add(head);
+    if (root.userData.stoop && !root.userData.hold) poseHold(root, {}); // show the stoop at rest
 
     return root;
   },
 };
+
+/** Pose the arms for `hold` and fix `item` (built upright) to the forearm `fore`, at `grip`. */
+function placeHeld(root, fore, item, grip, hold) {
+  root.userData.hold = hold;
+  poseHold(root, hold);
+  root.updateMatrixWorld(true);
+  const at = root.worldToLocal(fore.localToWorld(grip.clone()));
+  if (hold.centre) at.x = 0; // between both hands
+  root.localToWorld(at);
+  item.position.copy(fore.worldToLocal(at));
+  // upright relative to the body, whatever the arm's angle
+  const q = new THREE.Quaternion();
+  item.quaternion.copy(fore.getWorldQuaternion(q).invert().multiply(root.getWorldQuaternion(new THREE.Quaternion())));
+  fore.add(item);
+}
+
+/**
+ * Give an already built character something to hold (a HOLD_POSES item, e.g.
+ * 'Umbrella (open)' when it starts to rain), posing its arms. Works on skinned
+ * people too (their joints stay). Returns a function that takes it away again.
+ */
+export function giveHeldItem(root, p, kind, color, style) {
+  const hold = HOLD_POSES[kind];
+  const fore = root.getObjectByName('foreR');
+  if (!hold || !fore) return null;
+  const f = measure(p);
+  f.mats = { trim: style.material('accent', 0x2a2a30) };
+  const { grip, dir } = handGrip(f, -1);
+  const raw = buildHandItem(f, kind, style.material('cloth', CLOTH_COLORS[color] ?? CLOTH_COLORS.Blue), grip, dir, style);
+  const item = mergeByMaterial(raw); // a few draw calls, not one per part
+  const before = root.userData.hold;
+  placeHeld(root, fore, item, grip, hold);
+  return () => {
+    fore.remove(item);
+    item.traverse((o) => o.geometry?.dispose());
+    if (before) root.userData.hold = before; else delete root.userData.hold;
+  };
+}
 
 // the schema's defaults are the Man's default design
 for (const [k, v] of Object.entries(BODY_DEFAULTS.Man)) if (human.schema[k]) human.schema[k].value = v;

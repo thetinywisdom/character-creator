@@ -19,7 +19,7 @@ agents to see what exists:
 |---|---|---|
 | 📦 Catalogue (home) | every placeable item with its id, settings and a `createAsset(...)` line to copy | `src/catalog/` |
 | 👤 Characters | the character creator; ⬇ JSON / ⬆ export and import a character | `src/subjects/human*` |
-| 🏙 City | walk a generated sample town; 🎲 new town, time of day, third person / iso | `src/city/` |
+| 🏙 City | walk a generated sample town; 🎲 new town, time of day, weather, third person / iso | `src/city/` |
 
 There is no city editor: a game generates its towns (`generateCityData`) or
 writes the town JSON itself.
@@ -52,7 +52,28 @@ const city = new City({ style, renderer, human, cat, params, data: generateCityD
 ```
 
 `City.js` is a working example of everything together (movement, collisions,
-traffic, cameras); copy what you need rather than treating it as a fixed engine.
+traffic, cameras, night and weather); copy what you need rather than treating
+it as a fixed engine.
+
+## Building on top: what goes where
+
+Games can add their own animations, characters, buildings and items. Keep
+the foundation general and the game specific:
+
+- **Add to this repo** anything any game could use: a new animation (sitting,
+  waving), a new body type or clothing option, a building, a prop, a tree, a
+  weather. Follow the patterns below (catalogue entry, collider, style roles,
+  docs) so it shows up in the viewer and every future game gets it.
+- **Keep in the game** what only that game needs: its rules, UI, menus,
+  saves, story characters, game-only models.
+- **New animations** are plain functions that set joint rotations each frame,
+  like `anim/gait.js` (people) and `anim/catGait.js` (the cat). Joints are
+  named groups (`JOINT_NAMES`, `CAT_JOINTS`); skinned people keep them, so an
+  animation works in the city too. Run extra poses after `poseGait`, as
+  `poseHold` does. Models made elsewhere (glTF) can be loaded with three.js
+  too; give them style materials so they match.
+- **New kinds of characters** follow `subjects/cat.js`: a `schema`, `presets`
+  and a `build(params, style)` that names its joints.
 
 ## Run, build, publish
 
@@ -78,7 +99,8 @@ src/catalog/index.js   ASSET CATALOGUE: every placeable item behind one interfac
 src/catalog/thumbs.js  catalogue pictures (drawn on demand, cached in the browser)
 src/subjects/          human.js (+ human/*: frame, sculpt, hair, head, tops, arms, legwear,
                        footwear, outerwear, accessories, handheld, rules), cat.js, tree.js
-src/anim/              gait.js (walk / run, wing flap), skirt.js (skirt stretch)
+src/anim/              gait.js (people: walk / run, wing flap, poseHold: stoop + held items),
+                       catGait.js (cat walk / run), skirt.js (skirt stretch)
 src/city/format.js     town JSON format, grid geometry, validation
 src/city/layout.js     generator: generateCityData(seed), blockObjects, streetObjects, roadNetwork
 src/city/build.js      buildCity(data, style): town JSON -> scene, colliders, routes, ground
@@ -89,7 +111,10 @@ src/city/civic.js      udon/soba, family restaurant, takoyaki, koban, post offic
                        clinic, fire station, karaoke, wooden apartment, parking, gas station
 src/city/interiors.js  painted shop interiors and curtains
 src/city/facades.js    painted office facades, roof clutter, roof signs
-src/city/City.js       walkable town: player, people, cars, cats, collisions, cameras
+src/city/City.js       walkable town: player, people, cars, cats, collisions, cameras,
+                       setWeather('Clear'|'Rain'|'Snow'), night via applyLighting
+src/city/atmosphere.js night glow (setNightGlow), snow cover (setSnowCover), rain / snow
+                       particles (Precipitation), lamp light pools, weatherLight
 src/city/input.js      keyboard, drag, pinch and on-screen joystick
 src/props/             street props (furniture, traffic, vehicles, extras, japan)
 src/creator/Creator.js the character creator panel (viewer only)
@@ -118,7 +143,13 @@ roles are softened. `light` glows: never use it for big textured surfaces.
 `createAsset(id, params, style)` builds one; unknown params fall back to the
 defaults. `params.variant` picks from `variants`, `params.color` from
 `colors`, `params.seed` changes the look of seeded items, buildings take
-`w` / `d` (lot size) and shops `shopType`.
+`w` / `d` (lot size) and shops `shopType`. Groups (catalogue tabs):
+buildings, street, traffic, extras, nature, animals, vehicles, areas.
+`animated: 'cat'` marks items with joints (`animal.cat`: pose it with
+`poseCat`, `anim/catGait.js`). Trees (`nature.tree`) come in 11 presets
+(oak, lollipop, pine, old giant, cherry blossom, Japanese maple, ginkgo,
+zelkova, black pine, weeping willow, bamboo); motorbikes
+(`vehicle.scooter`) in 50cc, Delivery, Step-through and Motorcycle.
 
 **Town JSON** (`src/city/format.js`): `{ format: 'tiny-city', version: 1,
 meta, grid: { cols, rows, block: 40, road: 6, sidewalk: 3, curb: 0.12 },
@@ -139,6 +170,16 @@ pedestrians sidestep; cars brake for things ahead. A new item needs a collider.
 (`src/lib/skin.js`, about 2 draw calls a person). Prefer painted textures over
 many small meshes ("feel real, not be real").
 
+**Night and weather.** Night is the `Night` lighting preset (`night: true`):
+`setNightGlow(root, on)` makes lamps, signs, shop interiors and lit windows
+glow by changing the shared style materials (no real lights). A painted
+texture that should only partly glow carries a light mask in
+`texture.userData.glowMap` (see `curtainTexture`, `officeTexture`): paint one
+for any new painted window texture. `setSnowCover(root, on)` whitens roles
+(ground, grass, roof, leaf, ...). Both change shared materials, so apply them
+per scene and switch them off when leaving (the viewer does this for snow).
+Rain and snow particles follow a point (`Precipitation.update(dt, centre)`).
+
 **No coplanar surfaces.** Two surfaces facing the same way must be ≥ 2 cm
 apart or they flicker on phones. Keep the 24-bit depth buffer in `ps1.js`.
 
@@ -154,11 +195,19 @@ these characters, or not use them at all.
 ```
 
 `params` holds the values of `human.schema` (`src/subjects/human.js`): body
-(`bodyType` Man / Woman / Boy / Girl, `build` Skinny / Normal / Bulky / Fat,
+(`bodyType` Man / Woman / Boy / Girl / Grandpa / Grandma, `build` Skinny / Normal / Bulky / Fat,
 `height`, `headsTall`, `legLength`, widths and thicknesses, `skin`), hair and
 face (`hair`, `hairColor`, `beard`, `moustache`, `headwear`, `mask`,
 `faceAccessory`), clothes (`top`, `legwear`, `outerwear`, `footwear`, each with
 a colour) and accessories (`backAccessory`, `bodyAccessory`, `handItem`).
+Hand items: shopping bag, briefcase, umbrella, walking stick (hanging, swing
+with the arm) and umbrella (open), phone, ice cream, coffee cup, boxes (held:
+the arms take a pose from `HOLD_POSES` in `human/handheld.js`, kept by
+`poseHold` while walking). `giveHeldItem(body, params, kind, color, style)`
+hands a held item to an already built (even skinned) person and returns a
+function that takes it away (the city uses it for umbrellas in the rain).
+`human.outfits` holds ready-made looks (clothes only): Office worker, Police
+officer, Delivery worker, Summer stroll, Rainy day, Coffee run, On the phone.
 `human.schema[key]` gives each key's options or min / max and default.
 
 To use one in a game:
@@ -173,8 +222,9 @@ const person = human.build(p, style);       // animate with poseGait (src/anim/g
 
 Rules (`human/rules.js`): no facial hair on women and children; no skirts or
 crop tops on men and boys; ties need a shirt; sailor uniform for women and
-girls, gakuran for men and boys; children don't carry babies; yukata hides
-legwear. `BODY_DEFAULTS` holds each body type's default design. Each game
+girls, gakuran for men and boys (not for grandparents); children don't carry
+babies; yukata hides legwear. Grandparents stand with a stoop
+(`userData.stoop`) and walk slowly in the city. `BODY_DEFAULTS` holds each body type's default design. Each game
 decides what players may change.
 
 ## Common tasks
@@ -185,7 +235,7 @@ faces +z, returns `{ group, footprint, colliders }`) in `shops.js` /
 `shopWindow`), add it to `SHOP_BUILDINGS` / `CIVIC_BUILDINGS` with label and
 lot size, give it a painted interior (`PAINT` in `interiors.js`). Optionally
 add it to block fills in `layout.js`. It then appears in the Catalogue. Bump
-`VERSION` in `catalog/thumbs.js` if an existing item's look changes.
+`VERSION` in `catalog/thumbs.js` if an existing item's look changes (now 3: office facades repainted with light masks).
 
 **Add a prop.** Add `{ id, label, variants, colors?, build(params, style) }` to
 a file in `src/props/`, list it in `PROP_GROUPS` (`props/index.js`), add its
@@ -208,9 +258,10 @@ No unit tests; verify by building and looking.
   `--use-gl=angle --use-angle=swiftshader`): `npx vite preview`, open the
   page, use `window.__cc` and take screenshots.
 - Hooks on `window.__cc`: `params`, `state`, `setView('catalog'|'item'|'creator'|'city')`,
-  `openItem(id, params)`, `CATALOG`, `apply('human', values)`, `orbit(az)`,
+  `openItem(id, params)`, `CATALOG`, `human` (presets, outfits), `apply('human', values)`, `orbit(az)`,
   `gait.lock = fraction` (freeze the walk), `getCity()` (`player`, `npcs`,
-  `cars`, `cam`, `iso`, `setViewMode('iso'|'third')`), `newTown(seed)`, `cityInput`.
+  `cars`, `cats`, `cam`, `iso`, `setViewMode('iso'|'third')`, `setWeather(kind)`),
+  `newTown(seed)`, `cityInput`. The app bar's ☀ / 🌤 buttons switch light and weather.
 - To look at one building: `openItem('building.bank')`, or place the player
   in the city with `getCity().player.position.set(...)`.
 - Check desktop (1280 × 720) and phone (390 × 844).

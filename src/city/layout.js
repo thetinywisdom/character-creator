@@ -76,13 +76,13 @@ export function blockObjects(grid, block) {
   if (type === 'park') {
     place('area.park', { w: BLOCK - WALK * 2, d: BLOCK - WALK * 2, seed: seedOf() }, cx, cz, [0, 1]);
   } else if (type === 'shrine') {
-    // a shrine in a grove: old trees and pines round the edge, cherry trees by the gate
+    // a shrine in a grove: old trees, zelkova and pines round the edge, cherry trees by the gate
     const inner = BLOCK - WALK * 2;
     place('building.shrine', { w: 18, d: inner - 2, seed: seedOf() }, cx, cz, [0, 1]);
     for (let i = 0; i < 10; i++) {
       const side = i % 2 ? 1 : -1;
       const z = z0 + WALK + 3 + Math.floor(i / 2) * ((inner - 6) / 4);
-      const kind = z > z1 - WALK - 9 ? 'Cherry blossom' : rng() < 0.5 ? 'Old giant' : 'Pine';
+      const kind = z > z1 - WALK - 9 ? 'Cherry blossom' : ['Old giant', 'Zelkova', 'Black pine', 'Pine'][Math.floor(rng() * 4)];
       place('nature.tree', { variant: kind, seed: 1 + Math.floor(rng() * 50) }, cx + side * (inner / 2 - 3.5), z, [0, 1]);
     }
   } else if (type === 'school') {
@@ -108,7 +108,7 @@ export function blockObjects(grid, block) {
         const out = side === 'north' ? [0, -1] : [0, 1];
         const lz = side === 'north' ? z0 + WALK + D / 2 : z1 - WALK - D / 2;
         place(pick.asset, { w: r2(w), d: D, seed: seedOf(), ...(pick.shopType ? { shopType: pick.shopType } : {}) }, x + w / 2, lz, out);
-        // a vending machine, planter or bicycle in front of some buildings
+        // a vending machine, planter, bicycle or motorbike in front of some buildings
         const r = rng();
         const frontZ = side === 'north' ? z0 + WALK + 0.1 : z1 - WALK - 0.1;
         const fwd = side === 'north' ? -0.5 : 0.5;
@@ -118,6 +118,10 @@ export function blockObjects(grid, block) {
           place('prop.planter', { variant: 'Potted plant' }, x + 0.8, frontZ + fwd * 0.6, out);
         } else if (r < 0.48) {
           place('vehicle.bicycle', { color: ['White', 'Gray', 'Blue', 'Red'][Math.floor(rng() * 4)] }, x + w - 1, frontZ + fwd * 0.9, [1, 0]);
+        } else if (r < 0.55) {
+          // a parked motorbike (a delivery scooter outside food shops)
+          const variant = pick.shopType ? 'Delivery' : ['50cc', 'Step-through', 'Motorcycle'][Math.floor(rng() * 3)];
+          place('vehicle.scooter', { variant, color: ['Red', 'White', 'Black', 'Blue', 'Green'][Math.floor(rng() * 5)] }, x + w - 1.2, frontZ + fwd * 1.0, [1, 0]);
         }
         if (pick.shopType === 'Konbini') {
           place('prop.postBox', {}, x + w + 0.2, frontZ + fwd * 1.0, out);

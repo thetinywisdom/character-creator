@@ -2,6 +2,11 @@ import * as THREE from 'three';
 import { capsuleBetween, ellipsoid, seg } from '../lib/shapes.js';
 
 // Cat gray-box, standing on all fours. Faces +z (head at +z, tail at -z).
+// Joints for the walk / run (anim/catGait.js): legFL, legFR, legBL, legBR,
+// head, tail.
+
+// fur colours (furLight is the paws and inner ears)
+export const CAT_FUR = { Ginger: 0xe8913f, Gray: 0x8c8c90, Black: 0x2e2e33, White: 0xeeeae2, Brown: 0x7a5a40, Cream: 0xe6cfa2 };
 
 export const cat = {
   id: 'cat',
@@ -18,6 +23,7 @@ export const cat = {
     tailLength: { value: 0.34, min: 0.1,  max: 0.5,  step: 0.01, label: 'Tail length (m)' },
     tailUp:     { value: 0.6,  min: 0,    max: 1,    step: 0.01, label: 'Tail raise' },
     tailCurl:   { value: 0.5,  min: 0,    max: 1,    step: 0.01, label: 'Tail curl' },
+    furColor:   { value: 'Ginger', options: Object.keys(CAT_FUR), label: 'Fur colour' },
   },
   presets: {
     Housecat: { bodyLength: 0.42, chubbiness: 1,    legLength: 0.16, headSize: 1,    earSize: 1,   tailLength: 0.34 },
@@ -27,7 +33,8 @@ export const cat = {
   },
 
   build(p, style) {
-    const M = (role) => style.material(role);
+    const fur = CAT_FUR[p.furColor];
+    const M = (role) => style.material(role, role === 'fur' ? fur : undefined);
     const root = new THREE.Group();
     root.name = 'cat';
 
@@ -47,15 +54,22 @@ export const cat = {
     root.add(body);
 
     // --- legs + paws ---------------------------------------------------
-    const legZ = { front: L / 2 - bodyR * 0.8, back: -L / 2 + bodyR * 0.9 };
+    // each leg hangs from a joint at the top (legFL, legFR, legBL, legBR) so
+    // anim/catGait.js can swing it; the haunch of a back leg moves with it
+    const legZ = { F: L / 2 - bodyR * 0.8, B: -L / 2 + bodyR * 0.9 };
+    const topY = bodyY - bodyR * 0.2;
     for (const [which, z] of Object.entries(legZ)) {
       for (const sx of [-1, 1]) {
         const x = sx * bodyR * 0.48;
-        if (which === 'back') {
-          root.add(ellipsoid(bodyR * 0.55, [0.6, 1, 1], M('fur'), { position: [sx * bodyR * 0.42, bodyY - bodyR * 0.25, z] }));
+        const leg = new THREE.Group();
+        leg.name = `leg${which}${sx < 0 ? 'R' : 'L'}`;
+        leg.position.set(x, topY, z);
+        if (which === 'B') {
+          leg.add(ellipsoid(bodyR * 0.55, [0.6, 1, 1], M('fur'), { position: [-sx * bodyR * 0.06, -bodyR * 0.05, 0] }));
         }
-        root.add(capsuleBetween([x, bodyY - bodyR * 0.2, z], [x, legR * 1.1, z], legR, M('fur')));
-        root.add(ellipsoid(legR * 1.3, [1, 0.65, 1.3], M('furLight'), { position: [x, legR * 0.7, z + legR * 0.4] }));
+        leg.add(capsuleBetween([0, 0, 0], [0, legR * 1.1 - topY, 0], legR, M('fur')));
+        leg.add(ellipsoid(legR * 1.3, [1, 0.65, 1.3], M('furLight'), { position: [0, legR * 0.7 - topY, legR * 0.4] }));
+        root.add(leg);
       }
     }
 
@@ -112,10 +126,14 @@ export const cat = {
         pos.setXYZ(k, v.x, v.y, v.z);
       }
     }
-    const tail = new THREE.Mesh(tube, M('fur'));
+    // the tail hangs from a joint at its base so it can sway
+    const tail = new THREE.Group();
     tail.name = 'tail';
+    tail.position.copy(pts[0]);
+    tube.translate(-pts[0].x, -pts[0].y, -pts[0].z);
+    tail.add(new THREE.Mesh(tube, M('fur')));
+    tail.add(ellipsoid(tailR * 0.55, [1, 1, 1], M('fur'), { position: pts[n].clone().sub(pts[0]).toArray() }));
     root.add(tail);
-    root.add(ellipsoid(tailR * 0.55, [1, 1, 1], M('fur'), { position: pts[n].toArray() }));
 
     return root;
   },

@@ -51,12 +51,14 @@ export const HAIR_COLORS = {
   Blonde: 0xe0b860,
   Red: 0xa8432a,
   Gray: 0xa0a0a0,
+  White: 0xe8e6e0,
   Pink: 0xe66ea8,
   Blue: 0x3d6fd6,
 };
 
 export const CLOTH_COLORS = {
   Blue: 0x3f7fd6,
+  'Light blue': 0x9cc4e8,
   Red: 0xd8443c,
   Yellow: 0xf2c230,
   Green: 0x3fa65a,

@@ -10,9 +10,11 @@ import { thumbInto } from './catalog/thumbs.js';
 import { City } from './city/City.js';
 import { CityInput } from './city/input.js';
 import { generateCityData } from './city/layout.js';
+import { setNightGlow, setSnowCover } from './city/atmosphere.js';
 import { SHOP_TYPES } from './city/buildings.js';
 import { Creator } from './creator/Creator.js';
 import { RUN_SPEED, WALK_SPEED, createGait, poseGait, stepGait } from './anim/gait.js';
+import { CAT_RUN_SPEED, CAT_WALK_SPEED, createCatGait, poseCat, stepCatGait } from './anim/catGait.js';
 import { saveFile, openTextFile } from './lib/saveFile.js';
 import { CLOTH_COLORS } from './styles/palette.js';
 import './style.css';
@@ -33,7 +35,7 @@ const PAGE_BG = new THREE.Color('#1d1f23');
 
 const params = loadParams(subjects);
 const human = subjects.find((s) => s.id === 'human');
-const state = { view: 'catalog', anim: 'Still', lighting: 'Day', citySeed: 3, cityView: 'third' };
+const state = { view: 'catalog', anim: 'Still', itemAnim: 'Walk', lighting: 'Day', weather: 'Clear', citySeed: 3, cityView: 'third' };
 
 const hint = document.querySelector('#hint');
 const toastEl = document.querySelector('#toast');
@@ -54,7 +56,7 @@ let reframe = true;
 // ---------------------------------------------------------------------------
 // 📦 Catalogue
 // ---------------------------------------------------------------------------
-const TABS = [['all', 'All'], ['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['nature', 'Nature'], ['vehicles', 'Vehicles'], ['areas', 'Areas']];
+const TABS = [['all', 'All'], ['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['nature', 'Nature'], ['animals', 'Animals'], ['vehicles', 'Vehicles'], ['areas', 'Areas']];
 const catalogEl = document.querySelector('#catalog');
 const itemEl = document.querySelector('#item');
 const items = ASSETS.filter((a) => a.group);
@@ -90,6 +92,7 @@ function openItem(id, p) {
   itemCell = new Cell({ entries: [{ subject }], style, renderer });
   itemCell.rebuild({});
   itemCell.applyLighting(lightingPresets[state.lighting]);
+  setNightGlow(itemCell.scene, !!lightingPresets[state.lighting].night);
   reframe = true;
   renderItemPanel();
   setView('item');
@@ -100,7 +103,7 @@ function renderItemPanel() {
   const p = selected.params;
   const chips = (label, key, values, swatch = false) => {
     if (!values || values.length < 2) return '';
-    return `<h3>${label}</h3><div class="chips">${values.map((v) => `<button data-k="${key}" data-v="${v ?? ''}" class="${(p[key] ?? '') === (v ?? '') ? 'on' : ''}${swatch ? ' sw' : ''}" ${swatch ? `title="${v}" style="background:#${(CLOTH_COLORS[v] ?? 0x888888).toString(16).padStart(6, '0')}"` : ''}>${swatch ? '' : v ?? 'Any'}</button>`).join('')}</div>`;
+    return `<h3>${label}</h3><div class="chips">${values.map((v) => `<button data-k="${key}" data-v="${v ?? ''}" class="${(p[key] ?? '') === (v ?? '') ? 'on' : ''}${swatch ? ' sw' : ''}" ${swatch ? `title="${v}" style="background:#${(a.swatches?.[v] ?? CLOTH_COLORS[v] ?? 0x888888).toString(16).padStart(6, '0')}"` : ''}>${swatch ? '' : v ?? 'Any'}</button>`).join('')}</div>`;
   };
   const shopTypes = 'shopType' in a.params ? [null, ...SHOP_TYPES] : null;
   const code = `createAsset('${a.id}', ${JSON.stringify(p)}, style)`;
@@ -111,6 +114,7 @@ function renderItemPanel() {
       ${chips('Type', 'variant', a.variants)}
       ${chips('Colour', 'color', a.colors, true)}
       ${chips('Shop', 'shopType', shopTypes)}
+      ${a.animated ? `<h3>Animation</h3><div class="chips">${['Still', 'Walk', 'Run'].map((m) => `<button data-anim="${m}" class="${state.itemAnim === m ? 'on' : ''}">${m}</button>`).join('')}</div>` : ''}
       ${'seed' in a.params ? '<h3>Look</h3><div class="chips"><button data-act="seed">🎲 New look</button></div>' : ''}
       <h3>Use it in a game</h3>
       <pre>${code}</pre>
@@ -120,6 +124,7 @@ function renderItemPanel() {
     const b = e.target.closest('button');
     if (!b) return;
     if (b.dataset.act === 'back') return setView('catalog');
+    if (b.dataset.anim) { state.itemAnim = b.dataset.anim; return renderItemPanel(); }
     if (b.dataset.act === 'copy') return navigator.clipboard?.writeText(code).then(() => toast('Copied'), () => toast(code));
     if (b.dataset.act === 'seed') selected.params.seed = Math.floor(Math.random() * 1e9);
     if (b.dataset.k) selected.params[b.dataset.k] = b.dataset.v === '' ? null : b.dataset.v;
@@ -184,6 +189,7 @@ function ensureCity() {
   if (!city) {
     city = new City({ style, renderer, human, cat: subjects.find((s) => s.id === 'cat'), params, data: generateCityData(state.citySeed) });
     city.applyLighting(lightingPresets[state.lighting]);
+    if (state.weather !== 'Clear') city.setWeather(state.weather);
     if (state.cityView === 'iso') city.setViewMode('iso');
   }
   return city;
@@ -193,6 +199,7 @@ function updateCityBar() {
   const iso = city?.viewMode === 'iso';
   viewBtn.innerHTML = iso ? '🎥<span> 3rd person</span>' : '🎥<span> Iso view</span>';
   document.querySelector('#lightBtn').innerHTML = `${{ Day: '☀', Sunset: '🌇', Night: '🌙' }[state.lighting]}<span> ${state.lighting}</span>`;
+  document.querySelector('#weatherBtn').innerHTML = `${{ Clear: '🌤', Rain: '🌧', Snow: '❄' }[state.weather]}<span> ${state.weather}</span>`;
   hint.textContent = iso
     ? 'WASD / arrows · Shift run · drag to turn · scroll or pinch to zoom · Q / E rotate · V third person'
     : 'WASD / arrows · Shift run · drag to look · scroll to zoom · V isometric view';
@@ -203,6 +210,12 @@ document.querySelector('#lightBtn').onclick = () => {
   const names = Object.keys(lightingPresets);
   state.lighting = names[(names.indexOf(state.lighting) + 1) % names.length];
   for (const c of [city, humanCell, itemCell]) c?.applyLighting(lightingPresets[state.lighting]);
+  if (itemCell) setNightGlow(itemCell.scene, !!lightingPresets[state.lighting].night);
+  updateCityBar();
+};
+document.querySelector('#weatherBtn').onclick = () => {
+  const all = ['Clear', 'Rain', 'Snow'];
+  state.weather = ensureCity().setWeather(all[(all.indexOf(state.weather) + 1) % all.length]);
   updateCityBar();
 };
 window.addEventListener('keydown', (e) => {
@@ -230,6 +243,8 @@ function setView(view) {
   if (view === 'catalog') { hint.textContent = 'Tap an item to turn it around and see its settings'; renderCatalog(); }
   if (view === 'item' || view === 'creator') { hint.textContent = 'Drag to turn · scroll or pinch to zoom'; reframe = true; }
   if (view === 'city') { ensureCity(); updateCityBar(); }
+  // snow lies on shared materials: show it only in the city
+  if (city) setSnowCover(city.scene, view === 'city' && state.weather === 'Snow');
 }
 document.querySelector('#modes').onclick = (e) => {
   const m = e.target.closest('[data-mode]')?.dataset.mode;
@@ -242,6 +257,7 @@ window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.view
 // ---------------------------------------------------------------------------
 const timer = new THREE.Timer();
 const gait = createGait(); // walk / run preview for the character creator
+const catGait = createCatGait();
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight, pr = renderer.getPixelRatio();
   if (canvas.width !== Math.floor(w * pr) || canvas.height !== Math.floor(h * pr)) renderer.setSize(w, h, false);
@@ -271,7 +287,14 @@ function loop(time) {
   renderer.setScissorTest(false);
   renderer.setClearColor(PAGE_BG);
   renderer.clear();
-  if (state.view === 'item' && itemCell) preview(itemCell, panelRect(itemEl, W, H), H);
+  if (state.view === 'item' && itemCell) {
+    if (CATALOG[selected.id].animated === 'cat') {
+      // walk / run in place: the cat's gait (anim/catGait.js)
+      stepCatGait(catGait, dt, { Still: 0, Walk: CAT_WALK_SPEED, Run: CAT_RUN_SPEED }[state.itemAnim]);
+      itemCell.scene.traverse((o) => { if (o.name === 'cat') poseCat(o, catGait); });
+    }
+    preview(itemCell, panelRect(itemEl, W, H), H);
+  }
   else if (state.view === 'creator') {
     stepGait(gait, dt, state.anim === 'Run' ? RUN_SPEED : state.anim === 'Walk' ? WALK_SPEED : 0);
     if (gait.lock != null) gait.phase = gait.lock * Math.PI * 2; // debug: freeze at a cycle fraction
@@ -291,7 +314,7 @@ requestAnimationFrame(loop);
 // Debug hooks for agents and tests (see SKILLS.md, "Testing and checking")
 Object.assign(window, {
   __cc: {
-    params, state, setView, openItem, CATALOG, getCity: () => ensureCity(), cityInput, gait,
+    params, state, setView, openItem, CATALOG, human, getCity: () => ensureCity(), cityInput, gait,
     /** Set character settings (rules applied). */
     apply: (id, values) => { Object.assign(params[id], values); humanChanged(); reframe = true; },
     newTown: (seed) => { state.citySeed = seed; city = null; return ensureCity(); },

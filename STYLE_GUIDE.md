@@ -185,7 +185,12 @@ dressed in the same tones as the street will disappear.
 
 ## Character rules
 
-Four body types: **Man, Woman, Boy, Girl**. Children (about 8 years old) are
+Six body types: **Man, Woman, Boy, Girl, Grandpa, Grandma**. Grandparents are
+a little shorter (Grandpa 1.64 m, Grandma 1.5 m), stand with a **gentle stoop**
+(~11° forward at the hips, head tilted back up, kept while walking), have grey
+or white hair and walk slowly in the city (0.6–0.8 m/s); Grandpa's default
+design has a flat cap, cardigan, moustache and walking stick, Grandma's a bun,
+cardigan, skirt and shopping bag. Grandma uses the woman's body shape. Children (about 8 years old) are
 ~1.27 m and 5.8 heads tall, with short legs, narrow shoulders and a straight,
 soft torso (no waist, no V, no chest sculpting). Switching between an adult
 and a child body type brings the matching proportions.
@@ -311,6 +316,47 @@ About one in six random characters is a child.
   (vending machines, bins, benches) against the buildings, parked cars in the
   lane next to the curb.
 
+## 3e-1. People content
+
+- **Held items** put the arm in a pose and stay upright whatever the arm does:
+  open umbrella (canopy over the head, shaft leaning back), phone at the ear,
+  ice cream and take-away coffee at chest height (upper arm down, forearm up),
+  a stack of cardboard boxes held in both arms in front of the belly.
+  Hanging items (bag, briefcase, closed umbrella, walking stick) swing with
+  the arm.
+- **Uniforms and hats:** police uniform (light blue shirt, navy vest, gold
+  badge) with a peaked police cap (navy top, black band and peak, gold badge);
+  suit jacket (closed below the chest, a V with lapels showing shirt and tie,
+  one button); straw hat (wide brim, red band); flat cap.
+- **Looks** are clothes-only presets (office worker, police officer, delivery
+  worker, summer stroll, rainy day, coffee run, on the phone).
+- **Motorbikes:** 50cc scooter, delivery scooter (big box in the bike's colour
+  with a white lid), step-through moped (leg shields, front basket), naked
+  motorcycle (tank, black engine block, round headlight, exhaust).
+- **Cat:** walks with the cat's lateral sequence (feet a quarter cycle apart),
+  head nodding, tail held up and swaying; runs with a bounding gallop (front
+  pair, then back pair), the body rocking and the tail lowered behind.
+
+## 3e-2. Trees
+
+Oak, lollipop, pine, old giant, cherry blossom, **Japanese maple** (small,
+layered, autumn red), **ginkgo** (tall and narrow, gold), **zelkova** (big
+vase-shaped street / shrine tree), **black pine** (leaning kinked trunk, flat
+pads of needles), **weeping willow** (round crown, thin curtains to near the
+ground) and **bamboo** (a clump of thin green canes with leaf tufts). Parks
+mix all of them; shrine groves use old giants, zelkova and pines.
+
+## 3e-3. Atmosphere
+
+- **Night:** a dark blue sky and dim light; windows glow only where a room is
+  lit (light masks painted with the textures: curtains, offices), shop
+  interiors and sign faces glow, lamps glow brighter, soft warm pools of
+  light lie under street lamps. No real extra lights (cheap on phones).
+- **Rain:** thin pale streaks, slightly slanted; darker, greyer light; about
+  three in four people without something in their hands open an umbrella.
+- **Snow:** small white flakes drifting down; ground, pavements, grass, roofs
+  and leaves turn white, roads stay darker (cleared); bright, cool light.
+
 ## 3f. Buildings and the city
 
 - **Buildings** are boxes with a few strong details, in muted wall colours:
@@ -321,7 +367,7 @@ About one in six random characters is a child.
 - **Shops** carry a lit signboard with Japanese text, plus their own detail:
   konbini colour stripes, ramen / izakaya noren and red lantern, café and
   bakery striped awnings.
-- **Town layout:** 40 m blocks, 9 m roads, 3 m raised sidewalks, buildings
+- **Town layout:** 40 m blocks, 6 m roads, 3 m raised sidewalks, buildings
   facing the street; utility poles and wires on one side of each block, lamps
   on the other; crosswalks on every intersection arm; traffic drives on the left.
 - **Large flat surfaces are tiled** (about 6 m pieces): PS1 vertex snapping

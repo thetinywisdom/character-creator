@@ -78,6 +78,7 @@ export class Creator {
       if (b.dataset.act === 'export') this.actions.exportJson();
       if (b.dataset.act === 'import') this.actions.importJson().then(() => this.render());
       if (b.dataset.preset) { this.actions.preset(b.dataset.preset); this.render(); }
+      if (b.dataset.outfit) { Object.assign(this.params, this.subject.outfits[b.dataset.outfit]); this.onChange('outfit'); this.render(); }
       if (b.dataset.key) this.set(b.dataset.key, b.dataset.val);
     });
     el.addEventListener('input', (e) => {
@@ -117,6 +118,13 @@ export class Creator {
       body.appendChild(s);
       return s;
     };
+    // ready-made looks (clothes only) at the top of the Clothes tab
+    if (this.tab === 'clothes' && this.subject.outfits) {
+      const row = section('Looks').appendChild(Object.assign(document.createElement('div'), { className: 'cr-chips' }));
+      for (const name of Object.keys(this.subject.outfits)) {
+        row.appendChild(Object.assign(document.createElement('button'), { textContent: name })).dataset.outfit = name;
+      }
+    }
     for (const [key, def] of Object.entries(schema)) {
       const tab = TAB_OF[key] ?? GROUP_TAB[def.group] ?? 'body';
       if (tab !== this.tab || hidden.keys.has(key) || hidden.groups.has(def.group)) continue;

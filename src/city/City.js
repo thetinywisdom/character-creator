@@ -7,6 +7,9 @@ import { car } from '../props/vehicles.js';
 import { generateCityData } from './layout.js';
 import { buildCity } from './build.js';
 import { JOINT_NAMES, createGait, poseGait, stepGait } from '../anim/gait.js';
+import { Precipitation, lampPools, setNightGlow, setSnowCover, weatherLight } from './atmosphere.js';
+import { giveHeldItem } from '../subjects/human.js';
+import { CAT_JOINTS, CAT_RUN_SPEED, CAT_WALK_SPEED, createCatGait, poseCat, stepCatGait } from '../anim/catGait.js';
 
 // The walkable town: a generated city, your character (built from the
 // creator's current settings), pedestrians on the sidewalks, cats in the park
@@ -92,9 +95,19 @@ export class City {
     // --- the town (static, merged to a few meshes) --------------------------
     setDetail(style.detail ?? 1);
     // any city file (generated, edited or loaded); a generated town by default
-    const city = buildCity(data ?? generateCityData(seed), style);
+    const cityData = data ?? generateCityData(seed);
+    const city = buildCity(cityData, style);
     this.layout = city;
     this.scene.add(mergeByMaterial(city.group));
+    // light pools under the street lamps, shown at night (atmosphere.js);
+    // a lamp's head reaches 1.45 m out over the road from its post
+    this.pools = lampPools(cityData.objects.filter((o) => o.asset === 'prop.streetLamp').map((o) => {
+      const r = ((o.rot ?? 0) * Math.PI) / 180;
+      return [o.x + Math.sin(r) * 1.45, o.z + Math.cos(r) * 1.45];
+    }));
+    this.pools.visible = false;
+    this.scene.add(this.pools);
+    this.weather = 'Clear';
 
     // --- characters -----------------------------------------------------------
     const rng = mulberry32(seed * 31 + 7);
@@ -118,13 +131,16 @@ export class City {
     for (let i = 0; i < (city.walkLoops.length ? npcCount : 0); i++) {
       const loop = city.walkLoops[Math.floor(rng() * city.walkLoops.length)];
       const { lengths, total } = loopLengths(loop);
+      const look = { ...params.human, ...human.randomize(rng) };
+      const elderly = look.bodyType === 'Grandpa' || look.bodyType === 'Grandma';
       const npc = {
-        body: buildPerson({ ...params.human, ...human.randomize(rng) }),
+        body: buildPerson(look),
+        look,
         root: new THREE.Group(),
         loop, lengths, total,
         s: rng() * total,
         dir: rng() < 0.5 ? 1 : -1,
-        speed: 1.0 + rng() * 0.5,
+        speed: elderly ? 0.6 + rng() * 0.2 : 1.0 + rng() * 0.5, // grandparents walk slowly
         gait: createGait(rng() * 10),
         lane: (rng() - 0.5) * 1.2, // spread across the sidewalk
       };
@@ -137,12 +153,13 @@ export class City {
     this.cats = [];
     for (let i = 0; i < 3; i++) {
       const raw = cat.build({ ...params.cat }, style);
-      raw.scale.setScalar(cat.exaggeration ?? 1);
-      const body = mergeByMaterial(raw);
+      // one skinned mesh per cat, joints kept for the walk / run (anim/catGait.js)
+      const body = skinCharacter(raw, new Set(CAT_JOINTS), personMat);
       const root = new THREE.Group();
+      root.scale.setScalar(cat.exaggeration ?? 1);
       root.add(body);
       this.scene.add(root);
-      this.cats.push({ root, x: pr.x0 + rng() * (pr.x1 - pr.x0), z: pr.z0 + rng() * (pr.z1 - pr.z0), tx: 0, tz: 0, wait: rng() * 3 });
+      this.cats.push({ root, body, gait: createCatGait(rng() * 10), speed: 0, x: pr.x0 + rng() * (pr.x1 - pr.x0), z: pr.z0 + rng() * (pr.z1 - pr.z0), tx: 0, tz: 0, wait: rng() * 3 });
     }
 
     // a few cars driving round the ring road (on the left, Japanese style)
@@ -169,12 +186,42 @@ export class City {
   }
 
   applyLighting(preset) {
+    this.lightPreset = preset;
+    const night = !!preset.night;
+    setNightGlow(this.scene, night);
+    this.pools.visible = night;
+    preset = weatherLight(preset, this.weather);
     this.key.color.copy(this.base.keyColor).multiply(new THREE.Color(preset.keyColor));
     this.key.intensity = this.base.keyIntensity * preset.key;
     this.hemi.intensity = this.base.hemiIntensity * preset.hemi;
     this.scene.background.copy(this.baseBackground);
     if (preset.tint !== null) this.scene.background.lerp(new THREE.Color(preset.tint), preset.tintAmount);
     this.lightDir.set(...preset.dir).normalize();
+  }
+
+  /**
+   * Weather: 'Clear', 'Rain' (falling rain, darker light, many people open
+   * umbrellas) or 'Snow' (falling snow, white ground, roofs and trees).
+   */
+  setWeather(kind = 'Clear') {
+    if (this.precip) { this.scene.remove(this.precip.object); this.precip.dispose(); this.precip = null; }
+    for (const n of this.npcs) { n.putAway?.(); n.putAway = null; }
+    this.weather = kind;
+    if (kind !== 'Clear') {
+      this.precip = new Precipitation(kind);
+      this.scene.add(this.precip.object);
+    }
+    setSnowCover(this.scene, kind === 'Snow');
+    if (kind === 'Rain') {
+      // most people without something in their hands open an umbrella
+      const colors = ['Blue', 'Navy', 'Red', 'Black', 'White', 'Green', 'Pink', 'Yellow'];
+      this.npcs.forEach((n, i) => {
+        if ((n.look.handItem && n.look.handItem !== 'None') || i % 4 === 3) return;
+        n.putAway = giveHeldItem(n.body, n.look, 'Umbrella (open)', colors[i % colors.length], this.style);
+      });
+    }
+    this.applyLighting(this.lightPreset);
+    return kind;
   }
 
   /** Static colliders near (x, z), from a coarse grid built on first use. */
@@ -286,6 +333,8 @@ export class City {
   }
 
   update(dt, input) {
+    // rain / snow fall around the player
+    this.precip?.update(dt, this.player.root.position);
     const look = input.takeLook();
     if (this.viewMode === 'iso') {
       // drag turns the view freely, wheel / pinch zooms; Q / E (rotateIso) turn it 90° smoothly
@@ -358,15 +407,31 @@ export class City {
     // --- cats: wander between random points in the park ----------------------
     const pr = this.layout.parkRect ?? { x0: -1, x1: 1, z0: -1, z1: 1 };
     for (const c of this.cats) {
-      if (c.wait > 0) { c.wait -= dt; continue; }
-      if (!c.tx) { c.tx = pr.x0 + Math.random() * (pr.x1 - pr.x0); c.tz = pr.z0 + Math.random() * (pr.z1 - pr.z0); }
-      const dx = c.tx - c.x, dz = c.tz - c.z;
-      const d = Math.hypot(dx, dz);
-      if (d < 0.3) { c.tx = 0; c.wait = 1 + Math.random() * 4; continue; }
-      c.x += (dx / d) * 0.9 * dt;
-      c.z += (dz / d) * 0.9 * dt;
+      // wander between random points; now and then dash somewhere instead
+      let target = 0;
+      if (c.wait > 0) c.wait -= dt;
+      else {
+        if (!c.tx) {
+          c.tx = pr.x0 + Math.random() * (pr.x1 - pr.x0); c.tz = pr.z0 + Math.random() * (pr.z1 - pr.z0);
+          c.cruise = Math.random() < 0.3 ? CAT_RUN_SPEED : CAT_WALK_SPEED;
+        }
+        const dx = c.tx - c.x, dz = c.tz - c.z;
+        const d = Math.hypot(dx, dz);
+        if (d < 0.3) { c.tx = 0; c.wait = 1 + Math.random() * 4; } else {
+          target = Math.min(c.cruise, d * 2); // slow down on arrival
+          c.x += (dx / d) * c.speed * dt;
+          c.z += (dz / d) * c.speed * dt;
+          // turn smoothly toward the target
+          const want = Math.atan2(dx, dz);
+          let turn = want - c.root.rotation.y;
+          turn = Math.atan2(Math.sin(turn), Math.cos(turn));
+          c.root.rotation.y += turn * Math.min(1, dt * 8);
+        }
+      }
+      c.speed += (target - c.speed) * Math.min(1, dt * 4);
       c.root.position.set(c.x, 0.05, c.z);
-      c.root.rotation.y = Math.atan2(dx, dz);
+      stepCatGait(c.gait, dt, c.speed);
+      poseCat(c.body, c.gait);
     }
 
     // --- cars on the ring road -------------------------------------------------

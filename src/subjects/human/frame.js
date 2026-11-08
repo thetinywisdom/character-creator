@@ -42,7 +42,7 @@ export function measure(p) {
   const legR = p.legThickness * H * B.limb;
   const waist = B.waist; // the middle of the torso: wider when fat
   const L = torsoLen;
-  const woman = p.bodyType === 'Woman';
+  const woman = p.bodyType === 'Woman' || p.bodyType === 'Grandma';
   const child = p.bodyType === 'Boy' || p.bodyType === 'Girl';
   const girl = p.bodyType === 'Girl';
 

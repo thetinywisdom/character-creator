@@ -5,6 +5,7 @@ import { SHOP_BUILDINGS } from '../city/shops.js';
 import { CIVIC_BUILDINGS } from '../city/civic.js';
 const EXTRA_BUILDINGS = { ...SHOP_BUILDINGS, ...CIVIC_BUILDINGS };
 import { tree } from '../subjects/tree.js';
+import { CAT_FUR, cat } from '../subjects/cat.js';
 import { bush } from '../props/extras.js';
 import { park } from '../city/park.js';
 import { PROP_GROUPS } from '../props/index.js';
@@ -18,12 +19,14 @@ import { tiledBox } from '../props/util.js';
 // Each asset:
 //   id        'building.house', 'prop.bench', 'vehicle.car', ...
 //   label     name for menus
-//   category  'building' | 'area' | 'nature' | 'prop' | 'vehicle' | 'ground' | 'line'
-//   group     palette tab in the editor: 'buildings' | 'street' | 'traffic' |
-//             'extras' | 'vehicles' | 'nature' | 'areas' (none = not offered there)
+//   category  'building' | 'area' | 'nature' | 'animal' | 'prop' | 'vehicle' | 'ground' | 'line'
+//   group     catalogue tab: 'buildings' | 'street' | 'traffic' | 'extras' |
+//             'vehicles' | 'nature' | 'animals' | 'areas' (none = not listed)
 //   params    default settings (a city object's params override these)
 //   variants  optional list of variant names (params.variant)
 //   colors    optional list of colour names (params.color)
+//   swatches  optional { colour name: hex } when the names are not cloth colours
+//   animated  optional: 'cat' = the object has joints for poseCat (anim/catGait.js)
 //   size      rough [width, depth] in metres, for editor previews and snapping
 //   build(params, style) -> THREE.Object3D, standing on y = 0, facing +z.
 //             Its userData.colliders lists solid boxes in its own local space:
@@ -51,7 +54,7 @@ const PROP_COLLIDERS = {
   utilityPole: { hw: 0.2, hd: 0.2 },
   car: { hw: 0.9, hd: 2.3 },
   bicycle: { hw: 0.3, hd: 0.85 },
-  scooter: { hw: 0.35, hd: 0.9 },
+  scooter: { hw: 0.35, hd: 1.0 },
   planter: { 'Planter box': { hw: 0.7, hd: 0.25 }, 'Potted plant': { hw: 0.22, hd: 0.22 } },
   cone: { Cone: { hw: 0.18, hd: 0.18 }, Barrier: { hw: 1.1, hd: 0.18 } },
   bollard: { Bollard: { hw: 0.08, hd: 0.08 }, 'Guard rail': { hw: 1.0, hd: 0.06 } },
@@ -173,6 +176,29 @@ const natureAssets = [{
   },
 }];
 
+// --- animals -----------------------------------------------------------------
+// Animated: the built cat has joints for anim/catGait.js (poseCat).
+const animalAssets = [{
+  id: 'animal.cat',
+  label: 'Cat',
+  category: 'animal',
+  group: 'animals',
+  animated: 'cat',
+  variants: Object.keys(cat.presets),
+  colors: Object.keys(CAT_FUR),
+  swatches: CAT_FUR,
+  params: { variant: 'Housecat', color: 'Ginger' },
+  size: [0.4, 0.9],
+  build(p, style) {
+    const defaults = Object.fromEntries(Object.entries(cat.schema).map(([k, d]) => [k, d.value]));
+    const c = cat.build({ ...defaults, ...(cat.presets[p.variant] ?? {}), furColor: p.color ?? 'Ginger' }, style);
+    const g = new THREE.Group();
+    g.scale.setScalar(cat.exaggeration ?? 1);
+    g.add(c);
+    return withColliders(g, [{ hw: 0.2, hd: 0.35 }]);
+  },
+}];
+
 // --- ground and lines --------------------------------------------------------
 const groundAssets = [{
   id: 'ground.paving',
@@ -199,7 +225,7 @@ const groundAssets = [{
   },
 }];
 
-export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...propAssets, ...groundAssets];
+export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...groundAssets];
 export const CATALOG = Object.fromEntries(ASSETS.map((a) => [a.id, a]));
 
 /** Assets of one category (or all). */
