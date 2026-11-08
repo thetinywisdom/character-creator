@@ -9,6 +9,7 @@ import { mulberry32 } from './lib/rng.js';
 import { PROP_GROUPS, propSubject } from './props/index.js';
 import { City } from './city/City.js';
 import { CityInput } from './city/input.js';
+import { RUN_SPEED, WALK_SPEED, createGait, poseGait, stepGait } from './anim/gait.js';
 import './style.css';
 
 // ---------------------------------------------------------------------------
@@ -35,6 +36,7 @@ const state = {
   lighting: 'Day',
   street: false, // frame subjects small, as seen from across a street
   characterScale: 1, // >1 exaggerates people and animals so they read when tiny
+  anim: 'Still',     // preview animation for characters in the viewer: Still | Walk | Run
 };
 const STREET_HEIGHT = 6; // metres of height in view at street distance
 const LINEUP_HEIGHT = 9;
@@ -310,6 +312,7 @@ if (styles.length > 1) {
       if (['lineup', 'crowd', 'study'].includes(state.view)) setView(state.view);
     });
 }
+viewFolder.add(state, 'anim', ['Still', 'Walk', 'Run']).name('Preview animation');
 viewFolder.add(state, 'turntable').name('Turntable');
 viewFolder.add(state, 'speed', 0, 1.5, 0.01).name('Spin speed');
 viewFolder.add(actions, 'screenshot').name('Save PNG');
@@ -499,6 +502,14 @@ function renderCell(cell, camera, x, y, w, h) {
 // Render loop
 // ---------------------------------------------------------------------------
 const timer = new THREE.Timer();
+// shared gait for previewing walk / run on characters in the viewer (in place)
+const viewerGait = createGait();
+function animateHumans(cell) {
+  for (const p of cell.pivots) {
+    const o = p.children[0];
+    if (o && o.name === 'human') poseGait(o, viewerGait);
+  }
+}
 
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight;
@@ -514,6 +525,7 @@ function loop(time) {
   processDirty();
   const dt = Math.min(timer.getDelta(), 0.1);
   if (state.turntable) state.angle += dt * state.speed;
+  stepGait(viewerGait, dt, state.anim === 'Run' ? RUN_SPEED : state.anim === 'Walk' ? WALK_SPEED : 0);
 
   const W = canvas.clientWidth, H = canvas.clientHeight;
   renderer.setScissorTest(false);
@@ -531,6 +543,7 @@ function loop(time) {
       const r = cell.el.getBoundingClientRect();
       if (r.bottom < 0 || r.top > H || r.right < 0 || r.left > W || r.width < 2 || r.height < 2) continue;
       cell.setAngle(state.angle);
+      animateHumans(cell);
       cell.frame(r.width / r.height, cell.camera, { minHeight: framingHeight() });
       renderCell(cell, cell.camera, r.left, H - r.bottom, r.width, r.height);
     }
@@ -538,6 +551,7 @@ function loop(time) {
     const cell = activeCell();
     const w = bigViewWidth();
     cell.setAngle(state.angle);
+    animateHumans(cell);
     focusCam.aspect = w / H;
     focusCam.updateProjectionMatrix();
     controls.update();

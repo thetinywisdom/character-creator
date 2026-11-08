@@ -4,27 +4,15 @@ import { mergeByMaterial } from '../lib/merge.js';
 import { mulberry32 } from '../lib/rng.js';
 import { car } from '../props/vehicles.js';
 import { generateCity } from './layout.js';
+import { JOINT_NAMES, createGait, poseGait, stepGait } from '../anim/gait.js';
 
 // The walkable town: a generated city, your character (built from the
 // creator's current settings), pedestrians on the sidewalks, cats in the park
 // and a few cars on the ring road. Rendered by main.js like any other cell
 // (it has .scene and .style), with its own camera.
 
-const LIMBS = new Set(['legL', 'legR', 'armL', 'armR', 'head']);
+const LIMBS = new Set([...JOINT_NAMES, 'head']); // kept as separate groups so they can move
 const PLAYER_R = 0.3;
-
-/** Simple walk cycle on a merged character (legs and arms are kept groups). */
-function animateWalk(body, phase, amount) {
-  const legs = Math.sin(phase) * 0.6 * amount;
-  const arms = Math.sin(phase) * 0.45 * amount;
-  for (const c of body.children) {
-    if (c.name === 'legL') c.rotation.x = legs;
-    else if (c.name === 'legR') c.rotation.x = -legs;
-    else if (c.name === 'armL') c.rotation.x = -arms;
-    else if (c.name === 'armR') c.rotation.x = arms;
-  }
-  body.position.y = Math.abs(Math.sin(phase)) * 0.03 * amount; // small bob
-}
 
 /** Point at distance s along a closed polyline. Returns position and heading. */
 function alongLoop(loop, lengths, total, s) {
@@ -81,7 +69,7 @@ export class City {
       style.decorate?.(raw);
       return mergeByMaterial(raw, LIMBS);
     };
-    this.player = { body: buildPerson(params.human), root: new THREE.Group(), x: 0, z: 0, heading: 0, phase: 0, speed: 0 };
+    this.player = { body: buildPerson(params.human), root: new THREE.Group(), x: 0, z: 0, heading: 0, speed: 0, gait: createGait() };
     this.player.root.add(this.player.body);
     this.scene.add(this.player.root);
     // start on the sidewalk next to the park
@@ -100,7 +88,7 @@ export class City {
         s: rng() * total,
         dir: rng() < 0.5 ? 1 : -1,
         speed: 1.0 + rng() * 0.5,
-        phase: rng() * 10,
+        gait: createGait(rng() * 10),
         lane: (rng() - 0.5) * 1.2, // spread across the sidewalk
       };
       npc.root.add(npc.body);
@@ -197,8 +185,8 @@ export class City {
       p.z += (mz / len) * p.speed * dt;
     }
     this.collide(p);
-    p.phase += dt * p.speed * 4.2;
-    animateWalk(p.body, p.phase, Math.min(1, p.speed / 1.6));
+    stepGait(p.gait, dt, p.speed);
+    poseGait(p.body, p.gait);
     const ground = this.layout.groundHeight(p.x, p.z);
     p.root.position.set(p.x, ground, p.z);
     p.root.rotation.y = p.heading;
@@ -213,8 +201,8 @@ export class City {
       const ox = (-q.dz / len) * n.lane, oz = (q.dx / len) * n.lane;
       n.root.position.set(q.x + ox, 0, q.z + oz);
       n.root.rotation.y = hd;
-      n.phase += dt * n.speed * 4.2;
-      animateWalk(n.body, n.phase, 1);
+      stepGait(n.gait, dt, n.speed);
+      poseGait(n.body, n.gait);
     }
 
     // --- cats: wander between random points in the park ----------------------

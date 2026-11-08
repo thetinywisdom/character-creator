@@ -180,6 +180,18 @@ dressed in the same tones as the street will disappear.
 - **Large flat surfaces are tiled** (about 6 m pieces): PS1 vertex snapping
   distorts huge polygons.
 
+## 3g. Animation
+
+- Characters have real joints: hip → knee → ankle, shoulder → elbow.
+- **Walk:** about 1.8 steps per second; the knee bends most in early swing, the
+  foot stays level and plants heel-first, arms swing opposite the legs with a
+  soft elbow, the body rises over each step and sways slightly.
+- **Run:** about 2.9 steps per second; high heel kick, knee lift, roughly 90°
+  elbows pumping harder, a forward lean, a dip on landing and a float between
+  steps.
+- Walk blends into run with speed, and both fade to a standing pose with a
+  slight breathing motion.
+
 ## 4. Readability checklist (for any new character)
 
 - [ ] Visible at street distance on the sidewalk, in Day **and** Night lighting

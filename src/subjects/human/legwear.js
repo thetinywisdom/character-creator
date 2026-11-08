@@ -2,7 +2,9 @@ import * as THREE from 'three';
 import { seg, taperBetween } from '../../lib/shapes.js';
 import { buildFoot } from './footwear.js';
 
-// Legwear: trousers, shorts, skirt. Legs are groups pivoting at the hip.
+// Legwear: trousers, shorts, skirt. Each leg is a chain of joints so it can
+// walk and run naturally: hip (legL/legR) -> knee (shinL/shinR) -> ankle
+// (footL/footR). Each joint group sits at its pivot point.
 
 export const LEGWEAR = ['Trousers', 'Shorts', 'Skirt'];
 
@@ -13,23 +15,36 @@ export function buildLeg(f, kind, mats, sx, footwear = 'Shoes') {
   const ankle = -f.legLen + f.footH;
   const knee = -f.legLen * 0.48;
   const legMat = kind === 'Trousers' ? mats.legwear : mats.skin;
+  const side = sx < 0 ? 'R' : 'L';
   // knees and feet sit a little closer to the centre than the hips
   const inX = -sx * f.hx * f.kneeIn;
-  // thigh (hip -> knee) and shin (knee -> ankle), tapered
+  // thigh (hip -> knee), tapered
   const hip = [0, f.thighTop, 0];
   leg.add(taperBetween(hip, [inX, knee, 0], f.thighR, f.kneeR, legMat));
-  // shin: knee -> calf (bulging toward the back) -> ankle
-  const calfY = knee + (ankle - knee) * 0.3;
+  // knee joint: the shin hangs from here (knee -> calf bulging back -> ankle)
+  const shin = new THREE.Group();
+  shin.name = `shin${side}`;
+  shin.position.set(inX, knee, 0);
+  leg.add(shin);
+  const calfY = (ankle - knee) * 0.3;
   const calfZ = -f.kneeR * 0.35;
-  leg.add(taperBetween([inX, knee, 0], [inX, calfY, calfZ], f.kneeR, f.calfR, legMat));
-  leg.add(taperBetween([inX, calfY, calfZ], [inX, ankle + f.ankleR, 0], f.calfR, f.ankleR, legMat));
+  const ankleY = ankle + f.ankleR - knee;
+  shin.add(taperBetween([0, 0, 0], [0, calfY, calfZ], f.kneeR, f.calfR, legMat));
+  shin.add(taperBetween([0, calfY, calfZ], [0, ankleY, 0], f.calfR, f.ankleR, legMat));
+  // ankle joint: the foot (built in leg space, so shift it back by the joint position)
+  const footJoint = new THREE.Group();
+  footJoint.name = `foot${side}`;
+  footJoint.position.set(0, ankle - knee, 0);
+  const foot = buildFoot(f, footwear, mats.shoe, 0);
+  foot.position.set(0, -ankle, 0);
+  footJoint.add(foot);
+  shin.add(footJoint);
   if (kind === 'Shorts') {
     // covers the upper thigh, a little wider than the leg
     const t = 0.8;
     const rEnd = THREE.MathUtils.lerp(f.thighR, f.kneeR, t);
     leg.add(taperBetween(hip, [inX * t, knee * t, 0], f.thighR * 1.12, rEnd * 1.15, mats.legwear));
   }
-  leg.add(buildFoot(f, footwear, mats.shoe, inX));
   return leg;
 }
 

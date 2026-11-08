@@ -11,6 +11,8 @@ café, bakery, bookshop, izakaya), and a park with a playground, benches, trees,
 a toilet hut and cats. Streets have sidewalks, crosswalks, traffic lights,
 utility poles with wires, lamps, vending machines, parked cars and cars
 driving on the left, plus pedestrians walking the sidewalks.
+Characters walk and run with a jointed, procedural gait (knees, ankles, elbows);
+the viewer's **Preview animation** setting shows it up close.
 Controls: WASD / arrows to walk, Shift to run, drag to look, scroll to zoom,
 Esc to leave; on phones an on-screen joystick.
 
@@ -104,6 +106,7 @@ src/
   props/             furniture.js, traffic.js, vehicles.js, extras.js, index.js
   city/              layout.js (town generator), buildings.js, park.js, City.js (walking,
                      pedestrians, cars, camera), input.js (keys, drag, joystick)
+  anim/gait.js       procedural walk / run cycle
   lib/               shape helpers, seeded random, sign textures, mesh merging
 ```
 
