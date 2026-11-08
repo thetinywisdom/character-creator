@@ -67,6 +67,18 @@ export function blockObjects(grid, block) {
 
   if (type === 'park') {
     place('area.park', { w: BLOCK - WALK * 2, d: BLOCK - WALK * 2, seed: seedOf() }, cx, cz, [0, 1]);
+  } else if (type === 'shrine') {
+    // a shrine in a grove: old trees and pines round the edge, cherry trees by the gate
+    const inner = BLOCK - WALK * 2;
+    place('building.shrine', { w: 18, d: inner - 2, seed: seedOf() }, cx, cz, [0, 1]);
+    for (let i = 0; i < 10; i++) {
+      const side = i % 2 ? 1 : -1;
+      const z = z0 + WALK + 3 + Math.floor(i / 2) * ((inner - 6) / 4);
+      const kind = z > z1 - WALK - 9 ? 'Cherry blossom' : rng() < 0.5 ? 'Old giant' : 'Pine';
+      place('nature.tree', { variant: kind, seed: 1 + Math.floor(rng() * 50) }, cx + side * (inner / 2 - 3.5), z, [0, 1]);
+    }
+  } else if (type === 'school') {
+    place('building.school', { w: BLOCK - WALK * 2, d: BLOCK - WALK * 2, seed: seedOf() }, cx, cz, [0, 1]);
   } else if (type === 'plaza') {
     place('ground.paving', { w: BLOCK - WALK * 2, d: BLOCK - WALK * 2, color: 0xc9c1ae }, cx, cz, [0, 1]);
     for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {

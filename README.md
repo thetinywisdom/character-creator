@@ -194,6 +194,13 @@ In the viewer: **View → Save city file** downloads the current town,
 **Load city file** walks any city file, and **Back to the sample town** returns
 to the generated town. Unknown assets in a file are skipped with a warning.
 
+**Content added in batch 3a:** Shrine (torii gate, stone path and lanterns,
+raised wooden hall with a straw rope and offering box) and School (three
+storeys with a clock, entrance canopy, sports ground with a track, fence and
+gate), each also a block type; a **Nature** palette tab (trees: oak, round,
+pine, old giant, cherry blossom; flower beds; bushes); Japanese street props
+(stone lantern, red or white paper lantern, sandwich board, bike rack).
+
 ### City editor
 
 **View → City editor** opens the current town from above. Tools:

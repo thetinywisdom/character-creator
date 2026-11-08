@@ -16,10 +16,10 @@ import { thumbInto } from './thumbs.js';
 //   two fingers               pinch to zoom, drag to pan (any tool)
 //   right or middle button    pan;  wheel: zoom
 
-const TYPE_LABELS = { residential: 'Houses', mixed: 'Mixed', shops: 'Shops', downtown: 'Downtown', park: 'Park', plaza: 'Plaza' };
-const TYPE_COLORS = { residential: '#9fc58a', mixed: '#e8c27a', shops: '#ef8f6b', downtown: '#8fb3e0', park: '#5fae5a', plaza: '#cfc6b0', erase: '#999' };
+const TYPE_LABELS = { residential: 'Houses', mixed: 'Mixed', shops: 'Shops', downtown: 'Downtown', park: 'Park', plaza: 'Plaza', shrine: 'Shrine', school: 'School' };
+const TYPE_COLORS = { residential: '#9fc58a', mixed: '#e8c27a', shops: '#ef8f6b', downtown: '#8fb3e0', park: '#5fae5a', plaza: '#cfc6b0', shrine: '#d2452e', school: '#c9a978', erase: '#999' };
 const SNAP = 0.5;
-const PALETTE_TABS = [['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['vehicles', 'Vehicles'], ['areas', 'Areas']];
+const PALETTE_TABS = [['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['nature', 'Nature'], ['vehicles', 'Vehicles'], ['areas', 'Areas']];
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 const snap = (v) => Math.round(v / SNAP) * SNAP;
 

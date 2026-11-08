@@ -16,16 +16,20 @@ export const tree = {
     branches:       { value: 4,    min: 0,    max: 8,   step: 1,    label: 'Branches (cloud)' },
     clusters:       { value: 7,    min: 3,    max: 14,  step: 1,    label: 'Clusters / tiers' },
     seed:           { value: 1,    min: 1,    max: 99,  step: 1,    label: 'Seed' },
+    leaves:         { value: 'Green', options: ['Green', 'Cherry blossom', 'Autumn'], label: 'Leaves' },
   },
   presets: {
     Oak:        { canopyShape: 'cloud', trunkHeight: 1.6, trunkThickness: 0.16, canopySize: 1.1, branches: 4, clusters: 7, seed: 1 },
     Lollipop:   { canopyShape: 'round', trunkHeight: 1.8, trunkThickness: 0.09, canopySize: 0.8, branches: 0, clusters: 5, seed: 1 },
     Pine:       { canopyShape: 'pine',  trunkHeight: 0.9, trunkThickness: 0.14, canopySize: 1.0, branches: 0, clusters: 8, seed: 1 },
     'Old giant': { canopyShape: 'cloud', trunkHeight: 2.2, trunkThickness: 0.34, canopySize: 1.8, branches: 6, clusters: 12, seed: 7 },
+    // sakura: a low, wide, spreading crown of pink blossom on a dark trunk
+    'Cherry blossom': { canopyShape: 'cloud', trunkHeight: 1.3, trunkThickness: 0.2, canopySize: 1.5, branches: 6, clusters: 11, seed: 3, leaves: 'Cherry blossom' },
   },
 
   build(p, style) {
-    const M = (role) => style.material(role);
+    const LEAVES = { 'Cherry blossom': 0xf3b3c8, Autumn: 0xd9772e };
+    const M = (role) => (role === 'leaf' && LEAVES[p.leaves] ? style.material('leaf', LEAVES[p.leaves]) : style.material(role));
     const root = new THREE.Group();
     root.name = 'tree';
     const rng = mulberry32(p.seed * 7919 + 13);

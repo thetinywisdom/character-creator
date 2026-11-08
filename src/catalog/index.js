@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { mulberry32 } from '../lib/rng.js';
-import { apartment, house, mixedUse, office, shop } from '../city/buildings.js';
+import { apartment, house, mixedUse, office, school, shop, shrine } from '../city/buildings.js';
+import { tree } from '../subjects/tree.js';
+import { bush } from '../props/extras.js';
 import { park } from '../city/park.js';
 import { PROP_GROUPS } from '../props/index.js';
 import { wire } from '../props/extras.js';
@@ -13,9 +15,9 @@ import { tiledBox } from '../props/util.js';
 // Each asset:
 //   id        'building.house', 'prop.bench', 'vehicle.car', ...
 //   label     name for menus
-//   category  'building' | 'area' | 'prop' | 'vehicle' | 'ground' | 'line'
+//   category  'building' | 'area' | 'nature' | 'prop' | 'vehicle' | 'ground' | 'line'
 //   group     palette tab in the editor: 'buildings' | 'street' | 'traffic' |
-//             'extras' | 'vehicles' | 'areas' (none = not offered there)
+//             'extras' | 'vehicles' | 'nature' | 'areas' (none = not offered there)
 //   params    default settings (a city object's params override these)
 //   variants  optional list of variant names (params.variant)
 //   colors    optional list of colour names (params.color)
@@ -30,6 +32,10 @@ import { tiledBox } from '../props/util.js';
 /** Solid boxes for props, by prop id (half width, half depth, centre z). */
 const PROP_COLLIDERS = {
   bench: { hw: 0.8, hd: 0.25 },
+  stoneLantern: { hw: 0.35, hd: 0.35 },
+  paperLantern: { hw: 0.1, hd: 0.1 },
+  sandwichBoard: { hw: 0.28, hd: 0.25 },
+  bikeRack: { hw: 1.3, hd: 0.6 },
   streetLamp: { hw: 0.15, hd: 0.15 },
   trashBin: { hw: 0.4, hd: 0.3 },
   hydrant: { hw: 0.15, hd: 0.15 },
@@ -53,19 +59,21 @@ const withColliders = (obj, colliders) => {
 // --- buildings ---------------------------------------------------------------
 // Builders fill a lot of width w and depth d (facing the street, +z). The seed
 // makes the same settings always give the same building.
-const BUILDERS = { house, apartment, mixedUse, shop, office };
-const BUILDING_LABELS = { house: 'House', apartment: 'Apartment block', mixedUse: 'Shop with flats above', shop: 'Shop', office: 'Office building' };
+const BUILDERS = { house, apartment, mixedUse, shop, office, shrine, school };
+const BUILDING_LABELS = { house: 'House', apartment: 'Apartment block', mixedUse: 'Shop with flats above', shop: 'Shop', office: 'Office building', shrine: 'Shrine', school: 'School' };
+const BUILDING_SIZES = { shrine: [18, 26], school: [34, 34] };
 const buildingAssets = Object.entries(BUILDERS).map(([key, fn]) => ({
   id: `building.${key}`,
   label: BUILDING_LABELS[key],
   category: 'building',
   group: 'buildings',
-  params: { w: 10, d: 12, seed: 1, ...(key === 'shop' || key === 'mixedUse' ? { shopType: null } : {}) },
-  size: [10, 12],
+  params: { w: BUILDING_SIZES[key]?.[0] ?? 10, d: BUILDING_SIZES[key]?.[1] ?? 12, seed: 1, ...(key === 'shop' || key === 'mixedUse' ? { shopType: null } : {}) },
+  size: BUILDING_SIZES[key] ?? [10, 12],
   build(p, style) {
     const b = fn(style, mulberry32(p.seed ?? 1), p.w, p.d, p.shopType ?? undefined);
     const fp = b.footprint;
-    return withColliders(b.group, [{ x: 0, z: fp.z, hw: fp.w / 2, hd: fp.d / 2 }]);
+    // builders with several solid parts list them; otherwise the footprint is solid
+    return withColliders(b.group, b.colliders ?? [{ x: 0, z: fp.z, hw: fp.w / 2, hd: fp.d / 2 }]);
   },
 }));
 
@@ -84,7 +92,7 @@ const areaAssets = [{
 }];
 
 // --- props and vehicles ------------------------------------------------------
-const PALETTE_GROUP = { 'Street furniture': 'street', 'Traffic and signs': 'traffic', Vehicles: 'vehicles', Extras: 'extras' };
+const PALETTE_GROUP = { 'Street furniture': 'street', 'Traffic and signs': 'traffic', Vehicles: 'vehicles', Extras: 'extras', 'Japanese street': 'extras' };
 const propAssets = PROP_GROUPS.flatMap((group) => group.props.map((prop) => ({
   id: `${group.label === 'Vehicles' ? 'vehicle' : 'prop'}.${prop.id}`,
   group: PALETTE_GROUP[group.label],
@@ -101,6 +109,60 @@ const propAssets = PROP_GROUPS.flatMap((group) => group.props.map((prop) => ({
     return withColliders(obj, box ? [box] : []);
   },
 })));
+
+// --- nature ------------------------------------------------------------------
+const FLOWERS = { Red: [0xd8443c], Yellow: [0xf2c230], Mixed: [0xd8443c, 0xf2c230, 0xf28cb8, 0xf4f4f0, 0x8a55c9] };
+const natureAssets = [{
+  id: 'nature.tree',
+  label: 'Tree',
+  category: 'nature',
+  group: 'nature',
+  variants: Object.keys(tree.presets),
+  params: { variant: 'Oak', seed: 0 },
+  size: [4, 4],
+  build(p, style) {
+    const defaults = Object.fromEntries(Object.entries(tree.schema).map(([k, d]) => [k, d.value]));
+    const preset = tree.presets[p.variant] ?? tree.presets.Oak;
+    const t = tree.build({ ...defaults, ...preset, ...(p.seed ? { seed: p.seed } : {}) }, style);
+    return withColliders(t, [{ hw: 0.3, hd: 0.3 }]);
+  },
+}, {
+  id: 'nature.flowerBed',
+  label: 'Flower bed',
+  category: 'nature',
+  group: 'nature',
+  variants: Object.keys(FLOWERS),
+  params: { variant: 'Mixed', seed: 1 },
+  size: [1.8, 0.9],
+  build(p, style) {
+    const g = new THREE.Group();
+    const rng = mulberry32((p.seed ?? 1) * 31 + 7);
+    g.add(tiledBox(1.8, 0.32, 0.9, style.material('concrete', 0xa8664a), [0, 0.16, 0]));
+    g.add(tiledBox(1.66, 0.04, 0.76, style.material('bark', 0x5a4030), [0, 0.32, 0]));
+    const leaf = style.material('leaf');
+    const colours = FLOWERS[p.variant] ?? FLOWERS.Mixed;
+    for (let i = 0; i < 14; i++) {
+      const x = -0.7 + (i % 7) * 0.233 + (rng() - 0.5) * 0.08, z = i < 7 ? -0.18 : 0.18;
+      g.add(new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 4), leaf).translateX(x).translateY(0.38).translateZ(z));
+      const f = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 4), style.material('signage', colours[Math.floor(rng() * colours.length)]));
+      f.position.set(x + (rng() - 0.5) * 0.06, 0.48, z + (rng() - 0.5) * 0.06);
+      g.add(f);
+    }
+    return withColliders(g, [{ hw: 0.9, hd: 0.45 }]);
+  },
+}, {
+  id: 'nature.bush',
+  label: 'Bush',
+  category: 'nature',
+  group: 'nature',
+  variants: ['Small', 'Large'],
+  params: { variant: 'Small', seed: 1 },
+  size: [1.2, 1.2],
+  build(p, style) {
+    const b = bush(style, p.variant === 'Large' ? 0.9 : 0.55, mulberry32((p.seed ?? 1) * 17 + 3));
+    return withColliders(b, [{ hw: 0.5, hd: 0.5 }]);
+  },
+}];
 
 // --- ground and lines --------------------------------------------------------
 const groundAssets = [{
@@ -128,7 +190,7 @@ const groundAssets = [{
   },
 }];
 
-export const ASSETS = [...buildingAssets, ...areaAssets, ...propAssets, ...groundAssets];
+export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...propAssets, ...groundAssets];
 export const CATALOG = Object.fromEntries(ASSETS.map((a) => [a.id, a]));
 
 /** Assets of one category (or all). */

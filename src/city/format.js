@@ -16,7 +16,7 @@
 //                                   // open ground; roads run round every block)
 //     { "col": 0, "row": 0, "type": "residential", "seed": 12345 }
 //   ],                              // type: residential | mixed | shops |
-//                                   // downtown | park | plaza
+//                                   // downtown | park | plaza | shrine | school
 //   "objects": [                    // everything placed in the town
 //     {
 //       "asset": "building.house",  // an id from the asset catalogue
@@ -35,7 +35,7 @@
 export const FORMAT = 'tiny-city';
 export const VERSION = 1;
 
-export const BLOCK_TYPES = ['residential', 'mixed', 'shops', 'downtown', 'park', 'plaza'];
+export const BLOCK_TYPES = ['residential', 'mixed', 'shops', 'downtown', 'park', 'plaza', 'shrine', 'school'];
 
 /** World extent of a grid, and the corners of block (col, row). */
 export function gridGeometry(grid) {
