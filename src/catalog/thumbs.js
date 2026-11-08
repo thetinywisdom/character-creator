@@ -8,7 +8,7 @@ import { setDetail } from '../lib/shapes.js';
 // show them at once and only new assets get drawn. Bump VERSION when assets
 // change shape and their pictures should be redrawn.
 
-const VERSION = 9; // 2: zebra crossings; 3: office light masks; 4: buildings vary by seed; 5: new cars; 6: dressed backs; 7: the palette; 8: building colours, motorbikes; 9: hexagon wheels
+const VERSION = 9; // 2: zebra crossings; 3: office light masks; 4: buildings vary by seed; 5: new cars; 6: dressed backs; 7: the palette; 8: building colours, motorbikes; 9: octagon wheels
 const SIZE = 64; // drawn small, shown scaled up with crisp pixels
 const mem = new Map();
 const queue = [];

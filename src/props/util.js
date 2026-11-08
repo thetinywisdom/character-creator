@@ -47,10 +47,10 @@ export function face(w, h, material, pos = [0, 0, 0]) {
 }
 
 /**
- * Wheel lying on its side (axle along x). Every vehicle wheel is a hexagon
- * (6 sides, whatever the detail level): part of the PS1 look.
+ * Wheel lying on its side (axle along x). Every vehicle wheel is an octagon
+ * (8 sides, whatever the detail level): part of the PS1 look.
  */
-export const WHEEL_SIDES = 6;
+export const WHEEL_SIDES = 8;
 export function wheel(r, width, material, pos = [0, 0, 0]) {
   const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, width, WHEEL_SIDES), material);
   m.rotation.z = Math.PI / 2;

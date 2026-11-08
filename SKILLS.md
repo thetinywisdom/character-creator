@@ -296,7 +296,7 @@ faces +z, returns `{ group, footprint, colliders }`) in `shops.js` /
 `shopWindow`), add it to `SHOP_BUILDINGS` / `CIVIC_BUILDINGS` with label and
 lot size, give it a painted interior (`PAINT` in `interiors.js`). Optionally
 add it to block fills in `layout.js`. It then appears in the Catalogue. Bump
-`VERSION` in `catalog/thumbs.js` if an existing item's look changes (now 9: hexagon wheels).
+`VERSION` in `catalog/thumbs.js` if an existing item's look changes (now 9: octagon wheels).
 
 **Add a prop.** Add `{ id, label, variants, colors?, build(params, style) }` to
 a file in `src/props/`, list it in `PROP_GROUPS` (`props/index.js`), add its

@@ -246,7 +246,7 @@ export const bicycle = {
     const r = 0.33;
     const front = [0, r, 0.55], back = [0, r, -0.5];
     for (const p of [front, back]) {
-      const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.03, 4, WHEEL_SIDES), tire); // hexagon wheels, like every vehicle
+      const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.03, 4, WHEEL_SIDES), tire); // octagon wheels, like every vehicle
       t.rotation.y = Math.PI / 2;
       t.position.set(...p);
       g.add(t);
