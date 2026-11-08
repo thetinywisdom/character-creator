@@ -377,7 +377,8 @@ About one in six random characters is a child.
   (colour on top, white below), points (pale body, dark ears, face, paws and
   tail); inner ears blush. Tails long, curled over the back, or a short bob;
   ears pointed, tufted (dark tips) or folded; short or long (fluffy, with a
-  ruff) coat. Poses: sit, loaf (paws tucked), sleep (curled, tail round).
+  ruff) coat. Poses: sit, loaf (paws tucked), sleep (lying flat on its side, legs loosely
+  bent, head resting).
 - **Cat:** walks with the cat's lateral sequence (feet a quarter cycle apart),
   head nodding, tail held up and swaying; runs with a bounding gallop (front
   pair, then back pair), the body rocking and the tail lowered behind.
