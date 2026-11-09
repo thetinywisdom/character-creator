@@ -222,7 +222,12 @@ in a circle; bubbles from `GROUP_TALK` when you are within ~22 m), `kid`
 (children running about the park), `police` (outside each koban; two more
 walk a beat). Looks fit the place: ~70% suits downtown, school uniforms by
 the school, police uniforms, aprons on promoters. Shop types of `building.shop`
-/ `mixedUse` without a `shopType` are read from their seed. Roles with a place carry
+/ `mixedUse` without a `shopType` are read from their seed. Riders: people
+sitting on bicycles and scooters in the traffic (`cars` with `rider: true`).
+Bus stop: a shelter on the bus route; the bus slows in and waits 5 s
+(`bus.stop`), `Crowd.busArrived` hides one or two waiters (got on) and lets
+earlier ones off by the door as walkers (`busWait` role; faked, nobody is
+tracked inside); passing walkers top the stop up. Roles with a place carry
 `role.home` {x, z, heading}. People further than ~48 m from the player are
 hidden and not animated. After any reaction a person walks back to their
 place at their own pace (`City.endAct` → act 'return' → `City.finishAct`) and

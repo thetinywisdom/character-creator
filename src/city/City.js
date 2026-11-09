@@ -5,7 +5,8 @@ import { skinCharacter, vertexColorMaterial } from '../lib/skin.js';
 import { mulberry32 } from '../lib/rng.js';
 import { bicycle, car, scooter } from '../props/vehicles.js';
 import { Interactions } from './interact.js';
-import { Crowd } from './crowd.js';
+import { Crowd, sitPose } from './crowd.js';
+import { createAsset } from '../catalog/index.js';
 import { generateCityData } from './layout.js';
 import { buildCity } from './build.js';
 import { JOINT_NAMES, createGait, poseGait, stepGait } from '../anim/gait.js';
@@ -236,6 +237,49 @@ export class City {
       const bus = kinds[i] === 'Bus';
       this.cars.push({ obj, size: built.userData.size ?? { hw: 0.9, hd: 2.3 }, s: rng() * ring.total, speed: bus ? 5 + rng() : 7 + rng() * 3, ...ring, loop });
     }
+    // people riding bikes and motorbikes in the traffic (sitting on them, crowd.js sitPose)
+    const rideKinds = [['bicycle', { color: 'Blue' }, 4], ['scooter', { variant: '50cc' }, 6.5], ['bicycle', { color: 'Red' }, 4.5],
+      ['scooter', { variant: 'Step-through' }, 7], ['scooter', { variant: 'Delivery' }, 6], ['bicycle', { color: 'White' }, 4]];
+    rideKinds.forEach(([kind, prm, speed], i) => {
+      if (!loops.length) return;
+      const loop = loops[(i * 5 + 3) % loops.length], ring = loopLengths(loop);
+      const obj = mergeByMaterial(kind === 'bicycle' ? bicycle.build(prm, style) : scooter.build(prm, style));
+      this.silhouettes.push(...addObjectSilhouette(obj, silCars, silCache));
+      const rider = buildPerson({ ...params.human, ...human.randomize(rng), handItem: 'None', backAccessory: 'None', bodyAccessory: 'None' });
+      sitPose(rider, kind === 'bicycle' ? 0.86 : 0.74);
+      rider.position.z = kind === 'bicycle' ? -0.2 : -0.35;
+      for (const a of ['armL', 'armR']) { const j = rider.getObjectByName(a); if (j) j.rotation.x = -0.95; } // hands on the bars
+      obj.add(rider);
+      this.scene.add(obj);
+      this.cars.push({ obj, size: { hw: 0.35, hd: 0.95 }, s: rng() * ring.total, speed: speed * (0.9 + rng() * 0.2), ...ring, loop, rider: true });
+    });
+
+    // a bus stop on the bus's route: the bus pulls in, people get off and on
+    const bus = this.cars.find((c) => c.size.hd > 4);
+    if (bus) {
+      let k = 0;
+      bus.lengths.forEach((l, i) => { if (l > bus.lengths[k]) k = i; });
+      const a = bus.loop[k], b = bus.loop[(k + 1) % bus.loop.length], len = bus.lengths[k];
+      const fx = (b[0] - a[0]) / len, fz = (b[1] - a[1]) / len, lx = fz, lz = -fx; // left of the bus = the kerb
+      const sx = (a[0] + b[0]) / 2, sz = (a[1] + b[1]) / 2;
+      const stopS = bus.lengths.slice(0, k).reduce((u, v) => u + v, 0) + len / 2;
+      const shelter = createAsset('prop.busStop', { variant: 'Shelter' }, style);
+      const kx = sx + lx * 3.2, kz = sz + lz * 3.2;
+      shelter.position.set(kx, 0, kz);
+      shelter.rotation.y = Math.atan2(-lx, -lz); // facing the road
+      this.scene.add(mergeByMaterial(shelter));
+      city.colliders.push({ x: kx - lx * 0.5, z: kz - lz * 0.5, hw: Math.abs(fx) > 0.5 ? 1.6 : 0.6, hd: Math.abs(fx) > 0.5 ? 0.6 : 1.6 });
+      bus.stop = { s: stopS, x: sx, z: sz, door: { x: sx + lx * 2.2 + fx * 3.5, z: sz + lz * 2.2 + fz * 3.5 }, wait: 0, served: false };
+      // people waiting at the stop, facing the road
+      const stopInfo = { stop: bus.stop, slots: [], waiters: [], boarded: [] };
+      for (let i = 0; i < 4; i++) {
+        const d = -1.5 + i * 0.9;
+        stopInfo.slots.push({ x: sx + lx * 2.1 + fx * d, z: sz + lz * 2.1 + fz * d, heading: Math.atan2(-lx, -lz) });
+      }
+      this.crowd.busStop = stopInfo;
+      stopInfo.slots.slice(0, 3).forEach((home) => this.crowd.assign(makePerson(), { kind: 'busWait', home: { ...home } }));
+    }
+
     // a scooter and a bicycle you can ride, parked by where you start
     [['scooter', scooter.build({ variant: '50cc' }, style), { hw: 0.45, hd: 0.95 }, 2.4],
      ['bicycle', bicycle.build({ color: 'Blue' }, style), { hw: 0.3, hd: 0.9 }, 3.6]].forEach(([bike, built, size, dx]) => {
@@ -640,7 +684,17 @@ export class City {
         if (c.wait < 3) for (const o of this.cars) if (o !== c && ahead(o.obj.position, o)) blocked = true;
       }
       c.wait = blocked ? c.wait + dt : 0;
-      c.speed += ((blocked ? 0 : c.cruise) - c.speed) * Math.min(1, dt * (blocked ? 6 : 1.5));
+      let cruise = c.cruise;
+      if (c.stop) {
+        // the bus slows into its stop, waits, then pulls away (crowd.js swaps people)
+        const st = c.stop, ahead = (((st.s - c.s) % c.total) + c.total) % c.total;
+        if (st.wait > 0) { st.wait -= dt; cruise = 0; c.speed = 0; if (st.wait <= 0) st.served = true; }
+        else if (!st.served && ahead < 14) {
+          cruise = Math.min(cruise, ahead * 0.7);
+          if (ahead < 0.4) { st.wait = 5; this.crowd.busArrived(); }
+        } else if (st.served && ahead > 20 && ahead < c.total - 5) st.served = false;
+      }
+      c.speed += ((blocked ? 0 : cruise) - c.speed) * Math.min(1, dt * (blocked ? 6 : 1.5));
       c.s += c.speed * dt;
       // the route already runs down the middle of the kerb-side lane (driving
       // on the left, block on the driver's left), so the car sits right on it

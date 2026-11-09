@@ -88,6 +88,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 35. **A busier town, step 2**: queues outside food shops, shop promoters calling out, chatting groups with bubbles, kids in the park, police, suits downtown and school uniforms by schools (~108 people).
 
+36. **A busier town, step 3**: people riding bicycles and scooters in traffic; a bus stop where the bus pulls in, people get on and off (faked).
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.

@@ -184,9 +184,45 @@ export class Crowd {
     return roles;
   }
 
+  /**
+   * The bus has stopped (faked: nobody is tracked inside): one or two people
+   * who got on earlier step off by the door and walk away; one or two of
+   * those waiting get on and vanish.
+   */
+  busArrived() {
+    const b = this.busStop;
+    if (!b) return;
+    const off = b.boarded.splice(0, 1 + Math.floor(Math.random() * 2));
+    off.forEach((n, i) => {
+      n.root.visible = true;
+      n.pos = { x: b.stop.door.x + i * 0.5, z: b.stop.door.z };
+      n.root.position.set(n.pos.x, 0, n.pos.z);
+      n.role = { kind: 'walk' };
+      this.city.endAct(n); // walk over to the pavement route and carry on
+    });
+    const on = b.waiters.filter((n) => !n.act && n.role.kind === 'busWait').slice(0, 1 + Math.floor(Math.random() * 2));
+    for (const n of on) {
+      b.waiters.splice(b.waiters.indexOf(n), 1);
+      n.role = { kind: 'busWait', slot: -1, home: n.role.home };
+      n.root.visible = false;
+      b.boarded.push(n);
+    }
+  }
+
   /** Queues move, groups chat: once a frame. */
   update(dt) {
     const city = this.city, p = city.player, ix = city.ix;
+    // the bus stop fills up again with passing walkers
+    const b = this.busStop;
+    if (b && b.waiters.length < 3 && Math.random() < dt * 0.3) {
+      const free = b.slots.find((sl) => !b.waiters.some((w) => w.role.home && Math.hypot(w.role.home.x - sl.x, w.role.home.z - sl.z) < 0.3));
+      const n = free && city.npcs.find((q) => q.role.kind === 'walk' && !q.act && !q.cross && q.pos && Math.hypot(q.pos.x - free.x, q.pos.z - free.z) < 12);
+      if (n) {
+        n.role = { kind: 'busWait', home: { ...free } };
+        b.waiters.push(n);
+        n.act = { kind: 'return', x: free.x, z: free.z, t: 30 };
+      }
+    }
     for (const q of this.queues ?? []) {
       if (q.gone && (q.gone.t -= dt) <= 0) {
         // back out of the shop, now at the end of the line
@@ -228,6 +264,7 @@ export class Crowd {
     n.role = role;
     if (role.queue && !role.queue.members.includes(n)) role.queue.members.push(n);
     if (role.group && !role.group.members.includes(n)) role.group.members.push(n);
+    if (role.kind === 'busWait' && role.slot !== -1 && this.busStop && !this.busStop.waiters.includes(n)) this.busStop.waiters.push(n);
     if (role.home) {
       n.pos = { x: role.home.x, z: role.home.z };
       n.root.position.set(role.home.x, this.city.layout.groundHeight(role.home.x, role.home.z), role.home.z);
@@ -253,7 +290,7 @@ export class Crowd {
       return;
     }
     if (r.kind === 'kid') { this.runAbout(n, dt); return; }
-    if (r.kind === 'queue' || r.kind === 'group' || r.kind === 'police') {
+    if (r.kind === 'queue' || r.kind === 'group' || r.kind === 'police' || r.kind === 'busWait') {
       // stand facing the shop / the group; small weight shifts, glances
       r.look = (r.look ?? Math.random() * 10) + dt;
       this.city.stepPerson(n, dt, 0);
