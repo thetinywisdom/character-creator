@@ -40,7 +40,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   Brisk, Swagger, Sneak) and, separately, a run (Natural, Ninja, Panic);
   townspeople get a random mix. (The Walk lab for tuning them is a dev tool:
   add #dev to the address to show its 🚶 button.)
-- **Interactions in the City:** left-click anyone you can see to talk to them
+- **Interactions in the City:** point at someone and a yellow ring lights up
+  under them (and under the person whose menu is open). Left-click anyone you can see to talk to them
   (you run over first); right-click them, or face them and press **E**, for
   the action menu: **1** Slap, **2** Push, **3** Talk, **4** Fart (the number
   keys also work straight on whoever you face). Hold **1** or hold-click to

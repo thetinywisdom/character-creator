@@ -308,7 +308,10 @@ start; WASD drives (the pedal `drive.pedal` eases down and the pull fades
 towards top speed, `ACC` per kind: bus 1.6, bicycle 2.2, car 3.4, scooter 3.8
 m/s²; the handbrake held going straight locks the wheels and stops it at 9
 m/s² with skid marks, steering on it drifts), people hit fall over, you get out on the driver's side
-and the vehicle stays parked). Clicking a person or vehicle works at any distance you can see: you
+and the vehicle stays parked). Whoever is under the mouse gets a bright pulsing yellow ring with a dark
+edge (`ix.hoverRing`, from `CityInput.hover` and `ix.pickAt`; the pointer
+becomes a hand); the open menu's person keeps it; the soft ring marks whoever
+you face. Clicking a person or vehicle works at any distance you can see: you
 run over to them first (`player.goal`, cancelled by any movement key), then
 act. Input arrives as events
 (`CityInput.takeEvents()`): keys E (action menu / ride), 1 slap (hold to charge: `CHARGE` = two cycles of the

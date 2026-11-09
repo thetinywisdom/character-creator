@@ -637,6 +637,10 @@ export class City {
     const a = input.axes();
     // clicks, keys and taps for interactions (interact.js)
     const rect = this.renderer.domElement.getBoundingClientRect();
+    // who is under the mouse (a highlight ring, interact.js)
+    const hv = input.hover && !p.riding ? this.ix.pickAt(input.hover.x, input.hover.y, this.activeCamera, rect) : null;
+    this.ix.hover = hv;
+    this.renderer.domElement.style.cursor = hv ? 'pointer' : '';
     for (const ev of input.takeEvents?.() ?? []) this.ix.handle(ev, this.activeCamera, rect);
     const busy = this.ix.updatePlayer(dt, a); // riding, staggering or slipping
     if (!busy) {

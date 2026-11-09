@@ -466,6 +466,9 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 - **Cute cats (proposals):** dot or sparkle eyes (ink, a paper glint), a
   blush nose, blush cheeks, round bean or boxy loaf bodies, big paws, cheek
   fluff; the same faceted, palette-painted look and the same rig.
+- **Targeting:** under the person (or vehicle) your mouse is on, a yellow
+  ring (#ffd23f) on a slightly wider ink ring, pulsing gently (±6 %); the
+  person you face gets the soft paper ring; the mouse pointer is a hand.
 - **Speech:** floating text, no box (owner's pick, design B of
   labs/bubble-lab.html): Silkscreen 8 px on whole pixels with a 1 px ink
   outline; talk off-white, shouts yellow with a short shake; a line rises a

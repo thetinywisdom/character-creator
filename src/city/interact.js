@@ -96,6 +96,15 @@ export class Interactions {
     this.ring.renderOrder = 3;
     this.ring.visible = false;
     city.scene.add(this.ring);
+    // the one under your mouse: a bright yellow ring with a dark edge (reads on any ground), pulsing
+    this.hoverRing = new THREE.Group();
+    const flat = (r0, r1, color) => new THREE.Mesh(new THREE.RingGeometry(r0, r1, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color, depthWrite: false }));
+    const edge = flat(0.4, 0.64, 0x2f3236), glow = flat(0.45, 0.59, 0xffd23f);
+    glow.position.y = 0.004;
+    this.hoverRing.add(edge, glow);
+    this.hoverRing.traverse((o) => { o.renderOrder = 4; });
+    this.hoverRing.visible = false;
+    city.scene.add(this.hoverRing);
   }
 
   // --- bubbles -------------------------------------------------------------------
@@ -926,7 +935,17 @@ export class Interactions {
     if (this.menu && !this.menu.npc.pos) this.closeMenu();
     // the ring under whoever you are facing
     this.target = p.riding || p.act ? null : this.facing();
-    const t = this.menu ? { type: 'npc', ref: this.menu.npc } : this.target;
+    // the bright ring: on the open menu's person, else on whoever the mouse is over
+    const hv = this.menu ? { type: 'npc', ref: this.menu.npc } : this.hover;
+    this.hoverRing.visible = !!hv;
+    if (hv) {
+      const o = hv.type === 'npc' ? hv.ref.root.position : hv.ref.obj.position;
+      const s = (hv.type === 'vehicle' ? Math.max(hv.ref.size.hw, 0.6) * 2.2 : 1) * (1 + 0.06 * Math.sin(performance.now() / 160));
+      this.hoverRing.scale.setScalar(s);
+      this.hoverRing.position.set(o.x, city.layout.groundHeight(o.x, o.z) + 0.035, o.z);
+    }
+    // the soft ring: whoever you face (unless the bright ring is already on them)
+    const t = this.target && this.target.ref !== hv?.ref ? this.target : null;
     this.ring.visible = !!t;
     if (t) {
       const o = t.type === 'npc' ? t.ref.root.position : t.ref.obj.position;

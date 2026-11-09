@@ -48,6 +48,9 @@ export class CityInput {
       // holding still starts charging a slap (released on pointerup)
       if (e.button === 0) press.timer = setTimeout(() => { if (press && !press.moved) { press.fired = true; press.charging = true; this.events.push({ type: 'chargeStart', x: press.x, y: press.y }); } }, 300);
     });
+    // where the mouse is (not fingers): the City highlights who is under it
+    canvas.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') this.hover = { x: e.clientX, y: e.clientY }; });
+    canvas.addEventListener('pointerleave', () => { this.hover = null; });
     canvas.addEventListener('pointermove', (e) => {
       if (press && !press.charging && e.pointerId === press.id && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 8) { press.moved = true; clearTimeout(press.timer); }
     });
