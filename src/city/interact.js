@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { COMEDY } from './comedy.js';
 import { sitPose } from './crowd.js';
 import { bananaPeel } from '../props/extras.js';
 import { JOINT_NAMES } from '../anim/gait.js';
@@ -38,6 +39,30 @@ const CHASE_YELLS = ['Get back here!', "I'll get you!", "You're DEAD!", 'Come he
 const BURSTS = {
   powerslap: ['SMAAACK!!', 'KA-POW!!', 'WHAM!!'], slap: ['SLAP!', 'WHAP!', 'SMACK!'], push: ['SHOVE!', 'WHUMP!', 'OOF!'], slip: ['WHOOPS!'], bonk: ['BONK!'], bump: ['BUMP!', 'OOF!', 'WHOA!', 'OOPS!'] };
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
+
+// the comic hits the owner picked (comedy.js): windmill slap, launch power
+// slap, sumo push; calm people fall feet over head, aggressive ones faceplant
+const ANIM = {
+  slap: COMEDY.slap[0], powerslap: COMEDY.slap[2], push: COMEDY.push[0],
+  fallCalm: COMEDY.fall[0].victim, fallAggressive: COMEDY.fall[1].victim,
+};
+const HIT_AT = { slap: 0.42, powerslap: 0.4, push: 0.25 }; // s into the swing when it lands
+const FART_WINDUP = 0.65; // s of squatting and straining before the blast
+ANIM.fart = { attacker: { dur: 0.95, pose(body, j, t) {
+  const sq = Math.min(1, t / 0.2) * (t < FART_WINDUP ? 1 : Math.max(0, 1 - (t - FART_WINDUP) / 0.25));
+  const shake = t < FART_WINDUP ? Math.sin(t * 70) * 0.04 * sq : 0;
+  body.position.y = -0.18 * sq + (t >= FART_WINDUP && t < FART_WINDUP + 0.15 ? 0.12 : 0); // a little hop as it blasts
+  body.position.x = shake;
+  for (const s of ['L', 'R']) {
+    if (j[`leg${s}`]) j[`leg${s}`].rotation.x = -0.75 * sq;
+    if (j[`shin${s}`]) j[`shin${s}`].rotation.x = 1.25 * sq;
+    if (j[`foot${s}`]) j[`foot${s}`].rotation.x = -0.4 * sq;
+    if (j[`arm${s}`]) { j[`arm${s}`].rotation.x = -0.6 * sq; j[`arm${s}`].rotation.z = (s === 'L' ? 1 : -1) * 0.5 * sq; } // fists clenched
+  }
+  if (j.spine) j.spine.rotation.x = 0.35 * sq;
+  if (j.head) j.head.rotation.x = 0.25 * sq + shake * 2;
+} } };
+const fallOf = (who) => (who.trait === 'Aggressive' ? ANIM.fallAggressive : ANIM.fallCalm);
 
 const REACH = 1.7;        // m: how close a person must be to act on them
 const PICK_REACH = 60;    // m: a clicked person can be anywhere you can see; you run over to them
@@ -214,7 +239,7 @@ export class Interactions {
   doAction(kind, n) {
     const p = this.city.player;
     p.heading = Math.atan2(n.pos.x - p.x, n.pos.z - p.z); // turn to them
-    p.action = { kind: kind === 'powerslap' ? 'slap' : kind, t: 0, dur: kind === 'talk' ? 0.01 : 0.4 };
+    p.action = { kind, t: 0, dur: kind === 'talk' ? 0.01 : ANIM[kind].attacker.dur };
     const agg = n.trait === 'Aggressive';
     if (kind === 'talk') {
       // a question and an answer that fits it (smalltalk.js), from a calm or a grumpy person
@@ -231,24 +256,27 @@ export class Interactions {
       this.shake = 0.3;
       const dx = n.pos.x - p.x, dz = n.pos.z - p.z, d = Math.hypot(dx, dz) || 1;
       if (kind === 'push' || kind === 'powerslap') {
-        // a push knocks them over (like a car): they fall, get up shouting, then react
-        const k = kind === 'powerslap' ? 4.2 : 3.2;
+        // a push sends them flying (sumo); a power slap launches them spinning
+        // into the air and they land sitting. Then up shouting, and they react
+        const anim = ANIM[kind].victim, [k] = anim.kb;
         if (kind === 'powerslap') this.shake = 0.5;
-        this.knockDown(n, { x: (dx / d) * k, z: (dz / d) * k }, p);
-        this.domino(n, { x: dx / d, z: dz / d }, k * 0.8, 2);
+        this.knockDown(n, { x: (dx / d) * k, z: (dz / d) * k }, p, null, anim);
+        this.domino(n, { x: dx / d, z: dz / d }, 3.2 * 0.8, 2);
         return;
       }
+      // a slap spins them round on the spot, dizzy; then they react
       this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 0.75, this.nameOf(n));
-      n.flinch = 0.35;
-      if (agg) n.act = { kind: 'retaliate', move: kind, t: 0.55, struck: false };
-      else n.act = { kind: 'flee', t: 4, delay: kind === 'push' ? 0.35 : 0.2 };
-    }, 150);
+      n.root.rotation.y = Math.atan2(-dx, -dz); // facing you as it lands
+      n.comic = { spec: ANIM.slap.victim, t: 0 };
+      const then = agg ? { kind: 'retaliate', move: kind, t: 0.55, struck: false } : { kind: 'flee', t: 4, delay: 0 };
+      n.act = { kind: 'wait', t: ANIM.slap.victim.dur * 0.85, then };
+    }, (HIT_AT[kind] ?? 0.15) * 1000);
   }
 
   /** An aggressive person hits the player back. */
   strikePlayer(n, move) {
     const p = this.city.player;
-    n.action = { kind: move, t: 0, dur: 0.4 };
+    n.action = { kind: move, t: 0, dur: ANIM[move].attacker.dur };
     setTimeout(() => {
       if (Math.hypot(p.x - n.pos.x, p.z - n.pos.z) > 1.8) return;
       if (p.riding && !p.riding.bike) return; // safe inside a car
@@ -259,8 +287,10 @@ export class Interactions {
       const k = move === 'push' ? 3.2 : 1.8;
       p.kb = { x: (dx / d) * k, z: (dz / d) * k, t: move === 'push' ? 0.35 : 0.25 };
       // a push back knocks you over too; a slap makes you stagger
-      p.act = move === 'push' ? { kind: 'slip', t: 2.0, total: 2.0 } : { kind: 'stagger', t: 0.5 };
-    }, 150);
+      p.heading = Math.atan2(-dx, -dz); // facing them, so a push sends you over backwards
+      if (move === 'push') { p.kb = { x: (dx / d) * 4.5, z: (dz / d) * 4.5, t: 0.7 }; p.act = { kind: 'slip', t: 2.4, total: 2.4, anim: ANIM.push.victim }; }
+      else { p.act = { kind: 'stagger', t: ANIM.slap.victim.dur * 0.7 }; p.comic = { spec: ANIM.slap.victim, t: 0 }; }
+    }, (HIT_AT[move] ?? 0.15) * 1000);
   }
   /** A car you stepped in front of hits you: you fly, land flat, the driver shouts. */
   hitByCar(c) {
@@ -274,7 +304,7 @@ export class Interactions {
     this.say(this.midOfPlayer(), pick(['WHAM!', 'BONK!', 'KRUNCH!']), 'burst');
     this.shake = 0.5;
     this.say(() => c.obj.position.clone().add(new THREE.Vector3(0, 2, 0)), pick(['WATCH IT!', 'Are you crazy?!', 'Idiot!', 'Look where you\'re going!']), 'shout', 2.4, 0.5, 'DRIVER');
-    setTimeout(() => this.city.knock.cloud(new THREE.Vector3(p.x, this.city.layout.groundHeight(p.x, p.z), p.z), { n: 12, r: 0.7, life: 0.9 }), 450);
+    setTimeout(() => this.city.knock.cloud(new THREE.Vector3(p.x, this.city.layout.groundHeight(p.x, p.z), p.z), { n: 22, r: 0.7, life: 0.9, size: 0.2 }), 450);
   }
   midOfPlayer() { const p = this.city.player; return () => p.root.position.clone().add(new THREE.Vector3(0, (p.height ?? 1.7) * 0.75, 0)); }
 
@@ -284,15 +314,21 @@ export class Interactions {
    * fall, get up shouting, then react: aggressive ones chase you and push you
    * back, calm ones run away.
    */
-  knockDown(n, kb, p = this.city.player, word = null) {
+  knockDown(n, kb, p = this.city.player, word = null, anim = null) {
     const agg = n.trait === 'Aggressive';
     if (word) this.say(this.midOf(n), pick(BURSTS[word]), 'burst');
-    n.act = { kind: 'slip', t: 2.0, total: 2.0,
+    const total = anim ? anim.dur : 2.4;
+    n.act = { kind: 'slip', t: total, total, anim,
       then: agg ? { kind: 'chase', move: 'push', t: 10, cd: 0.4 } : { kind: 'flee', t: 4, delay: 0 } };
-    n.kb = { x: kb.x, z: kb.z, t: 0.35 };
+    n.kb = { x: kb.x, z: kb.z, t: anim ? anim.kb[1] : 0.35 };
+    // they face the way they came from, so they go over backwards (a faceplant falls forwards)
+    const fwd = (anim ?? fallOf(n)) === ANIM.fallAggressive;
+    n.root.rotation.y = fwd ? Math.atan2(kb.x, kb.z) : Math.atan2(-kb.x, -kb.z);
+    if (n.pos) this.startleNear(n.pos.x, n.pos.z); // people on benches nearby jump
+    n.comic = null;
     if (this.menu?.npc === n) this.menu = null;
     // a cloud of dust where they hit the ground
-    setTimeout(() => n.pos && this.city.knock.cloud(new THREE.Vector3(n.pos.x, this.city.layout.groundHeight(n.pos.x, n.pos.z), n.pos.z), { n: 12, r: 0.7, life: 0.9 }), 330);
+    setTimeout(() => n.pos && this.city.knock.cloud(new THREE.Vector3(n.pos.x, this.city.layout.groundHeight(n.pos.x, n.pos.z), n.pos.z), { n: 22, r: 0.7, life: 0.9, size: 0.2 }), 330);
     // the shout comes as they get back up
     this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 1.7, this.nameOf(n));
   }
@@ -323,6 +359,17 @@ export class Interactions {
         }, (i++) * 110);
       }
     }, 180);
+  }
+
+  /** People sitting nearby jump in their seats and shout (chaos close by). */
+  startleNear(x, z, r = 6, lines = null) {
+    for (const m of this.city.npcs) {
+      if (m.role?.kind !== 'bench' || m.act || !m.pos || (m.startle ?? 0) > 0) continue;
+      if (Math.hypot(m.pos.x - x, m.pos.z - z) > r) continue;
+      m.startle = 1.4;
+      const agg = m.trait === 'Aggressive';
+      this.say(this.headOf(m), pick(lines ?? (agg ? ['HEY! WATCH IT!', 'What the h*ll?!', 'Unbelievable!'] : ['Oh my!', 'Eek!!', 'Goodness!', 'Somebody help!'])), 'shout', 2.2, 0.2 + Math.random() * 0.4, this.nameOf(m));
+    }
   }
 
   slip(who, isPlayer = false, word = 'slip') {
@@ -412,7 +459,7 @@ export class Interactions {
     n.gait && city.stepPerson(n, dt, a.kind === 'slip' ? 0 : speed);
     this.poseActor(n, dt);
     if (n.act === a && a.t <= 0) {
-      if (a.then) { n.act = a.then; n.body.rotation.x = 0; n.body.position.y = 0; } // up again: now react
+      if (a.then) { n.act = a.then; if (a.kind === 'slip') { n.body.rotation.set(0, 0, 0); n.body.position.set(0, 0, 0); } } // up again: now react
       else city.endAct(n);
     }
   }
@@ -420,41 +467,36 @@ export class Interactions {
   // --- poses on top of the walk: arm swings, flinch, falling ---------------------------
   poseActor(who, dt) {
     const body = who.body, j = joints(body);
+    body.rotation.order = 'YXZ'; // spins stay round the vertical even when lying down
     if (who.action) {
-      const ac = who.action;
+      // the swing: the owner's picked comic attacks (comedy.js)
+      const ac = who.action, spec = ANIM[ac.kind]?.attacker;
       ac.t += dt;
-      const f = Math.sin(Math.PI * Math.min(1, ac.t / ac.dur));
-      if (ac.kind === 'slap') {
-        if (j.armR) { j.armR.rotation.x = -1.7 * f; j.armR.rotation.z -= 0.6 * f; }
-        if (j.foreR) j.foreR.rotation.x = -0.3 * f;
-        if (j.spine) j.spine.rotation.y += 0.35 * f;
-      } else if (ac.kind === 'push') {
-        for (const s of ['L', 'R']) {
-          if (j[`arm${s}`]) j[`arm${s}`].rotation.x = -1.45 * f;
-          if (j[`fore${s}`]) j[`fore${s}`].rotation.x = -0.25 * f;
-        }
-        if (j.spine) j.spine.rotation.x += 0.3 * f;
-      }
-      if (ac.t >= ac.dur) who.action = null;
+      if (spec && ac.t <= spec.dur) spec.pose(body, j, ac.t);
+      if (ac.t >= ac.dur) { who.action = null; if (!who.act || who.act.kind !== 'slip') body.position.set(0, 0, 0); }
     }
     if (who.flinch > 0) {
       who.flinch -= dt;
       if (j.spine) j.spine.rotation.x -= 0.35 * Math.sin(Math.PI * Math.max(0, who.flinch) / 0.35);
     }
+    if (who.comic) {
+      // a reaction on top of whatever they do (a slap: spin round, dizzy)
+      const c = who.comic;
+      c.t += dt;
+      if (c.t <= c.spec.dur) c.spec.pose(body, j, c.t);
+      else { who.comic = null; body.rotation.set(0, 0, 0); body.position.set(0, 0, 0); }
+    }
     const a = who.act;
     if (a?.kind === 'slip') {
-      // feet fly up, land flat on the back, lie still, get back up
-      const t = a.total - a.t;
-      const down = t < 0.25 ? t / 0.25 : t < a.total - 0.6 ? 1 : Math.max(0, (a.total - t) / 0.6);
-      body.rotation.x = -1.45 * down;
-      body.position.y = 0.12 * down;
-      if (j.legL) j.legL.rotation.x = -0.9 * down * (t < 0.4 ? 1.4 : 1);
-      if (j.legR) j.legR.rotation.x = -0.6 * down;
-      if (j.armL) j.armL.rotation.x = -1.2 * down;
-      if (j.armR) j.armR.rotation.x = -1.0 * down;
-      if (a.stunned && j.head) j.head.rotation.y = Math.sin(t * 9) * 0.6 * down; // dizzy, head rolling
+      // on the ground: a push / launch plays its own fall; anything else
+      // (peel, bump, stink) falls by temper; the lying part stretches to fit
+      const spec = a.anim ?? fallOf(who);
+      const t = a.total - a.t, up = 0.5;
+      const tt = t < a.total - up ? Math.min(t, spec.dur - up - 0.01) : spec.dur - (a.total - t);
+      spec.pose(body, j, Math.max(0, tt));
+      if (a.stunned && j.head) j.head.rotation.y = Math.sin(t * 9) * 0.6; // dizzy, head rolling
     } else if (a?.kind === 'stagger') {
-      if (j.spine) j.spine.rotation.x -= 0.4 * Math.max(0, a.t);
+      if (j.spine && !who.comic) j.spine.rotation.x -= 0.4 * Math.max(0, a.t);
     }
   }
 
@@ -501,7 +543,7 @@ export class Interactions {
       const ground = city.layout.groundHeight(p.x, p.z);
       p.root.position.set(p.x, ground, p.z);
       p.root.rotation.y = p.heading;
-      if (p.act.t <= 0) { p.act = null; p.body.rotation.x = 0; }
+      if (p.act.t <= 0) { p.act = null; p.body.rotation.set(0, 0, 0); p.body.position.set(0, 0, 0); }
       return true;
     }
     return false;
@@ -513,13 +555,20 @@ export class Interactions {
    * there stunned (dizzy), then gets up, holds their nose and runs off.
    */
   fart() {
-    const city = this.city, p = city.player;
-    if ((this.fartCd ?? 0) > 0) return;
+    const p = this.city.player;
+    if ((this.fartCd ?? 0) > 0 || p.riding) return;
     this.fartCd = 2.5;
+    // squat, strain and shake a moment... then it goes off
+    p.action = { kind: 'fart', t: 0, dur: ANIM.fart.attacker.dur };
+    setTimeout(() => this.fartBlast(), FART_WINDUP * 1000);
+  }
+  fartBlast() {
+    const city = this.city, p = city.player;
     const at = new THREE.Vector3(p.x, city.layout.groundHeight(p.x, p.z) + 0.3, p.z);
-    city.knock.cloud(at, { color: 0x9cbf5a, n: 16, r: 1.1, life: 2.2, size: 0.55, rise: 0.35, opacity: 0.75 });
-    setTimeout(() => city.knock.cloud(at, { color: 0xb8cf6a, n: 10, r: 1.6, life: 2.0, size: 0.7, rise: 0.25, opacity: 0.6 }), 250);
+    city.knock.cloud(at, { color: 0x9cbf5a, n: 46, r: 1.1, life: 2.0, size: 0.3, rise: 0.45 });
+    setTimeout(() => city.knock.cloud(at, { color: 0xc2d46e, n: 34, r: 1.7, life: 1.8, size: 0.34, rise: 0.3 }), 250);
     this.say(this.midOfPlayer(), pick(['PFFRRT!', 'BRAAAP!', 'PFFT!', 'TOOT!']), 'burst');
+    this.startleNear(p.x, p.z, FART_R + 1.5, ['EWWW!', 'GROSS!', '*cough* *cough*', 'WHO DID THAT?!', 'Disgusting!']);
     this.shake = 0.2;
     let i = 0;
     for (const n of city.npcs) {
@@ -684,7 +733,7 @@ export class Interactions {
         if (!n.pos || n.act?.kind === 'slip') continue;
         for (const k of [-1, 1]) {
           if (Math.hypot(n.pos.x - (nx + fx * off * k), n.pos.z - (nz + fz * off * k)) < r + 0.35) {
-            this.knockDown(n, { x: fx * 2.5, z: fz * 2.5 }, p, 'bonk');
+            this.knockDown(n, { x: fx * 4.5, z: fz * 4.5 }, p, 'bonk', ANIM.push.victim);
             break;
           }
         }
@@ -808,11 +857,13 @@ export class Interactions {
     }
     // bubbles age and go
     for (const b of this.bubbles) {
-      const was = b.age;
       b.age += dt;
       // one speech bubble per person: a new line replaces what they said before
-      if (was < 0 && b.age >= 0 && b.anchor.who && b.kind !== 'burst') {
-        for (const o of this.bubbles) if (o !== b && o.anchor.who === b.anchor.who && o.kind !== 'burst' && o.age >= 0) o.age = o.life;
+      if (!b.shown && b.age >= 0) {
+        b.shown = true;
+        if (b.anchor.who && b.kind !== 'burst') {
+          for (const o of this.bubbles) if (o !== b && o.shown && o.anchor.who === b.anchor.who && o.kind !== 'burst') o.age = o.life;
+        }
       }
     }
     if (this.charge) this.charge.t += dt;

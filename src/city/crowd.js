@@ -72,8 +72,8 @@ export function sitPose(body, seatY) {
     if (j[`leg${s}`]) j[`leg${s}`].rotation.x = -1.5;
     if (j[`shin${s}`]) j[`shin${s}`].rotation.x = 1.5;
     if (j[`foot${s}`]) j[`foot${s}`].rotation.x = 0;
-    if (j[`arm${s}`]) j[`arm${s}`].rotation.x = -0.35;
-    if (j[`fore${s}`]) j[`fore${s}`].rotation.x = -0.8;
+    if (j[`arm${s}`]) { j[`arm${s}`].rotation.x = -0.12; j[`arm${s}`].rotation.z = 0; } // hands resting on the lap
+    if (j[`fore${s}`]) j[`fore${s}`].rotation.x = -0.55;
   }
   if (j.spine) j.spine.rotation.set(-0.05, 0, 0);
 }
@@ -256,6 +256,18 @@ export class Crowd {
         n.act = { kind: 'return', x: n.role.home.x, z: n.role.home.z, t: 20 };
       }
     }
+    // people side by side on a bench chat now and then (when you are near)
+    this.benchT = (this.benchT ?? 3) - dt;
+    if (this.benchT < 0 && ix) {
+      this.benchT = 2.5 + Math.random() * 2.5;
+      const sitters = city.npcs.filter((n) => n.role?.kind === 'bench' && !n.act && n.pos && n.root.visible && Math.hypot(n.pos.x - p.x, n.pos.z - p.z) < 22);
+      const n = sitters[Math.floor(Math.random() * sitters.length)];
+      if (n) {
+        n.role.chat = 2.4;
+        ix.say(ix.headOf(n), GROUP_TALK[Math.floor(Math.random() * GROUP_TALK.length)], 'talk', 2.4, 0, ix.nameOf(n));
+      }
+    }
+    for (const n of city.npcs) if (n.role?.kind === 'bench' && n.role.chat > 0) n.role.chat -= dt;
     for (const g of this.groups ?? []) {
       if ((g.t -= dt) > 0) continue;
       g.t = 2.6 + Math.random() * 2;
@@ -295,6 +307,18 @@ export class Crowd {
     if (this.culled(n)) return;
     if (r.kind === 'bench') {
       sitPose(n.body, 0.45);
+      const j = joints(n.body);
+      r.look = (r.look ?? Math.random() * 10) + dt;
+      if (j.head) j.head.rotation.y = 0.4 * Math.sin(r.look * 0.35) * Math.sin(r.look * 0.11);
+      if (n.startle > 0) {
+        // jumps in the seat: arms up, leaning back, a shake of the head
+        n.startle -= dt;
+        const f = Math.min(1, n.startle / 0.3) * Math.min(1, (1.4 - n.startle) / 0.12);
+        for (const s of ['L', 'R']) { if (j[`arm${s}`]) j[`arm${s}`].rotation.x = -2.5 * f; if (j[`fore${s}`]) j[`fore${s}`].rotation.x = -0.4 * f; }
+        if (j.spine) j.spine.rotation.x = -0.3 * f;
+        if (j.head) j.head.rotation.y = Math.sin(n.startle * 25) * 0.4 * f;
+        n.body.position.y += Math.abs(Math.sin(n.startle * 14)) * 0.08 * f;
+      } else if (r.chat > 0 && j.armR) j.armR.rotation.x -= 0.5 * Math.max(0, Math.sin(r.look * 1.3)); // talking with a hand
       return;
     }
     if (r.kind === 'kid') { this.runAbout(n, dt); return; }

@@ -730,7 +730,7 @@ export class City {
       if (this.crowd.culled(n)) continue; // far away: hidden, not animated
       stepGait(n.gait, dt, pace);
       poseGait(n.body, n.gait);
-      if (n.action || n.flinch > 0) this.ix.poseActor(n, dt);
+      if (n.action || n.flinch > 0 || n.comic) this.ix.poseActor(n, dt);
     }
 
     // --- cats: wander between random points in the park ----------------------

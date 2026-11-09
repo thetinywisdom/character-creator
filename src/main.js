@@ -327,8 +327,10 @@ function stackBubbles(list, pie) {
     }
     placed.push({ x0: nx0 + best.dx, x1: nx0 + best.dx + w + 8, y0: ny1 + best.dy - h - 8, y1: ny1 + best.dy });
     // ease towards the spot so bubbles slide rather than jump
+    // a new bubble pops up right at its free spot; later moves slide quickly
+    const fresh = el.dataset.ox === undefined;
     const ox = Number(el.dataset.ox ?? 0), oy = Number(el.dataset.oy ?? 0);
-    const nxo = ox + (best.dx - ox) * 0.3, nyo = oy + (best.dy - oy) * 0.3;
+    const nxo = fresh ? best.dx : ox + (best.dx - ox) * 0.5, nyo = fresh ? best.dy : oy + (best.dy - oy) * 0.5;
     el.dataset.ox = String(nxo); el.dataset.oy = String(nyo);
     el.style.marginLeft = `${nxo}px`;
     el.style.marginTop = `${nyo}px`;
@@ -403,7 +405,9 @@ function drawOverlay(c, W, H) {
     chargeEl.style.setProperty('--col', `rgb(${col})`);
     chargeEl.style.setProperty('--deg', `${f * 360}deg`);
     chargeEl.classList.toggle('shake', second);
-    const s = screenOf(c.player.root.position.clone().add(new THREE.Vector3(0, (c.player.height ?? 1.7) * 0.55, 0)), cam, W, H);
+    // a small dial over the head of whoever is about to get it
+    const over = ch.ref?.root ? ix.headOf(ch.ref)().add(new THREE.Vector3(0, 0.45, 0)) : c.player.root.position.clone().add(new THREE.Vector3(0, (c.player.height ?? 1.7) + 0.7, 0));
+    const s = screenOf(over, cam, W, H);
     chargeEl.style.left = `${s.x}px`;
     chargeEl.style.top = `${s.y}px`;
   }

@@ -260,11 +260,12 @@ html, body {
 .bubble.right::after { left: 10px; margin-left: 0; }
 
 /* the slap charge ring */
+/* the slap charge: a small dial over the target's head (owner's pick B),
+   pixel style: ink rim, hard drop shadow, fills clockwise */
 #charge {
-  position: absolute; width: 92px; height: 92px; margin: -46px 0 0 -46px; border-radius: 50%;
-  background: conic-gradient(var(--col) var(--deg), rgba(47, 50, 54, .35) 0);
-  -webkit-mask: radial-gradient(circle, transparent 54%, #000 56%); mask: radial-gradient(circle, transparent 54%, #000 56%);
-  filter: drop-shadow(0 0 2px #2f3236);
+  position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%;
+  background: conic-gradient(var(--col) var(--deg), #f2efe8 0);
+  border: 3px solid #2f3236; box-shadow: 2px 3px 0 #2f3236; box-sizing: border-box;
 }
 #charge[hidden] { display: none; }
 #charge.shake { animation: charge-shake .08s linear infinite; }

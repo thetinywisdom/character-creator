@@ -124,8 +124,12 @@ src/city/crowd.js      the crowd: roles (walk, stand, bench, ...), placed from t
 src/city/knock.js      Knockables: props tagged userData.knock (catalogue KNOCKABLE: planters,
                        bins, street signs, cones, bollards, sandwich boards) fly
                        when a vehicle hits them, blink, POOF, back in 5 s
-                       Knockables.cloud(at, opts) makes dust / stink clouds of cubes
-src/city/comedy.js     comic slap / push / fall variations (COMEDY) and ComedyStage previews
+                       Knockables.cloud(at, opts): dust / stink clouds of flat camera-facing
+                       squares in three shades that pop in steps (pixel puffs)
+src/city/comedy.js     comic slap / push / fall variations (COMEDY) and ComedyStage previews;
+                       interact.js ANIM holds the owner's picks: slap = Windmill spin,
+                       power slap = Launch, push = Sumo send-off, falls by temper
+                       (calm: Feet over head, aggressive: Faceplant), fart wind-up
 src/city/interact.js   character interactions: traits, slap / push / talk (pie menu), chat
                        bubbles + comic bursts, banana peels, riding vehicles
 src/city/atmosphere.js night glow (setNightGlow), snow cover (setSnowCover), rain / snow
@@ -284,7 +288,7 @@ act. Input arrives as events
 (`CityInput.takeEvents()`): keys E (pie menu / ride), F slap (hold to charge: `CHARGE` cycles, green to
 yellow = slap, shaking yellow to red = power slap that knocks down; release
 to hit; events chargeStart / chargeEnd), G push, T talk,
-B banana, Q fart (`ix.fart`: a green cloud, everyone within `FART_R` 3.5 m
+B banana, Q fart (`ix.fart`: squat and strain `FART_WINDUP` 0.65 s, then a green pixel cloud, everyone within `FART_R` 3.5 m
 falls over stunned for 3.6 s, then runs off; 2.5 s cooldown), Space jump (`player.jumpY` / `vy`), 1-3 menu, Esc; mouse click = E, hold = charge a slap, release to hit (ride on a vehicle),
 double click = push, right click = talk; taps work the same. A busy person
 has `n.act` ({ kind: 'wait' | 'talk' | 'retaliate' | 'chase' | 'flee' |
@@ -304,7 +308,13 @@ would overlap takes the nearest free spot above or up to either side, and a
 long curved paper-and-ink tail on the `#tails` SVG layer (under every bubble)
 reaches its speaker; bubble ids grow with age; one bubble per person (anchors
 from `headOf` / `playerHead` carry `who`, a new line replaces the old); the open pie menu counts as taken (and sits on top). People
-knocked down raise a dust cloud. Traffic brakes at 7 m/s², so stepping out
+knocked down raise a dust cloud. Hits are animated by `poseActor` from
+`ANIM` (attacker swing in `who.action`, slap reaction in `who.comic`, falls
+in act 'slip' with `anim` or by temper, the lying part stretched to fit the
+act). People on benches chat now and then, rest their hands on their laps
+and jump in their seats shouting when chaos happens near them
+(`ix.startleNear`, `n.startle`). The slap charge is a small dial over the
+target's head (`#charge`). Traffic brakes at 7 m/s², so stepping out
 right in front of a moving car gets you hit (`ix.hitByCar`: thrown, flat on
 the ground, the driver shouts). Small talk lives in `src/city/smalltalk.js` (`SMALL_TALK`: 50
 [question, calm answer, aggressive answer]; every answer fits its question).

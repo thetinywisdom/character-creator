@@ -76,16 +76,24 @@ export class Knockables {
    * ground, a green stink cloud for a fart): `color`, `n` cubes, spread
    * radius `r` m, lasting `life` s.
    */
-  cloud(at, { color = 0xd8cfb8, n = 10, r = 0.6, life = 0.8, size = 0.32, rise = 0.5, opacity = 0.9 } = {}) {
+  cloud(at, { color = 0xd8cfb8, n = 10, r = 0.6, life = 0.8, size = 0.32, rise = 0.5 } = {}) {
+    // pixel puffs: solid blocks in three flat shades of the colour (no soft
+    // see-through fade), growing and shrinking in steps
+    const base = new THREE.Color(color);
+    this.cloudMats ??= new Map();
+    const shades = [1.12, 1, 0.82].map((k) => {
+      const key = `${color}:${k}`;
+      if (!this.cloudMats.has(key)) this.cloudMats.set(key, new THREE.SpriteMaterial({ color: base.clone().multiplyScalar(k), fog: true }));
+      return this.cloudMats.get(key);
+    });
     for (let i = 0; i < n; i++) {
-      const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false });
-      const m = new THREE.Mesh(this.puffGeo, mat);
+      const m = new THREE.Sprite(shades[i % 3]); // a flat square facing the camera: a pixel of the cloud
       const a = (i / n) * Math.PI * 2 + Math.random() * 0.5;
-      m.position.set(at.x + Math.cos(a) * r * 0.4, at.y + 0.15 + Math.random() * 0.25, at.z + Math.sin(a) * r * 0.4);
+      m.position.set(at.x + Math.cos(a) * r * 0.4, at.y + 0.1 + Math.random() * 0.3, at.z + Math.sin(a) * r * 0.4);
       m.userData.v = new THREE.Vector3(Math.cos(a) * r * 2.4, rise * (0.4 + Math.random()), Math.sin(a) * r * 2.4);
-      m.userData.t = 0; m.userData.life = life; m.userData.size = size; m.userData.op = opacity;
-      m.rotation.set(Math.random(), Math.random(), Math.random());
-      m.scale.setScalar(size * 0.6);
+      m.userData.t = -Math.random() * 0.12; m.userData.life = life * (0.7 + Math.random() * 0.5); m.userData.size = size * (0.6 + Math.random() * 0.7);
+      m.userData.pixel = true;
+      m.scale.setScalar(0.001);
       this.city.scene.add(m);
       this.puffs.push(m);
     }
@@ -157,13 +165,20 @@ export class Knockables {
     }
     for (const m of [...this.puffs]) {
       const u = (m.userData.t += dt) / (m.userData.life ?? 0.6);
+      if (u < 0) continue;
       m.position.addScaledVector(m.userData.v, dt);
       m.userData.v.multiplyScalar(Math.max(0, 1 - dt * 3));
       const sz = m.userData.size ?? 0.25;
-      m.scale.setScalar(sz + u * sz * 2);
-      m.rotation.y += dt * 1.5;
-      m.material.opacity = Math.max(0, 1 - u) * (m.userData.op ?? 1);
-      if (u >= 1) { this.city.scene.remove(m); m.material.dispose(); this.puffs.splice(this.puffs.indexOf(m), 1); }
+      if (m.userData.pixel) {
+        // pop up, hold, shrink away: in steps, like pixel art
+        const k = u < 0.2 ? u / 0.2 : u < 0.6 ? 1 : 1 - (u - 0.6) / 0.4;
+        m.scale.setScalar(Math.max(0.001, Math.round(k * 3) / 3 * sz));
+      } else {
+        m.scale.setScalar(sz + u * sz * 2);
+        m.rotation.y += dt * 1.5;
+        m.material.opacity = Math.max(0, 1 - u);
+      }
+      if (u >= 1) { this.city.scene.remove(m); if (!m.userData.pixel) m.material.dispose(); this.puffs.splice(this.puffs.indexOf(m), 1); }
     }
   }
 }
