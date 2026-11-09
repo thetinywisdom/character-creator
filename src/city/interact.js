@@ -36,7 +36,7 @@ const BURSTS = { slap: ['SLAP!', 'WHAP!', 'SMACK!'], push: ['SHOVE!', 'WHUMP!', 
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
 const REACH = 1.7;        // m: how close a person must be to act on them
-const PICK_REACH = 3.2;   // m: a clicked person can be a little further
+const PICK_REACH = 60;    // m: a clicked person can be anywhere you can see; you run over to them
 const RUN = 4.2;
 const MAX_PEELS = 10;
 
@@ -119,7 +119,7 @@ export class Interactions {
     }
     if (best) return best;
     for (const c of cars) {
-      if (this.distToVehicle(c, p.x, p.z) > 2.5) continue;
+      if (this.distToVehicle(c, p.x, p.z) > PICK_REACH) continue;
       const s = toScreen(c.obj.position.clone().add(new THREE.Vector3(0, 0.8, 0)));
       const d = Math.hypot(s.x - cx, s.y - cy);
       if (s.ok && d < 90 && d < bd) { bd = d; best = { type: 'vehicle', ref: c }; }
@@ -134,7 +134,7 @@ export class Interactions {
     if (p.act) return; // busy slipping or staggering
     if (ev.type === 'banana') return this.dropPeel();
     if (ev.type === 'close') { this.closeMenu(); return; }
-    if (ev.type === 'choose') { const m = this.menu; if (m) { this.closeMenu(); this.doAction(['slap', 'push', 'talk'][ev.n], m.npc); } return; }
+    if (ev.type === 'choose') { const m = this.menu; if (m) { this.menu = null; this.go(['slap', 'push', 'talk'][ev.n], m.npc); } return; }
     if (p.riding) {
       if (['primary', 'click', 'hold'].includes(ev.type)) this.getOff();
       return;
@@ -146,19 +146,40 @@ export class Interactions {
       case 'click':
         if (this.menu) { const same = t?.ref === this.menu.npc; this.closeMenu(); if (same || !t) return; }
         if (t?.type === 'npc') this.openMenu(t.ref);
-        else if (t?.type === 'vehicle') this.getOn(t.ref);
+        else if (t?.type === 'vehicle') this.go('ride', t.ref);
         return;
       case 'hold':
-        if (t?.type === 'npc') this.doAction('slap', t.ref);
-        else if (t?.type === 'vehicle') this.getOn(t.ref);
+        if (t?.type === 'npc') this.go('slap', t.ref);
+        else if (t?.type === 'vehicle') this.go('ride', t.ref);
         return;
-      case 'double': if (t?.type === 'npc') this.doAction('push', t.ref); return;
-      case 'right': if (t?.type === 'npc') this.doAction('talk', t.ref); return;
+      case 'double': if (t?.type === 'npc') this.go('push', t.ref); return;
+      case 'right': if (t?.type === 'npc') this.go('talk', t.ref); return;
       case 'slap': case 'push': case 'talk':
-        if (t?.type === 'npc') this.doAction(ev.type, t.ref);
+        if (t?.type === 'npc') this.go(ev.type, t.ref);
         return;
       default:
     }
+  }
+
+  /**
+   * Do `kind` ('slap' | 'push' | 'talk' | 'ride') to `ref` (a person or a
+   * vehicle): right away if close enough, else run over to them first
+   * (p.goal; any movement key cancels it).
+   */
+  go(kind, ref) {
+    const p = this.city.player;
+    if (this.inReach(kind, ref)) { this.doGoal(kind, ref); return; }
+    p.goal = { kind, ref, t: 25 };
+  }
+  inReach(kind, ref) {
+    const p = this.city.player;
+    if (kind === 'ride') return this.distToVehicle(ref, p.x, p.z) < 1.0;
+    return Math.hypot(ref.pos.x - p.x, ref.pos.z - p.z) < (kind === 'talk' ? 1.6 : 1.1);
+  }
+  doGoal(kind, ref) {
+    this.city.player.goal = null;
+    if (kind === 'ride') this.getOn(ref);
+    else this.doAction(kind, ref);
   }
 
   openMenu(n) {
@@ -322,6 +343,31 @@ export class Interactions {
   updatePlayer(dt, axes) {
     const city = this.city, p = city.player;
     if (p.riding) { this.drive(dt, axes); return true; }
+    if (p.goal && !p.act) {
+      const g = p.goal, ref = g.ref;
+      const tp = g.kind === 'ride' ? ref.obj.position : ref.pos;
+      g.t -= dt;
+      // moving yourself, or the target gone or ridden off, cancels the errand
+      if (Math.hypot(axes.x, axes.z) > 0.1 || !tp || g.t <= 0 || (g.kind === 'ride' && ref.ridden)) {
+        p.goal = null;
+        if (ref.act?.kind === 'wait') city.endAct(ref);
+        return false;
+      }
+      if (this.inReach(g.kind, ref)) { this.doGoal(g.kind, ref); return false; }
+      // run over to them
+      const dx = tp.x - p.x, dz = tp.z - p.z;
+      let d = Math.atan2(dx, dz) - p.heading;
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      p.heading += d * Math.min(1, dt * 10);
+      p.speed += (RUN - p.speed) * Math.min(1, dt * 6);
+      p.x += Math.sin(p.heading) * p.speed * dt;
+      p.z += Math.cos(p.heading) * p.speed * dt;
+      city.collide(p);
+      city.stepPerson(p, dt, p.speed);
+      p.root.position.set(p.x, city.layout.groundHeight(p.x, p.z), p.z);
+      p.root.rotation.y = p.heading;
+      return true;
+    }
     if (p.act) {
       p.act.t -= dt;
       if (p.kb) {
@@ -483,7 +529,7 @@ export class Interactions {
     this.shake = Math.max(0, (this.shake ?? 0) - dt);
     this.bubbles = this.bubbles.filter((b) => b.age < b.life);
     // the menu closes if you walk away
-    if (this.menu && (!this.menu.npc.pos || Math.hypot(this.menu.npc.pos.x - p.x, this.menu.npc.pos.z - p.z) > PICK_REACH + 0.5)) this.closeMenu();
+    if (this.menu && !this.menu.npc.pos) this.closeMenu();
     // the ring under whoever you are facing
     this.target = p.riding || p.act ? null : this.facing();
     const t = this.menu ? { type: 'npc', ref: this.menu.npc } : this.target;
