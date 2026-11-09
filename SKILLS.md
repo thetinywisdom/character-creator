@@ -299,9 +299,11 @@ run 4.2 m/s away from you, crossing roads more often, then `endAct` walks
 them back to their place. Bubbles (`ix.bubbles`: chat and comic bursts with an
 `anchor()` position) and the pie menu (`ix.menu`) are drawn by the viewer as
 page elements; a game can draw its own. Speech bubbles stack
-(`stackBubbles` in main.js): older ones keep their place, newer ones that would
-overlap are lifted above and get a long tail (`.lifted`, `--lift`); bubble ids
-grow with age; the open pie menu counts as taken (and sits on top). People
+(`stackBubbles` in main.js): older ones keep their place, a newer one that
+would overlap takes the nearest free spot above or up to either side, and a
+long curved paper-and-ink tail on the `#tails` SVG layer (under every bubble)
+reaches its speaker; bubble ids grow with age; one bubble per person (anchors
+from `headOf` / `playerHead` carry `who`, a new line replaces the old); the open pie menu counts as taken (and sits on top). People
 knocked down raise a dust cloud. Traffic brakes at 7 m/s², so stepping out
 right in front of a moving car gets you hit (`ix.hitByCar`: thrown, flat on
 the ground, the driver shouts). Small talk lives in `src/city/smalltalk.js` (`SMALL_TALK`: 50

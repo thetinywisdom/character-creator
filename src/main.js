@@ -279,6 +279,10 @@ const pie = document.querySelector('#pie');
 const chargeEl = Object.assign(document.createElement('div'), { id: 'charge', hidden: true });
 overlay.appendChild(chargeEl);
 const bubbleEls = new Map();
+// speech-bubble tails for bubbles lifted off their speaker (stackBubbles), under the bubbles
+const tailSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+tailSvg.id = 'tails';
+overlay.prepend(tailSvg);
 pie.addEventListener('click', (e) => {
   const b = e.target.closest('[data-n]');
   if (b) cityInput.events.push({ type: 'choose', n: Number(b.dataset.n) });
@@ -301,25 +305,47 @@ function stackBubbles(list, pie) {
   const placed = [];
   if (pie?.ok) placed.push({ x0: pie.x - 115, x1: pie.x + 115, y0: pie.y - 120, y1: pie.y + 6 });
   list.sort((a, b) => a.b.id - b.b.id);
+  const free = (x0, x1, y0, y1) => !placed.some((r) => r.x0 < x1 && r.x1 > x0 && r.y0 < y1 && r.y1 > y0);
+  const tails = [];
   for (const { b, el, s } of list) {
     const w = el.offsetWidth, h = el.offsetHeight;
     const fx = b.side === 'left' ? 0.88 : b.side === 'right' ? 0.12 : 0.5;
-    const x0 = s.x - w * fx - 4, x1 = x0 + w + 8;
-    let y1 = s.y + 4, lift = 0;
-    for (let guard = 0; guard < 12; guard++) {
-      const hit = placed.find((r) => r.x0 < x1 && r.x1 > x0 && r.y0 < y1 && r.y1 > y1 - h - 8);
-      if (!hit) break;
-      y1 = hit.y0 - 2;
-      lift = s.y + 4 - y1;
+    const nx0 = s.x - w * fx - 4, ny1 = s.y + 4; // where it would sit, right over its speaker
+    // try spots ever further out: straight up, or up and to either side (the
+    // nearest free one wins), so a crowd's bubbles fan out like a comic panel
+    let best = { dx: 0, dy: 0 };
+    if (!free(nx0, nx0 + w + 8, ny1 - h - 8, ny1)) {
+      best = null;
+      for (let ring = 1; ring < 14 && !best; ring++) {
+        const dy = -ring * (h * 0.55);
+        for (const dx of [0, -w * 0.45, w * 0.45, -w * 0.8, w * 0.8]) {
+          const x0 = nx0 + dx, y1 = ny1 + dy;
+          if (free(x0, x0 + w + 8, y1 - h - 8, y1)) { best = { dx, dy }; break; }
+        }
+      }
+      best ??= { dx: 0, dy: -14 * h * 0.55 };
     }
-    placed.push({ x0, x1, y0: y1 - h - 8, y1 });
-    // ease towards the new height so bubbles slide rather than jump
-    const cur = Number(el.dataset.lift ?? 0), next = cur + (lift - cur) * 0.35;
-    el.dataset.lift = String(next);
-    el.style.marginTop = `${-next}px`;
-    el.style.setProperty('--lift', `${next}px`);
-    el.classList.toggle('lifted', next > 6);
+    placed.push({ x0: nx0 + best.dx, x1: nx0 + best.dx + w + 8, y0: ny1 + best.dy - h - 8, y1: ny1 + best.dy });
+    // ease towards the spot so bubbles slide rather than jump
+    const ox = Number(el.dataset.ox ?? 0), oy = Number(el.dataset.oy ?? 0);
+    const nxo = ox + (best.dx - ox) * 0.3, nyo = oy + (best.dy - oy) * 0.3;
+    el.dataset.ox = String(nxo); el.dataset.oy = String(nyo);
+    el.style.marginLeft = `${nxo}px`;
+    el.style.marginTop = `${nyo}px`;
+    const off = Math.hypot(nxo, nyo) > 8;
+    el.classList.toggle('lifted', off);
+    if (off) {
+      // a long comic tail from the bubble's bottom edge (the end nearest the speaker) down to them
+      const left = s.x - w * fx + nxo, bottom = s.y + nyo - 4;
+      const bx = Math.max(left + 22, Math.min(left + w - 22, s.x));
+      tails.push({ bx, by: bottom - 6, tx: s.x, ty: s.y - 2 });
+    }
   }
+  // tails go on a layer under every bubble, so they never cut across one
+  tailSvg.innerHTML = tails.map(({ bx, by, tx, ty }) => {
+    const mx = (bx + tx) / 2, my = (by + ty) / 2, bend = (tx - bx) * 0.25 + 10;
+    return `<path d="M${bx - 10} ${by} Q${mx - bend * 0.3} ${my} ${tx} ${ty} Q${mx + bend * 0.3 + 6} ${my} ${bx + 10} ${by} Z"/>`;
+  }).join('');
 }
 
 function drawOverlay(c, W, H) {

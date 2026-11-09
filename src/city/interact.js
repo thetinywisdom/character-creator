@@ -78,8 +78,8 @@ export class Interactions {
     this.bubbles.push({ anchor, text, kind, name, side, age: -delay, life, id: (this.nextId = (this.nextId ?? 0) + 1) }); // ids grow: older bubbles keep their place (main.js stackBubbles)
   }
   nameOf(n) { return (n.name ??= NAMES[Math.floor(Math.random() * NAMES.length)]); }
-  headOf(n) { return () => n.root.position.clone().add(new THREE.Vector3(0, (n.look?.height ?? 1.7) + 0.3, 0)); }
-  playerHead() { const p = this.city.player; return () => p.root.position.clone().add(new THREE.Vector3(0, (p.height ?? 1.7) + 0.3, 0)); }
+  headOf(n) { const f = () => n.root.position.clone().add(new THREE.Vector3(0, (n.look?.height ?? 1.7) + 0.3, 0)); f.who = n; return f; }
+  playerHead() { const p = this.city.player; const f = () => p.root.position.clone().add(new THREE.Vector3(0, (p.height ?? 1.7) + 0.3, 0)); f.who = p; return f; }
   midOf(n) { return () => n.root.position.clone().add(new THREE.Vector3(0, (n.look?.height ?? 1.7) * 0.75, 0)); }
 
   // --- what are we facing / what was clicked ---------------------------------------
@@ -807,7 +807,14 @@ export class Interactions {
       }
     }
     // bubbles age and go
-    for (const b of this.bubbles) b.age += dt;
+    for (const b of this.bubbles) {
+      const was = b.age;
+      b.age += dt;
+      // one speech bubble per person: a new line replaces what they said before
+      if (was < 0 && b.age >= 0 && b.anchor.who && b.kind !== 'burst') {
+        for (const o of this.bubbles) if (o !== b && o.anchor.who === b.anchor.who && o.kind !== 'burst' && o.age >= 0) o.age = o.life;
+      }
+    }
     if (this.charge) this.charge.t += dt;
     this.shake = Math.max(0, (this.shake ?? 0) - dt);
     this.bubbles = this.bubbles.filter((b) => b.age < b.life);

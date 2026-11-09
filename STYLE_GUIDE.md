@@ -432,8 +432,10 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 - **Clouds:** dust is a ring of pale sand cubes billowing out low and
   fading in under a second; a fart is two waves of big translucent
   yellow-green cubes that linger ~2 s.
-- **Stacked bubbles:** when bubbles would overlap, newer ones sit above and
-  a long ink wedge tail reaches down to the speaker.
+- **Stacked bubbles:** when bubbles would overlap, newer ones fan out above
+  and to the sides; a long, slightly curved tail (bubble paper with the same
+  3 px ink outline) runs under the other bubbles down to the speaker. One
+  bubble per person at a time.
 - **Speech bubbles:** pixel font (Silkscreen), off-white with a thick ink
   border, a hard drop shadow, a tail pointing at the speaker, a small name
   tag (YOU for the player); they pop in with a bounce and fade after ~3 s.
