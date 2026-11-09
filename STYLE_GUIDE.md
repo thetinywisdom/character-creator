@@ -444,6 +444,9 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   Silkscreen 8 px on whole pixels; controls (pie, buttons) are square with
   3 px ink borders and hard shadows, their emoji icons drawn small and blown
   up. Hit bursts are always spiky stars.
+- **Slap charge:** a small dial over the target's head (pixel: ink rim on
+  paper), filling clockwise twice: green to yellow, then yellow to red; full
+  red shakes (hard slap ready).
 - **Speech bubbles:** pixel font (Silkscreen), off-white with a thick ink
   border, a hard drop shadow, a tail pointing at the speaker, a small name
   tag (YOU for the player); they pop in with a bounce and fade after ~3 s.
