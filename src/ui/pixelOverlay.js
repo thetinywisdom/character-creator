@@ -217,7 +217,11 @@ export class PixelOverlay {
 
     // --- the slap charge: a little dial over the target's head
     if (charge?.s?.ok) {
-      const r = 7, cx = L(charge.s.x) + (charge.shake ? Math.round((Math.random() - 0.5) * 3) : 0), cy = L(charge.s.y) + (charge.shake ? Math.round((Math.random() - 0.5) * 3) : 0);
+      // grows through the second round with a slow tremble; full red shakes hard
+      const r = Math.round(7 + 6 * (charge.grow ?? 0) + (charge.shake ? 1 : 0));
+      const amp = charge.shake ? 3 : (charge.grow ?? 0) > 0 ? 0.6 + 1.4 * charge.grow : 0;
+      const jit = () => (amp ? Math.round((Math.random() - 0.5) * 2 * amp * (charge.shake ? 1 : Math.random() < 0.35 ? 1 : 0)) : 0);
+      const cx = L(charge.s.x) + jit(), cy = L(charge.s.y) - Math.round(6 * (charge.grow ?? 0)) + jit();
       for (let y = -r - 2; y <= r + 2; y++) {
         for (let x = -r - 2; x <= r + 2; x++) {
           const d = Math.hypot(x + 0.5, y + 0.5);

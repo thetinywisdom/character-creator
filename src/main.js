@@ -407,7 +407,9 @@ function chargeInfo(c, ix, cam, W, H) {
   const col = second ? mix([255, 210, 63], [232, 64, 47], f) : mix([90, 200, 110], [255, 210, 63], f);
   // a small dial over the head of whoever is about to get it
   const over = ch.ref?.root ? ix.headOf(ch.ref)().add(new THREE.Vector3(0, 0.45, 0)) : c.player.root.position.clone().add(new THREE.Vector3(0, (c.player.height ?? 1.7) + 0.7, 0));
-  return { f, col: `rgb(${col})`, shake: ch.t >= c1 + c2, s: screenOf(over, cam, W, H) }; // shakes once full red: hard slap ready
+  // the second round: the dial keeps growing and trembles more and more; full red is the climax (big shake)
+  const grow = second ? Math.min(1, (ch.t - c1) / c2) : 0;
+  return { f, col: `rgb(${col})`, grow, shake: ch.t >= c1 + c2, s: screenOf(over, cam, W, H) };
 }
 function drawPixelOverlay(c, W, H) {
   const ix = c.ix, cam = c.activeCamera;
@@ -480,6 +482,7 @@ function drawOverlay(c, W, H) {
     chargeEl.style.setProperty('--col', ci.col);
     chargeEl.style.setProperty('--deg', `${ci.f * 360}deg`);
     chargeEl.classList.toggle('shake', ci.shake);
+    chargeEl.style.scale = String(1 + 0.8 * ci.grow);
     const s = ci.s;
     chargeEl.style.left = `${s.x}px`;
     chargeEl.style.top = `${s.y}px`;
