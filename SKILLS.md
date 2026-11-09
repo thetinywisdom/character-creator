@@ -317,7 +317,10 @@ knocked down raise a dust cloud. Hits are animated by `poseActor` from
 in act 'slip' with `anim` or by temper, the lying part stretched to fit the
 act). People on benches chat now and then, rest their hands on their laps
 and jump in their seats shouting when chaos happens near them
-(`ix.startleNear`, `n.startle`). The slap charge is a small dial over the
+(`ix.startleNear`, `n.startle`). They stay seated while you use the menu,
+talk to or slap them (`SEATED` acts, `ix.updateSeated`: sitting pose, head
+turned to you, a slap = a jump in the seat and a shout); a push or power
+slap still knocks them off. The slap charge is a small dial over the
 target's head (`#charge`). Traffic brakes at 7 m/s², so stepping out
 right in front of a moving car gets you hit (`ix.hitByCar`: thrown, flat on
 the ground, the driver shouts). Small talk lives in `src/city/smalltalk.js` (`SMALL_TALK`: 50

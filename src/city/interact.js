@@ -64,6 +64,8 @@ ANIM.fart = { attacker: { dur: 0.95, pose(body, j, t) {
 } } };
 const fallOf = (who) => (who.trait === 'Aggressive' ? ANIM.fallAggressive : ANIM.fallCalm);
 
+const SEATED = new Set(['wait', 'talk', 'seated']); // acts a bench sitter does without getting up
+
 const REACH = 1.7;        // m: how close a person must be to act on them
 const PICK_REACH = 60;    // m: a clicked person can be anywhere you can see; you run over to them
 const RUN = 4.2;
@@ -265,6 +267,13 @@ export class Interactions {
         this.domino(n, { x: dx / d, z: dz / d }, 3.2 * 0.8, 2);
         return;
       }
+      if (n.role?.kind === 'bench' && !n.act?.kind?.match(/slip/)) {
+        // sitting: a jump in the seat, arms up, and a shout; they stay put
+        this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 0.4, this.nameOf(n));
+        n.startle = 1.4;
+        n.act = { kind: 'seated', t: 1.6 };
+        return;
+      }
       // a slap spins them round on the spot, dizzy; then they react
       this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 0.75, this.nameOf(n));
       n.root.rotation.y = Math.atan2(-dx, -dz); // facing you as it lands
@@ -384,6 +393,7 @@ export class Interactions {
   // --- a busy person (City calls this instead of walking their route) ---------------
   updateNpc(n, dt) {
     const city = this.city, p = city.player, a = n.act;
+    if (n.role?.kind === 'bench' && SEATED.has(a.kind)) return this.updateSeated(n, dt);
     a.t -= dt;
     let speed = 0, face = null;
     const toP = { x: p.x - n.pos.x, z: p.z - n.pos.z };
@@ -463,6 +473,22 @@ export class Interactions {
       if (a.then) { n.act = a.then; if (a.kind === 'slip') { n.body.rotation.set(0, 0, 0); n.body.position.set(0, 0, 0); } } // up again: now react
       else city.endAct(n);
     }
+  }
+
+  /** Someone on a bench being talked to or slapped: they stay in their seat. */
+  updateSeated(n, dt) {
+    const a = n.act, p = this.city.player, h = n.role.home;
+    a.t -= dt;
+    n.pos = { x: h.x, z: h.z };
+    n.root.position.set(h.x, this.city.layout.groundHeight(h.x, h.z), h.z);
+    n.root.rotation.y = h.heading;
+    this.city.crowd.updateRole(n, dt); // the sitting pose (and a jump in the seat, n.startle)
+    // turn the head to you (as far as a neck goes)
+    const j = joints(n.body);
+    let d = Math.atan2(p.x - h.x, p.z - h.z) - h.heading;
+    d = Math.atan2(Math.sin(d), Math.cos(d));
+    if (j.head && !(n.startle > 0)) j.head.rotation.y = Math.max(-1.1, Math.min(1.1, d));
+    if (a.t <= 0) n.act = null;
   }
 
   // --- poses on top of the walk: arm swings, flinch, falling ---------------------------

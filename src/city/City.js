@@ -341,6 +341,8 @@ export class City {
   endAct(n) {
     n.kb = null;
     n.body.rotation.x = 0;
+    // still in their seat: just carry on sitting
+    if (n.role?.kind === 'bench' && n.pos && Math.hypot(n.pos.x - n.role.home.x, n.pos.z - n.role.home.z) < 0.3) { n.act = null; return; }
     const home = n.role?.home ?? this.nearestOnRoute(n);
     n.act = { kind: 'return', x: home.x, z: home.z, t: 40 };
   }

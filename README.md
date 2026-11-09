@@ -40,7 +40,7 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   seconds or once you are 300 m away. Calm people run 300 m away along the
   streets, then walk back. **B** (🍌) drops a banana peel. A slap spins them round, a full-charge slap launches them spinning into
   the air, a push sends them flying sumo-style; calm people fall feet over
-  head, aggressive ones faceplant. **Q** (💨) farts (you squat and strain first): everyone near you
+  head, aggressive ones faceplant. People on benches stay seated when you talk to or slap them. **Q** (💨) farts (you squat and strain first): everyone near you
   falls over, stunned, then runs off. When lots of people talk at once their
   bubbles stack up instead of covering each other.
   **E** (or hold-click) next to a car, the bus, the scooter or the bicycle
