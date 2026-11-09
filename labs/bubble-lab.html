@@ -1,0 +1,349 @@
+<!doctype html>
+<!--
+  Bubble lab: a reusable pixel design bench for speech UI (owner: keep it for
+  future game design). Open this file in a browser. Everything is drawn on
+  200x124 canvases and blown up with hard pixels:
+   - stage(g, people, t): a strip of pavement with little pixel people
+   - F3 / f3(): a hand-made 3x5 bitmap font; outlineText(): Silkscreen with a
+     1 px ink outline; snap(): hard edges and palette colours only
+   - SCENES: scripted lines (you & an NPC, spam clicks, NPCs chatting, chaos)
+   - DESIGNS: A dark nameplate, B floating text (used in the game), C tiny
+     tag, D emotes + chat log, E dialogue box + emotes
+  Add a design to DESIGNS or a scene to SCENES to try a new idea.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiny City Bubble Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: one section per bubble design; each shows the same four scenes, live and looping, as real low-res pixels. */
+:root {
+  --paper: #f2f2ee; --card: #ffffff; --ink: #2f3236; --muted: #6b6e70; --line: #d9d8d0; --accent: #f2b64a;
+  --pixel: 'Silkscreen', ui-monospace, monospace; --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper: #1d1f22; --card: #26292d; --ink: #ecebe4; --muted: #a3a6a8; --line: #3a3e43; color-scheme: dark } }
+:root[data-theme="dark"] { --paper: #1d1f22; --card: #26292d; --ink: #ecebe4; --muted: #a3a6a8; --line: #3a3e43; color-scheme: dark }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--body); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 110px; display: grid; gap: 36px; }
+h1 { font: 700 clamp(22px, 4vw, 32px)/1.1 var(--pixel); margin: 0; }
+h2 { font: 700 17px/1.2 var(--pixel); margin: 0; }
+p { margin: 0; max-width: 70ch; }
+.lead { color: var(--muted); }
+.design { display: grid; gap: 12px; background: var(--card); border: 2px solid var(--line); padding: 14px; position: relative; }
+.design:has(input:checked) { border-color: var(--ink); box-shadow: 4px 4px 0 var(--accent); }
+.head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.head label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.tag { font: 700 11px var(--pixel); background: var(--accent); color: #2f3236; padding: 1px 6px; }
+.note { font-size: 14px; color: var(--muted); }
+.edge { font-size: 13px; color: var(--muted); display: grid; gap: 2px; }
+.edge b { color: var(--ink); font-weight: 700; }
+.scenes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 10px; }
+figure { margin: 0; display: grid; gap: 4px; min-width: 0; }
+figure canvas { width: 100%; height: auto; aspect-ratio: 200 / 124; image-rendering: pixelated; display: block; background: #9fb08d; }
+figcaption { font: 400 10px var(--pixel); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+input[type=radio] { accent-color: #2f3236; width: 18px; height: 18px; }
+.tally { position: fixed; left: 0; right: 0; bottom: 0; background: var(--ink); color: var(--paper); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px)); }
+.tally .in { max-width: 1240px; margin: 0 auto; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.tally code { font: 12px var(--pixel); flex: 1 1 260px; min-width: 0; }
+.tally button { font: 700 12px var(--pixel); background: var(--accent); color: #2f3236; border: 0; padding: 10px 14px; cursor: pointer; }
+.tally button:focus-visible, .head label:focus-within { outline: 3px solid var(--accent); }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <h1>Bubble lab</h1>
+    <p class="lead">Five ways to show speech, all drawn as real pixels at the game's pixel size, each running the same four scenes on a loop. The rule for every design: one line per person at a time, so a new line replaces the old one.</p>
+  </header>
+  <div id="designs"></div>
+</div>
+<div class="tally"><div class="in"><code id="pick">Pick a design (you can also mix: say which parts you like).</code><button type="button" id="copy">Copy my pick</button></div></div>
+
+<script>
+// ---- pixel kit ----------------------------------------------------------------
+const W = 200, H = 124;
+const C = { ink: '#2f3236', paper: '#f2efe8', brick: '#9e6c60', yellow: '#ffd23f', red: '#e8402f', navy: '#262b3a', sky: '#9ad8f0', grass: '#9fb08d', grass2: '#93a582', path: '#ddd0aa', white: '#ffffff', shadow: '#7f8f6e', gold: '#f2b64a', green: '#6fbf5f', pink: '#f4508c' };
+const PAL = Object.values(C).map((h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)));
+function snap(g) {
+  // hard edges and only the palette's colours: real pixels, whatever was drawn
+  const img = g.getImageData(0, 0, W, H), d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    let best = PAL[0], bd = Infinity;
+    for (const c of PAL) { const e = (c[0] - d[i]) ** 2 + (c[1] - d[i + 1]) ** 2 + (c[2] - d[i + 2]) ** 2; if (e < bd) { bd = e; best = c; } }
+    d[i] = best[0]; d[i + 1] = best[1]; d[i + 2] = best[2]; d[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+}
+// a 3x5 bitmap font (for the tiny tag)
+const F3 = {
+  A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110', E: '111100110100111', F: '111100110100100', G: '011100101101011', H: '101101111101101',
+  I: '111010010010111', J: '001001001101010', K: '101101110101101', L: '100100100100111', M: '101111111101101', N: '110101101101101', O: '010101101101010', P: '110101110100100',
+  Q: '010101101110011', R: '110101110101101', S: '011100010001110', T: '111010010010010', U: '101101101101111', V: '101101101101010', W: '101101111111101', X: '101101010101101',
+  Y: '101101010010010', Z: '111001010100111', '0': '010101101101010', '1': '010110010010111', '2': '110001010100111', '3': '110001010001110', '4': '101101111001001', '5': '111100110001110',
+  '6': '011100110101010', '7': '111001010010010', '8': '010101010101010', '9': '010101011001110', '!': '010010010000010', '?': '110001010000010', '.': '000000000000010', ',': '000000000010100',
+  "'": '010010000000000', '-': '000000111000000', '*': '000101010101000', ':': '000010000010000', ' ': '000000000000000', '#': '101111101111101', '&': '010101010101011', '/': '001001010100100',
+};
+const f3w = (t) => t.length * 4 - 1;
+function f3(g, t, x, y, col) {
+  g.fillStyle = col;
+  [...t.toUpperCase()].forEach((ch, i) => { const m = F3[ch] ?? F3['?']; for (let k = 0; k < 15; k++) if (m[k] === '1') g.fillRect(x + i * 4 + (k % 3), y + Math.floor(k / 3), 1, 1); });
+}
+const FONT = "8px 'Silkscreen', monospace";
+function wrap(g, text, max, measure) {
+  const out = []; let line = '';
+  for (const w of text.split(' ')) { const t = line ? `${line} ${w}` : w; if (measure(t) > max && line) { out.push(line); line = w; } else line = t; }
+  if (line) out.push(line); return out;
+}
+const sil = (g, t) => { g.font = FONT; return g.measureText(t).width; };
+function outlineText(g, t, x, y, col, out = C.ink) {
+  g.font = FONT; g.fillStyle = out;
+  for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [1, -1], [-1, 1]]) g.fillText(t, x + dx, y + dy);
+  g.fillStyle = col; g.fillText(t, x, y);
+}
+
+// ---- the stage: a strip of pavement and little people ----------------------------
+function stage(g, people, t) {
+  g.fillStyle = C.grass; g.fillRect(0, 0, W, H);
+  g.fillStyle = C.path; g.fillRect(0, 84, W, 22);
+  g.fillStyle = C.grass2; for (let x = 0; x < W; x += 9) g.fillRect(x + ((x / 9) % 2) * 3, 72, 2, 1);
+  for (const p of people) {
+    const bob = p.talking && Math.floor(t * 6) % 2 ? -1 : 0;
+    g.fillStyle = C.shadow; g.fillRect(p.x - 3, p.y, 7, 2);
+    g.fillStyle = p.col; g.fillRect(p.x - 2, p.y - 9 + bob, 5, 6);      // body
+    g.fillStyle = C.ink; g.fillRect(p.x - 2, p.y - 3, 2, 3); g.fillRect(p.x + 1, p.y - 3, 2, 3); // legs
+    g.fillStyle = '#e2b08e'; g.fillRect(p.x - 1, p.y - 13 + bob, 3, 4); // head
+    g.fillStyle = p.hair ?? C.ink; g.fillRect(p.x - 1, p.y - 14 + bob, 3, 2);
+    if (p.you) { g.fillStyle = C.gold; g.fillRect(p.x - 3, p.y + 1, 7, 1); }
+  }
+}
+const head = (p) => ({ x: p.x, y: p.y - 15 });
+
+// ---- scenes (scripted lines on an 8 s loop) ----------------------------------------
+const SCENES = [
+  { id: 'talk', label: 'You & an NPC talking',
+    people: [{ id: 'you', name: 'YOU', x: 82, y: 98, col: '#f2f2ee', you: true }, { id: 'riku', name: 'RIKU', x: 112, y: 98, col: '#3f7fd6', hair: '#3a2a22' }],
+    lines: [[0, 'you', 'Busy day?'], [1.2, 'riku', 'So busy! But a good busy.'], [4, 'you', 'Where is the station?'], [5.2, 'riku', 'Two blocks north.']] },
+  { id: 'spam', label: 'Clicking talk repeatedly',
+    people: [{ id: 'you', name: 'YOU', x: 82, y: 98, col: '#f2f2ee', you: true }, { id: 'aya', name: 'AYA', x: 112, y: 98, col: '#d46a8e' }],
+    lines: [[0, 'you', 'Hi!'], [0.45, 'you', 'Hello?'], [0.9, 'you', 'Hey!!'], [1.35, 'you', 'Anyone?'], [1.8, 'you', 'Nice weather!'], [2.6, 'aya', 'One at a time!', 'shout']] },
+  { id: 'group', label: 'NPCs chatting with each other',
+    people: [{ id: 'ken', name: 'KEN', x: 70, y: 98, col: '#5f8f5a' }, { id: 'mai', name: 'MAI', x: 100, y: 96, col: '#f2c230', hair: '#8a5a2a' }, { id: 'gen', name: 'GEN', x: 130, y: 99, col: '#7a6aa8' }],
+    lines: [[0, 'ken', 'Did you finish the report?'], [1.4, 'mai', 'Almost. You?'], [2.8, 'gen', "Let's get ramen after."], [4.2, 'ken', 'Yes please!'], [5.6, 'mai', 'My treat.']] },
+  { id: 'chaos', label: 'Chaos: six people at once',
+    people: [{ id: 'a', name: 'EMI', x: 44, y: 99, col: '#3f7fd6' }, { id: 'b', name: 'TARO', x: 66, y: 95, col: '#d46a8e' }, { id: 'c', name: 'YUKI', x: 90, y: 100, col: '#5f8f5a' }, { id: 'd', name: 'SORA', x: 112, y: 96, col: '#f2c230' }, { id: 'e', name: 'DEB', x: 136, y: 99, col: '#7a6aa8' }, { id: 'f', name: 'GEN', x: 158, y: 95, col: '#e2e2e2' }],
+    lines: [[0, 'a', 'EWWW!', 'shout'], [0.1, 'b', 'Gross!', 'shout'], [0.2, 'c', 'Who did that?!', 'shout'], [0.3, 'd', 'My eyes!', 'shout'], [0.45, 'e', '*cough*', 'shout'], [0.6, 'f', 'Disgusting!', 'shout']] },
+];
+const LIFE = 2.6;
+function active(scene, t) {
+  // one line per person: the latest that has started and not run out
+  const by = new Map();
+  for (const [at, who, text, kind] of scene.lines) if (t >= at && t < at + LIFE) by.set(who, { who, text, kind: kind ?? 'talk', age: t - at, at });
+  return [...by.values()].sort((a, b) => a.at - b.at);
+}
+
+// ---- shared layout: boxes never overlap; the oldest keeps its spot -----------------
+function place(items) {
+  const placed = [];
+  const free = (r) => !placed.some((o) => o.x0 < r.x1 + 3 && o.x1 > r.x0 - 3 && o.y0 < r.y1 + 2 && o.y1 > r.y0 - 2);
+  for (const it of items) {
+    let r = null;
+    for (let ring = 0; ring < 12 && !r; ring++) {
+      for (const dx of ring ? [0, -it.w * 0.55, it.w * 0.55] : [0]) {
+        const x0 = Math.round(Math.max(1, Math.min(W - it.w - 1, it.ax - it.w / 2 + dx))), y1 = it.ay - 2 - Math.round(ring * (it.h * 0.6 + 1));
+        const c = { x0, x1: x0 + it.w, y0: y1 - it.h, y1 };
+        if (free(c)) { r = c; break; }
+      }
+    }
+    r ??= { x0: 1, x1: 1 + it.w, y0: 1, y1: 1 + it.h };
+    placed.push(r); it.r = r;
+  }
+  return items;
+}
+const popIn = (age) => (age < 0.08 ? 0 : 1);
+const fadeOut = (age) => age > LIFE - 0.3;
+
+// ---- the designs ----------------------------------------------------------------------
+const DESIGNS = [
+  {
+    id: 'A', name: 'Dark nameplate',
+    note: 'A small dark box with a one-pixel light rim, white pixel text and the name in gold, like an RPG text box. A notch of 3 pixels points at the speaker; when it has to move up, a 1-pixel dotted line leads back down.',
+    edges: ['Repeated clicks: your box swaps its text with a 1-frame blink; the answer replaces it later.', 'Talking with each other: boxes sit side by side, then stack upward.', 'Chaos: they stack and fan out; nothing overlaps.'],
+    draw(g, scene, t) {
+      const items = active(scene, t).map((l) => {
+        const p = scene.people.find((q) => q.id === l.who), lines = wrap(g, l.text.toUpperCase(), 66, (s) => sil(g, s));
+        const w = Math.max(...lines.map((s) => sil(g, s)), sil(g, p.name)) + 7, h = 11 + lines.length * 9 + 3;
+        const hd = head(p);
+        return { l, p, lines, w: Math.ceil(w), h, ax: hd.x, ay: hd.y - 2 };
+      });
+      place(items);
+      for (const it of items) {
+        if (!popIn(it.l.age) || (fadeOut(it.l.age) && Math.floor(t * 12) % 2)) continue;
+        const { r } = it;
+        const lifted = it.ay - 2 - r.y1 > 2;
+        if (lifted) { g.fillStyle = C.navy; for (let y = r.y1 + 1; y < it.ay; y += 2) g.fillRect(it.ax, y, 1, 1); }
+        g.fillStyle = C.navy; g.fillRect(r.x0, r.y0, r.x1 - r.x0, r.y1 - r.y0);
+        g.fillStyle = C.paper; g.fillRect(r.x0 + 1, r.y0 + 1, r.x1 - r.x0 - 2, 1); g.fillRect(r.x0 + 1, r.y1 - 2, r.x1 - r.x0 - 2, 1); g.fillRect(r.x0 + 1, r.y0 + 1, 1, r.y1 - r.y0 - 2); g.fillRect(r.x1 - 2, r.y0 + 1, 1, r.y1 - r.y0 - 2);
+        if (!lifted) { g.fillStyle = C.navy; const nx = Math.max(r.x0 + 3, Math.min(r.x1 - 4, it.ax)); g.fillRect(nx - 1, r.y1, 3, 1); g.fillRect(nx, r.y1 + 1, 1, 1); }
+        g.font = FONT; g.textBaseline = 'top';
+        g.fillStyle = C.gold; g.fillText(it.p.name, r.x0 + 4, r.y0 + 3);
+        g.fillStyle = it.l.kind === 'shout' ? C.yellow : C.white;
+        it.lines.forEach((s, i) => g.fillText(s, r.x0 + 4, r.y0 + 12 + i * 9));
+      }
+    },
+  },
+  {
+    id: 'B', name: 'Floating text',
+    note: 'No box at all: the words float over the head in pixel letters with a one-pixel dark outline, like old online games. Talk is white, shouts are yellow and shake. The name is left out; the line sits right over the speaker.',
+    edges: ['Repeated clicks: each new line pushes the old one up and it fades out quickly (a short trail of your spam).', 'Talking with each other: lines stack per speaker; colour tells talk from shout.', 'Chaos: lines nudge up to stay readable; very light on the screen.'],
+    draw(g, scene, t) {
+      const items = active(scene, t).map((l) => {
+        const p = scene.people.find((q) => q.id === l.who), lines = wrap(g, l.text.toUpperCase(), 80, (s) => sil(g, s));
+        return { l, p, lines, w: Math.ceil(Math.max(...lines.map((s) => sil(g, s)))) + 4, h: lines.length * 9 + 3, ax: head(p).x, ay: head(p).y - Math.min(3, Math.floor(it_age(l) * 6)) };
+      });
+      // repeated lines from the same person: the replaced ones drift up and fade fast
+      for (const [at, who, text] of scene.lines) {
+        const age = t - at; const latest = items.find((i) => i.l.who === who);
+        if (latest && at < latest.l.at && age < latest.l.age + 0.5 && age >= 0) {
+          const p = scene.people.find((q) => q.id === who); const y = head(p).y - 10 - Math.floor((latest.l.age) * 20);
+          if (latest.l.age < 0.5 && y > 4) { g.font = FONT; g.textBaseline = 'top'; const s = text.toUpperCase(); if (Math.floor(t * 16) % 2) outlineText(g, s, Math.round(p.x - sil(g, s) / 2), y, C.paper); }
+        }
+      }
+      place(items);
+      for (const it of items) {
+        if (fadeOut(it.l.age) && Math.floor(t * 12) % 2) continue;
+        const sh = it.l.kind === 'shout' && it.l.age < 0.6 ? (Math.floor(t * 30) % 2 ? 1 : -1) : 0;
+        g.textBaseline = 'top';
+        it.lines.forEach((s, i) => outlineText(g, s, Math.round((it.r.x0 + it.r.x1) / 2 - sil(g, s) / 2) + sh, it.r.y0 + 2 + i * 9, it.l.kind === 'shout' ? C.yellow : C.white));
+      }
+    },
+  },
+  {
+    id: 'C', name: 'Tiny tag',
+    note: 'A tiny paper tag with a one-pixel ink border and a hand-made 3-by-5 pixel font, so it stays very small and very pixel. The name is a coloured dot (each person keeps their colour). Shouts get an ink box with paper letters.',
+    edges: ['Repeated clicks: the tag swaps text; a little counter (x2, x3...) shows how many times you went on.', 'Talking with each other: tiny tags fit side by side; colour dots tell who is who.', 'Chaos: six small tags rarely need to stack.'],
+    draw(g, scene, t) {
+      const act = active(scene, t);
+      const items = act.map((l) => {
+        const p = scene.people.find((q) => q.id === l.who);
+        const n = scene.lines.filter(([at, who]) => who === l.who && at <= l.at && l.at - at < 2.5).length;
+        const text = l.text.toUpperCase() + (n > 1 ? ` X${n}` : '');
+        const lines = wrap(g, text, 58, f3w);
+        return { l, p, lines, n, w: Math.max(...lines.map(f3w)) + 8, h: lines.length * 7 + 4, ax: head(p).x, ay: head(p).y - 1 };
+      });
+      place(items);
+      for (const it of items) {
+        if (fadeOut(it.l.age) && Math.floor(t * 12) % 2) continue;
+        const { r } = it, shout = it.l.kind === 'shout';
+        g.fillStyle = C.ink; g.fillRect(r.x0, r.y0, r.x1 - r.x0, r.y1 - r.y0);
+        if (!shout) { g.fillStyle = C.paper; g.fillRect(r.x0 + 1, r.y0 + 1, r.x1 - r.x0 - 2, r.y1 - r.y0 - 2); }
+        g.fillStyle = it.p.col; g.fillRect(r.x0 + 2, r.y0 + 2, 2, 2); // who: their colour
+        it.lines.forEach((s, i) => f3(g, s, r.x0 + 6, r.y0 + 2 + i * 7, shout ? C.paper : C.ink));
+        const lifted = it.ay - r.y1 > 2;
+        g.fillStyle = C.ink;
+        if (lifted) for (let y = r.y1 + 1; y < it.ay; y += 2) g.fillRect(it.ax, y, 1, 1);
+        else g.fillRect(Math.max(r.x0 + 2, Math.min(r.x1 - 3, it.ax)), r.y1, 1, 2);
+      }
+    },
+  },
+  {
+    id: 'D', name: 'Emotes and chat log',
+    note: 'Over heads only a small pixel icon (a speech icon for talk, a red ! for a shout). The words go into a chat log in the corner, newest at the bottom, names in their colour. The screen stays clean however many people talk.',
+    edges: ['Repeated clicks: each line is a new log row; your icon pulses.', 'Talking with each other: a readable conversation in the log, in order.', 'Chaos: only icons over heads; the log scrolls six shouts.'],
+    draw(g, scene, t) {
+      const act = active(scene, t);
+      for (const l of act) {
+        const p = scene.people.find((q) => q.id === l.who), hd = head(p), y = hd.y - 9 - (l.age < 0.15 ? 2 : 0);
+        if (l.kind === 'shout') { g.fillStyle = C.ink; g.fillRect(hd.x - 3, y - 1, 7, 9); g.fillStyle = C.red; g.fillRect(hd.x - 2, y, 5, 7); g.fillStyle = C.white; g.fillRect(hd.x, y + 1, 1, 3); g.fillRect(hd.x, y + 5, 1, 1); }
+        else { g.fillStyle = C.ink; g.fillRect(hd.x - 4, y - 1, 9, 7); g.fillRect(hd.x - 3, y + 6, 2, 1); g.fillStyle = C.paper; g.fillRect(hd.x - 3, y, 7, 5); g.fillStyle = C.ink; if (Math.floor(t * 4) % 2) { g.fillRect(hd.x - 2, y + 2, 1, 1); g.fillRect(hd.x, y + 2, 1, 1); g.fillRect(hd.x + 2, y + 2, 1, 1); } }
+      }
+      // the log: the last five lines that have been said
+      const said = scene.lines.filter(([at]) => t >= at).slice(-5);
+      if (!said.length) return;
+      const rows = said.map(([, who, text, kind]) => { const p = scene.people.find((q) => q.id === who); return { p, s: text.toUpperCase(), kind }; });
+      const lw = 118, lh = rows.length * 6 + 4, x0 = 2, y0 = 2;
+      g.fillStyle = C.navy; g.fillRect(x0, y0, lw, lh);
+      rows.forEach((r, i) => {
+        const y = y0 + 2 + i * 6;
+        f3(g, r.p.name + ':', x0 + 2, y, r.p.you ? C.gold : C.sky);
+        f3(g, r.s.slice(0, 22), x0 + 2 + f3w(r.p.name + ':') + 3, y, r.kind === 'shout' ? C.yellow : C.white);
+      });
+    },
+  },
+  {
+    id: 'E', name: 'Dialogue box + emotes',
+    note: 'Your conversations show in a dialogue box at the bottom of the screen with the speaker\'s name, like a JRPG. Everyone else gets small overhead icons (speech, !), and their words appear as small floating text only when you are close.',
+    edges: ['Repeated clicks: the dialogue box replaces the line straight away (no stacking at all).', 'NPCs chatting: overhead floating text, one line each, small.', 'Chaos: icons over heads, nothing covers the picture.'],
+    draw(g, scene, t) {
+      if (scene.id === 'group') return DESIGNS[1].draw(g, scene, t); // NPCs among themselves: small floating text, spaced like B
+      const act = active(scene, t);
+      const withYou = scene.people.some((p) => p.you);
+      const box = withYou ? act.filter((l) => scene.people.find((q) => q.id === l.who)) .slice(-1)[0] : null;
+      for (const l of act) {
+        if (box && l === box) continue;
+        const p = scene.people.find((q) => q.id === l.who), hd = head(p);
+        if (scene.id === 'group') { g.font = FONT; g.textBaseline = 'top'; const s = l.text.toUpperCase(); const ls = wrap(g, s, 70, (x) => sil(g, x)); ls.forEach((x, i) => outlineText(g, x, Math.round(Math.max(2, Math.min(W - sil(g, x) - 2, hd.x - sil(g, x) / 2))), hd.y - 10 - (ls.length - 1 - i) * 8 - (p.id === 'mai' ? 10 : 0), C.white)); continue; }
+        const y = hd.y - 9;
+        if (l.kind === 'shout') { g.fillStyle = C.ink; g.fillRect(hd.x - 3, y - 1, 7, 9); g.fillStyle = C.red; g.fillRect(hd.x - 2, y, 5, 7); g.fillStyle = C.white; g.fillRect(hd.x, y + 1, 1, 3); g.fillRect(hd.x, y + 5, 1, 1); }
+        else { g.fillStyle = C.ink; g.fillRect(hd.x - 4, y - 1, 9, 7); g.fillStyle = C.paper; g.fillRect(hd.x - 3, y, 7, 5); }
+      }
+      if (box) {
+        const p = scene.people.find((q) => q.id === box.who);
+        const x0 = 6, y0 = H - 30, w = W - 12, h = 26;
+        g.fillStyle = C.navy; g.fillRect(x0, y0, w, h);
+        g.fillStyle = C.paper; g.fillRect(x0 + 1, y0 + 1, w - 2, 1); g.fillRect(x0 + 1, y0 + h - 2, w - 2, 1); g.fillRect(x0 + 1, y0 + 1, 1, h - 2); g.fillRect(x0 + w - 2, y0 + 1, 1, h - 2);
+        g.fillStyle = C.navy; g.fillRect(x0 + 5, y0 - 5, sil(g, p.name) + 6, 7); g.fillStyle = C.paper; g.fillRect(x0 + 5, y0 - 5, sil(g, p.name) + 6, 1); g.fillRect(x0 + 5, y0 - 5, 1, 6); g.fillRect(x0 + 10 + sil(g, p.name), y0 - 5, 1, 6);
+        g.font = FONT; g.textBaseline = 'top'; g.fillStyle = C.gold; g.fillText(p.name, x0 + 8, y0 - 5);
+        const shown = box.text.toUpperCase().slice(0, Math.floor(box.age * 30)); // typewriter
+        const ls = wrap(g, shown, w - 10, (x) => sil(g, x));
+        g.fillStyle = box.kind === 'shout' ? C.yellow : C.white; ls.slice(0, 2).forEach((s, i) => g.fillText(s, x0 + 5, y0 + 5 + i * 9));
+        if (box.age > 1 && Math.floor(t * 3) % 2) { g.fillStyle = C.white; g.fillRect(x0 + w - 7, y0 + h - 6, 3, 1); g.fillRect(x0 + w - 6, y0 + h - 5, 1, 1); }
+      }
+    },
+  },
+];
+function it_age(l) { return l.age; }
+
+// ---- page -------------------------------------------------------------------------------
+const root = document.getElementById('designs');
+root.style.cssText = 'display:grid;gap:22px';
+const cells = [];
+for (const d of DESIGNS) {
+  const sec = document.createElement('section');
+  sec.className = 'design';
+  sec.innerHTML = `<div class="head"><label for="pick-${d.id}"><input type="radio" name="design" id="pick-${d.id}" value="${d.id}"><span class="tag">${d.id}</span><h2>${d.name}</h2></label></div>
+    <p class="note">${d.note}</p><div class="edge">${d.edges.map((e) => { const [k, v] = e.split(': '); return `<span><b>${k}:</b> ${v}</span>`; }).join('')}</div><div class="scenes"></div>`;
+  const grid = sec.querySelector('.scenes');
+  for (const s of SCENES) {
+    const fig = document.createElement('figure');
+    const cv = Object.assign(document.createElement('canvas'), { width: W, height: H });
+    cv.setAttribute('role', 'img'); cv.setAttribute('aria-label', `${d.name}: ${s.label}`);
+    fig.append(cv, Object.assign(document.createElement('figcaption'), { textContent: s.label }));
+    grid.append(fig);
+    cells.push({ d, s, g: cv.getContext('2d', { willReadFrequently: true }) });
+  }
+  root.append(sec);
+}
+const LOOP = 8;
+function frame(now) {
+  const t = window.T ?? (now / 1000) % LOOP;
+  for (const c of cells) {
+    c.g.imageSmoothingEnabled = false;
+    const talking = new Set(active(c.s, t).map((l) => l.who));
+    stage(c.g, c.s.people.map((p) => ({ ...p, talking: talking.has(p.id) })), t);
+    c.d.draw(c.g, c.s, t);
+    snap(c.g);
+  }
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches || !frame.once) { frame.once = true; requestAnimationFrame(frame); }
+}
+(document.fonts?.load ? document.fonts.load(FONT) : Promise.resolve()).then(() => requestAnimationFrame(frame), () => requestAnimationFrame(frame));
+
+const out = document.getElementById('pick');
+document.addEventListener('change', () => { const v = document.querySelector('input[name=design]:checked')?.value; out.textContent = v ? `Bubbles: design ${v} (${DESIGNS.find((d) => d.id === v).name})` : out.textContent; });
+document.getElementById('copy').addEventListener('click', async (e) => {
+  const t = out.textContent;
+  try { await navigator.clipboard.writeText(t); e.target.textContent = 'Copied'; }
+  catch { const r = document.createRange(); r.selectNodeContents(out); const s = getSelection(); s.removeAllRanges(); s.addRange(r); e.target.textContent = 'Selected: copy it'; }
+  setTimeout(() => { e.target.textContent = 'Copy my pick'; }, 1800);
+});
+</script>

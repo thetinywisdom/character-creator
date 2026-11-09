@@ -38,7 +38,7 @@ const PAGE_BG = new THREE.Color('#1d1f23');
 
 const params = loadParams(subjects);
 const human = subjects.find((s) => s.id === 'human');
-const state = { ui: { world: 'pixel', hud: 'pixel' }, view: 'catalog', anim: 'Still', itemAnim: 'Walk', lighting: 'Day', weather: 'Clear', citySeed: 3, cityView: 'third' };
+const state = { ui: { hud: 'pixel' }, view: 'catalog', anim: 'Still', itemAnim: 'Walk', lighting: 'Day', weather: 'Clear', citySeed: 3, cityView: 'third' };
 
 const hint = document.querySelector('#hint');
 const toastEl = document.querySelector('#toast');
@@ -272,18 +272,11 @@ document.querySelector('#modes').onclick = (e) => {
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.view === 'item') setView('catalog'); });
 
 // ---------------------------------------------------------------------------
-// City overlay: chat bubbles, comic bursts and the pie menu (interact.js),
+// City overlay: floating speech, comic bursts and the pie menu (interact.js),
 // drawn as page elements so the text stays sharp over the low-res picture
 // ---------------------------------------------------------------------------
 const overlay = document.querySelector('#overlay');
 const pie = document.querySelector('#pie');
-const chargeEl = Object.assign(document.createElement('div'), { id: 'charge', hidden: true });
-overlay.appendChild(chargeEl);
-const bubbleEls = new Map();
-// speech-bubble tails for bubbles lifted off their speaker (stackBubbles), under the bubbles
-const tailSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-tailSvg.id = 'tails';
-overlay.prepend(tailSvg);
 pie.addEventListener('click', (e) => {
   const b = e.target.closest('[data-n]');
   if (b) cityInput.events.push({ type: 'choose', n: Number(b.dataset.n) });
@@ -297,66 +290,10 @@ function screenOf(v, camera, W, H) {
   return { x: (s.x + 1) / 2 * W, y: (1 - s.y) / 2 * H, ok: s.z < 1 && Math.abs(s.x) < 1.3 && Math.abs(s.y) < 1.3 };
 }
 /**
- * Speech bubbles never cover each other: the oldest keeps its place over its
- * speaker, each newer one that would overlap is lifted above, and its tail
- * stretches down to its speaker (--lift), so in a crowd everyone is heard at once.
- * The pie menu, when open, counts as already taken.
- */
-function stackBubbles(list, pie) {
-  const placed = [];
-  if (pie?.ok) placed.push({ x0: pie.x - 115, x1: pie.x + 115, y0: pie.y - 120, y1: pie.y + 6 });
-  list.sort((a, b) => a.b.id - b.b.id);
-  const free = (x0, x1, y0, y1) => !placed.some((r) => r.x0 < x1 && r.x1 > x0 && r.y0 < y1 && r.y1 > y0);
-  const tails = [];
-  for (const { b, el, s } of list) {
-    const w = el.offsetWidth, h = el.offsetHeight;
-    const fx = b.side === 'left' ? 0.88 : b.side === 'right' ? 0.12 : 0.5;
-    const nx0 = s.x - w * fx - 4, ny1 = s.y + 4; // where it would sit, right over its speaker
-    // try spots ever further out: straight up, or up and to either side (the
-    // nearest free one wins), so a crowd's bubbles fan out like a comic panel
-    let best = { dx: 0, dy: 0 };
-    if (!free(nx0, nx0 + w + 8, ny1 - h - 8, ny1)) {
-      best = null;
-      for (let ring = 1; ring < 14 && !best; ring++) {
-        const dy = -ring * (h * 0.55);
-        for (const dx of [0, -w * 0.45, w * 0.45, -w * 0.8, w * 0.8]) {
-          const x0 = nx0 + dx, y1 = ny1 + dy;
-          if (free(x0, x0 + w + 8, y1 - h - 8, y1)) { best = { dx, dy }; break; }
-        }
-      }
-      best ??= { dx: 0, dy: -14 * h * 0.55 };
-    }
-    placed.push({ x0: nx0 + best.dx, x1: nx0 + best.dx + w + 8, y0: ny1 + best.dy - h - 8, y1: ny1 + best.dy });
-    // ease towards the spot so bubbles slide rather than jump
-    // a new bubble pops up right at its free spot; later moves slide quickly
-    const fresh = el.dataset.ox === undefined;
-    const ox = Number(el.dataset.ox ?? 0), oy = Number(el.dataset.oy ?? 0);
-    const nxo = fresh ? best.dx : ox + (best.dx - ox) * 0.5, nyo = fresh ? best.dy : oy + (best.dy - oy) * 0.5;
-    el.dataset.ox = String(nxo); el.dataset.oy = String(nyo);
-    el.style.marginLeft = `${nxo}px`;
-    el.style.marginTop = `${nyo}px`;
-    const off = Math.hypot(nxo, nyo) > 8;
-    el.classList.toggle('lifted', off);
-    if (off) {
-      // a long comic tail from the bubble's bottom edge (the end nearest the speaker) down to them
-      const left = s.x - w * fx + nxo, bottom = s.y + nyo - 4;
-      const bx = Math.max(left + 22, Math.min(left + w - 22, s.x));
-      tails.push({ bx, by: bottom - 6, tx: s.x, ty: s.y - 2 });
-    }
-  }
-  // tails go on a layer under every bubble, so they never cut across one
-  tailSvg.innerHTML = tails.map(({ bx, by, tx, ty }) => {
-    const mx = (bx + tx) / 2, my = (by + ty) / 2, bend = (tx - bx) * 0.25 + 10;
-    return `<path d="M${bx - 10} ${by} Q${mx - bend * 0.3} ${my} ${tx} ${ty} Q${mx + bend * 0.3 + 6} ${my} ${bx + 10} ${by} Z"/>`;
-  }).join('');
-}
-
-/**
- * The interaction UI comes in two layers a game can style separately
- * (state.ui): `world` - what floats over people (speech bubbles, hit bursts,
- * the slap charge): 'pixel' paints them as real pixels at the picture's pixel
- * size (ui/pixelOverlay.js), 'html' as crisp page elements; `hud` - the
- * screen controls (pie menu, action buttons): 'pixel' or 'clean'.
+ * The interaction UI comes in two layers: the world layer (floating speech,
+ * hit bursts, the slap charge) is painted as real pixels at the picture's
+ * pixel size (ui/pixelOverlay.js); the HUD (pie menu, action buttons) can be
+ * styled per game: state.ui.hud = 'pixel' | 'clean' (setUiStyle).
  */
 const pixelUi = new PixelOverlay(overlay);
 // icons on the controls: emoji, or (pixel HUD) the same emoji drawn small and
@@ -390,12 +327,10 @@ function setActIcon(t) {
   if (i && i.dataset.icon !== t) { i.dataset.icon = t; paintIcon(i); }
 }
 document.fonts?.ready?.then(() => pixelIcons());
-function setUiStyle({ world = state.ui.world, hud = state.ui.hud } = {}) {
-  state.ui = { world, hud };
+function setUiStyle({ hud = state.ui.hud } = {}) {
+  state.ui = { ...state.ui, hud };
   document.body.dataset.hud = hud;
-  pixelUi.visible = world === 'pixel';
-  if (world === 'pixel') { for (const el of bubbleEls.values()) el.remove(); bubbleEls.clear(); chargeEl.hidden = true; tailSvg.innerHTML = ''; }
-  pixelIcons(hud === 'pixel');
+  pixelIcons();
 }
 function chargeInfo(c, ix, cam, W, H) {
   const ch = ix.charge;
@@ -431,66 +366,7 @@ function pieAndShake(c, ix, cam, W, H, menu) {
   const sh = ix.shake ?? 0;
   canvas.style.transform = sh > 0 ? `translate(${(Math.random() - 0.5) * 14 * sh / 0.3}px, ${(Math.random() - 0.5) * 10 * sh / 0.3}px)` : '';
 }
-function drawOverlay(c, W, H) {
-  if (state.ui.world === 'pixel') return drawPixelOverlay(c, W, H);
-  const ix = c.ix, cam = c.activeCamera;
-  const live = new Set();
-  const talk = []; // speech bubbles on screen, stacked after this loop
-  for (const b of ix.bubbles) {
-    if (b.age < 0) continue;
-    live.add(b.id);
-    let el = bubbleEls.get(b.id);
-    if (!el) {
-      el = document.createElement('div');
-      if (b.kind === 'burst') {
-        // two spiky stars (outer and inner) behind outlined pixel text
-        el.className = 'burst';
-        el.style.setProperty('--tilt', `${(Math.random() < 0.5 ? -1 : 1) * (6 + Math.random() * 8)}deg`);
-        el.innerHTML = `<i class="b-out"></i><i class="b-in"></i><b>${b.text}</b>`;
-      } else if (b.kind === 'confused') {
-        el.className = 'qbox';
-        el.textContent = '?';
-      } else {
-        el.className = `bubble ${b.kind}${b.side ? ` ${b.side}` : ''}`;
-        el.innerHTML = `${b.name ? `<small>${b.name}</small>` : ''}<span></span>`;
-        el.querySelector('span').textContent = b.text;
-      }
-      overlay.appendChild(el);
-      bubbleEls.set(b.id, el);
-    }
-    const s = screenOf(b.anchor(), cam, W, H);
-    el.style.display = s.ok ? '' : 'none';
-    el.style.left = `${s.x}px`;
-    el.style.top = `${s.y}px`;
-    if (b.kind === 'talk') el.style.opacity = String(Math.min(1, (b.life - b.age) / 0.4));
-    if (s.ok && (b.kind === 'talk' || b.kind === 'shout')) talk.push({ b, el, s });
-  }
-  stackBubbles(talk, ix.menu ? screenOf(ix.headOf(ix.menu.npc)(), cam, W, H) : null);
-  for (const [id, el] of bubbleEls) if (!live.has(id)) { el.remove(); bubbleEls.delete(id); }
-  // the pie menu pops out of the person you chose
-  pie.hidden = !ix.menu;
-  if (ix.menu) {
-    const s = screenOf(ix.headOf(ix.menu.npc)(), cam, W, H);
-    pie.style.left = `${s.x}px`;
-    pie.style.top = `${s.y}px`;
-  }
-  setActIcon(c.player.riding ? '⏏' : 'E');
-  // the slap charge ring round your character: green to yellow (slap), then shaking yellow to red (power slap)
-  const ci = chargeInfo(c, ix, cam, W, H);
-  chargeEl.hidden = !ci;
-  if (ci) {
-    chargeEl.style.setProperty('--col', ci.col);
-    chargeEl.style.setProperty('--deg', `${ci.f * 360}deg`);
-    chargeEl.classList.toggle('shake', ci.shake);
-    chargeEl.style.scale = String(1 + 0.8 * ci.grow);
-    const s = ci.s;
-    chargeEl.style.left = `${s.x}px`;
-    chargeEl.style.top = `${s.y}px`;
-  }
-  // a quick screen shake on a hit
-  const sh = ix.shake ?? 0;
-  canvas.style.transform = sh > 0 ? `translate(${(Math.random() - 0.5) * 14 * sh / 0.3}px, ${(Math.random() - 0.5) * 10 * sh / 0.3}px)` : '';
-}
+function drawOverlay(c, W, H) { drawPixelOverlay(c, W, H); }
 
 // ---------------------------------------------------------------------------
 // Render loop

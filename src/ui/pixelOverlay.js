@@ -1,12 +1,12 @@
-// The world layer of the interaction UI drawn as real pixels: speech bubbles,
-// their tails, hit bursts, the "?" box and the slap charge dial are painted on
+// The world layer of the interaction UI drawn as real pixels: floating speech,
+// hit bursts, the "?" box and the slap charge dial are painted on
 // a small canvas (screen size / pixel size, the same pixel size as the PS1
 // picture) and stretched back up with hard edges, so they are pixelated the
 // way the 3D scene is, not drawn in a pixel "style".
 //
-// Each bubble and burst is drawn once into a sprite, its edges made hard
+// Each line of speech and each burst is drawn once into a sprite, its edges made hard
 // (alpha 0 or 1) and its colours snapped to the few UI inks, then reused.
-// Layout (stacking, tails) works in low-res pixels.
+// Layout (keeping lines apart) works in low-res pixels.
 
 const INK = '#2f3236', PAPER = '#f2efe8', BRICK = '#9e6c60', YELLOW = '#ffd23f', PINK = '#f4508c', WHITE = '#f2efe8';
 const SNAP = [INK, PAPER, BRICK, YELLOW, PINK].map((h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)));
@@ -64,36 +64,9 @@ export class PixelOverlay {
     parent.prepend(this.canvas);
     this.g = this.canvas.getContext('2d');
     this.sprites = new Map(); // key -> sprite
-    this.state = new Map();   // bubble id -> { ox, oy } (stacking, eased)
   }
   set visible(v) { this.canvas.hidden = !v; }
 
-  bubbleSprite(b) {
-    const key = `b|${b.kind}|${b.name}|${b.text}|${document.fonts?.check?.(`8px ${FONT}`)}`;
-    let s = this.sprites.get(key);
-    if (s) return s;
-    const shout = b.kind === 'shout';
-    const m = sprite(1, 1).getContext('2d');
-    m.font = `400 8px ${FONT}`;
-    const lines = wrap(m, b.text.toUpperCase(), 104);
-    const tw = Math.max(...lines.map((l) => m.measureText(l).width), b.name ? m.measureText(b.name.toUpperCase()).width : 0);
-    const pad = 4, B = 2, lh = 9, nameH = b.name ? 10 : 0;
-    const w = Math.round(tw + pad * 2 + B * 2), h = Math.round(lines.length * lh + nameH + pad * 2 + B * 2 - 1);
-    const cv = sprite(w + 2, h + 2), g = cv.getContext('2d');
-    box(g, 2, 2, w, h, 4, INK);          // hard shadow
-    box(g, 0, 0, w, h, 4, INK);          // outline
-    box(g, B, B, w - 2 * B, h - 2 * B, 3, PAPER);
-    g.textBaseline = 'top';
-    g.font = `400 8px ${FONT}`;
-    if (b.name) { g.fillStyle = BRICK; g.fillText(b.name.toUpperCase(), B + pad, B + pad); }
-    // whole-pixel positions keep the pixel font sharp
-    g.fillStyle = shout ? BRICK : INK;
-    lines.forEach((l, i) => g.fillText(l, Math.round((w - g.measureText(l).width) / 2), B + pad + nameH + i * lh));
-    s = { cv: crisp(cv), w, h };
-    this.sprites.set(key, s);
-    if (this.sprites.size > 300) this.sprites.delete(this.sprites.keys().next().value);
-    return s;
-  }
   burstSprite(text) {
     const key = `x|${text}|${document.fonts?.check?.(`8px ${FONT}`)}`;
     let s = this.sprites.get(key);
@@ -121,17 +94,75 @@ export class PixelOverlay {
     return s;
   }
 
-  /** A long tail from (bx, by) on a bubble's bottom edge to the speaker at (tx, ty): paper inside, ink edges, row by row. */
-  tail(bx, by, tx, ty) {
-    const g = this.g, rows = Math.max(1, Math.round(ty - by));
-    const cx = bx + (tx - bx) * 0.25 + 3, cy = by + (ty - by) * 0.5; // a gentle curve
-    for (let k = 0; k <= rows; k++) {
-      const t = k / rows, y = Math.round(by + k);
-      const x = Math.round((1 - t) ** 2 * bx + 2 * (1 - t) * t * cx + t * t * tx);
-      const hw = Math.round(5 * (1 - t));
-      g.fillStyle = INK; g.fillRect(x - hw - 2, y, hw * 2 + 4, 1);
-      if (hw > 0) { g.fillStyle = PAPER; g.fillRect(x - hw, y, hw * 2, 1); }
+
+
+  /** A floating line of pixel text (outlined), cached. */
+  floatSprite(b) {
+    const key = `f|${b.kind}|${b.text}|${document.fonts?.check?.(`8px ${FONT}`)}`;
+    let s = this.sprites.get(key);
+    if (s) return s;
+    const m = sprite(1, 1).getContext('2d');
+    m.font = `400 8px ${FONT}`;
+    const lines = wrap(m, b.text.toUpperCase(), 92);
+    const w = Math.ceil(Math.max(...lines.map((l) => m.measureText(l).width))) + 4, h = lines.length * 9 + 3;
+    const cv = sprite(w, h), g = cv.getContext('2d');
+    g.font = `400 8px ${FONT}`; g.textBaseline = 'top';
+    const col = b.kind === 'shout' ? YELLOW : PAPER;
+    lines.forEach((l, i) => {
+      const x = Math.round((w - g.measureText(l).width) / 2), y = 1 + i * 9;
+      g.fillStyle = INK;
+      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [1, -1], [-1, 1]]) g.fillText(l, x + dx, y + dy);
+      g.fillStyle = col; g.fillText(l, x, y);
+    });
+    s = { cv: crisp(cv), w, h };
+    this.sprites.set(key, s);
+    if (this.sprites.size > 300) this.sprites.delete(this.sprites.keys().next().value);
+    return s;
+  }
+
+  /**
+   * Speech as floating text (the owner's pick, design B of the bubble lab): no
+   * box, outlined pixel words over the head; talk light, shouts yellow and
+   * shaking. Lines never cover each other (the oldest keeps its place, newer
+   * ones move up or aside). A line replaced by the same person's next one
+   * drifts up, blinking, and is gone in half a second.
+   */
+  drawFloating(speech, pie, L) {
+    const g = this.g;
+    const placed = [];
+    if (pie?.ok) placed.push({ x0: L(pie.x) - 58, x1: L(pie.x) + 58, y0: L(pie.y) - 60, y1: L(pie.y) + 3 });
+    const free = (x0, x1, y0, y1) => !placed.some((r) => r.x0 < x1 + 3 && r.x1 > x0 - 3 && r.y0 < y1 + 2 && r.y1 > y0 - 2);
+    const now = performance.now() / 1000;
+    this.ghosts ??= [];
+    const live = new Map();
+    speech.sort((a, b) => a.b.id - b.b.id);
+    for (const { b, s } of speech) {
+      const sp = this.floatSprite(b), w = sp.w, h = sp.h;
+      const ax = L(s.x), ay = L(s.y) - 2 - Math.min(3, Math.floor(b.age * 6)); // rises a touch as it appears
+      let best = null;
+      for (let ring = 0; ring < 14 && !best; ring++) {
+        for (const dx of ring ? [0, -w * 0.55, w * 0.55].map(Math.round) : [0]) {
+          const x0 = ax - Math.round(w / 2) + dx, y1 = ay - Math.round(ring * (h * 0.6 + 1));
+          if (free(x0, x0 + w, y1 - h, y1)) { best = { dx, dy: y1 - ay }; break; }
+        }
+      }
+      best ??= { dx: 0, dy: -14 * h };
+      const x0 = ax - Math.round(w / 2) + best.dx, y0 = ay + best.dy - h;
+      placed.push({ x0, x1: x0 + w, y0, y1: y0 + h });
+      live.set(b.id, { who: b.anchor.who, sp, x0, y0 });
+      if (b.life - b.age < 0.3 && Math.floor(now * 12) % 2) continue; // blinks out
+      const shake = b.kind === 'shout' && b.age < 0.6 ? (Math.floor(now * 30) % 2 ? 1 : -1) : 0;
+      g.drawImage(sp.cv, x0 + shake, y0);
     }
+    // lines replaced by the same person: drift up and blink away
+    for (const [id, was] of this.lastFloat ?? []) {
+      if (live.has(id) || !was.who) continue;
+      if ([...live.values()].some((v) => v.who === was.who)) this.ghosts.push({ ...was, t: 0 });
+    }
+    this.lastFloat = live;
+    const dt = Math.min(0.1, now - (this.ghostT ?? now)); this.ghostT = now;
+    this.ghosts = this.ghosts.filter((gh) => (gh.t += dt) < 0.5);
+    for (const gh of this.ghosts) if (Math.floor(now * 16) % 2) g.drawImage(gh.sp.cv, gh.x0, Math.round(gh.y0 - gh.t * 40));
   }
 
   /**
@@ -147,58 +178,7 @@ export class PixelOverlay {
     g.clearRect(0, 0, cw, ch);
     const L = (v) => Math.round(v / px);
 
-    // --- speech: stack so nothing covers anything (the oldest keeps its place)
-    const placed = [];
-    if (pie?.ok) placed.push({ x0: L(pie.x) - 58, x1: L(pie.x) + 58, y0: L(pie.y) - 60, y1: L(pie.y) + 3 });
-    const free = (x0, x1, y0, y1) => !placed.some((r) => r.x0 < x1 && r.x1 > x0 && r.y0 < y1 && r.y1 > y0);
-    const live = new Set(), drawn = [];
-    speech.sort((a, b) => a.b.id - b.b.id);
-    for (const { b, s } of speech) {
-      live.add(b.id);
-      const sp = this.bubbleSprite(b), w = sp.w, h = sp.h;
-      const fx = b.side === 'left' ? 0.88 : b.side === 'right' ? 0.12 : 0.5;
-      const sx = L(s.x), sy = L(s.y), nx0 = sx - Math.round(w * fx), ny1 = sy - 5;
-      let best = { dx: 0, dy: 0 };
-      if (!free(nx0 - 2, nx0 + w + 2, ny1 - h - 2, ny1)) {
-        best = null;
-        for (let ring = 1; ring < 14 && !best; ring++) {
-          const dy = -Math.round(ring * h * 0.55);
-          for (const dx of [0, -w * 0.45, w * 0.45, -w * 0.8, w * 0.8].map(Math.round)) {
-            if (free(nx0 + dx - 2, nx0 + dx + w + 2, ny1 + dy - h - 2, ny1 + dy)) { best = { dx, dy }; break; }
-          }
-        }
-        best ??= { dx: 0, dy: -14 * h };
-      }
-      placed.push({ x0: nx0 + best.dx - 2, x1: nx0 + best.dx + w + 2, y0: ny1 + best.dy - h - 2, y1: ny1 + best.dy });
-      let st = this.state.get(b.id);
-      if (!st) { st = { ox: best.dx, oy: best.dy }; this.state.set(b.id, st); }
-      st.ox += (best.dx - st.ox) * 0.5; st.oy += (best.dy - st.oy) * 0.5;
-      const x0 = nx0 + Math.round(st.ox), y0 = ny1 + Math.round(st.oy) - h;
-      const age = b.age, pop = Math.min(1, age / 0.15);
-      const alpha = b.kind === 'talk' ? Math.min(1, (b.life - b.age) / 0.4) : 1;
-      const shake = b.kind === 'shout' && age > 0.2 && age < 0.9 ? Math.round(Math.sin(age * 40) * 1.5) : 0;
-      drawn.push({ sp, x0: x0 + shake, y0, w, h, sx, sy, fx, lifted: Math.hypot(st.ox, st.oy) > 4, pop, alpha });
-    }
-    for (const id of this.state.keys()) if (!live.has(id)) this.state.delete(id);
-    // tails first (under every bubble), then the bubbles
-    for (const d of drawn) {
-      g.globalAlpha = d.alpha;
-      if (d.lifted) this.tail(Math.max(d.x0 + 10, Math.min(d.x0 + d.w - 10, d.sx)), d.y0 + d.h - 3, d.sx, d.sy - 1);
-      else {
-        // the short tail: a small stepped point under the bubble
-        const tx = Math.max(d.x0 + 6, Math.min(d.x0 + d.w - 6, d.x0 + Math.round(d.w * d.fx)));
-        for (let k = 0; k < 5; k++) { g.fillStyle = INK; g.fillRect(tx - (5 - k) - 1, d.y0 + d.h - 2 + k, (5 - k) * 2 + 2, 1); if (k < 4) { g.fillStyle = PAPER; g.fillRect(tx - (4 - k), d.y0 + d.h - 2 + k, (4 - k) * 2, 1); } }
-      }
-    }
-    for (const d of drawn) {
-      g.globalAlpha = d.alpha;
-      if (d.pop < 1) {
-        const k = 0.4 + 0.6 * d.pop + Math.sin(d.pop * Math.PI) * 0.15;
-        const w = Math.max(1, Math.round(d.sp.cv.width * k)), h = Math.max(1, Math.round(d.sp.cv.height * k));
-        g.drawImage(d.sp.cv, Math.round(d.x0 + (d.sp.cv.width - w) / 2), Math.round(d.y0 + d.sp.cv.height - h), w, h);
-      } else g.drawImage(d.sp.cv, d.x0, d.y0);
-    }
-    g.globalAlpha = 1;
+    this.drawFloating(speech, pie, L);
 
     // --- bursts: pop big, settle, fade; tilted (rotated with hard pixels)
     for (const { b, s } of bursts) {

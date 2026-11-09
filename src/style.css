@@ -184,49 +184,10 @@ html, body {
 .pal-card { cursor: default; }
 .pal-card i { display: block; width: 100%; aspect-ratio: 1.6; border-radius: 6px; }
 
-/* --- city interactions: bubbles, comic bursts, pie menu, action buttons ------ */
+/* --- city interactions: pie menu, action buttons (speech, bursts: ui/pixelOverlay.js) */
 #overlay { position: fixed; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
 #overlay[hidden], #pie[hidden], #cityActions[hidden] { display: none; }
-/* comic speech: pixel font, thick ink border, a hard shadow, a name tag */
-.bubble {
-  position: absolute; transform: translate(-50%, -100%); max-width: 230px; padding: 8px 12px 7px;
-  background: #f2efe8; color: #2f3236; border: 3px solid #2f3236; border-radius: 12px;
-  box-shadow: 3px 4px 0 #2f3236;
-  font: 400 13px/1.25 'Silkscreen', ui-monospace, monospace; text-align: center; white-space: normal;
-  animation: bubble-pop .2s cubic-bezier(.3, 1.6, .5, 1);
-}
-.bubble small { display: block; text-align: left; font: 700 10px/1 'Silkscreen', monospace; color: #9e6c60; margin-bottom: 3px; }
-.bubble.shout span { color: #9e6c60; font-weight: 700; font-size: 16px; }
-.bubble.shout { animation: bubble-pop .2s cubic-bezier(.3, 1.6, .5, 1), shout-shake .35s .2s 2; }
-.bubble::after { /* the tail pointing down at the speaker */
-  content: ''; position: absolute; left: 50%; bottom: -10px; width: 13px; height: 13px; margin-left: -7px;
-  background: #f2efe8; border-right: 3px solid #2f3236; border-bottom: 3px solid #2f3236; transform: rotate(45deg);
-}
-.qbox { /* the confused "?" box popping over a head */
-  position: absolute; transform: translate(-75%, -190%); width: 46px; height: 46px; display: grid; place-items: center; z-index: 1;
-  background: #f2efe8; color: #2f3236; border: 3px solid #2f3236; border-radius: 10px; box-shadow: 3px 4px 0 #2f3236;
-  font: 700 30px/1 'Silkscreen', monospace; animation: q-pop .9s ease-out forwards;
-}
-.burst {
-  position: absolute; width: 150px; height: 104px; transform: translate(-50%, -50%) rotate(var(--tilt, -8deg));
-  display: grid; place-items: center; animation: burst-pop .9s ease-out forwards;
-}
-.burst i { position: absolute; inset: 0; clip-path: polygon(50% 0%, 60% 24%, 84% 6%, 78% 32%, 100% 34%, 82% 54%, 98% 78%, 70% 70%, 64% 100%, 50% 78%, 34% 98%, 30% 72%, 2% 82%, 18% 56%, 0% 34%, 24% 30%, 14% 4%, 40% 22%); }
-.burst .b-out { background: #2f3236; }                                   /* ink outline */
-.burst .b-out + .b-in { inset: 6px; background: #ffd23f; }               /* flashy yellow: the owner's exception to the palette, for drama */
-.burst .b-in::after { content: ''; position: absolute; inset: 20% 22%; background: #f4508c;   /* hot pink core */
-  clip-path: polygon(50% 0%, 62% 30%, 96% 22%, 74% 50%, 98% 84%, 62% 70%, 50% 100%, 38% 70%, 4% 84%, 26% 50%, 2% 22%, 38% 30%); }
-.burst b {
-  position: relative; font: 700 24px/1 'Silkscreen', monospace; color: #f2efe8; letter-spacing: .02em;
-  text-shadow: 2px 0 #2f3236, -2px 0 #2f3236, 0 2px #2f3236, 0 -2px #2f3236, 2px 2px #2f3236, -2px 2px #2f3236, 2px -2px #2f3236, -2px -2px #2f3236, 3px 4px 0 #2f3236;
-}
-@keyframes bubble-pop { from { transform: translate(-50%, -100%) scale(.4); opacity: 0; } }
-@keyframes shout-shake { 25% { margin-left: -4px; } 75% { margin-left: 4px; } }
-@keyframes q-pop { 0% { scale: .2; opacity: 0; } 20% { scale: 1.25; opacity: 1; } 35% { scale: 1; } 80% { opacity: 1; } 100% { opacity: 0; translate: 0 -10px; } }
-@keyframes burst-pop {
-  0% { scale: .2; opacity: 0; } 12% { scale: 1.35; opacity: 1; } 22% { scale: .95; } 32% { scale: 1.05; } 42% { scale: 1; } 78% { opacity: 1; } 100% { scale: 1.1; opacity: 0; }
-}
-#pie { position: absolute; width: 0; height: 0; pointer-events: none; z-index: 3; } /* above speech bubbles */
+#pie { position: absolute; width: 0; height: 0; pointer-events: none; z-index: 3; } /* above the floating speech */
 #pie button {
   position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%;
   display: grid; place-items: center; align-content: center; gap: 0; pointer-events: auto; cursor: pointer;
@@ -246,33 +207,9 @@ html, body {
 }
 #cityActions #actBtn { width: 76px; height: 76px; background: var(--accent); color: #1d1d1d; border-color: var(--accent); }
 
-/* stacked bubbles (main.js stackBubbles): moved off their speaker, the small
-   tail is swapped for a long curved one on the #tails layer under all bubbles */
-#tails { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-#tails path { fill: #f2efe8; stroke: #2f3236; stroke-width: 3; stroke-linejoin: round; }
-.bubble { z-index: 1; }
-.bubble.lifted::after { display: none; }
-
-/* two people talking: the bubbles lean apart (tails still point at each speaker) */
-.bubble.left { transform: translate(-88%, -100%); }
-.bubble.left::after { left: auto; right: 4px; }
-.bubble.right { transform: translate(-12%, -100%); }
-.bubble.right::after { left: 10px; margin-left: 0; }
-
-/* the slap charge ring */
-/* the slap charge: a small dial over the target's head (owner's pick B),
-   pixel style: ink rim, hard drop shadow, fills clockwise */
-#charge {
-  position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%;
-  background: conic-gradient(var(--col) var(--deg), #f2efe8 0);
-  border: 3px solid #2f3236; box-shadow: 2px 3px 0 #2f3236; box-sizing: border-box;
-}
-#charge[hidden] { display: none; }
-#charge.shake { animation: charge-shake .08s linear infinite; }
-@keyframes charge-shake { 25% { translate: -3px 2px; } 50% { translate: 3px -2px; } 75% { translate: -2px -3px; } }
 
 /* --- interaction UI layers (main.js setUiStyle) ------------------------------ */
-/* world layer 'pixel': bubbles, bursts and the charge painted as real pixels */
+/* world layer: floating speech, bursts and the charge painted as real pixels */
 #pixelOverlay { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; pointer-events: none; z-index: 1; }
 #pixelOverlay[hidden] { display: none; }
 .ico { font-style: normal; display: grid; place-items: center; }

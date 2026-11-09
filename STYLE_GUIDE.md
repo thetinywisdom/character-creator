@@ -418,7 +418,7 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   (black ink outline, a flashy yellow `#ffd23f` star, a hot pink `#f4508c`
   core, tilted; the one deliberate exception to the palette, for drama) with white pixel
   capitals outlined in ink (SLAP!, WHAP!, SMACK!, SHOVE!, WHUMP!, OOF!,
-  WHOOPS!, BONK!), popping big, settling, fading in under a second; then the victim shouts in a speech bubble with
+  WHOOPS!, BONK!), popping big, settling, fading in under a second; then the victim shouts in floating text with
   a small name tag and red (brick) text: censored swearing from aggressive
   people ("You motherf**ker!"), scared lines from calm ones ("Eek!!"); a
   short screen shake.
@@ -432,13 +432,9 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 - **Clouds:** dust is a ring of pale sand cubes billowing out low and
   fading in under a second; a fart is two waves of big translucent
   yellow-green cubes that linger ~2 s.
-- **Stacked bubbles:** when bubbles would overlap, newer ones fan out above
-  and to the sides; a long, slightly curved tail (bubble paper with the same
-  3 px ink outline) runs under the other bubbles down to the speaker. One
-  bubble per person at a time.
 - **Clouds:** pixel puffs: flat squares facing the camera in three flat
   shades, popping in and shrinking away in steps (no soft fade).
-- **Real pixels for the world UI:** bubbles, tails, bursts and the charge
+- **Real pixels for the world UI:** floating speech, bursts and the charge
   dial are painted at the picture's pixel size (ui/pixelOverlay.js) with
   hard edges and only the UI inks (ink, paper, brick, yellow, pink), text in
   Silkscreen 8 px on whole pixels; controls (pie, buttons) are square with
@@ -448,9 +444,11 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   paper), filling clockwise twice: green to yellow, then yellow to red. In the
   second round it keeps growing (to about twice its size) with a slow, rising
   tremble; full red is the climax: a little bigger again and a hard shake.
-- **Speech bubbles:** pixel font (Silkscreen), off-white with a thick ink
-  border, a hard drop shadow, a tail pointing at the speaker, a small name
-  tag (YOU for the player); they pop in with a bounce and fade after ~3 s.
+- **Speech:** floating text, no box (owner's pick, design B of
+  labs/bubble-lab.html): Silkscreen 8 px on whole pixels with a 1 px ink
+  outline; talk off-white, shouts yellow with a short shake; a line rises a
+  touch as it appears, blinks out at the end; a replaced line drifts up
+  blinking. No speech balloons (owner: removed).
 - **Slap charge ring:** a ring round your character filling clockwise, green
   to yellow (a slap), then shaking, yellow to red (a power slap).
 - **Pie menu:** three round off-white buttons (icon + word) fanned above the

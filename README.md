@@ -42,7 +42,7 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   the air, a push sends them flying sumo-style; calm people fall feet over
   head, aggressive ones faceplant. People on benches stay seated when you talk to or slap them. **Q** (💨) farts (you squat and strain first): everyone near you
   falls over, stunned, then runs off. When lots of people talk at once their
-  bubbles stack up instead of covering each other.
+  lines float over their heads without covering each other.
   **E** (or hold-click) next to a car, the bus, the scooter or the bicycle
   gets you on; drive with WASD; hold Shift or the right
   mouse button for the handbrake (it stops you going straight; steer while

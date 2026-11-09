@@ -126,9 +126,11 @@ src/city/knock.js      Knockables: props tagged userData.knock (catalogue KNOCKA
                        when a vehicle hits them, blink, POOF, back in 5 s
                        Knockables.cloud(at, opts): dust / stink clouds of flat camera-facing
                        squares in three shades that pop in steps (pixel puffs)
-src/ui/pixelOverlay.js the 'pixel' world layer of the interaction UI: bubbles, tails, bursts,
+src/ui/pixelOverlay.js the world layer of the interaction UI: floating speech, bursts,
                        charge dial painted on a canvas at the picture's pixel size;
-                       main.js setUiStyle({ world: 'pixel'|'html', hud: 'pixel'|'clean' })
+                       main.js setUiStyle({ hud: 'pixel'|'clean' }) styles the controls
+labs/bubble-lab.html   speech-UI design bench (5 pixel designs x 4 scenes, pixel stage kit,
+                       3x5 bitmap font); open it in a browser, reuse for future games
 src/city/comedy.js     comic slap / push / fall variations (COMEDY) and ComedyStage previews;
                        interact.js ANIM holds the owner's picks: slap = Windmill spin,
                        power slap = Launch, push = Sumo send-off, falls by temper
@@ -307,12 +309,12 @@ pavement route (`n.flee.left` = 300 m, `n.fleeRole` keeps their old role),
 run 4.2 m/s away from you, crossing roads more often, then `endAct` walks
 them back to their place. Bubbles (`ix.bubbles`: chat and comic bursts with an
 `anchor()` position) and the pie menu (`ix.menu`) are drawn by the viewer as
-page elements; a game can draw its own. Speech bubbles stack
-(`stackBubbles` in main.js): older ones keep their place, a newer one that
-would overlap takes the nearest free spot above or up to either side, and a
-long curved paper-and-ink tail on the `#tails` SVG layer (under every bubble)
-reaches its speaker; bubble ids grow with age; one bubble per person (anchors
-from `headOf` / `playerHead` carry `who`, a new line replaces the old); the open pie menu counts as taken (and sits on top). People
+page elements; a game can draw its own. Speech is floating pixel text over the head
+(`PixelOverlay.drawFloating`, design B of labs/bubble-lab.html): no box,
+1 px ink outline, talk light, shouts yellow and shaking; lines never cover
+each other (the oldest keeps its place, newer ones move up or aside); one
+line per person (anchors from `headOf` / `playerHead` carry `who`, a new
+line replaces the old, which drifts up blinking); the open pie menu counts as taken (and sits on top). People
 knocked down raise a dust cloud. Hits are animated by `poseActor` from
 `ANIM` (attacker swing in `who.action`, slap reaction in `who.comic`, falls
 in act 'slip' with `anim` or by temper, the lying part stretched to fit the
