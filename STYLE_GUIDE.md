@@ -422,6 +422,10 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   a small name tag and red (brick) text: censored swearing from aggressive
   people ("You motherf**ker!"), scared lines from calm ones ("Eek!!"); a
   short screen shake.
+- **Knocked-over props:** the same burst on impact (CLONK!, BANG!, KRAK!,
+  THWACK!); the prop tumbles, bounces once, lies on its side, blinks, and
+  vanishes with a POOF! burst and a puff of off-white cubes; it pops back
+  in at its place with a small overshoot.
 - **Speech bubbles:** pixel font (Silkscreen), off-white with a thick ink
   border, a hard drop shadow, a tail pointing at the speaker, a small name
   tag (YOU for the player); they pop in with a bounce and fade after ~3 s.

@@ -96,6 +96,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 39. **The bus turns properly**: traffic and the cars you drive turn round the rear axle instead of spinning on their centre; the bus takes wider corners.
 
+40. **Knock things flying**: sandwich boards, planters, parked bicycles and park bins hit by your vehicle fly off (CLONK!), land on their side, blink, go POOF and pop back at their place 5 s after the hit.
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.

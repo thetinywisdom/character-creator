@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { setDetail } from '../lib/shapes.js';
 import { mergeByMaterial } from '../lib/merge.js';
+import { Knockables } from './knock.js';
 import { skinCharacter, vertexColorMaterial } from '../lib/skin.js';
 import { mulberry32 } from '../lib/rng.js';
 import { bicycle, car, scooter } from '../props/vehicles.js';
@@ -103,6 +104,8 @@ export class City {
     const cityData = data ?? generateCityData(seed);
     const city = buildCity(cityData, style);
     this.layout = city;
+    // small props you can knock over come out of the merged town (knock.js)
+    this.knock = new Knockables(this, city.group, city.colliders);
     this.scene.add(mergeByMaterial(city.group));
     // light pools under the street lamps, shown at night (atmosphere.js);
     // a lamp's head reaches 1.45 m out over the road from its post
@@ -480,6 +483,7 @@ export class City {
   /** Push a circle at pos (radius r) out of the static colliders (circle vs box). */
   pushOut(pos, r) {
     for (const c of this.nearColliders(pos.x, pos.z)) {
+      if (c.down) continue; // a knocked-over prop (knock.js)
       const dx = pos.x - c.x, dz = pos.z - c.z;
       if (Math.abs(dx) > c.hw + r || Math.abs(dz) > c.hd + r) continue;
       const cx = Math.max(-c.hw, Math.min(c.hw, dx));
@@ -772,6 +776,7 @@ export class City {
 
     // --- camera: third person, behind and above ----------------------------------
     this.ix.update(dt);
+    this.knock.update(dt);
 
     // riding: the camera eases round behind the vehicle and pulls back a little
     if (p.riding && this.viewMode !== 'iso' && Math.abs(p.riding.drive.speed) > 1) {

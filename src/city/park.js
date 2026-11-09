@@ -92,6 +92,7 @@ export function park(style, rng, w, d) {
   solid(vm, 1, 0.8);
   const bin = trashBin.build({ variant: 'Recycling station' }, style);
   bin.position.set(-w / 4 + 4.2, 0, -d / 4 - 1.5);
+  bin.userData.knock = true;
   g.add(bin);
 
   // lamps by the paths

@@ -549,6 +549,7 @@ export class Interactions {
     if (Math.abs(slipA) > 0.2 && Math.abs(dv.speed) > 3) this.skid(c, nx, nz, fx, fz);
     // collide: two circles along the vehicle against buildings, props, other vehicles
     const r = c.size.hw, off = Math.max(0, c.size.hd - r);
+    city.knock.hitBy(nx, nz, fx, fz, dv.speed, r, off); // boards, planters, bikes, bins fly (before they could stop us)
     let hit = false;
     for (const k of [-1, 1]) {
       const q = { x: nx + fx * off * k, z: nz + fz * off * k };

@@ -39,7 +39,9 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   streets, then walk back. **B** (🍌) drops a banana peel.
   **E** (or hold-click) next to a car, the bus, the scooter or the bicycle
   gets you on; drive with WASD; hold Shift or the right
-  mouse button for the handbrake and steer to drift; E to get off.
+  mouse button for the handbrake and steer to drift; E to get off. Hit a
+  sandwich board, planter, parked bike or bin and it goes flying, blinks and
+  goes POOF, then pops back 5 seconds later.
 
 ## Docs
 

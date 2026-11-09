@@ -121,6 +121,8 @@ src/city/variety.js    shared building variety: flatsAbove, roofTop, frontExtras
 src/city/silhouette.js see-through people in the iso view (stencil + GreaterDepth copy)
 src/city/crowd.js      the crowd: roles (walk, stand, bench, ...), placed from the layout,
                        distance culling, sitPose
+src/city/knock.js      Knockables: props tagged userData.knock (boards, planters, parked
+                       bikes, bins) fly when a vehicle hits them, blink, POOF, back in 5 s
 src/city/interact.js   character interactions: traits, slap / push / talk (pie menu), chat
                        bubbles + comic bursts, banana peels, riding vehicles
 src/city/atmosphere.js night glow (setNightGlow), snow cover (setSnowCover), rain / snow
@@ -247,7 +249,10 @@ a line of small talk), drop banana peels (anyone stepping on one slips), and
 ride vehicles (cars and the bus steer like real vehicles: the turn rate
 depends on the wheelbase, `size.hd * 1.3`, and the body pivots round the rear
 axle; traffic tows `c.rear` behind a front axle that follows the lane, so the
-bus swings round corners; Shift or a held right button is the handbrake: the vehicle
+bus swings round corners; small props tagged `userData.knock` are taken out
+of the merged town by `Knockables` and fly off when your vehicle hits them
+(`city.knock.hitBy`), their collider gets `down` so `pushOut` skips it until
+they pop back; Shift or a held right button is the handbrake: the vehicle
 slows and loses grip, `drive.travel` lags `drive.heading`, so it drifts and
 leaves skid marks; traffic cars, the bus, a scooter and a bicycle parked by the
 start; WASD drives, people hit fall over, you get out on the driver's side

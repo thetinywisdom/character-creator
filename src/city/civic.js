@@ -166,6 +166,7 @@ export function koban(style, rng, w, d) {
     const bike = bicycle.build({ color: 'White' }, style);
     bike.position.set(-s * (kw / 2 + 0.2), 0, front + 1.0 + i * 0.7);
     bike.rotation.y = Math.PI / 2;
+    bike.userData.knock = true;
     g.add(bike);
   }
   return { group: g, footprint: { w: kw, d: kd, z: kz }, colliders: [solid(kw, kd, kz)] };
