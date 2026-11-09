@@ -5,6 +5,7 @@ import { skinCharacter, vertexColorMaterial } from '../lib/skin.js';
 import { mulberry32 } from '../lib/rng.js';
 import { bicycle, car, scooter } from '../props/vehicles.js';
 import { Interactions } from './interact.js';
+import { Crowd } from './crowd.js';
 import { generateCityData } from './layout.js';
 import { buildCity } from './build.js';
 import { JOINT_NAMES, createGait, poseGait, stepGait } from '../anim/gait.js';
@@ -75,7 +76,7 @@ function loopLengths(loop) {
 }
 
 export class City {
-  constructor({ style, renderer, human, cat, params, npcCount = 28, seed = 3, data = null }) {
+  constructor({ style, renderer, human, cat, params, npcCount = 46, seed = 3, data = null }) {
     this.style = style;
     this.renderer = renderer;
     this.scene = new THREE.Scene();
@@ -138,19 +139,21 @@ export class City {
     this.player.z = city.start.z;
     const pr = city.parkRect ?? { x0: -1, x1: 1, z0: -1, z1: 1 };
 
+    // the crowd (crowd.js): walkers who roam the town, people standing about,
+    // people on park benches. Each is one skinned person.
     this.npcs = [];
-    for (let i = 0; i < (city.walkLoops.length ? npcCount : 0); i++) {
+    this.crowd = new Crowd(this);
+    this.loopInfo = new Map(city.walkLoops.map((l) => [l, loopLengths(l)]));
+    const makePerson = (look = { ...params.human, ...human.randomize(rng) }) => {
       const loop = city.walkLoops[Math.floor(rng() * city.walkLoops.length)];
-      const { lengths, total } = loopLengths(loop);
-      const look = { ...params.human, ...human.randomize(rng) };
       const elderly = look.bodyType === 'Grandpa' || look.bodyType === 'Grandma';
       const npc = {
         trait: look.trait ?? (rng() < 0.25 ? 'Aggressive' : 'Calm'), // how they react (interact.js)
         body: buildPerson(look),
         look,
         root: new THREE.Group(),
-        loop, lengths, total,
-        s: rng() * total,
+        loop, ...this.loopInfo.get(loop),
+        s: rng() * this.loopInfo.get(loop).total,
         dir: rng() < 0.5 ? 1 : -1,
         speed: elderly ? 0.6 + rng() * 0.2 : 1.0 + rng() * 0.5, // grandparents walk slowly
         gait: createGait(rng() * 10),
@@ -159,6 +162,13 @@ export class City {
       npc.root.add(npc.body);
       this.scene.add(npc.root);
       this.npcs.push(npc);
+      return npc;
+    };
+    if (city.walkLoops.length) {
+      const { benches, stands } = this.crowd.spots(rng);
+      for (let i = 0; i < npcCount; i++) this.crowd.assign(makePerson(), { kind: 'walk' });
+      for (const home of stands.slice(0, 14)) this.crowd.assign(makePerson(), { kind: 'stand', home });
+      for (const home of benches) if (rng() < 0.7) this.crowd.assign(makePerson(), { kind: 'bench', home });
     }
 
     // cats wandering in the park
@@ -222,9 +232,64 @@ export class City {
   }
 
   /** A busy person is done: back to walking their route from where they are. */
+  /**
+   * A busy person is done: they walk back (normally, at their own pace) to
+   * their place, their route or their spot, then carry on (finishAct).
+   */
   endAct(n) {
+    n.kb = null;
+    n.body.rotation.x = 0;
+    const home = n.role?.home ?? this.nearestOnRoute(n);
+    n.act = { kind: 'return', x: home.x, z: home.z, t: 40 };
+  }
+
+  /** Walking a route: the nearest point of it to where they are now. */
+  nearestOnRoute(n) {
+    let best = { x: n.pos.x, z: n.pos.z }, bd = Infinity;
+    const L = n.loop.length;
+    for (let i = 0; i < L; i++) {
+      const a = n.loop[i], b = n.loop[(i + 1) % L], len = n.lengths[i] || 1e-6;
+      const t = Math.max(0, Math.min(1, ((n.pos.x - a[0]) * (b[0] - a[0]) + (n.pos.z - a[1]) * (b[1] - a[1])) / (len * len)));
+      const x = a[0] + (b[0] - a[0]) * t, z = a[1] + (b[1] - a[1]) * t, d = Math.hypot(x - n.pos.x, z - n.pos.z);
+      if (d < bd) { bd = d; best = { x, z }; }
+    }
+    return best;
+  }
+
+  /** Which segment of their route a walker is on. */
+  segmentAt(n) {
+    let s = ((n.s % n.total) + n.total) % n.total;
+    for (let i = 0; i < n.lengths.length; i++) { if (s <= n.lengths[i]) return i; s -= n.lengths[i]; }
+    return 0;
+  }
+
+  /** Crossing the road to another block's pavement, then walking its route. */
+  crossRoad(n, dt) {
+    const c = n.cross, dx = c.x - n.pos.x, dz = c.z - n.pos.z, d = Math.hypot(dx, dz);
+    if (d < 0.2) {
+      n.cross = null;
+      n.loop = c.loop;
+      Object.assign(n, this.loopInfo.get(c.loop));
+      n.s = n.lengths.slice(0, c.k).reduce((a, b) => a + b, 0);
+      n.off = { x: 0, z: 0 };
+      n.seg = undefined;
+      return;
+    }
+    n.pos = { x: n.pos.x + (dx / d) * n.speed * dt, z: n.pos.z + (dz / d) * n.speed * dt };
+    n.root.position.set(n.pos.x, this.layout.groundHeight(n.pos.x, n.pos.z), n.pos.z);
+    let h = Math.atan2(dx, dz) - n.root.rotation.y;
+    h = Math.atan2(Math.sin(h), Math.cos(h));
+    n.root.rotation.y += h * Math.min(1, dt * 6);
+    if (this.crowd.culled(n)) return;
+    stepGait(n.gait, dt, n.speed);
+    poseGait(n.body, n.gait);
+  }
+
+  /** Back at their place: pick their role up again. */
+  finishAct(n) {
     n.act = null;
     n.kb = null;
+    if (n.role?.home) { this.crowd.assign(n, n.role); return; }
     // the nearest point of their route; the sidestep offset carries them back smoothly
     let best = 0, bd = Infinity, acc = 0;
     const L = n.loop.length;
@@ -440,8 +505,18 @@ export class City {
 
     // --- pedestrians ----------------------------------------------------------
     for (const n of this.npcs) {
-      if (n.act) { this.ix.updateNpc(n, dt); continue; } // slapped, chasing, fleeing, talking, slipped
+      if (n.act) { n.root.visible = true; this.ix.updateNpc(n, dt); continue; } // slapped, chasing, fleeing, talking, walking back
+      if (n.role && n.role.kind !== 'walk') { this.crowd.updateRole(n, dt); continue; } // standing, sitting...
+      if (n.cross) { this.crossRoad(n, dt); continue; }
       n.s += n.dir * n.speed * dt;
+      // at a corner, sometimes cross to the next block (crowd.js), so walkers roam
+      const seg = this.segmentAt(n);
+      if (n.seg !== undefined && seg !== n.seg) {
+        const corner = n.loop[n.dir > 0 ? seg : n.seg];
+        const to = this.crowd.maybeCross(n, corner);
+        if (to) n.cross = { ...to, from: { ...n.pos } };
+      }
+      n.seg = seg;
       const q = alongLoop(n.loop, n.lengths, n.total, n.s, 1.2); // round the corners
       const hd = Math.atan2(q.dx * n.dir, q.dz * n.dir);
       const len = Math.hypot(q.dx, q.dz) || 1;
@@ -453,7 +528,7 @@ export class City {
       const bx = q.x + ox, bz = q.z + oz;
       const pos = { x: bx + n.off.x, z: bz + n.off.z };
       for (const o of this.npcs) {
-        if (o === n || !o.pos) continue;
+        if (o === n || !o.pos || Math.abs(o.pos.x - pos.x) > 1 || Math.abs(o.pos.z - pos.z) > 1) continue;
         const dx = pos.x - o.pos.x, dz = pos.z - o.pos.z, d = Math.hypot(dx, dz), min = PERSON_R * 2 + 0.08;
         if (d < min && d > 1e-5) { pos.x += (dx / d) * (min - d) * 0.5; pos.z += (dz / d) * (min - d) * 0.5; }
       }
@@ -465,6 +540,7 @@ export class City {
       n.pos = pos;
       n.root.position.set(pos.x, 0, pos.z);
       n.root.rotation.y = hd;
+      if (this.crowd.culled(n)) continue; // far away: hidden, not animated
       stepGait(n.gait, dt, n.speed);
       poseGait(n.body, n.gait);
       if (n.action || n.flinch > 0) this.ix.poseActor(n, dt);

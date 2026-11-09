@@ -84,6 +84,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 33. **Character interactions**: calm / aggressive traits; slap, push and talk (Sims-style pie menu on E or click, plus shortcuts F / G / T and mouse hold / double / right click) with reactions (run away, slap back and chase, push back), chat bubbles and comic bursts (SLAP!, WHUMP!, WHOOPS!); banana peels people slip on; riding cars, the bus, a scooter and a bicycle. Iso rotate moved to < and >.
 
+34. **A busier town, step 1**: 66 people with roles (roaming walkers who cross streets, people standing about, bench sitters), distance culling; after a reaction people walk back naturally to their place. Clicks work at any distance (you run over); 50 matched small-talk questions and answers; flashy hit bursts; a push knocks people over and they react.
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.

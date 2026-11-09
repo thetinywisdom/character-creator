@@ -119,6 +119,8 @@ src/city/backs.js      dresses bare backs and sides of every building (windows, 
                        back door, drain pipe, emergency stairs), found with rays
 src/city/variety.js    shared building variety: flatsAbove, roofTop, frontExtras, side, pick, between
 src/city/silhouette.js see-through people in the iso view (stencil + GreaterDepth copy)
+src/city/crowd.js      the crowd: roles (walk, stand, bench, ...), placed from the layout,
+                       distance culling, sitPose
 src/city/interact.js   character interactions: traits, slap / push / talk (pie menu), chat
                        bubbles + comic bursts, banana peels, riding vehicles
 src/city/atmosphere.js night glow (setNightGlow), snow cover (setSnowCover), rain / snow
@@ -209,6 +211,16 @@ style material writes stencil 0, a person's materials stencil 1
 shows them in iso only. The PS1 render target has a depth + stencil buffer;
 keep it. A silhouette pixel is drawn once (it marks the stencil), so overlapping
 parts tint evenly.
+
+**The crowd** (`src/city/crowd.js`). Every pedestrian has a role
+(`n.role.kind`): `walk` (walks a block's pavement and, at corners, sometimes
+crosses the road to another block's route, so walkers roam), `stand` (stands
+about, looks around), `bench` (sits on a park bench). Roles with a place carry
+`role.home` {x, z, heading}. People further than ~48 m from the player are
+hidden and not animated. After any reaction a person walks back to their
+place at their own pace (`City.endAct` → act 'return' → `City.finishAct`) and
+picks their role up again. Add a role: assign it in the City constructor
+and handle it in `Crowd.updateRole`.
 
 **Character interactions** (`src/city/interact.js`, optional for games).
 Every person has a `trait` ('Calm' | 'Aggressive', in the human schema and

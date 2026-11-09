@@ -291,6 +291,18 @@ export class Interactions {
         face = Math.atan2(-toP.x, -toP.z);
         speed = RUN;
         break;
+      case 'return': {
+        // walk back to their place at their own pace, like anyone walking
+        const dx = a.x - n.pos.x, dz = a.z - n.pos.z, d = Math.hypot(dx, dz);
+        if (d < 0.25) { city.finishAct(n); return; }
+        face = Math.atan2(dx, dz);
+        // only walk once roughly facing the way (no sliding sideways)
+        let off = face - n.root.rotation.y;
+        off = Math.atan2(Math.sin(off), Math.cos(off));
+        speed = Math.abs(off) < 0.8 ? Math.min(n.speed ?? 1.2, d * 2 + 0.3) : 0;
+        if (a.t <= 0) { city.finishAct(n); return; }
+        break;
+      }
       case 'slip':
       default:
     }
