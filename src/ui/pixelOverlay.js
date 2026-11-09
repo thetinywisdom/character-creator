@@ -42,6 +42,23 @@ function ghost(g, x, y, w, h, col = NAVY) {
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (((x + i) & 1) || ((y + j) & 1)) g.fillRect(x + i, y + j, 1, 1);
   g.fillRect(x, y, w, 1); g.fillRect(x, y + h - 1, w, 1); g.fillRect(x, y, 1, h); g.fillRect(x + w - 1, y, 1, h);
 }
+/**
+ * A button plate: solid navy (a little see-through, no dither, so the icon and
+ * label read cleanly over any background), pixel-cut corners, an ink edge and
+ * a light line along the top.
+ */
+function plate(g, x, y, w, h) {
+  g.globalAlpha = 0.86;
+  g.fillStyle = NAVY;
+  g.fillRect(x + 1, y + 1, w - 2, h - 2);
+  g.globalAlpha = 1;
+  g.fillStyle = INK;
+  g.fillRect(x + 2, y, w - 4, 1); g.fillRect(x + 2, y + h - 1, w - 4, 1);
+  g.fillRect(x, y + 2, 1, h - 4); g.fillRect(x + w - 1, y + 2, 1, h - 4);
+  g.fillRect(x + 1, y + 1, 1, 1); g.fillRect(x + w - 2, y + 1, 1, 1); g.fillRect(x + 1, y + h - 2, 1, 1); g.fillRect(x + w - 2, y + h - 2, 1, 1);
+  g.fillStyle = '#4a5370';
+  g.fillRect(x + 2, y + 1, w - 4, 1); // top light
+}
 /** A pixel disc (filled circle) of radius r at (cx, cy); dithered = see-through. */
 function disc(g, cx, cy, r, col, dithered = false) {
   g.fillStyle = col;
@@ -233,7 +250,7 @@ export class PixelOverlay {
     });
   }
   /**
-   * The action pad (ui/actionPad.js): see-through tiles exactly where the tap
+   * The action pad (ui/actionPad.js): solid navy plates exactly where the tap
    * areas are, a pixel icon (twice its size when there is room), a label and,
    * for keyboards, the key. Pressed tiles flash yellow; people buttons with
    * nobody to act on are dimmed. Rects in low-res pixels.
@@ -242,7 +259,8 @@ export class PixelOverlay {
     const g = this.g;
     for (const t of tiles) {
       const { x, y, s } = t;
-      if (t.on) { g.fillStyle = YELLOW; g.fillRect(x, y, s, s); } else ghost(g, x, y, s, s);
+      plate(g, x, y, s, s);
+      if (t.on) { g.fillStyle = YELLOW; g.fillRect(x + 1, y + 1, s - 2, s - 2); }
       g.globalAlpha = t.dim ? 0.55 : 1;
       const icon = ICONS[t.icon], n = icon.length;
       const k = s >= 32 ? 2 : 1, label = s >= 20;

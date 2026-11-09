@@ -472,7 +472,9 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   the pixel way (three navy pixels in four) inside a solid 1 px navy edge, outlined white
   words, key numbers in sky blue; the one under the pointer goes solid navy
   with yellow words and a 2 px yellow edge. **Action buttons** (ui/actionPad.js):
-  every interaction has a ghost tile exactly the size of its tap area:
+  every interaction has a tile exactly the size of its tap area: a solid navy
+  plate (86% opaque, no dither: the owner found the dithered ghost tiles hard
+  to read), pixel-cut corners, a 1 px ink edge and a light line along the top:
   USE (a skin-coloured hand, 1.25x bigger; OFF with the eject arrow while
   riding), SLAP, PUSH, TALK, FART, JUMP, PEEL, RUN (BRAKE while riding); an
   11x11 pixel icon (twice its size when the tile is 32+ px) over a

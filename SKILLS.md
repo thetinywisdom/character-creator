@@ -358,7 +358,7 @@ front within 7 m, you run over; USE takes a vehicle within 2.5 m first, else
 talks), shown with the hover ring (`ix.padTarget`). Layouts `PAD_LAYOUTS`
 Arc / Grid / Split / Bar (`actionPad.setLayout`, kept in localStorage
 `tinycity.pad`, 🎮 toolbar button). The menu (SLAP, PUSH, TALK, FART)
-and the action buttons are painted on the pixel layer as
+and the action buttons (solid navy plates since the owner found the dithered ones hard to read) are painted on the pixel layer as
 "ghost plates" (owner's pick C of the controls lab): see-through dithered
 plates, no border, white words with key numbers, the pointed-at one solid with
 yellow; the page's buttons are invisible tap areas on top (`setUiStyle({ hud:
