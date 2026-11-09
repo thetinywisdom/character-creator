@@ -169,7 +169,8 @@ export class Interactions {
     if (ev.type === 'chargeEnd') {
       const c = this.charge;
       this.charge = null;
-      if (c) this.go(c.t >= CHARGE[0] ? 'powerslap' : 'slap', c.ref);
+      // a hard slap only once the second cycle has gone all the way round to red
+      if (c) this.go(c.t >= CHARGE[0] + CHARGE[1] ? 'powerslap' : 'slap', c.ref);
       return;
     }
     if (ev.type === 'close') { this.closeMenu(); return; }

@@ -32,8 +32,9 @@ agents to build games on. **Agents: read `SKILLS.md`.**
 - **Interactions in the City:** face a person and press **E**, or click anyone you can see (you run
   over to them)
   for a pie menu: 👋 Slap, ✋ Push, 💬 Talk (shortcuts F, G, T; hold F or hold-click to
-  charge a slap: release in the green-yellow ring for a slap, keep holding
-  until it shakes red for a power slap that knocks them down; double-click to push, right-click to talk). A push knocks people over, and anyone standing next to them goes down too. Calm people run away;
+  charge a slap: a small dial over their head fills twice. Let go before the
+  second round is done for a slap; hold until it is full red and shaking for
+  a power slap that launches them; double-click to push, right-click to talk). A push knocks people over, and anyone standing next to them goes down too. Calm people run away;
   aggressive ones get up, chase you and hit back: they run faster than you,
   shout threats and can shove you off a bike or scooter, but give up after 10
   seconds or once you are 300 m away. Calm people run 300 m away along the
