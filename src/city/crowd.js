@@ -125,7 +125,15 @@ export class Crowd {
       // shop / mixedUse pick their shop type from the seed when none is given (buildings.js)
       const type = (key === 'shop' || key === 'mixedUse')
         ? o.params.shopType ?? SHOP_TYPES[Math.floor(mulberry32(o.params.seed ?? 1)() * SHOP_TYPES.length)] : key;
-      const front = (o.params.d ?? 12) / 2 + 0.9; // on the pavement just outside
+      // the real storefront (some buildings stand back from the lot edge):
+      // walk out from the lot centre to the far edge of the building's box,
+      // then stand 1.5 m out from it
+      let face = null;
+      for (let t = 0; t <= (o.params.d ?? 12) / 2 + 1; t += 0.1) {
+        const x = o.x + out[0] * t, z = o.z + out[1] * t;
+        if (this.city.nearColliders(x, z).some((c) => (c.hw > 1.5 || c.hd > 1.5) && Math.abs(x - c.x) <= c.hw && Math.abs(z - c.z) <= c.hd)) face = t;
+      }
+      const front = (face ?? (o.params.d ?? 12) / 2) + 1.5;
       shops.push({ type, x: o.x + out[0] * front, z: o.z + out[1] * front, out, along: [out[1], -out[0]], w: o.params.w ?? 8 });
     }
     return { benches, stands, shops, kobans, parks };

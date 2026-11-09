@@ -218,7 +218,9 @@ parts tint evenly.
 (`n.role.kind`): `walk` (walks a block's pavement and, at corners, sometimes
 crosses the road to another block's route, so walkers roam), `stand` (stands
 about, looks around), `bench` (sits on a park bench), `queue` (lines up outside ramen / udon /
-sushi / takoyaki shops; the front one goes in, the rest shuffle up),
+sushi / takoyaki shops, 1.5 m out from the real storefront, found by walking
+out from the lot centre to the far edge of the building's collider; the front
+one goes in, the rest shuffle up),
 `promote` (waves and calls out outside a shop, `CALLS`), `group` (2-4 chat
 in a circle; bubbles from `GROUP_TALK` when you are within ~22 m), `kid`
 (children running about the park), `police` (outside each koban; two more

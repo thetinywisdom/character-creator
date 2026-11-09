@@ -102,6 +102,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 42. **Driving feel**: vehicles gather speed gradually (the bus slowest) instead of jumping to speed; the handbrake held going straight stops the vehicle, leaving skid marks.
 
+43. **Queues at the door**: queues (and promoters) stand 1.5 m from the actual storefront, also for shops set back from the street.
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.
