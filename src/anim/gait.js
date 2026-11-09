@@ -51,6 +51,33 @@ export const WALK_STYLES = {
   'Swagger': { stride: 1.05, knee: 1.1, bounce: 1.2, arms: 1.3, lean: -0.5, sway: 3, cadence: 0.85, mode: 'swagger' },
   'Stiff toy': { stride: 0.8, knee: 1, bounce: 0, arms: 0.9, lean: 0, sway: 1.5, cadence: 1.15, mode: 'stiff' },
 };
+/**
+ * The walks and runs a character can have (the owner's picks, tuned in the
+ * Walk lab): chosen separately in the character creator (walkStyle,
+ * runStyle); townspeople get a random mix, mostly Natural.
+ */
+export const WALKS = {
+  Natural: { stride: 0.85, knee: 1.1, bounce: 1.9, arms: 1.7, lean: 1.05, sway: 1, cadence: 1.1 },
+  Brisk: { stride: 1.05, knee: 1.1, bounce: 0, arms: 1.15, lean: 1.3, sway: 1.1, cadence: 1.1 },
+  Swagger: { stride: 1.05, knee: 1.65, bounce: 2.3, arms: 1.3, lean: -0.5, sway: 0.3, cadence: 0.85, mode: 'swagger' },
+  Sneak: { stride: 0.55, knee: 1.4, bounce: 0, arms: 0, lean: 2.5, sway: 0, cadence: 0.6, mode: 'sneak' },
+};
+export const RUNS = {
+  Natural: { stride: 1, knee: 1.15, bounce: 1.8, arms: 1.5, lean: 1, sway: 1.3, cadence: 1.2 },
+  Ninja: { stride: 1.1, knee: 1.15, bounce: 0, arms: 0, lean: 2.5, sway: 0, cadence: 1.6, mode: 'ninja' },
+  Panic: { stride: 1, knee: 1.25, bounce: 1, arms: 1, lean: -0.3, sway: 1, cadence: 1.2, mode: 'panic' },
+};
+// everyone switches from walk to run quickly: from 1.6 m/s, over 0.2 m/s
+export const RUN_AT = 1.6, RUN_BLEND = 0.2;
+const tuneCache = new Map();
+/** The gait tune for a look ({ walkStyle, runStyle }), shared per combination. */
+export function tuneOf(look = {}) {
+  const w = WALKS[look.walkStyle] ? look.walkStyle : 'Natural', r = RUNS[look.runStyle] ? look.runStyle : 'Natural';
+  const key = `${w}|${r}`;
+  if (!tuneCache.has(key)) tuneCache.set(key, { walk: WALKS[w], run: RUNS[r], runAt: RUN_AT, blend: RUN_BLEND, fps: 0 });
+  return tuneCache.get(key);
+}
+
 export const RUN_STYLES = {
   'Natural sprint': {},
   'Jog': { stride: 0.8, knee: 0.8, arms: 0.7, lean: 0.5, cadence: 0.85, bounce: 0.6 },

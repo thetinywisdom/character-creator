@@ -36,12 +36,10 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   faces, round bean or loaf bodies, big paws and cheek fluff; make them all
   walk, run, sit, loaf or sleep. Cats got new options for this: Face, Body
   shape, Paw size, Cheek fluff.
-- **Walk lab (🚶 in the City bar):** try ways of walking and running on your
-  character: walk styles (Natural, Relaxed stroll, Bouncy cartoon, Power walk,
-  Sneak, Swagger, Stiff toy), run styles (Natural sprint, Jog, Cartoon wheel,
-  Panic, Ninja), sliders (stride, knee lift, bounce, arm swing, lean, hip
-  sway, cadence), when running starts and how long it blends, a choppy pixel
-  frame rate, and auto-walk with a side view. Copy settings to share them.
+- **Walk and run styles:** in the character creator pick a walk (Natural,
+  Brisk, Swagger, Sneak) and, separately, a run (Natural, Ninja, Panic);
+  townspeople get a random mix. (The Walk lab for tuning them is a dev tool:
+  add #dev to the address to show its 🚶 button.)
 - **Interactions in the City:** left-click anyone you can see to talk to them
   (you run over first); right-click them, or face them and press **E**, for
   the action menu: **1** Slap, **2** Push, **3** Talk, **4** Fart (the number

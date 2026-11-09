@@ -133,10 +133,15 @@ src/ui/catLab.js       the Cat lab view (🐱 mode): every cat version so far (s
                        with the cute options) and CUTE_CATS proposals (v6 with face / shape /
                        pawSize / cheeks); 7 = today's cat (v6 body + v2 head), one tile each,
                        all on the cat rig: Still / Walk / Run / Sit / Loaf / Sleep
-src/ui/walkLab.js      the Walk lab (City, 🚶 button): walk / run styles (WALK_STYLES,
+src/ui/walkLab.js      dev tool (hidden; #dev in the address or __cc.devTools(true)): the Walk lab (City, 🚶 button): walk / run styles (WALK_STYLES,
                        RUN_STYLES in anim/gait.js), sliders, walk-to-run blend, frame
                        rate, auto-walk side view; sets city.playerTune (the main
-                       character only); kept in localStorage, Copy settings = JSON
+                       character only, while open); kept in localStorage, Copy settings = JSON.
+                       The styles people actually have: WALKS (Natural, Brisk, Swagger,
+                       Sneak) and RUNS (Natural, Ninja, Panic) in anim/gait.js, picked
+                       separately in the creator (human walkStyle / runStyle); tuneOf(look)
+                       gives the tune; everyone runs from 1.6 m/s, blending over 0.2;
+                       townspeople get a random mix, mostly Natural
 src/ui/pixelOverlay.js the world layer of the interaction UI: floating speech, bursts,
                        charge dial painted on a canvas at the picture's pixel size;
                        main.js setUiStyle({ hud: 'pixel'|'clean' }) styles the controls

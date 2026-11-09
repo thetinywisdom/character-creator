@@ -10,7 +10,7 @@ import { Crowd, leanInto, pedalPose, sitPose } from './crowd.js';
 import { createAsset } from '../catalog/index.js';
 import { generateCityData } from './layout.js';
 import { buildCity } from './build.js';
-import { JOINT_NAMES, createGait, poseGait, stepGait } from '../anim/gait.js';
+import { JOINT_NAMES, createGait, poseGait, stepGait, tuneOf } from '../anim/gait.js';
 import { Precipitation, lampPools, setNightGlow, setSnowCover, weatherLight } from './atmosphere.js';
 import { giveHeldItem } from '../subjects/human.js';
 import { addObjectSilhouette, addSilhouette, markPerson, silhouetteMaterial } from './silhouette.js';
@@ -138,6 +138,7 @@ export class City {
       return body;
     };
     this.buildPerson = buildPerson; // for previews (comedy.js)
+    this.humanParams = params.human; // your look (walk / run styles come from it)
     this.player = { body: buildPerson(params.human, true), root: new THREE.Group(), x: 0, z: 0, heading: 0, speed: 0, gait: createGait(), height: params.human.height };
     this.player.root.add(this.player.body);
     this.scene.add(this.player.root);
@@ -156,6 +157,7 @@ export class City {
       const npc = {
         trait: look.trait ?? (rng() < 0.25 ? 'Aggressive' : 'Calm'), // how they react (interact.js)
         name: look.name ?? null, // optional; not shown for now
+        tune: tuneOf(look), // their walk and run (walkStyle / runStyle)
         body: buildPerson(look),
         look,
         root: new THREE.Group(),
@@ -330,8 +332,9 @@ export class City {
 
   /** Walk / run a person's legs at `speed` (used while they are busy). */
   stepPerson(who, dt, speed) {
-    stepGait(who.gait, dt, speed);
-    poseGait(who.body, who.gait);
+    // everyone walks and runs their own way (walkStyle / runStyle, anim/gait.js)
+    stepGait(who.gait, dt, speed, who.tune ?? null);
+    poseGait(who.body, who.gait, 'natural', who.tune ?? null);
   }
 
   /** A busy person is done: back to walking their route from where they are. */
@@ -435,8 +438,8 @@ export class City {
     h = Math.atan2(Math.sin(h), Math.cos(h));
     n.root.rotation.y += h * Math.min(1, dt * 6);
     if (this.crowd.culled(n)) return;
-    stepGait(n.gait, dt, pace);
-    poseGait(n.body, n.gait);
+    stepGait(n.gait, dt, pace, n.tune);
+    poseGait(n.body, n.gait, 'natural', n.tune);
   }
 
   /** Back at their place: pick their role up again. */
@@ -657,8 +660,10 @@ export class City {
       p.z += (mz / len) * p.speed * dt;
     }
     this.collide(p);
-    stepGait(p.gait, dt, p.speed, this.playerTune ?? null);
-    poseGait(p.body, p.gait, this.playerGait ?? 'natural', this.playerTune ?? null);
+    // your walk and run: from the character creator (the Walk lab overrides while it is open)
+    p.tune = this.playerTune ?? tuneOf(this.humanParams);
+    stepGait(p.gait, dt, p.speed, p.tune);
+    poseGait(p.body, p.gait, this.playerGait ?? 'natural', p.tune);
     this.ix.poseActor(p, dt); // a slap or push swing
     // jumping (Space): up, a tuck of the legs in the air, and down again
     if (p.jumpY > 0 || p.vy) {
@@ -733,8 +738,8 @@ export class City {
       n.root.rotation.y = hd;
       n.root.rotation.z = leanInto(n, hd, pace, dt, 0.05, 0.2);
       if (this.crowd.culled(n)) continue; // far away: hidden, not animated
-      stepGait(n.gait, dt, pace);
-      poseGait(n.body, n.gait);
+      stepGait(n.gait, dt, pace, n.tune);
+      poseGait(n.body, n.gait, 'natural', n.tune);
       if (n.action || n.flinch > 0 || n.comic) this.ix.poseActor(n, dt);
     }
 

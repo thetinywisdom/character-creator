@@ -1,3 +1,4 @@
+// A dev tool (hidden: open the page with #dev, or __cc.devTools(true)).
 // The Walk lab: try different ways of walking and running on the main
 // character, live in the City. Pick a walk and a run style, then fine-tune
 // with sliders; auto-walk shows the character from the side, walking or
@@ -22,7 +23,7 @@ export class WalkLab {
     this.panel = panel;
     this.getCity = getCity;
     try { this.s = { ...DEFAULT, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') }; } catch { this.s = { ...DEFAULT }; }
-    button.onclick = () => { panel.hidden = !panel.hidden; button.classList.toggle('on', !panel.hidden); if (panel.hidden) this.set({ auto: 'off' }); };
+    button.onclick = () => { panel.hidden = !panel.hidden; button.classList.toggle('on', !panel.hidden); if (panel.hidden) this.set({ auto: 'off' }); else this.apply(); };
     this.render();
     this.apply();
   }
@@ -41,7 +42,8 @@ export class WalkLab {
     this.apply();
     this.render();
   }
-  apply() { const c = this.getCity(); if (c) c.playerTune = this.tune(); }
+  /** While the panel is open its tune drives your character; closed, your character's own walk / run do. */
+  apply() { const c = this.getCity(); if (c) c.playerTune = this.panel.hidden ? null : this.tune(); }
   get auto() { return this.panel.hidden ? 'off' : this.s.auto; }
 
   render() {

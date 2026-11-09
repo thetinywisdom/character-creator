@@ -18,7 +18,7 @@ import { generateCityData } from './city/layout.js';
 import { setNightGlow, setSnowCover } from './city/atmosphere.js';
 import { SHOP_TYPES } from './city/buildings.js';
 import { Creator } from './creator/Creator.js';
-import { RUN_SPEED, WALK_SPEED, createGait, poseGait, stepGait } from './anim/gait.js';
+import { RUN_SPEED, WALK_SPEED, createGait, poseGait, stepGait, tuneOf } from './anim/gait.js';
 import { CAT_RUN_SPEED, CAT_WALK_SPEED, createCatGait, poseCat, stepCatGait } from './anim/catGait.js';
 import { saveFile, openTextFile } from './lib/saveFile.js';
 import { CLOTH_COLORS, PALETTE } from './styles/palette.js';
@@ -249,6 +249,10 @@ window.addEventListener('keydown', (e) => {
 // ---------------------------------------------------------------------------
 const MODE = { catalog: 'catalog', item: 'catalog', creator: 'characters', city: 'city', catlab: 'catlab' };
 let catLab = null; // the Cat lab (ui/catLab.js), made the first time you open it
+/** Dev tools (the Walk lab button): on with #dev in the address, or __cc.devTools(true). */
+function devTools() {
+  try { return location.hash === '#dev' || localStorage.getItem('tinycity.dev') === '1'; } catch { return location.hash === '#dev'; }
+}
 function setView(view) {
   state.view = view;
   const mode = MODE[view];
@@ -258,6 +262,7 @@ function setView(view) {
   creator.show(view === 'creator');
   document.querySelectorAll('.city-only').forEach((b) => { b.hidden = view !== 'city'; });
   if (view !== 'city') document.querySelector('#walkLab').hidden = true;
+  if (!devTools()) document.querySelectorAll('.dev-only').forEach((b) => { b.hidden = true; }); // dev tools stay out of players' way
   cityInput.active = view === 'city';
   joystick.hidden = !(view === 'city' && (matchMedia('(pointer: coarse)').matches || window.innerWidth < 900));
   overlay.hidden = view !== 'city';
@@ -422,9 +427,10 @@ function loop(time) {
     preview(itemCell, panelRect(itemEl, W, H), H);
   }
   else if (state.view === 'creator') {
-    stepGait(gait, dt, state.anim === 'Run' ? RUN_SPEED : state.anim === 'Walk' ? WALK_SPEED : 0);
+    const tune = tuneOf(params.human); // the walk and run chosen in the creator
+    stepGait(gait, dt, state.anim === 'Run' ? RUN_SPEED : state.anim === 'Walk' ? WALK_SPEED : 0, tune);
     if (gait.lock != null) gait.phase = gait.lock * Math.PI * 2; // debug: freeze at a cycle fraction
-    for (const p of humanCell.pivots) { const o = p.children[0]; if (o?.name === 'human') poseGait(o, gait); }
+    for (const p of humanCell.pivots) { const o = p.children[0]; if (o?.name === 'human') poseGait(o, gait, 'natural', tune); }
     preview(humanCell, creator.previewRect(W, H), H);
   } else if (state.view === 'catlab' && catLab) {
     try { catLab.render(ps1, dt, W, H); } catch (err) { if (!loop.warnedCat) { loop.warnedCat = true; console.error('cat lab', err); } }
@@ -453,6 +459,8 @@ Object.assign(window, {
      * 'slap' | 'push' | 'fall', n 0-2, shown at time t; null clears it.
      */
     COMEDY,
+    /** Show or hide the dev tools (the Walk lab button in the City); remembered in this browser. */
+    devTools: (on = true) => { try { localStorage.setItem('tinycity.dev', on ? '1' : '0'); } catch { /* fine */ } setView(state.view); },
     /** Style the interaction UI: { world: 'pixel' | 'html', hud: 'pixel' | 'clean' }. */
     setUiStyle,
     comedy: (kind, n = 0, t = 0) => {

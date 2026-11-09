@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { RUNS, WALKS } from '../anim/gait.js';
 import { ellipsoid, seg } from '../lib/shapes.js';
 import { CLOTH_COLORS, HAIR_COLORS, SKIN_TONES } from '../styles/palette.js';
 import { measure } from './human/frame.js';
@@ -36,6 +37,8 @@ export const human = {
     // body
     bodyType:      { group: 'Body', value: 'Man', options: BODY_TYPES, label: 'Body type' },
     trait:         { group: 'Body', value: 'Calm', options: ['Calm', 'Aggressive'], label: 'Trait (how they react)' },
+    walkStyle:     { group: 'Body', value: 'Natural', options: Object.keys(WALKS), label: 'Walk' },
+    runStyle:      { group: 'Body', value: 'Natural', options: Object.keys(RUNS), label: 'Run' },
     build:         { group: 'Body', value: 'Normal', options: BUILDS, label: 'Build' },
     headsTall:     { group: 'Body', value: 7.5,   min: 2.5,   max: 7.5,  step: 0.1,   label: 'Heads tall' },
     height:        { group: 'Body', value: 1.6,   min: 1.0,   max: 2.0,  step: 0.01,  label: 'Height (m)' },
@@ -110,6 +113,8 @@ export const human = {
     const out = {
       bodyType,
       trait: rng() < 0.25 ? 'Aggressive' : 'Calm', // about one in four
+      walkStyle: pick(['Natural', 'Natural', 'Natural', 'Natural', 'Natural', 'Brisk', 'Brisk', 'Swagger', 'Sneak']), // mostly Natural
+      runStyle: pick(['Natural', 'Natural', 'Natural', 'Natural', 'Ninja', 'Panic']),
       build: pick(['Normal', 'Normal', 'Normal', 'Normal', 'Skinny', 'Skinny', 'Bulky', 'Fat', 'Fat']),
       headsTall: range(7, 7.5, 0.1),
       height: woman ? range(1.5, 1.75, 0.01) : range(1.62, 1.9, 0.01),
