@@ -129,6 +129,8 @@ const propAssets = PROP_GROUPS.flatMap((group) => group.props.map((prop) => ({
   build(p, style) {
     const obj = prop.build(p, style, p); // crosswalk reads p.length
     if (KNOCKABLE.has(prop.id)) obj.userData.knock = true; // a vehicle knocks it flying (city/knock.js)
+    // every vehicle placed in a town can be ridden (City takes it out of the merged town)
+    if (group.label === 'Vehicles') obj.userData.rideable = prop.id === 'bicycle' || prop.id === 'scooter' ? prop.id : 'car';
     const c = PROP_COLLIDERS[prop.id];
     const box = c && (c.hw !== undefined ? c : c[p.variant]);
     return withColliders(obj, box ? [box] : []);

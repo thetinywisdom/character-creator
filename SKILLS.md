@@ -264,8 +264,10 @@ sitting on bicycles and scooters in the traffic (`cars` with `rider: true`,
 `bike`, `riderBody`, `riderLook`). Every vehicle can be ridden: take one from
 someone and `City.ejectDriver(c)` makes them jump out on the driver's side,
 shout and run away scared (a new walker); parked cars (carports, petrol
-stations) and bicycles outside shops and the koban are tagged
-`userData.rideable` and taken out of the merged town (`takeRideables`) into
+stations), bicycles outside shops and the koban, and every catalogue vehicle
+placed in a town (vehicle.car / bus / bicycle / scooter, e.g. the scooters
+and bikes outside shops) are tagged `userData.rideable` ('car' | 'bicycle' |
+'scooter') and taken out of the merged town (`takeRideables`) into
 `cars` as parked. A rider who falls is thrown clear of the bike and lies on
 the road, then is back in the saddle when the bike rights.
 Bus stop: a shelter at the kerb on the bus route (only its glass back is

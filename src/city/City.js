@@ -902,7 +902,7 @@ function takeRideables(city, group, colliders) {
     const pos = new THREE.Vector3(), quat = new THREE.Quaternion(), scl = new THREE.Vector3();
     o.matrixWorld.decompose(pos, quat, scl);
     if (pos.y > 0.5) continue; // up in a car park: stays put
-    const kind = o.userData.rideable, size = o.userData.size ?? (kind === 'car' ? { hw: 0.9, hd: 2.3 } : { hw: 0.3, hd: 0.9 });
+    const kind = o.userData.rideable, size = o.userData.size ?? (kind === 'car' ? { hw: 0.9, hd: 2.3 } : kind === 'scooter' ? { hw: 0.45, hd: 0.95 } : { hw: 0.3, hd: 0.9 });
     o.parent.remove(o);
     const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(quat);
     const heading = Math.atan2(fwd.x, fwd.z);
@@ -913,7 +913,7 @@ function takeRideables(city, group, colliders) {
     for (const c of colliders) {
       if (Math.hypot(c.x - pos.x, c.z - pos.z) < 0.6 && Math.max(c.hw, c.hd) < size.hd + 0.6) c.down = true;
     }
-    const car = { obj, size, parked: true, fx: Math.sin(heading), fz: Math.cos(heading), speed: 0, ...(kind === 'bicycle' ? { bike: 'bicycle' } : {}) };
+    const car = { obj, size, parked: true, fx: Math.sin(heading), fz: Math.cos(heading), speed: 0, ...(kind === 'bicycle' || kind === 'scooter' ? { bike: kind } : {}) };
     out.push(car);
   }
   return out;
