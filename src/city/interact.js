@@ -490,6 +490,7 @@ export class Interactions {
     this.closeMenu();
     c.ridden = true;
     c.parked = false;
+    c.fallen = null; c.obj.rotation.z = 0; // picked up if it had fallen over
     p.riding = c;
     c.drive = { speed: 0, heading: c.obj.rotation.y, travel: c.obj.rotation.y };
     p.body.visible = !!c.bike; // inside a car you are hidden; on a bike you sit on it
@@ -550,12 +551,21 @@ export class Interactions {
     // collide: two circles along the vehicle against buildings, props, other vehicles
     const r = c.size.hw, off = Math.max(0, c.size.hd - r);
     city.knock.hitBy(nx, nz, fx, fz, dv.speed, r, off); // boards, planters, bikes, bins fly (before they could stop us)
-    let hit = false;
+    let hit = false, crash = null;
     for (const k of [-1, 1]) {
       const q = { x: nx + fx * off * k, z: nz + fz * off * k };
       const bx = q.x, bz = q.z;
       city.pushOut(q, r);
-      for (const o of city.cars) if (o !== c) city.pushOutOfCar(q, r, o);
+      for (const o of city.cars) {
+        if (o === c) continue;
+        const ox = q.x, oz = q.z;
+        city.pushOutOfCar(q, r, o);
+        if (q.x === ox && q.z === oz || o.fallen) continue;
+        // a real knock (closing speed, either of us moving), not a nudge
+        const ov = o.parked ? 0 : (o.speed ?? 0);
+        const rel = Math.hypot(tx * dv.speed - (o.fx ?? 0) * ov, tz * dv.speed - (o.fz ?? 0) * ov);
+        if (rel > 2.5) crash = { o, rel };
+      }
       const px = q.x - bx, pz = q.z - bz;
       if (Math.hypot(px, pz) > 1e-4) {
         nx += px; nz += pz;
@@ -563,6 +573,23 @@ export class Interactions {
       }
     }
     if (hit) dv.speed *= 0.4;
+    if (crash) {
+      // anyone on a bike in a crash comes off: you (on a bicycle or scooter),
+      // and a bicycle or scooter you hit (their rider too)
+      const { o, rel } = crash;
+      if (o.bike || o.rider) this.topple(o, Math.sign((o.obj.position.x - nx) * (o.fz ?? 1) - (o.obj.position.z - nz) * (o.fx ?? 0)) || 1);
+      if (c.bike) {
+        this.say(this.midOfPlayer(), pick(['CRASH!', 'WHAM!', 'KRUNCH!']), 'burst');
+        this.shake = 0.45;
+        const v = Math.min(5, rel * 0.6);
+        pos.set(nx, pos.y, nz);
+        this.getOff();
+        this.topple(c, 1);
+        p.kb = { x: tx * v, z: tz * v, t: 0.4 };
+        p.act = { kind: 'slip', t: 2.2, total: 2.2 };
+        return;
+      }
+    }
     // knock over people in the way
     if (Math.abs(dv.speed) > 1.5) {
       for (const n of city.npcs) {
@@ -607,6 +634,26 @@ export class Interactions {
   }
 
   /** Sit the player on a bike: hips on the seat, knees up, hands on the bars. */
+  /** A bicycle or scooter falls on its side (a rider on it falls with it), and gets up after a while. */
+  topple(c, side) {
+    if (c.fallen || !(c.bike || c.rider)) return;
+    c.fallen = { t: 0, side, dur: c.rider ? 3.5 : 4.5 };
+    c.speed = 0;
+    if (c.rider) {
+      const at = () => c.obj.position.clone().add(new THREE.Vector3(0, 1.4, 0));
+      this.say(at, pick(['CRASH!', 'WHAM!', 'KRUNCH!']), 'burst');
+      this.say(at, pick(SHOUTS[Math.random() < 0.5 ? 'Aggressive' : 'Calm']), 'shout', 2.4, 0.6, pick(NAMES));
+    }
+  }
+  /** Fallen bikes lie down, then stand back up (traffic riders ride on). */
+  updateFallen(c, dt) {
+    const f = c.fallen;
+    f.t += dt;
+    const down = f.t < f.dur ? Math.min(1, f.t / 0.25) : Math.max(0, 1 - (f.t - f.dur) / 0.4);
+    c.obj.rotation.z = f.side * 1.4 * (down < 1 && f.t < f.dur ? down * down : down);
+    if (f.t >= f.dur + 0.4) { c.fallen = null; c.obj.rotation.z = 0; }
+  }
+
   sitOnBike(p, c) {
     const j = joints(p.body);
     const hipY = j.legL?.position.y ?? 0.85;

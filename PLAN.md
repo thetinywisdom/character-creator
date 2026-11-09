@@ -98,6 +98,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 40. **Knock things flying**: sandwich boards, planters, parked bicycles and park bins hit by your vehicle fly off (CLONK!), land on their side, blink, go POOF and pop back at their place 5 s after the hit.
 
+41. **Bike crashes**: a crash on a bicycle or scooter throws you off (CRASH!); a bicycle or scooter you hit falls over with its rider, who shouts and then rides on.
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.

@@ -426,6 +426,9 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   THWACK!); the prop tumbles, bounces once, lies on its side, blinks, and
   vanishes with a POOF! burst and a puff of off-white cubes; it pops back
   in at its place with a small overshoot.
+- **Bike crashes:** CRASH! / WHAM! / KRUNCH! burst and a bigger shake; the
+  bike tips onto its side with the rider still in the saddle pose, lies
+  there a few seconds, then swings back upright.
 - **Speech bubbles:** pixel font (Silkscreen), off-white with a thick ink
   border, a hard drop shadow, a tail pointing at the speaker, a small name
   tag (YOU for the player); they pop in with a bounce and fade after ~3 s.

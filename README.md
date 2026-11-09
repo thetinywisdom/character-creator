@@ -41,7 +41,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   gets you on; drive with WASD; hold Shift or the right
   mouse button for the handbrake and steer to drift; E to get off. Hit a
   sandwich board, planter, parked bike or bin and it goes flying, blinks and
-  goes POOF, then pops back 5 seconds later.
+  goes POOF, then pops back 5 seconds later. Crash on a bicycle or scooter
+  and you fly off; hit someone riding one and they fall over too.
 
 ## Docs
 

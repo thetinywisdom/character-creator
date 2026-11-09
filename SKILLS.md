@@ -252,7 +252,10 @@ axle; traffic tows `c.rear` behind a front axle that follows the lane, so the
 bus swings round corners; small props tagged `userData.knock` are taken out
 of the merged town by `Knockables` and fly off when your vehicle hits them
 (`city.knock.hitBy`), their collider gets `down` so `pushOut` skips it until
-they pop back; Shift or a held right button is the handbrake: the vehicle
+they pop back; a crash with another vehicle (closing speed over 2.5 m/s)
+throws you off a bicycle or scooter (`getOff` + slip), and any bicycle or
+scooter in it falls over, its rider too (`ix.topple(c, side)`, `c.fallen`,
+`ix.updateFallen` stands it back up; getting on picks it up); Shift or a held right button is the handbrake: the vehicle
 slows and loses grip, `drive.travel` lags `drive.heading`, so it drifts and
 leaves skid marks; traffic cars, the bus, a scooter and a bicycle parked by the
 start; WASD drives, people hit fall over, you get out on the driver's side

@@ -725,6 +725,7 @@ export class City {
 
     // --- cars on the ring road -------------------------------------------------
     for (const c of this.cars) {
+      if (c.fallen) { this.ix.updateFallen(c, dt); if (c.fallen) continue; } // knocked over (interact.js)
       if (c.ridden || c.parked) continue; // driven by you, or left where you parked it
       // brake for anything in the lane just ahead: the player, pedestrians,
       // other cars (a car waiting over 3 s ignores other cars, so two cars can
