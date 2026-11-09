@@ -228,7 +228,9 @@ has `n.act` ({ kind: 'wait' | 'talk' | 'retaliate' | 'chase' | 'flee' |
 'slip' }) and is moved by `ix.updateNpc`; `City.endAct(n)` puts them back
 on their route. Bubbles (`ix.bubbles`: chat and comic bursts with an
 `anchor()` position) and the pie menu (`ix.menu`) are drawn by the viewer as
-page elements; a game can draw its own. Change the lines in `LINES`, `SHOUTS`,
+page elements; a game can draw its own. Small talk lives in `src/city/smalltalk.js` (`SMALL_TALK`: 50
+[question, calm answer, aggressive answer]; every answer fits its question).
+Change the lines there and in `SHOUTS`,
 `BURSTS` and the bubble `NAMES`. Bubble kinds: 'talk', 'shout', 'burst' ('confused' draws a '?' box, unused); `ix.shake` is a screen-shake amount the viewer applies.
 
 **Night and weather.** Night is the `Night` lighting preset (`night: true`):

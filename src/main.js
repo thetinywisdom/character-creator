@@ -303,7 +303,7 @@ function drawOverlay(c, W, H) {
         el.className = 'qbox';
         el.textContent = '?';
       } else {
-        el.className = `bubble ${b.kind}`;
+        el.className = `bubble ${b.kind}${b.side ? ` ${b.side}` : ''}`;
         el.innerHTML = `${b.name ? `<small>${b.name}</small>` : ''}<span></span>`;
         el.querySelector('span').textContent = b.text;
       }

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { JOINT_NAMES } from '../anim/gait.js';
+import { SMALL_TALK } from './smalltalk.js';
 
 // Character interactions and player tricks in the walkable town (City.js).
 //
@@ -20,11 +21,6 @@ import { JOINT_NAMES } from '../anim/gait.js';
 
 export const TRAITS = ['Calm', 'Aggressive'];
 
-const LINES = {
-  player: ['Hi there!', 'Nice weather today!', 'Seen any cats around?', 'Busy day?', 'Love this street.', 'Where is the station?', 'Nice shirt!'],
-  Calm: ['Hello!', "Isn't it lovely?", 'Have a nice day!', 'Oh, hi!', 'Just heading home.', 'The bakery here is great.', 'Thank you!'],
-  Aggressive: ['What do you want?', 'Hmph.', "Don't bother me.", 'Make it quick.', "I'm busy!", 'Whatever.', 'Do I know you?'],
-};
 // what a person shouts after being hit (censored, comic-style)
 const SHOUTS = {
   Aggressive: ['You motherf**ker!', "Oh, you're DEAD!", 'Say that again!', 'What the h*ll?!', 'You wanna go?!', '#@%&!!'],
@@ -68,8 +64,9 @@ export class Interactions {
 
   // --- bubbles -------------------------------------------------------------------
   /** kind: 'talk' | 'shout' (red, angry) | 'confused' (a ? box) | 'burst' (SLAP!). name: a tag on the bubble. */
-  say(anchor, text, kind = 'talk', life = kind === 'burst' ? 0.9 : kind === 'confused' ? 0.9 : 3.2, delay = 0, name = null) {
-    this.bubbles.push({ anchor, text, kind, name, age: -delay, life, id: Math.random() });
+  say(anchor, text, kind = 'talk', life = kind === 'burst' ? 0.9 : kind === 'confused' ? 0.9 : 3.2, delay = 0, name = null, side = null) {
+    // side: 'left' / 'right' leans a talk bubble away from the other speaker's, so they don't overlap
+    this.bubbles.push({ anchor, text, kind, name, side, age: -delay, life, id: Math.random() });
   }
   nameOf(n) { return (n.name ??= NAMES[Math.floor(Math.random() * NAMES.length)]); }
   headOf(n) { return () => n.root.position.clone().add(new THREE.Vector3(0, (n.look?.height ?? 1.7) + 0.3, 0)); }
@@ -199,8 +196,10 @@ export class Interactions {
     p.action = { kind, t: 0, dur: kind === 'talk' ? 0.01 : 0.4 };
     const agg = n.trait === 'Aggressive';
     if (kind === 'talk') {
-      this.say(this.playerHead(), pick(LINES.player), 'talk', 3.2, 0, 'YOU');
-      this.say(this.headOf(n), pick(LINES[agg ? 'Aggressive' : 'Calm']), 'talk', 3.2, 1.0, this.nameOf(n));
+      // a question and an answer that fits it (smalltalk.js), from a calm or a grumpy person
+      const [q, calm, grumpy] = pick(SMALL_TALK);
+      this.say(this.playerHead(), q, 'talk', 3.4, 0, 'YOU', 'left');
+      this.say(this.headOf(n), agg ? grumpy : calm, 'talk', 3.2, 1.1, this.nameOf(n), 'right');
       n.act = { kind: 'talk', t: 4.2 };
       return;
     }
