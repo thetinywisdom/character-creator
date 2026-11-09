@@ -29,6 +29,12 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   rotate); in the iso view people, cats and cars behind buildings show as
   silhouettes (you in yellow). WASD / arrows, Shift to run (it builds up speed), Space to jump, a joystick
   on touch screens.
+- **Walk lab (🚶 in the City bar):** try ways of walking and running on your
+  character: walk styles (Natural, Relaxed stroll, Bouncy cartoon, Power walk,
+  Sneak, Swagger, Stiff toy), run styles (Natural sprint, Jog, Cartoon wheel,
+  Panic, Ninja), sliders (stride, knee lift, bounce, arm swing, lean, hip
+  sway, cadence), when running starts and how long it blends, a choppy pixel
+  frame rate, and auto-walk with a side view. Copy settings to share them.
 - **Interactions in the City:** left-click anyone you can see to talk to them
   (you run over first); right-click them, or face them and press **E**, for
   the action menu: **1** Slap, **2** Push, **3** Talk, **4** Fart (the number

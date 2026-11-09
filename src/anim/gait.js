@@ -35,6 +35,29 @@ const pos = (x) => Math.max(0, x);
 const D = Math.PI / 180;
 
 export const WALK_SPEED = 1.6; // m/s
+
+/**
+ * Walk lab presets (City: the Walk lab panel tunes the main character).
+ * stride, knee, arms, lean, sway, cadence: 1 = the natural cycle; bounce: extra
+ * up-and-down (0 = none); mode: a special way of moving (sneak, power,
+ * swagger, stiff for walking; wheel, panic, ninja for running).
+ */
+export const WALK_STYLES = {
+  'Natural': {},
+  'Relaxed stroll': { stride: 0.85, knee: 0.8, bounce: 0.3, arms: 0.7, lean: 0.5, sway: 1.3, cadence: 0.85 },
+  'Bouncy cartoon': { stride: 1.15, knee: 1.5, bounce: 2.6, arms: 1.6, lean: 0.8, sway: 1.1, cadence: 1.1 },
+  'Power walk': { stride: 1.25, knee: 1, bounce: 0.5, arms: 1.6, lean: 1.8, sway: 1.2, cadence: 1.3, mode: 'power' },
+  'Sneak': { stride: 0.7, knee: 1.3, bounce: 0, arms: 0.4, lean: 1.4, sway: 0.6, cadence: 0.7, mode: 'sneak' },
+  'Swagger': { stride: 1.05, knee: 1.1, bounce: 1.2, arms: 1.3, lean: -0.5, sway: 3, cadence: 0.85, mode: 'swagger' },
+  'Stiff toy': { stride: 0.8, knee: 1, bounce: 0, arms: 0.9, lean: 0, sway: 1.5, cadence: 1.15, mode: 'stiff' },
+};
+export const RUN_STYLES = {
+  'Natural sprint': {},
+  'Jog': { stride: 0.8, knee: 0.8, arms: 0.7, lean: 0.5, cadence: 0.85, bounce: 0.6 },
+  'Cartoon wheel': { stride: 1, knee: 1, arms: 1.8, lean: 1.4, cadence: 1.45, mode: 'wheel' },
+  'Panic': { stride: 1, knee: 1.25, arms: 1, lean: -0.3, cadence: 1.2, bounce: 1, mode: 'panic' },
+  'Ninja': { stride: 1.15, knee: 1.1, arms: 1, lean: 2.2, cadence: 1.15, mode: 'ninja' },
+};
 export const RUN_SPEED = 4.2;
 
 // --- keyframes: [cycle fraction, degrees]; hip & knee flexion positive,
@@ -95,16 +118,18 @@ export function createGait(phase = 0) {
 }
 
 /** Advance the cycle for an entity moving at `speed` m/s. */
-export function stepGait(g, dt, speed) {
+export function stepGait(g, dt, speed, tune = null) {
   const amountTarget = clamp01(speed / 0.6);
-  const runTarget = clamp01((speed - 2.2) / 1.6);
+  // when running starts and how long walk and run are blended (Walk lab: runAt, blend)
+  const runTarget = clamp01((speed - (tune?.runAt ?? 2.2)) / (tune?.blend ?? 1.6));
   const k = Math.min(1, dt * 6);
   g.amount += (amountTarget - g.amount) * k;
   g.run += (runTarget - g.run) * k;
   // cadence: about 1.8 steps/s walking, 4 running (a full cycle is two steps)
   const refSpeed = lerp(WALK_SPEED, RUN_SPEED, g.run);
   const stride = Math.max(0.55, Math.min(1.25, speed / refSpeed));
-  const omega = lerp(5.6, 12.6, g.run) * stride;
+  const cadence = tune ? lerp(tune.walk?.cadence ?? 1, tune.run?.cadence ?? 1, g.run) : 1;
+  const omega = lerp(5.6, 12.6, g.run) * stride * cadence;
   if (g.amount > 0.01) g.phase += omega * dt;
   g.t += dt;
 }
@@ -139,20 +164,38 @@ function lowestSole(body, j) {
   return min === Infinity ? 0 : min;
 }
 
-function poseNatural(body, g) {
+function poseNatural(body, g, tune = null) {
   const j = jointsOf(body);
   const a = g.amount, run = g.run;
-  const u = g.phase / (Math.PI * 2); // cycle fraction, left heel strike at 0
+  // a tune (Walk lab): walk and run settings, blended like the poses
+  const W = tune?.walk ?? {}, R = tune?.run ?? {};
+  const tv = (k, d = 1) => lerp(W[k] ?? d, R[k] ?? d, run);
+  const wm = W.mode ?? 'natural', rm = R.mode ?? 'natural';
+  const wOf = (mode) => (wm === mode ? 1 - run : 0) + (rm === mode ? run : 0); // how much a special mode applies
+  // choppy frame rate (pixel feel): the pose only moves on whole frames
+  let ph = g.phase;
+  if (tune?.fps) { g.held ??= { t: -1, phase: 0 }; if (g.t - g.held.t >= 1 / tune.fps || g.t < g.held.t) { g.held = { t: g.t, phase: g.phase }; } ph = g.held.phase; }
+  const u = ph / (Math.PI * 2); // cycle fraction, left heel strike at 0
   const legAt = (key, uu) => lerp(sample(WALK[key], uu), sample(RUN[key], uu), run);
+  const stride = tv('stride'), kneeK = tv('knee'), armK = tv('arms');
+  const crouch = wOf('sneak'), wheel = wOf('wheel'), stiff = wOf('stiff');
   for (const [side, uu, opp] of [['L', u, u + 0.5], ['R', u + 0.5, u]]) {
-    const hip = legAt('hip', uu), knee = legAt('knee', uu), ankle = legAt('ankle', uu);
+    let hip = legAt('hip', uu) * stride, knee = legAt('knee', uu) * kneeK * (1 - 0.85 * stiff), ankle = legAt('ankle', uu) * stride;
+    if (crouch) { hip += 22 * crouch; knee += 38 * crouch; ankle += 12 * crouch; } // knees bent, low and careful
+    if (wheel) { const q = Math.PI * 2 * uu; hip = lerp(hip, 55 * Math.cos(q) + 20, wheel); knee = lerp(knee, 75 + 55 * Math.sin(q), wheel); ankle = lerp(ankle, -10 * Math.sin(q), wheel); } // legs go round like a wheel
     if (j[`leg${side}`]) j[`leg${side}`].rotation.x = -hip * D * a;
     if (j[`shin${side}`]) j[`shin${side}`].rotation.x = knee * D * a;
     if (j[`foot${side}`]) j[`foot${side}`].rotation.x = -ankle * D * a;
     // arms swing with the opposite leg: forward when that leg's heel strikes
     const c = Math.cos(Math.PI * 2 * opp);
-    const shoulder = lerp(3 + 15 * c, 10 + 50 * c, run);   // running: big swing, forward ~60°, back ~40°
-    const elbow = lerp(14 + 10 * c, 90 + 20 * c, run);     // forward arm bent more than the back arm
+    let shoulder = lerp(3 + 15 * c * armK, 10 + 50 * c * armK, run);   // running: big swing, forward ~60°, back ~40°
+    let elbow = lerp(14 + 10 * c, 90 + 20 * c, run);     // forward arm bent more than the back arm
+    const power = wOf('power'), panic = wOf('panic'), ninja = wOf('ninja'), swag = wOf('swagger');
+    if (power) { elbow = lerp(elbow, 90, power); shoulder = lerp(shoulder, 10 + 45 * c, power); }               // elbows at 90°, pumping
+    if (crouch) { elbow = lerp(elbow, 70, crouch); shoulder = lerp(shoulder, 25 + 6 * c, crouch); }              // hands up in front, tiptoeing
+    if (panic) { const fl = Math.sin(g.t * 22 + (side === 'L' ? 0 : 2)); shoulder = lerp(shoulder, 150 + 25 * fl, panic); elbow = lerp(elbow, 30 + 30 * fl, panic); } // arms waving over the head
+    if (ninja) { shoulder = lerp(shoulder, -55, ninja); elbow = lerp(elbow, 5, ninja); }                           // arms straight out behind
+    if (stiff) elbow = lerp(elbow, 0, stiff);                                                                       // arms like a toy's
     const arm = j[`arm${side}`];
     if (arm) {
       arm.rotation.x = -shoulder * D * a;
@@ -160,7 +203,8 @@ function poseNatural(body, g) {
       // chest on the forward swing (never past the centre line)
       if (arm.userData.baseZ === undefined) arm.userData.baseZ = arm.rotation.z;
       const sx = side === 'L' ? 1 : -1;
-      arm.rotation.z = arm.userData.baseZ * (1 - 0.45 * run * a) - sx * 7 * D * pos(c) * run * a;
+      arm.rotation.z = arm.userData.baseZ * (1 - 0.45 * run * a) - sx * 7 * D * pos(c) * run * a
+        + sx * 18 * D * swag * a + sx * 35 * D * panic * a;                                                          // swagger: arms out a little
     }
     if (j[`fore${side}`]) j[`fore${side}`].rotation.x = -elbow * D * a;
   }
@@ -171,12 +215,14 @@ function poseNatural(body, g) {
   //  - the head turns back against the shoulders so it keeps facing ahead,
   //    and tilts up a little against the lean so the eyes stay on the path
   const c0 = Math.cos(Math.PI * 2 * u); // 1 at left heel strike
-  const pelvis = lerp(4, 7, run) * D * a;
-  const shoulders = lerp(4, 9, run) * D * a;
-  const lean = lerp(2, 16, run) * D * a;
-  body.rotation.x = 5 * D * run * a;          // plus some whole-body lean from the ankles
+  const sway = tv('sway');
+  const swagT = wOf('swagger'), stiffT = wOf('stiff');
+  const pelvis = lerp(4, 7, run) * D * a * sway;
+  const shoulders = lerp(4, 9, run) * D * a * sway;
+  const lean = (lerp(2, 16, run) * tv('lean') + 14 * crouch) * D * a;
+  body.rotation.x = 5 * D * run * a * tv('lean');  // plus some whole-body lean from the ankles
   body.rotation.y = -pelvis * c0;             // left hip forward at left heel strike
-  body.rotation.z = 1.5 * D * Math.sin(Math.PI * 2 * u) * a * (1 - run);
+  body.rotation.z = (1.5 + 4 * swagT + 6 * stiffT) * D * Math.sin(Math.PI * 2 * u) * a * (1 - run) * Math.max(1, sway * 0.6); // side sway (a waddle for the toy)
   if (j.spine) {
     j.spine.rotation.x = lean;
     j.spine.rotation.y = (pelvis + shoulders) * c0; // undo the pelvis, then turn the shoulders the other way
@@ -192,7 +238,9 @@ function poseNatural(body, g) {
   // flight: centred between push-off (4/12) and the next contact (6/12)
   const flight = 0.06 * Math.pow(pos(Math.cos(Math.PI * 4 * (u - 5 / 12))), 2) * run * a;
   const breathe = 0.004 * Math.sin(g.t * 2.2) * (1 - a);
-  body.position.y = -ground + flight + breathe;
+  // extra bounce on top (bouncy styles): up twice a cycle, on each passing
+  const bounce = Math.max(0, tv('bounce', 0)) * 0.035 * Math.pow(Math.sin(Math.PI * 2 * u), 2) * a;
+  body.position.y = -ground + flight + breathe + bounce;
 }
 
 // ---------------------------------------------------------------------------
@@ -239,9 +287,9 @@ function poseSkate(body, g) {
 }
 
 /** Pose `body` (the character root) for gait state `g`. style: 'natural' | 'skate'. */
-export function poseGait(body, g, style = 'natural') {
+export function poseGait(body, g, style = 'natural', tune = null) {
   if (style === 'skate') poseSkate(body, g);
-  else poseNatural(body, g);
+  else poseNatural(body, g, tune);
   poseHold(body, body.userData.hold ?? {});
   flapWings(body, g);
   const j = jointsOf(body);

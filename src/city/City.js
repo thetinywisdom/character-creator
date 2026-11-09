@@ -657,8 +657,8 @@ export class City {
       p.z += (mz / len) * p.speed * dt;
     }
     this.collide(p);
-    stepGait(p.gait, dt, p.speed);
-    poseGait(p.body, p.gait, this.playerGait ?? 'natural');
+    stepGait(p.gait, dt, p.speed, this.playerTune ?? null);
+    poseGait(p.body, p.gait, this.playerGait ?? 'natural', this.playerTune ?? null);
     this.ix.poseActor(p, dt); // a slap or push swing
     // jumping (Space): up, a tuck of the legs in the air, and down again
     if (p.jumpY > 0 || p.vy) {

@@ -128,6 +128,10 @@ src/city/knock.js      Knockables: props tagged userData.knock (catalogue KNOCKA
                        when a vehicle hits them, blink, POOF, back in 5 s
                        Knockables.cloud(at, opts): dust / stink clouds of flat camera-facing
                        squares in three shades that pop in steps (pixel puffs)
+src/ui/walkLab.js      the Walk lab (City, 🚶 button): walk / run styles (WALK_STYLES,
+                       RUN_STYLES in anim/gait.js), sliders, walk-to-run blend, frame
+                       rate, auto-walk side view; sets city.playerTune (the main
+                       character only); kept in localStorage, Copy settings = JSON
 src/ui/pixelOverlay.js the world layer of the interaction UI: floating speech, bursts,
                        charge dial painted on a canvas at the picture's pixel size;
                        main.js setUiStyle({ hud: 'pixel'|'clean' }) styles the controls

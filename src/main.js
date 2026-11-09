@@ -1,3 +1,4 @@
+import { WalkLab } from './ui/walkLab.js';
 import { PixelOverlay } from './ui/pixelOverlay.js';
 import { ComedyStage, COMEDY } from './city/comedy.js';
 import * as THREE from 'three';
@@ -254,6 +255,7 @@ function setView(view) {
   itemEl.hidden = view !== 'item';
   creator.show(view === 'creator');
   document.querySelectorAll('.city-only').forEach((b) => { b.hidden = view !== 'city'; });
+  if (view !== 'city') document.querySelector('#walkLab').hidden = true;
   cityInput.active = view === 'city';
   joystick.hidden = !(view === 'city' && (matchMedia('(pointer: coarse)').matches || window.innerWidth < 900));
   overlay.hidden = view !== 'city';
@@ -416,7 +418,8 @@ function loop(time) {
     preview(humanCell, creator.previewRect(W, H), H);
   } else if (state.view === 'city' && city) {
     // an error in one update must never stop the picture (the city would go black)
-    try { city.update(dt, cityInput); } catch (err) { if (!loop.warned) { loop.warned = true; console.error('city update', err); } }
+    if (city.playerTune === undefined) walkLab.apply();
+    try { city.update(dt, walkLab.input(cityInput, city, dt)); } catch (err) { if (!loop.warned) { loop.warned = true; console.error('city update', err); } }
     city.setAspect(W / H);
     ps1.render(city, city.activeCamera, 0, 0, W, H);
     drawOverlay(city, W, H);
@@ -475,4 +478,7 @@ document.querySelector('#rotateSkip').onclick = () => { document.querySelector('
 matchMedia('(orientation: portrait)').addEventListener?.('change', updateRotateHint);
 window.addEventListener('resize', updateRotateHint);
 updateRotateHint();
+
+// the Walk lab panel (ui/walkLab.js): tune how the main character walks and runs
+const walkLab = new WalkLab({ panel: document.querySelector('#walkLab'), button: document.querySelector('#walkLabBtn'), getCity: () => city });
 
