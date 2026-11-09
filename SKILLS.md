@@ -245,7 +245,9 @@ a full run (Shift, 4.6 m/s), quick to stop. Space jumps.
 Every person has a `trait` ('Calm' | 'Aggressive', in the human schema and
 the character JSON; about 1 in 4 are aggressive). The player can:
 slap (aggressive: slaps back, then chases; calm: runs away), push (knocked
-over like a car hit, `ix.knockDown`; they get up shouting, then aggressive:
+over like a car hit, `ix.knockDown`; `ix.domino` then knocks down anyone
+within ~1.3 m of the victim (further in the push direction), one after
+another, up to two steps on, with a BUMP! burst; they get up shouting, then aggressive:
 chase and push you over too; calm: run away), talk (both say
 a line of small talk), drop banana peels (anyone stepping on one slips), and
 ride vehicles (cars and the bus steer like real vehicles: the turn rate

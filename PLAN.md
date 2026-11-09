@@ -104,6 +104,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 43. **Queues at the door**: queues (and promoters) stand 1.5 m from the actual storefront, also for shops set back from the street.
 
+44. **Domino pushes**: a push (or power slap) also knocks over the people standing around the victim, one after another (BUMP!), up to two steps on.
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.

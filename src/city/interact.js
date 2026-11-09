@@ -34,7 +34,7 @@ export const CHARGE = [0.7, 0.7];
 const CHASE_SPEED = 5.4; // m/s: faster than your run (4.6): get a vehicle or hide
 const CHASE_YELLS = ['Get back here!', "I'll get you!", "You're DEAD!", 'Come here!!', "Don't you run!", 'COWARD!', '#@%&!!'];
 const BURSTS = {
-  powerslap: ['SMAAACK!!', 'KA-POW!!', 'WHAM!!'], slap: ['SLAP!', 'WHAP!', 'SMACK!'], push: ['SHOVE!', 'WHUMP!', 'OOF!'], slip: ['WHOOPS!'], bonk: ['BONK!'] };
+  powerslap: ['SMAAACK!!', 'KA-POW!!', 'WHAM!!'], slap: ['SLAP!', 'WHAP!', 'SMACK!'], push: ['SHOVE!', 'WHUMP!', 'OOF!'], slip: ['WHOOPS!'], bonk: ['BONK!'], bump: ['BUMP!', 'OOF!', 'WHOA!', 'OOPS!'] };
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
 const REACH = 1.7;        // m: how close a person must be to act on them
@@ -231,6 +231,7 @@ export class Interactions {
         const k = kind === 'powerslap' ? 4.2 : 3.2;
         if (kind === 'powerslap') this.shake = 0.5;
         this.knockDown(n, { x: (dx / d) * k, z: (dz / d) * k }, p);
+        this.domino(n, { x: dx / d, z: dz / d }, k * 0.8, 2);
         return;
       }
       this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 0.75, this.nameOf(n));
@@ -274,6 +275,34 @@ export class Interactions {
     if (this.menu?.npc === n) this.menu = null;
     // the shout comes as they get back up
     this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 1.7, this.nameOf(n));
+  }
+
+  /**
+   * Someone knocked flying takes the people around them down too: anyone
+   * close by (more so in the way they fly) falls a beat later, and can take
+   * down their own neighbours (`depth` more steps), each push a little weaker.
+   */
+  domino(n, dir, k, depth, hit = new Set([n])) {
+    if (depth <= 0 || k < 1.2) return;
+    setTimeout(() => {
+      let i = 0;
+      for (const m of this.city.npcs) {
+        if (hit.has(m) || !m.pos || m.act?.kind === 'slip' || m.role?.kind === 'bench') continue;
+        const ox = m.pos.x - n.pos.x, oz = m.pos.z - n.pos.z, d = Math.hypot(ox, oz);
+        const ahead = (ox * dir.x + oz * dir.z) / (d || 1); // 1 straight in the way, -1 behind
+        if (d > 1.3 + Math.max(0, ahead) * 0.9 || d < 1e-3) continue;
+        hit.add(m);
+        // they go over away from whoever hit them, mostly along the push
+        const nx = ox / d, nz = oz / d;
+        let bx = dir.x * 0.6 + nx * 0.6, bz = dir.z * 0.6 + nz * 0.6;
+        const bl = Math.hypot(bx, bz) || 1; bx /= bl; bz /= bl;
+        // one after another, so it reads as a chain
+        setTimeout(() => {
+          this.knockDown(m, { x: bx * k, z: bz * k }, this.city.player, 'bump');
+          this.domino(m, { x: bx, z: bz }, k * 0.8, depth - 1, hit);
+        }, (i++) * 110);
+      }
+    }, 180);
   }
 
   slip(who, isPlayer = false, word = 'slip') {
