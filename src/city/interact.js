@@ -129,6 +129,7 @@ export class Interactions {
    * skipped.) Keeps people behind or inside buildings from being picked.
    */
   behindBuilding(camera, pos) {
+    if (camera.isOrthographicCamera) return false; // iso: people behind buildings show as silhouettes, so they can be picked
     const cx = camera.position.x, cz = camera.position.z, dx = pos.x - cx, dz = pos.z - cz;
     this.bigColliders ??= this.city.layout.colliders.filter((c) => c.hw > 1.5 && c.hd > 1.5);
     for (const c of this.bigColliders) {
@@ -217,15 +218,29 @@ export class Interactions {
       const t = Math.max(0, Math.min(1, ((cx - a.x) * vx + (cy - a.y) * vy) / l2));
       return Math.hypot(cx - (a.x + vx * t), cy - (a.y + vy * t));
     };
+    // People (like iso-city): each has a generous hitbox, a capsule round the
+    // whole body from just below the feet to above the head, wider than they
+    // look and never smaller than a fingertip (14 px), up to 40 px either side
+    // close up. The one you point at most squarely wins. Only people far off in
+    // the third-person view (over 30 m) get a tight box, so a stray click does
+    // not send you running across town. The iso camera sees everyone (people
+    // behind buildings show through as silhouettes), so nothing hides there.
+    const iso = camera.isOrthographicCamera;
+    let bs = Infinity;
     for (const n of npcs) {
-      if (!n.pos || !n.root.visible || Math.hypot(n.pos.x - p.x, n.pos.z - p.z) > PICK_REACH) continue;
-      const foot = n.root.position.clone(), top = this.headOf(n)().add(new THREE.Vector3(0, -0.15, 0));
+      if (!n.pos || !n.root.visible) continue;
+      const dist = Math.hypot(n.pos.x - p.x, n.pos.z - p.z);
+      if (!iso && dist > PICK_REACH) continue;
+      const foot = n.root.position.clone(), top = this.headOf(n)().add(new THREE.Vector3(0, 0.12, 0));
       const a = toScreen(foot), b = toScreen(top);
       if (!a.ok && !b.ok) continue;
       const tall = Math.hypot(b.x - a.x, b.y - a.y);
-      const reach = Math.max(5, Math.min(14, tall * 0.2)); // about a body's width either side (small far away: tight)
-      const d = segDist(a, b);
-      if (d < reach && d < bd && !this.behindBuilding(camera, n.pos)) { bd = d; best = { type: 'npc', ref: n }; }
+      const reach = !iso && dist > 30 ? Math.max(6, tall * 0.25) : Math.min(40, Math.max(14, tall * 0.38));
+      // under 1: inside the hitbox; lower: more squarely on them. Whoever is
+      // ringed already keeps priority (sticky), so the ring does not flicker
+      // between neighbours and a click goes to the one you see ringed.
+      const score = segDist(a, b) / reach * (this.mouseHover?.ref === n ? 0.6 : 1);
+      if (score < 1 && score < bs && !this.behindBuilding(camera, n.pos)) { bs = score; best = { type: 'npc', ref: n }; }
     }
     if (best) return best;
     // a vehicle only when you click on it: inside its outline on screen (the

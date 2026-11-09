@@ -351,12 +351,15 @@ you face), B banana, fart (`ix.fart`: squat and strain `FART_WINDUP` 0.65 s, the
 falls over stunned for 3.6 s, then runs off; 2.5 s cooldown), Space jump (`player.jumpY` / `vy`), Esc; mouse click = talk (ride on a vehicle), right click = the action menu, hold = charge a slap, release to hit,
 double click = push; taps work the same (except a long press: a finger
 resting on the screen is not a slap; `pointerType === 'touch'` skips the
-hold timer). Picking a person on screen (`pickAt`) reaches a body's width
-either side, at least 5 and at most 14 px, so tiny far-away people need a
-precise tap; a vehicle is picked only by a ray hit on its actual shape
+hold timer). Picking a person on screen (`pickAt`): a capsule hitbox round
+the whole body (feet to just above the head), 38% of their screen height
+either side, 14-40 px (people over 30 m away in the third-person view: tight,
+6 px+); the lowest distance/reach wins and the ringed person (`mouseHover`)
+counts 0.6x (sticky); a vehicle is picked only by a ray hit on its actual shape
 (`PICK_RAYS`, the centre and 5 px either way), not its screen box; anything
-behind or inside a building is not pickable (`ix.behindBuilding(camera, pos)`:
-the camera-to-target segment against colliders bigger than 3 m). A hold that
+behind or inside a building is not pickable in the third-person view
+(`ix.behindBuilding(camera, pos)`: the camera-to-target segment against
+colliders bigger than 3 m; the iso camera skips it). A hold that
 turns into a camera drag sends `chargeCancel` (no slap). **Action buttons** (`src/ui/actionPad.js`, `ActionPad`): every
 interaction has a button (USE = hand, SLAP hold-to-charge, PUSH, TALK, FART,
 JUMP, PEEL, RUN held = `cityInput.runHeld`, the handbrake when riding); they
@@ -530,7 +533,7 @@ No unit tests; verify by building and looking.
   `openItem(id, params)`, `CATALOG`, `human` (presets, outfits), `apply('human', values)`, `orbit(az)`,
   `gait.lock = fraction` (freeze the walk), `getCity()` (`player`, `npcs`,
   `cars`, `cats`, `cam`, `iso`, `setViewMode('iso'|'third')`, `setWeather(kind)`, `ix` interactions),
-  `newTown(seed)`, `cityInput`, `tuneOf(look)` (a walk / run tune), `setUiStyle({ world, hud })`, `COMEDY` and `comedy(kind, n, t)` (show comic hit
+  `newTown(seed)`, `cityInput`, `tuneOf(look)` (a walk / run tune), `THREE` (three.js, for tests: raycasts), `setUiStyle({ world, hud })`, `COMEDY` and `comedy(kind, n, t)` (show comic hit
   variation n of 'slap' | 'push' | 'fall' from `src/city/comedy.js` on two people
   beside you, at time t; `comedy(null)` clears it). The app bar's ☀ / 🌤 buttons switch light and weather.
 - To look at one building: `openItem('building.bank')`, or place the player
