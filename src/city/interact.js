@@ -154,11 +154,22 @@ export class Interactions {
       return { x: rect.left + (s.x + 1) / 2 * rect.width, y: rect.top + (1 - s.y) / 2 * rect.height, ok: s.z < 1 };
     };
     let best = null, bd = Infinity;
+    // a person is hit anywhere from their feet to the top of their head (not
+    // just near the middle), as wide as they look at that distance
+    const segDist = (a, b) => {
+      const vx = b.x - a.x, vy = b.y - a.y, l2 = vx * vx + vy * vy || 1;
+      const t = Math.max(0, Math.min(1, ((cx - a.x) * vx + (cy - a.y) * vy) / l2));
+      return Math.hypot(cx - (a.x + vx * t), cy - (a.y + vy * t));
+    };
     for (const n of npcs) {
       if (!n.pos || !n.root.visible || Math.hypot(n.pos.x - p.x, n.pos.z - p.z) > PICK_REACH) continue;
-      const s = toScreen(this.midOf(n)());
-      const d = Math.hypot(s.x - cx, s.y - cy);
-      if (s.ok && d < 55 && d < bd) { bd = d; best = { type: 'npc', ref: n }; }
+      const foot = n.root.position.clone(), top = this.headOf(n)().add(new THREE.Vector3(0, -0.15, 0));
+      const a = toScreen(foot), b = toScreen(top);
+      if (!a.ok && !b.ok) continue;
+      const tall = Math.hypot(b.x - a.x, b.y - a.y);
+      const reach = Math.max(14, tall * 0.2); // about a body's width either side
+      const d = segDist(a, b);
+      if (d < reach && d < bd) { bd = d; best = { type: 'npc', ref: n }; }
     }
     if (best) return best;
     for (const c of cars) {
