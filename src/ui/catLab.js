@@ -12,6 +12,7 @@ import { cat as v2 } from '../subjects/catVersions/cat_1b40be1.js';
 import { cat as v3 } from '../subjects/catVersions/cat_edf7b5c.js';
 import { cat as v4 } from '../subjects/catVersions/cat_10f037a.js';
 import { cat as v5 } from '../subjects/catVersions/cat_b6fbf6d.js';
+import { cat as v6 } from '../subjects/catVersions/cat_v6.js';
 import { CAT_RUN_SPEED, CAT_WALK_SPEED, createCatGait, poseCat, stepCatGait } from '../anim/catGait.js';
 
 const defaults = (c) => Object.fromEntries(Object.entries(c.schema).map(([k, d]) => [k, d.value]));
@@ -23,10 +24,11 @@ export const CAT_VERSIONS = [
   ['3 · Natural shape', v3, coat],
   ['4 · Cuter proportions', v4, coat],
   ['5 · Big round head', v5, coat],
-  ['6 · Today (calico)', cat, { furColor: 'White', pattern: 'Calico' }],
+  ['6 · Lofted (calico)', v6, { furColor: 'White', pattern: 'Calico' }],
+  ['7 · NEW: 2 + jointed legs', cat, { furColor: 'White', pattern: 'Calico' }],
 ];
 
-/** Cute proposals: today's cat with the cute options turned up. */
+/** Cute proposals: version 6 with its cute options turned up (face, shape, paws, cheeks). */
 export const CUTE_CATS = {
   'Mochi': { shape: 'Bean', bodyLength: 0.3, chubbiness: 1.35, legLength: 0.08, headSize: 1.45, earSize: 0.95, tailLength: 0.2, tailType: 'Bobtail', pawSize: 1.6, cheeks: 0.6, face: 'Sparkle', furColor: 'White', pattern: 'Solid' },
   'Loaf': { shape: 'Loaf', bodyLength: 0.4, chubbiness: 1.45, legLength: 0.07, headSize: 1.25, earSize: 0.85, earType: 'Folded', tailLength: 0.26, pawSize: 1.4, cheeks: 0.3, face: 'Sleepy', furColor: 'Ginger', pattern: 'Tabby' },
@@ -48,7 +50,7 @@ export class CatLab {
     this.anim = 'Walk';
     const rows = [
       { title: 'Versions so far', items: CAT_VERSIONS.map(([label, base, params], i) => subjectOf(`v${i}`, label, base, params)) },
-      { title: 'Cute proposals', items: Object.entries(CUTE_CATS).map(([name, params], i) => subjectOf(`c${i}`, name, cat, params)) },
+      { title: 'Cute proposals', items: Object.entries(CUTE_CATS).map(([name, params], i) => subjectOf(`c${i}`, name, v6, params)) },
     ];
     // one little stage per cat, so each fills its tile
     this.rows = rows.map((r) => {

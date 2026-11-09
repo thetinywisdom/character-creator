@@ -137,7 +137,8 @@ export function poseCat(body, g) {
   if (j.tail) {
     // a sitting tail still flicks now and then
     const flick = g.pose === 'sit' ? 0.12 * Math.sin(g.t * 2.2) * Math.max(0, Math.sin(g.t * 0.5)) : 0;
-    j.tail.rotation.x = lerp(j.tail.rotation.x, P.tailX, w);
+    // a tail built pointing up (body.userData.cat.tailPose) lowers further first
+    j.tail.rotation.x = lerp(j.tail.rotation.x, P.tailX + (body.userData.cat?.tailPose ?? 0), w);
     j.tail.rotation.y = lerp(j.tail.rotation.y, P.tailY + flick, w);
   }
 }

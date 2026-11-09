@@ -129,8 +129,9 @@ src/city/knock.js      Knockables: props tagged userData.knock (catalogue KNOCKA
                        Knockables.cloud(at, opts): dust / stink clouds of flat camera-facing
                        squares in three shades that pop in steps (pixel puffs)
 src/ui/catLab.js       the Cat lab view (🐱 mode): every cat version so far (subjects/catVersions/,
-                       copies of cat.js from the project history) and CUTE_CATS proposals
-                       (today's cat with face / shape / pawSize / cheeks), one tile each,
+                       copies of cat.js from the project history; cat_v6.js = the lofted cat
+                       with the cute options) and CUTE_CATS proposals (v6 with face / shape /
+                       pawSize / cheeks); 7 = today's cat, one tile each,
                        all on the cat rig: Still / Walk / Run / Sit / Loaf / Sleep
 src/ui/walkLab.js      the Walk lab (City, 🚶 button): walk / run styles (WALK_STYLES,
                        RUN_STYLES in anim/gait.js), sliders, walk-to-run blend, frame
