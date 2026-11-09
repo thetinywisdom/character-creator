@@ -460,6 +460,10 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   paper), filling clockwise twice: green to yellow, then yellow to red. In the
   second round it keeps growing (to about twice its size) with a slow, rising
   tremble; full red is the climax: a little bigger again and a hard shake.
+- **Traffic round obstacles:** a vehicle left standing in a lane is passed on
+  the right (away from the kerb), easing out over ~2 s and back in once past;
+  if the road is blocked, drivers wait and honk (a "HONK!" / "BEEP BEEP!"
+  burst every 2.5–5.5 s while you are within 30 m).
 - **Leaning:** people on foot roll into a turn (up to ~0.3 rad when running,
   0.2 for walkers), inside the body so their feet stay on the ground; bicycles and scooters lean with their rider (up to
   ~0.45 rad); all eased, upright again when parked.

@@ -45,7 +45,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   add #dev to the address to show its 🚶 button.)
 - **Park playground:** kids swing on the swings, climb the ladder and go
   down the curved slide, and climb and sit on the climbing frame.
-- **Driving among people:** people walk round your car (and any parked car)
+- **Driving among people:** traffic steers round a car or bike you leave in
+  the road (or waits and honks if you block it); people walk round your car (and any parked car)
   instead of through it; at low speed your car stops against them, at speed
   it knocks them over.
 - **Interactions in the City:** point at someone and a yellow ring lights up

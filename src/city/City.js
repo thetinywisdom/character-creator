@@ -827,9 +827,50 @@ export class City {
           const along = dx * c.fx + dz * c.fz, side = Math.abs(dx * c.fz - dz * c.fx);
           return along > 0.5 && along < nose + (other ? 4.2 + other.size.hd : 2.7) && side < (other ? 1.4 : 1.3);
         };
-        if (ahead(p)) blocked = true;
+        if (!p.riding && ahead(p)) blocked = true; // (riding: your vehicle is in the list below)
         for (const n of this.npcs) if (n.pos && ahead(n.pos)) blocked = true;
-        if (c.wait < 3) for (const o of this.cars) if (o !== c && ahead(o.obj.position, o)) blocked = true;
+        // a vehicle standing in the lane that is not traffic (one you parked or
+        // sit in, a fallen bike): steer out round it, then back in; brake if
+        // there is no room to get round yet
+        let want = 0, jammed = false;
+        const rr = c.size.hd > 4 ? 6 : 3;
+        for (const o of this.cars) {
+          if (o === c) continue;
+          const still = o.parked || o.fallen || (o.ridden && Math.abs(o.drive?.speed ?? 0) < 1);
+          if (!still) { if (c.wait < 3 && ahead(o.obj.position, o)) blocked = true; continue; }
+          const ox = o.obj.position.x, oz = o.obj.position.z;
+          if (Math.abs(ox - c.obj.position.x) > 22 || Math.abs(oz - c.obj.position.z) > 22) continue;
+          // where it is along our route (the road may bend): the nearest point of the lane
+          let best = null;
+          for (let k = -12; k <= 16; k += 0.5) {
+            const q = alongLoop(c.loop, c.lengths, c.total, c.s + k, rr), d = Math.hypot(q.x - ox, q.z - oz);
+            if (!best || d < best.d) best = { k, q, d };
+          }
+          if (best.d > 6) continue;
+          const q2 = alongLoop(c.loop, c.lengths, c.total, c.s + best.k + 0.4, rr);
+          let tx = q2.x - best.q.x, tz = q2.z - best.q.z; const tl = Math.hypot(tx, tz) || 1; tx /= tl; tz /= tl;
+          const along = best.k, sr = (ox - best.q.x) * -tz + (oz - best.q.z) * tx; // its offset to the right of the lane's middle
+          if (along < -(o.size.hd + c.size.hd + 3) || along > 14) continue; // until our back is well past it
+          const ofx = o.fx ?? Math.sin(o.obj.rotation.y), ofz = o.fz ?? Math.cos(o.obj.rotation.y);
+          const turn = Math.abs(ofx * tz - ofz * tx); // 0 along the lane, 1 across it
+          const ow = o.size.hw * (1 - turn) + o.size.hd * turn + c.size.hw + 0.35; // half the room it takes, plus ours
+          const near = sr - (c.dodge ?? 0); // its offset from us now
+          if (Math.abs(near) < ow && along > -(o.size.hd + c.size.hd + 1)) want = Math.max(want, c.dodge ?? 0); // alongside: do not ease back in yet
+          if (sr <= -ow || sr >= ow) continue; // clear of our lane (kerb side, or over the other side)
+          const need = sr + ow; // pass it on the right (away from the kerb)
+          if (need > 3.4) { if (along > 0) { blocked = true; jammed = true; } continue; } // no room on the road: wait (and honk)
+          want = Math.max(want, need);
+          if (along > -c.size.hd && along < c.size.hd + o.size.hd + 4 && (c.dodge ?? 0) < need - 0.1) blocked = true; // not out far enough yet
+        }
+        c.dodgeWant = want;
+        // stuck behind a vehicle blocking the road: honk now and then (when you are near enough to hear)
+        if (jammed && (c.honk = (c.honk ?? 1.5) - dt) <= 0) {
+          c.honk = 2.5 + Math.random() * 3;
+          if (Math.hypot(c.obj.position.x - p.x, c.obj.position.z - p.z) < 30) {
+            const pos = c.obj.position;
+            this.ix.say(() => pos.clone().add(new THREE.Vector3(0, c.bike ? 1.7 : 1.9, 0)), ['HONK!', 'BEEP BEEP!', 'HOONK!'][Math.floor(Math.random() * 3)], 'burst');
+          }
+        } else if (!jammed) c.honk = 1.5;
       }
       c.wait = blocked ? c.wait + dt : 0;
       let cruise = c.cruise;
@@ -853,6 +894,15 @@ export class City {
       // corner with the back cutting in, instead of spinning on the spot
       const wb = c.size.hd * 1.2;
       const qf = alongLoop(c.loop, c.lengths, c.total, c.s + wb / 2, c.size.hd > 4 ? 6 : 3);
+      // round a vehicle standing in the lane: the front axle eases out to the right and back
+      c.dodge ??= 0;
+      const dw = c.dodgeWant ?? 0;
+      c.dodge += Math.max(-1.2 * dt, Math.min(1.6 * dt, dw - c.dodge));
+      if (c.dodge > 0.01) {
+        const q2 = alongLoop(c.loop, c.lengths, c.total, c.s + wb / 2 + 0.4, c.size.hd > 4 ? 6 : 3);
+        let tx = q2.x - qf.x, tz = q2.z - qf.z; const tl = Math.hypot(tx, tz) || 1;
+        qf.x += (-tz / tl) * c.dodge; qf.z += (tx / tl) * c.dodge;
+      }
       if (!c.rear) { const q0 = alongLoop(c.loop, c.lengths, c.total, c.s - wb / 2, 3); c.rear = { x: q0.x, z: q0.z }; }
       let fx = qf.x - c.rear.x, fz = qf.z - c.rear.z;
       const len = Math.hypot(fx, fz) || 1;

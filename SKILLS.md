@@ -118,7 +118,9 @@ src/city/civic.js      udon/soba, family restaurant, takoyaki, koban, post offic
 src/city/interiors.js  painted shop interiors and curtains
 src/city/facades.js    painted office facades, roof clutter, roof signs
 src/city/City.js       walkable town: player, people, cars, cats, collisions (walkRoundCars: people
-                       on foot step round any car, the one you drive too), cameras,
+                       on foot step round any car, the one you drive too; traffic steers round a
+                       vehicle standing in its lane (c.dodge / c.dodgeWant, measured along the
+                       route) or waits and honks when the road is blocked), cameras,
                        setWeather('Clear'|'Rain'|'Snow'), night via applyLighting
 src/city/backs.js      dresses bare backs and sides of every building (windows, AC units,
                        back door, drain pipe, emergency stairs), found with rays
