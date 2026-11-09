@@ -436,6 +436,14 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   and to the sides; a long, slightly curved tail (bubble paper with the same
   3 px ink outline) runs under the other bubbles down to the speaker. One
   bubble per person at a time.
+- **Clouds:** pixel puffs: flat squares facing the camera in three flat
+  shades, popping in and shrinking away in steps (no soft fade).
+- **Real pixels for the world UI:** bubbles, tails, bursts and the charge
+  dial are painted at the picture's pixel size (ui/pixelOverlay.js) with
+  hard edges and only the UI inks (ink, paper, brick, yellow, pink), text in
+  Silkscreen 8 px on whole pixels; controls (pie, buttons) are square with
+  3 px ink borders and hard shadows, their emoji icons drawn small and blown
+  up. Hit bursts are always spiky stars.
 - **Speech bubbles:** pixel font (Silkscreen), off-white with a thick ink
   border, a hard drop shadow, a tail pointing at the speaker, a small name
   tag (YOU for the player); they pop in with a bounce and fade after ~3 s.

@@ -1,3 +1,4 @@
+import { PixelOverlay } from './ui/pixelOverlay.js';
 import { ComedyStage, COMEDY } from './city/comedy.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -37,7 +38,7 @@ const PAGE_BG = new THREE.Color('#1d1f23');
 
 const params = loadParams(subjects);
 const human = subjects.find((s) => s.id === 'human');
-const state = { view: 'catalog', anim: 'Still', itemAnim: 'Walk', lighting: 'Day', weather: 'Clear', citySeed: 3, cityView: 'third' };
+const state = { ui: { world: 'pixel', hud: 'pixel' }, view: 'catalog', anim: 'Still', itemAnim: 'Walk', lighting: 'Day', weather: 'Clear', citySeed: 3, cityView: 'third' };
 
 const hint = document.querySelector('#hint');
 const toastEl = document.querySelector('#toast');
@@ -350,7 +351,86 @@ function stackBubbles(list, pie) {
   }).join('');
 }
 
+/**
+ * The interaction UI comes in two layers a game can style separately
+ * (state.ui): `world` - what floats over people (speech bubbles, hit bursts,
+ * the slap charge): 'pixel' paints them as real pixels at the picture's pixel
+ * size (ui/pixelOverlay.js), 'html' as crisp page elements; `hud` - the
+ * screen controls (pie menu, action buttons): 'pixel' or 'clean'.
+ */
+const pixelUi = new PixelOverlay(overlay);
+// icons on the controls: emoji, or (pixel HUD) the same emoji drawn small and
+// blown up with hard pixels, so they are pixelated like the picture
+const iconEls = [...document.querySelectorAll('#pie button, #cityActions button')].map((btn) => {
+  const t = [...btn.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
+  const i = document.createElement('i');
+  i.className = 'ico';
+  i.dataset.icon = (t?.textContent ?? btn.textContent).trim();
+  if (t) t.replaceWith(i); else { btn.textContent = ''; btn.append(i); }
+  return i;
+});
+function paintIcon(i) {
+  if (state.ui.hud !== 'pixel') { i.textContent = i.dataset.icon; return; }
+  const cv = document.createElement('canvas'), n = 13;
+  cv.width = cv.height = n;
+  const g = cv.getContext('2d');
+  const letter = /^[A-Z]$/.test(i.dataset.icon);
+  g.font = letter ? "700 10px 'Silkscreen', monospace" : '11px sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillStyle = '#2f3236';
+  g.fillText(i.dataset.icon, n / 2, n / 2 + 1);
+  const img = g.getImageData(0, 0, n, n);
+  for (let k = 3; k < img.data.length; k += 4) img.data[k] = img.data[k] < 110 ? 0 : 255; // hard edges
+  g.putImageData(img, 0, 0);
+  i.replaceChildren(cv);
+}
+function pixelIcons() { iconEls.forEach(paintIcon); }
+function setActIcon(t) {
+  const i = document.querySelector('#actBtn .ico');
+  if (i && i.dataset.icon !== t) { i.dataset.icon = t; paintIcon(i); }
+}
+document.fonts?.ready?.then(() => pixelIcons());
+function setUiStyle({ world = state.ui.world, hud = state.ui.hud } = {}) {
+  state.ui = { world, hud };
+  document.body.dataset.hud = hud;
+  pixelUi.visible = world === 'pixel';
+  if (world === 'pixel') { for (const el of bubbleEls.values()) el.remove(); bubbleEls.clear(); chargeEl.hidden = true; tailSvg.innerHTML = ''; }
+  pixelIcons(hud === 'pixel');
+}
+function chargeInfo(c, ix, cam, W, H) {
+  const ch = ix.charge;
+  if (!ch) return null;
+  const [c1, c2] = CHARGE;
+  const second = ch.t >= c1;
+  const f = second ? Math.min(1, (ch.t - c1) / c2) : ch.t / c1;
+  const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+  const col = second ? mix([255, 210, 63], [232, 64, 47], f) : mix([90, 200, 110], [255, 210, 63], f);
+  // a small dial over the head of whoever is about to get it
+  const over = ch.ref?.root ? ix.headOf(ch.ref)().add(new THREE.Vector3(0, 0.45, 0)) : c.player.root.position.clone().add(new THREE.Vector3(0, (c.player.height ?? 1.7) + 0.7, 0));
+  return { f, col: `rgb(${col})`, shake: second, s: screenOf(over, cam, W, H) };
+}
+function drawPixelOverlay(c, W, H) {
+  const ix = c.ix, cam = c.activeCamera;
+  const speech = [], bursts = [];
+  for (const b of ix.bubbles) {
+    if (b.age < 0) continue;
+    const s = screenOf(b.anchor(), cam, W, H);
+    if (!s.ok) continue;
+    (b.kind === 'talk' || b.kind === 'shout' ? speech : bursts).push({ b, s });
+  }
+  const menu = ix.menu ? screenOf(ix.headOf(ix.menu.npc)(), cam, W, H) : null;
+  pixelUi.draw({ W, H, px: Math.max(1, Math.round(style.pixelScale || 2)), speech, bursts, pie: menu, charge: chargeInfo(c, ix, cam, W, H) });
+  pieAndShake(c, ix, cam, W, H, menu);
+}
+function pieAndShake(c, ix, cam, W, H, menu) {
+  pie.hidden = !ix.menu;
+  if (menu) { pie.style.left = `${menu.x}px`; pie.style.top = `${menu.y}px`; }
+  setActIcon(c.player.riding ? '⏏' : 'E');
+  const sh = ix.shake ?? 0;
+  canvas.style.transform = sh > 0 ? `translate(${(Math.random() - 0.5) * 14 * sh / 0.3}px, ${(Math.random() - 0.5) * 10 * sh / 0.3}px)` : '';
+}
 function drawOverlay(c, W, H) {
+  if (state.ui.world === 'pixel') return drawPixelOverlay(c, W, H);
   const ix = c.ix, cam = c.activeCamera;
   const live = new Set();
   const talk = []; // speech bubbles on screen, stacked after this loop
@@ -392,22 +472,15 @@ function drawOverlay(c, W, H) {
     pie.style.left = `${s.x}px`;
     pie.style.top = `${s.y}px`;
   }
-  document.querySelector('#actBtn').textContent = c.player.riding ? '⏏' : 'E';
+  setActIcon(c.player.riding ? '⏏' : 'E');
   // the slap charge ring round your character: green to yellow (slap), then shaking yellow to red (power slap)
-  const ch = ix.charge;
-  chargeEl.hidden = !ch;
-  if (ch) {
-    const [c1, c2] = CHARGE;
-    const second = ch.t >= c1;
-    const f = second ? Math.min(1, (ch.t - c1) / c2) : ch.t / c1;
-    const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
-    const col = second ? mix([255, 210, 63], [232, 64, 47], f) : mix([90, 200, 110], [255, 210, 63], f);
-    chargeEl.style.setProperty('--col', `rgb(${col})`);
-    chargeEl.style.setProperty('--deg', `${f * 360}deg`);
-    chargeEl.classList.toggle('shake', second);
-    // a small dial over the head of whoever is about to get it
-    const over = ch.ref?.root ? ix.headOf(ch.ref)().add(new THREE.Vector3(0, 0.45, 0)) : c.player.root.position.clone().add(new THREE.Vector3(0, (c.player.height ?? 1.7) + 0.7, 0));
-    const s = screenOf(over, cam, W, H);
+  const ci = chargeInfo(c, ix, cam, W, H);
+  chargeEl.hidden = !ci;
+  if (ci) {
+    chargeEl.style.setProperty('--col', ci.col);
+    chargeEl.style.setProperty('--deg', `${ci.f * 360}deg`);
+    chargeEl.classList.toggle('shake', ci.shake);
+    const s = ci.s;
     chargeEl.style.left = `${s.x}px`;
     chargeEl.style.top = `${s.y}px`;
   }
@@ -489,6 +562,8 @@ Object.assign(window, {
      * 'slap' | 'push' | 'fall', n 0-2, shown at time t; null clears it.
      */
     COMEDY,
+    /** Style the interaction UI: { world: 'pixel' | 'html', hud: 'pixel' | 'clean' }. */
+    setUiStyle,
     comedy: (kind, n = 0, t = 0) => {
       const c = ensureCity();
       if (!kind) { c.comedyStage?.dispose(); c.comedyStage = null; return null; }
@@ -504,3 +579,5 @@ Object.assign(window, {
     orbit: (az) => { const t = controls.target; camera.position.sub(t).applyAxisAngle(new THREE.Vector3(0, 1, 0), az).add(t); controls.update(); },
   },
 });
+
+setUiStyle(); // pixel world layer and pixel controls by default (owner's pick)

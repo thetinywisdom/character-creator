@@ -270,3 +270,16 @@ html, body {
 #charge[hidden] { display: none; }
 #charge.shake { animation: charge-shake .08s linear infinite; }
 @keyframes charge-shake { 25% { translate: -3px 2px; } 50% { translate: 3px -2px; } 75% { translate: -2px -3px; } }
+
+/* --- interaction UI layers (main.js setUiStyle) ------------------------------ */
+/* world layer 'pixel': bubbles, bursts and the charge painted as real pixels */
+#pixelOverlay { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; pointer-events: none; z-index: 1; }
+#pixelOverlay[hidden] { display: none; }
+.ico { font-style: normal; display: grid; place-items: center; }
+.ico canvas { width: 26px; height: 26px; image-rendering: pixelated; }
+#actBtn .ico canvas { width: 30px; height: 30px; }
+/* hud 'pixel': square controls, ink borders, hard shadows, pixel font */
+body[data-hud="pixel"] #pie button { border-radius: 0; border: 3px solid #2f3236; box-shadow: 3px 3px 0 #2f3236; width: 62px; height: 62px; }
+body[data-hud="pixel"] #pie button span { font: 400 9px/1.2 'Silkscreen', monospace; text-transform: uppercase; }
+body[data-hud="pixel"] #cityActions button { border-radius: 0; border: 3px solid #2f3236; box-shadow: 3px 3px 0 #2f3236; background: #f2efe8; color: #2f3236; }
+body[data-hud="pixel"] #cityActions #actBtn { background: var(--accent); border-color: #2f3236; }

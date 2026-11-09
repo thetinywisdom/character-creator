@@ -126,6 +126,9 @@ src/city/knock.js      Knockables: props tagged userData.knock (catalogue KNOCKA
                        when a vehicle hits them, blink, POOF, back in 5 s
                        Knockables.cloud(at, opts): dust / stink clouds of flat camera-facing
                        squares in three shades that pop in steps (pixel puffs)
+src/ui/pixelOverlay.js the 'pixel' world layer of the interaction UI: bubbles, tails, bursts,
+                       charge dial painted on a canvas at the picture's pixel size;
+                       main.js setUiStyle({ world: 'pixel'|'html', hud: 'pixel'|'clean' })
 src/city/comedy.js     comic slap / push / fall variations (COMEDY) and ComedyStage previews;
                        interact.js ANIM holds the owner's picks: slap = Windmill spin,
                        power slap = Launch, push = Sumo send-off, falls by temper
@@ -441,7 +444,7 @@ No unit tests; verify by building and looking.
   `openItem(id, params)`, `CATALOG`, `human` (presets, outfits), `apply('human', values)`, `orbit(az)`,
   `gait.lock = fraction` (freeze the walk), `getCity()` (`player`, `npcs`,
   `cars`, `cats`, `cam`, `iso`, `setViewMode('iso'|'third')`, `setWeather(kind)`, `ix` interactions),
-  `newTown(seed)`, `cityInput`, `COMEDY` and `comedy(kind, n, t)` (show comic hit
+  `newTown(seed)`, `cityInput`, `setUiStyle({ world, hud })`, `COMEDY` and `comedy(kind, n, t)` (show comic hit
   variation n of 'slap' | 'push' | 'fall' from `src/city/comedy.js` on two people
   beside you, at time t; `comedy(null)` clears it). The app bar's ☀ / 🌤 buttons switch light and weather.
 - To look at one building: `openItem('building.bank')`, or place the player
