@@ -446,6 +446,13 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 - **Leaning:** people on foot roll into a turn (up to ~0.3 rad when running,
   0.2 for walkers); bicycles and scooters lean with their rider (up to
   ~0.45 rad); all eased, upright again when parked.
+- **Controls (owner's pick C, "ghost plates"):** the action menu is a row of
+  four plates over the person (SLAP 1, PUSH 2, TALK 3, FART 4): see-through
+  the pixel way (a checkerboard of navy pixels), no border, outlined white
+  words, key numbers in sky blue; the one under the pointer goes solid navy
+  with yellow words and a 2 px yellow edge. Corner buttons are 16 px ghost
+  tiles with 9x9 pixel icons and their key in a corner; a press flashes them
+  yellow. Their tap areas are bigger than the tiles.
 - **Speech:** floating text, no box (owner's pick, design B of
   labs/bubble-lab.html): Silkscreen 8 px on whole pixels with a 1 px ink
   outline; talk off-white, shouts yellow with a short shake; a line rises a

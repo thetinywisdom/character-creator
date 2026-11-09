@@ -297,14 +297,20 @@ m/s² with skid marks, steering on it drifts), people hit fall over, you get out
 and the vehicle stays parked). Clicking a person or vehicle works at any distance you can see: you
 run over to them first (`player.goal`, cancelled by any movement key), then
 act. Input arrives as events
-(`CityInput.takeEvents()`): keys E (pie menu / ride), F slap (hold to charge: `CHARGE` = two cycles of the
+(`CityInput.takeEvents()`): keys E (action menu / ride), 1 slap (hold to charge: `CHARGE` = two cycles of the
 dial: the first fills green to yellow, the second yellow to red; releasing
 any time before the second cycle is complete gives a slap, only once it is
 full red (and shaking) a power slap (the dial grows through the second round,
-`chargeInfo().grow`, trembling more and more); release to hit; events chargeStart / chargeEnd), G push, T talk,
-B banana, Q fart (`ix.fart`: squat and strain `FART_WINDUP` 0.65 s, then a green pixel cloud, everyone within `FART_R` 3.5 m
-falls over stunned for 3.6 s, then runs off; 2.5 s cooldown), Space jump (`player.jumpY` / `vy`), 1-3 menu, Esc; mouse click = E, hold = charge a slap, release to hit (ride on a vehicle),
-double click = push, right click = talk; taps work the same. A busy person
+`chargeInfo().grow`, trembling more and more); release to hit; events chargeStart / chargeEnd), 2 push, 3 talk, 4 fart (event 'choose' n,
+`MENU_OPTIONS`; with the menu open they pick its option, else act on whoever
+you face), B banana, fart (`ix.fart`: squat and strain `FART_WINDUP` 0.65 s, then a green pixel cloud, everyone within `FART_R` 3.5 m
+falls over stunned for 3.6 s, then runs off; 2.5 s cooldown), Space jump (`player.jumpY` / `vy`), Esc; mouse click = talk (ride on a vehicle), right click = the action menu, hold = charge a slap, release to hit,
+double click = push; taps work the same. The menu (SLAP, PUSH, TALK, FART)
+and the corner buttons (jump, peel, E) are painted on the pixel layer as
+"ghost plates" (owner's pick C of the controls lab): see-through dithered
+plates, no border, white words with key numbers, the pointed-at one solid with
+yellow; the page's buttons are invisible tap areas on top (`setUiStyle({ hud:
+'clean' })` shows plain page buttons instead). A busy person
 has `n.act` ({ kind: 'wait' | 'talk' | 'retaliate' | 'chase' | 'flee' |
 'slip' }) and is moved by `ix.updateNpc`; `City.endAct(n)` puts them back
 on their route. Chasers are furious: they sprint at `CHASE_SPEED` (5.4 m/s,

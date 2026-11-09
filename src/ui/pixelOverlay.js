@@ -9,10 +9,25 @@
 // Layout (keeping lines apart) works in low-res pixels.
 
 const INK = '#2f3236', PAPER = '#f2efe8', BRICK = '#9e6c60', YELLOW = '#ffd23f', PINK = '#f4508c', WHITE = '#f2efe8';
-const SNAP = [INK, PAPER, BRICK, YELLOW, PINK].map((h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)));
+const NAVY = '#262b3a', SKY = '#9ad8f0', SKIN = '#e2b08e', GREEN = '#6fbf5f';
+const SNAP = [INK, PAPER, BRICK, YELLOW, PINK, NAVY, SKY, SKIN, GREEN].map((h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)));
 const FONT = "'Silkscreen', ui-monospace, monospace";
 const STAR = [[50, 0], [60, 24], [84, 6], [78, 32], [100, 34], [82, 54], [98, 78], [70, 70], [64, 100], [50, 78], [34, 98], [30, 72], [2, 82], [18, 56], [0, 34], [24, 30], [14, 4], [40, 22]];
 const CORE = [[50, 0], [62, 30], [96, 22], [74, 50], [98, 84], [62, 70], [50, 100], [38, 70], [4, 84], [26, 50], [2, 22], [38, 30]];
+
+// 9x9 pixel icons for the corner buttons (k ink, w paper, s skin, y yellow, g green)
+const ICONS = {
+  jump: ['....k....', '...kwk...', '..kwwwk..', '.kwwwwwk.', 'kkkwwwkkk', '..kwwwk..', '..kwwwk..', '..kkkkk..', '.........'],
+  peel: ['.......kk', '......kyk', '.....kyk.', '...kkyyk.', '.kkyyyk..', 'kyyyyk...', '.kkkk....', '.........', '.........'],
+  use: ['kkkkkkk..', 'kwwwwwk..', 'kwkkkkk..', 'kwwwwk...', 'kwkkkkk..', 'kwwwwwk..', 'kkkkkkk..', '.........', '.........'],
+  eject: ['....k....', '...kwk...', '..kwwwk..', '.kwwwwwk.', 'kkkkkkkkk', '.........', 'kkkkkkkkk', 'kwwwwwwwk', 'kkkkkkkkk'],
+};
+const ICOL = { k: INK, w: PAPER, s: SKIN, y: YELLOW, g: GREEN };
+// a 3x5 pixel font for the little key numbers
+const DIGITS = { 1: '010110010010111', 2: '110001010100111', 3: '110001010001110', 4: '101101111001001', E: '111100110100111', B: '110101110101101', _: '000000000000111' };
+function digit(g, ch, x, y, col) { const m = DIGITS[ch]; if (!m) return; g.fillStyle = col; for (let k = 0; k < 15; k++) if (m[k] === '1') g.fillRect(x + (k % 3), y + Math.floor(k / 3), 1, 1); }
+/** See-through the pixel way: a checkerboard of dark pixels. */
+function dither(g, x, y, w, h, col = NAVY) { g.fillStyle = col; for (let j = 0; j < h; j++) for (let i = (j + x + y) & 1; i < w; i += 2) g.fillRect(x + i, y + j, 1, 1); }
 
 /** Hard edges and the UI's own inks only: what makes a sprite read as pixels. */
 function crisp(cv) {
@@ -130,7 +145,7 @@ export class PixelOverlay {
   drawFloating(speech, pie, L) {
     const g = this.g;
     const placed = [];
-    if (pie?.ok) placed.push({ x0: L(pie.x) - 58, x1: L(pie.x) + 58, y0: L(pie.y) - 60, y1: L(pie.y) + 3 });
+    if (pie) placed.push(pie); // the open menu: speech goes round it
     const free = (x0, x1, y0, y1) => !placed.some((r) => r.x0 < x1 + 3 && r.x1 > x0 - 3 && r.y0 < y1 + 2 && r.y1 > y0 - 2);
     const now = performance.now() / 1000;
     this.ghosts ??= [];
@@ -168,11 +183,54 @@ export class PixelOverlay {
   }
 
   /**
+   * The action menu over a person (owner's pick C, "ghost plates"): a row of
+   * see-through dark plates, no border, white words with their key number;
+   * the one under the pointer fills in solid with yellow words and a yellow
+   * edge. rects: low-res plate rects; labels; hover index.
+   */
+  drawMenu(rects, labels, hover) {
+    const g = this.g;
+    rects.forEach((r, i) => {
+      const on = i === hover;
+      if (on) { g.fillStyle = NAVY; g.fillRect(r.x, r.y, r.w, r.h); g.fillStyle = YELLOW; g.fillRect(r.x, r.y, 2, r.h); }
+      else dither(g, r.x, r.y, r.w, r.h);
+      const sp = this.wordSprite(labels[i], on ? YELLOW : PAPER, !on);
+      g.drawImage(sp.cv, r.x + 5, r.y + Math.round((r.h - sp.h) / 2));
+      digit(g, String(i + 1), r.x + r.w - 6, r.y + Math.round((r.h - 5) / 2), SKY);
+    });
+  }
+  /** Corner buttons: small see-through squares with a pixel icon and their key; pressed ones flash yellow. */
+  drawCorner(tiles) {
+    const g = this.g;
+    for (const t of tiles) {
+      if (t.on) { g.fillStyle = YELLOW; g.fillRect(t.x, t.y, t.s, t.s); } else dither(g, t.x, t.y, t.s, t.s);
+      const ox = t.x + Math.round((t.s - 9) / 2), oy = t.y + Math.round((t.s - 9) / 2);
+      ICONS[t.icon].forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== '.') { g.fillStyle = ICOL[ch]; g.fillRect(ox + i, oy + j, 1, 1); } }));
+      digit(g, t.key, t.x + 1, t.y + 1, t.on ? INK : SKY);
+    }
+  }
+  /** A word in the pixel font, plain or with an ink outline (over see-through plates). */
+  wordSprite(text, col, outline) {
+    const key = `w|${text}|${col}|${outline}|${document.fonts?.check?.(`8px ${FONT}`)}`;
+    let s = this.sprites.get(key);
+    if (s) return s;
+    const m = sprite(1, 1).getContext('2d'); m.font = `400 8px ${FONT}`;
+    const w = Math.ceil(m.measureText(text).width) + 2, h = 10;
+    const cv = sprite(w, h), g = cv.getContext('2d');
+    g.font = `400 8px ${FONT}`; g.textBaseline = 'top';
+    if (outline) { g.fillStyle = INK; for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [1, -1], [-1, 1]]) g.fillText(text, 1 + dx, 1 + dy); }
+    g.fillStyle = col; g.fillText(text, 1, 1);
+    s = { cv: crisp(cv), w, h };
+    this.sprites.set(key, s);
+    return s;
+  }
+
+  /**
    * Draw a frame. items: speech { b, s } and bursts { b, s } with screen
    * points s (CSS px); pie: the open pie menu's screen point; charge:
    * { s, f, col } or null. px: the picture's pixel size.
    */
-  draw({ W, H, px, speech, bursts, pie, charge }) {
+  draw({ W, H, px, speech, bursts, pie, charge, menu, corner }) {
     const cw = Math.ceil(W / px), ch = Math.ceil(H / px);
     if (this.canvas.width !== cw || this.canvas.height !== ch) { this.canvas.width = cw; this.canvas.height = ch; }
     const g = this.g;
@@ -180,7 +238,9 @@ export class PixelOverlay {
     g.clearRect(0, 0, cw, ch);
     const L = (v) => Math.round(v / px);
 
-    this.drawFloating(speech, pie, L);
+    this.drawFloating(speech, menu?.box ?? null, L);
+    if (menu) this.drawMenu(menu.rects, menu.labels, menu.hover);
+    if (corner) this.drawCorner(corner);
 
     // --- bursts: pop big, settle, fade; tilted (rotated with hard pixels)
     for (const { b, s } of bursts) {

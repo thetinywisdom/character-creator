@@ -29,12 +29,13 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   rotate); in the iso view people, cats and cars behind buildings show as
   silhouettes (you in yellow). WASD / arrows, Shift to run (it builds up speed), Space to jump, a joystick
   on touch screens.
-- **Interactions in the City:** face a person and press **E**, or click anyone you can see (you run
-  over to them)
-  for a pie menu: 👋 Slap, ✋ Push, 💬 Talk (shortcuts F, G, T; hold F or hold-click to
+- **Interactions in the City:** left-click anyone you can see to talk to them
+  (you run over first); right-click them, or face them and press **E**, for
+  the action menu: **1** Slap, **2** Push, **3** Talk, **4** Fart (the number
+  keys also work straight on whoever you face). Hold **1** or hold-click to
   charge a slap: a small dial over their head fills twice. Let go before the
   second round is done for a slap; hold until it is full red and shaking for
-  a power slap that launches them; double-click to push, right-click to talk). A push knocks people over, and anyone standing next to them goes down too. Calm people run away;
+  a power slap that launches them. Double-click to push. A push knocks people over, and anyone standing next to them goes down too. Calm people run away;
   aggressive ones get up, chase you and hit back: they run faster than you,
   shout threats and can shove you off a bike or scooter, but give up after 10
   seconds or once you are 300 m away. Calm people run 300 m away along the

@@ -1,0 +1,325 @@
+<!doctype html>
+<!--
+  Controls lab: five pixel looks for the action menu and corner buttons (A
+  floating words, B icon arc, C ghost plates = used in the game, D command
+  list, E icon + word chips), each in three looping scenes. Same pixel kit as
+  bubble-lab.html, plus 9x9 icons (ICONS) and dither() for see-through plates.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiny City Controls Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: one section per controls design; each shows the same three scenes, live and looping, as real low-res pixels. */
+:root {
+  --paper: #f2f2ee; --card: #ffffff; --ink: #2f3236; --muted: #6b6e70; --line: #d9d8d0; --accent: #f2b64a;
+  --pixel: 'Silkscreen', ui-monospace, monospace; --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper: #1d1f22; --card: #26292d; --ink: #ecebe4; --muted: #a3a6a8; --line: #3a3e43; color-scheme: dark } }
+:root[data-theme="dark"] { --paper: #1d1f22; --card: #26292d; --ink: #ecebe4; --muted: #a3a6a8; --line: #3a3e43; color-scheme: dark }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--body); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 110px; display: grid; gap: 36px; }
+h1 { font: 700 clamp(22px, 4vw, 32px)/1.1 var(--pixel); margin: 0; }
+h2 { font: 700 17px/1.2 var(--pixel); margin: 0; }
+p { margin: 0; max-width: 70ch; }
+.lead { color: var(--muted); }
+.design { display: grid; gap: 12px; background: var(--card); border: 2px solid var(--line); padding: 14px; position: relative; }
+.design:has(input:checked) { border-color: var(--ink); box-shadow: 4px 4px 0 var(--accent); }
+.head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.head label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.tag { font: 700 11px var(--pixel); background: var(--accent); color: #2f3236; padding: 1px 6px; }
+.note { font-size: 14px; color: var(--muted); }
+.edge { font-size: 13px; color: var(--muted); display: grid; gap: 2px; }
+.edge b { color: var(--ink); font-weight: 700; }
+.scenes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 10px; }
+figure { margin: 0; display: grid; gap: 4px; min-width: 0; }
+figure canvas { width: 100%; height: auto; aspect-ratio: 200 / 124; image-rendering: pixelated; display: block; background: #9fb08d; }
+figcaption { font: 400 10px var(--pixel); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+input[type=radio] { accent-color: #2f3236; width: 18px; height: 18px; }
+.tally { position: fixed; left: 0; right: 0; bottom: 0; background: var(--ink); color: var(--paper); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px)); }
+.tally .in { max-width: 1240px; margin: 0 auto; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.tally code { font: 12px var(--pixel); flex: 1 1 260px; min-width: 0; }
+.tally button { font: 700 12px var(--pixel); background: var(--accent); color: #2f3236; border: 0; padding: 10px 14px; cursor: pointer; }
+.tally button:focus-visible, .head label:focus-within { outline: 3px solid var(--accent); }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <h1>Controls lab</h1>
+    <p class="lead">Five looks for the NPC action menu and the corner action buttons, all drawn as real pixels to sit with the floating speech. Each plays three scenes on a loop: the menu with the highlight moving and a click, the corner buttons being pressed, and the corner while riding. On a phone the corner buttons keep a big touch area around what you see.</p>
+  </header>
+  <div id="designs"></div>
+</div>
+<div class="tally"><div class="in"><code id="pick">Pick a design (or say which parts to mix).</code><button type="button" id="copy">Copy my pick</button></div></div>
+
+<script>
+// ---- pixel kit ----------------------------------------------------------------
+const W = 200, H = 124;
+const C = { ink: '#2f3236', paper: '#f2efe8', brick: '#9e6c60', yellow: '#ffd23f', red: '#e8402f', navy: '#262b3a', sky: '#9ad8f0', grass: '#9fb08d', grass2: '#93a582', path: '#ddd0aa', white: '#ffffff', shadow: '#7f8f6e', gold: '#f2b64a', green: '#6fbf5f', pink: '#f4508c' };
+const PAL = Object.values(C).map((h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)));
+function snap(g) {
+  // hard edges and only the palette's colours: real pixels, whatever was drawn
+  const img = g.getImageData(0, 0, W, H), d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    let best = PAL[0], bd = Infinity;
+    for (const c of PAL) { const e = (c[0] - d[i]) ** 2 + (c[1] - d[i + 1]) ** 2 + (c[2] - d[i + 2]) ** 2; if (e < bd) { bd = e; best = c; } }
+    d[i] = best[0]; d[i + 1] = best[1]; d[i + 2] = best[2]; d[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+}
+// a 3x5 bitmap font (for the tiny tag)
+const F3 = {
+  A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110', E: '111100110100111', F: '111100110100100', G: '011100101101011', H: '101101111101101',
+  I: '111010010010111', J: '001001001101010', K: '101101110101101', L: '100100100100111', M: '101111111101101', N: '110101101101101', O: '010101101101010', P: '110101110100100',
+  Q: '010101101110011', R: '110101110101101', S: '011100010001110', T: '111010010010010', U: '101101101101111', V: '101101101101010', W: '101101111111101', X: '101101010101101',
+  Y: '101101010010010', Z: '111001010100111', '0': '010101101101010', '1': '010110010010111', '2': '110001010100111', '3': '110001010001110', '4': '101101111001001', '5': '111100110001110',
+  '6': '011100110101010', '7': '111001010010010', '8': '010101010101010', '9': '010101011001110', '!': '010010010000010', '?': '110001010000010', '.': '000000000000010', ',': '000000000010100',
+  "'": '010010000000000', '-': '000000111000000', '*': '000101010101000', ':': '000010000010000', ' ': '000000000000000', '#': '101111101111101', '&': '010101010101011', '/': '001001010100100',
+};
+const f3w = (t) => t.length * 4 - 1;
+function f3(g, t, x, y, col) {
+  g.fillStyle = col;
+  [...t.toUpperCase()].forEach((ch, i) => { const m = F3[ch] ?? F3['?']; for (let k = 0; k < 15; k++) if (m[k] === '1') g.fillRect(x + i * 4 + (k % 3), y + Math.floor(k / 3), 1, 1); });
+}
+const FONT = "8px 'Silkscreen', monospace";
+function wrap(g, text, max, measure) {
+  const out = []; let line = '';
+  for (const w of text.split(' ')) { const t = line ? `${line} ${w}` : w; if (measure(t) > max && line) { out.push(line); line = w; } else line = t; }
+  if (line) out.push(line); return out;
+}
+const sil = (g, t) => { g.font = FONT; return g.measureText(t).width; };
+function outlineText(g, t, x, y, col, out = C.ink) {
+  g.font = FONT; g.fillStyle = out;
+  for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [1, -1], [-1, 1]]) g.fillText(t, x + dx, y + dy);
+  g.fillStyle = col; g.fillText(t, x, y);
+}
+
+// ---- the stage: a strip of pavement and little people ----------------------------
+function stage(g, people, t) {
+  g.fillStyle = C.grass; g.fillRect(0, 0, W, H);
+  g.fillStyle = C.path; g.fillRect(0, 84, W, 22);
+  g.fillStyle = C.grass2; for (let x = 0; x < W; x += 9) g.fillRect(x + ((x / 9) % 2) * 3, 72, 2, 1);
+  for (const p of people) {
+    const bob = p.talking && Math.floor(t * 6) % 2 ? -1 : 0;
+    g.fillStyle = C.shadow; g.fillRect(p.x - 3, p.y, 7, 2);
+    g.fillStyle = p.col; g.fillRect(p.x - 2, p.y - 9 + bob, 5, 6);      // body
+    g.fillStyle = C.ink; g.fillRect(p.x - 2, p.y - 3, 2, 3); g.fillRect(p.x + 1, p.y - 3, 2, 3); // legs
+    g.fillStyle = '#e2b08e'; g.fillRect(p.x - 1, p.y - 13 + bob, 3, 4); // head
+    g.fillStyle = p.hair ?? C.ink; g.fillRect(p.x - 1, p.y - 14 + bob, 3, 2);
+    if (p.you) { g.fillStyle = C.gold; g.fillRect(p.x - 3, p.y + 1, 7, 1); }
+  }
+}
+const head = (p) => ({ x: p.x, y: p.y - 15 });
+
+// ---- pixel icons (9x9; k ink, w paper, s skin, y yellow, g green, o gold) ---------------
+const ICONS = {
+  slap: ['...kk....', '..kssk.k.', '.kksskksk', 'ksskssksk', 'ksssssssk', 'kssssssk.', '.kssssk..', '..kssk...', '...kk....'],
+  push: ['.k.k.k...', 'ksksksk..', 'ksksksk..', 'kssssssk.', 'ksssssssk', 'kssssssk.', '.kssssk..', '..kkkk...', '.........'],
+  talk: ['.kkkkkkk.', 'kwwwwwwwk', 'kwkwkwkwk', 'kwwwwwwwk', '.kkkwkkk.', '...kwk...', '...kk....', '.........', '.........'],
+  jump: ['....k....', '...kwk...', '..kwwwk..', '.kwwwwwk.', 'kkkwwwkkk', '..kwwwk..', '..kwwwk..', '..kkkkk..', '.........'],
+  fart: ['.........', '..kkk....', '.kgggk.k.', 'kgggggkgk', 'kggggggk.', '.kggggk..', 'k.kkkk.k.', '.........', '.........'],
+  peel: ['.......kk', '......kyk', '.....kyk.', '...kkyyk.', '.kkyyyk..', 'kyyyyk...', '.kkkk....', '.........', '.........'],
+  use: ['kkkkkkk..', 'kwwwwwk..', 'kwkkkkk..', 'kwwwwk...', 'kwkkkkk..', 'kwwwwwk..', 'kkkkkkk..', '.........', '.........'],
+  eject: ['....k....', '...kwk...', '..kwwwk..', '.kwwwwwk.', 'kkkkkkkkk', '.........', 'kkkkkkkkk', 'kwwwwwwwk', 'kkkkkkkkk'],
+};
+const ICOL = { k: C.ink, w: C.paper, s: '#e2b08e', y: C.yellow, g: C.green, o: C.gold };
+function icon(g, name, x, y, tint = null) {
+  ICONS[name].forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '.') return; g.fillStyle = tint && ch !== 'k' ? tint : ICOL[ch]; g.fillRect(x + i, y + j, 1, 1); }));
+}
+const text = (g, s, x, y, col) => { g.font = FONT; g.textBaseline = 'top'; outlineText(g, s, Math.round(x), Math.round(y), col); };
+const tw = (g, s) => sil(g, s);
+const plate = (g, x, y, w, h, col = C.navy) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+// see-through the pixel way: a checkerboard of dark pixels over the picture
+function dither(g, x, y, w, h, col = C.navy) { g.fillStyle = col; for (let j = 0; j < h; j++) for (let i = (j + x + y) % 2; i < w; i += 2) g.fillRect(x + i, y + j, 1, 1); }
+
+// ---- scenes ------------------------------------------------------------------------------
+// menu: you face someone, their menu is open; the highlight walks SLAP > PUSH > TALK, then a click
+// buttons: the corner buttons, a press walks across them
+// riding: the same corner while riding (E becomes get off; peel and fart are off)
+const MENU = [['slap', 'SLAP', 'F'], ['push', 'PUSH', 'G'], ['talk', 'TALK', 'T']];
+const BUTTONS = [['jump', 'JUMP', 'SPACE'], ['fart', 'FART', 'Q'], ['peel', 'PEEL', 'B'], ['use', 'USE', 'E']];
+const SCENES = [
+  { id: 'menu', label: 'NPC menu (highlight moves, then a click)' },
+  { id: 'buttons', label: 'Action buttons (presses)' },
+  { id: 'riding', label: 'Action buttons while riding' },
+];
+function sceneState(id, t) {
+  const k = Math.floor(t / 0.9) % 4;            // 0..2 hover, 3 click on the last hovered
+  return { hover: Math.min(2, k), click: k === 3 && (t % 0.9) < 0.25, press: Math.floor(t / 0.7) % 5, pressing: (t % 0.7) < 0.18 };
+}
+function drawPeople(g, t) {
+  stage(g, [{ x: 84, y: 104, col: '#f2f2ee', you: true }, { x: 116, y: 104, col: '#3f7fd6', hair: '#3a2a22' }], t);
+}
+
+// ---- the designs -------------------------------------------------------------------------
+const DESIGNS = [
+  {
+    id: 'A', name: 'Floating words',
+    note: 'No shapes at all: the menu is three outlined pixel words around the head, like the speech. The one you point at turns yellow with a little arrow; its key sits in small grey letters beside it. The corner buttons are the same: word plus key, stacked like a list.',
+    menu(g, t, st) {
+      const hx = 116, hy = 80;
+      const pos = [[-38, -6], [-14, -18], [10, -6]];
+      MENU.forEach(([, word, key], i) => {
+        const on = st.hover === i, [dx, dy] = pos[i];
+        const x = hx + dx, y = hy + dy - (on ? 1 : 0);
+        if (on) text(g, '>', x - 6, y, C.yellow);
+        text(g, word, x, y, on ? (st.click ? C.paper : C.yellow) : C.paper);
+        if (on) { g.font = FONT; f3(g, key, x + tw(g, word) + 3, y + 2, C.sky); }
+      });
+    },
+    buttons(g, t, st, riding) {
+      const rows = riding ? [['use', 'GET OFF', 'E']] : BUTTONS.map(([, w, k], i) => [i, w, k]);
+      rows.forEach(([i, word, key], r) => {
+        const y = H - 12 - (rows.length - 1 - r) * 11, on = !riding && st.press === i && st.pressing;
+        const x = W - 6 - tw(g, word);
+        text(g, word, x, y - (on ? 1 : 0), on ? C.yellow : C.paper);
+        f3(g, key, x - 4 - f3w(key), y + 2, C.sky);
+      });
+    },
+  },
+  {
+    id: 'B', name: 'Icon arc',
+    note: 'Small pixel icons (a hand, a palm, a speech mark) floating in an arc over the head, no plates. Pointing at one lifts it and writes its name under it in floating text. Corner buttons are the same icons, bigger, with the key as a tiny letter on the corner.',
+    menu(g, t, st) {
+      const hx = 116, hy = 80;
+      const pos = [[-18, -2], [0, -12], [18, -2]];
+      MENU.forEach(([ic, word], i) => {
+        const on = st.hover === i, [dx, dy] = pos[i];
+        icon(g, ic, hx + dx - 4, hy + dy - (on ? 2 : 0) - 4, on && st.click ? C.yellow : null);
+        if (on) { const w = tw(g, word); text(g, word, hx - w / 2, hy - 26, C.yellow); }
+      });
+    },
+    buttons(g, t, st, riding) {
+      const list = riding ? [['eject', 'E']] : BUTTONS.map(([ic, , k]) => [ic, k]);
+      list.forEach(([ic, key], i) => {
+        const x = W - 14 - (list.length - 1 - i) * 16, y = H - 15, on = !riding && st.press === i && st.pressing;
+        // the icon drawn 1:1 is small, so the corner ones are drawn at 1px and get a soft dark disc behind for contrast
+        for (let j = -3; j <= 12; j++) for (let i = -3; i <= 12; i++) if ((i + j) % 2 === 0 && Math.hypot(i - 4, j - 4) < 7.5) { g.fillStyle = C.navy; g.fillRect(x + i, y + j, 1, 1); }
+        icon(g, ic, x, y - (on ? 1 : 0), on ? C.yellow : null);
+        f3(g, key === 'SPACE' ? '_' : key, x + 7, y + 7, C.sky);
+      });
+    },
+  },
+  {
+    id: 'C', name: 'Ghost plates',
+    note: 'A quiet see-through dark plate (see-through the pixel way: a checkerboard of dark pixels) with no border, white pixel text, the key in grey. The one you point at gets a yellow edge on its left and yellow text. Corner buttons are small see-through squares with the icon; pressing flashes them yellow.',
+    menu(g, t, st) {
+      const hx = 116, hy = 84;
+      MENU.forEach(([, word, key], i) => {
+        const on = st.hover === i;
+        const w = 40, x = hx - w / 2 + (i - 1) * (w + 3), y = hy - 14;
+        if (on) plate(g, x, y, w, 12); else dither(g, x, y, w, 12);
+        if (on) plate(g, x, y, 2, 12, st.click ? C.paper : C.yellow);
+        if (on) { g.font = FONT; g.textBaseline = 'top'; g.fillStyle = C.yellow; g.fillText(word, x + 5, y + 2); } else text(g, word, x + 5, y + 2, C.paper);
+        f3(g, key, x + w - 6, y + 4, C.sky);
+      });
+    },
+    buttons(g, t, st, riding) {
+      const list = riding ? [['eject', 'E']] : BUTTONS.map(([ic, , k]) => [ic, k]);
+      list.forEach(([ic, key], i) => {
+        const x = W - 18 - (list.length - 1 - i) * 18, y = H - 18, on = !riding && st.press === i && st.pressing;
+        if (on) plate(g, x, y, 15, 15, C.yellow); else dither(g, x, y, 15, 15);
+        icon(g, ic, x + 3, y + 3);
+        f3(g, key === 'SPACE' ? '_' : key, x + 1, y + 1, on ? C.ink : C.sky);
+      });
+    },
+  },
+  {
+    id: 'D', name: 'Command list',
+    note: 'An RPG-style command list that floats beside the person, just outlined text: a moving > cursor, the keys on the right. The corner shows the same kind of list with your actions and keys; while riding it only says GET OFF.',
+    menu(g, t, st) {
+      const x = 126, y0 = 56;
+      MENU.forEach(([, word, key], i) => {
+        const on = st.hover === i, y = y0 + i * 10;
+        if (on) text(g, '>', x - 7 + (Math.floor(t * 4) % 2), y, C.yellow);
+        text(g, word, x, y, on ? (st.click ? C.paper : C.yellow) : C.paper);
+        f3(g, key, x + 34, y + 2, C.sky);
+      });
+    },
+    buttons(g, t, st, riding) {
+      const rows = riding ? [['use', 'GET OFF', 'E']] : BUTTONS.map(([, w, k], i) => [i, w, k]);
+      const x = W - 64;
+      rows.forEach(([i, word, key], r) => {
+        const y = H - 12 - (rows.length - 1 - r) * 10, on = !riding && st.press === i && st.pressing;
+        if (on) text(g, '>', x - 7, y, C.yellow);
+        text(g, word, x, y, on ? C.yellow : C.paper);
+        f3(g, key, W - 4 - f3w(key), y + 2, C.sky);
+      });
+    },
+  },
+  {
+    id: 'E', name: 'Icon + word chips',
+    note: 'A middle way: each option is a small pixel icon followed by its word in floating text, side by side under the head, no plates. The one you point at turns yellow and gets a thin yellow underline. Corner buttons use the same icon + word, stacked.',
+    menu(g, t, st) {
+      const hx = 116, hy = 72;
+      const items = MENU.map(([ic, word]) => ({ ic, word, w: 11 + tw(g, word) }));
+      const total = items.reduce((s, it) => s + it.w, 0) + 8;
+      let x = Math.round(hx - total / 2);
+      items.forEach((it, i) => {
+        const on = st.hover === i;
+        icon(g, it.ic, x, hy - 1 - (on ? 1 : 0), on && st.click ? C.yellow : null);
+        text(g, it.word, x + 11, hy - (on ? 1 : 0), on ? C.yellow : C.paper);
+        if (on) plate(g, x, hy + 10, it.w - 1, 1, C.yellow);
+        x += it.w + 4;
+      });
+    },
+    buttons(g, t, st, riding) {
+      const rows = riding ? [['eject', 'GET OFF']] : BUTTONS.map(([ic, w]) => [ic, w]);
+      rows.forEach(([ic, word], r) => {
+        const y = H - 13 - (rows.length - 1 - r) * 12, on = !riding && st.press === r && st.pressing;
+        const x = W - 6 - tw(g, word);
+        icon(g, ic, x - 12, y - 1, on ? C.yellow : null);
+        text(g, word, x, y, on ? C.yellow : C.paper);
+      });
+    },
+  },
+];
+
+// ---- page ---------------------------------------------------------------------------------
+const root = document.getElementById('designs');
+root.style.cssText = 'display:grid;gap:22px';
+const cells = [];
+for (const d of DESIGNS) {
+  const sec = document.createElement('section');
+  sec.className = 'design';
+  sec.innerHTML = `<div class="head"><label for="pick-${d.id}"><input type="radio" name="design" id="pick-${d.id}" value="${d.id}"><span class="tag">${d.id}</span><h2>${d.name}</h2></label></div><p class="note">${d.note}</p><div class="scenes"></div>`;
+  const grid = sec.querySelector('.scenes');
+  for (const s of SCENES) {
+    const fig = document.createElement('figure');
+    const cv = Object.assign(document.createElement('canvas'), { width: W, height: H });
+    cv.setAttribute('role', 'img'); cv.setAttribute('aria-label', `${d.name}: ${s.label}`);
+    fig.append(cv, Object.assign(document.createElement('figcaption'), { textContent: s.label }));
+    grid.append(fig);
+    cells.push({ d, s, g: cv.getContext('2d', { willReadFrequently: true }) });
+  }
+  root.append(sec);
+}
+function frame(now) {
+  const t = window.T ?? now / 1000;
+  for (const c of cells) {
+    const g = c.g, st = sceneState(c.s.id, t);
+    g.imageSmoothingEnabled = false;
+    drawPeople(g, t);
+    // a line of floating speech in every scene, to judge how it sits with the speech
+    g.font = FONT; g.textBaseline = 'top';
+    if (c.s.id === 'menu') outlineText(g, 'OH, HELLO.', 72, 40, C.paper);
+    else outlineText(g, 'NICE WEATHER!', 60, 66, C.paper);
+    if (c.s.id === 'menu') c.d.menu(g, t, st);
+    else c.d.buttons(g, t, st, c.s.id === 'riding');
+    snap(g);
+  }
+  requestAnimationFrame(frame);
+}
+(document.fonts?.load ? document.fonts.load(FONT) : Promise.resolve()).then(() => requestAnimationFrame(frame), () => requestAnimationFrame(frame));
+
+const out = document.getElementById('pick');
+document.addEventListener('change', () => { const v = document.querySelector('input[name=design]:checked')?.value; if (v) out.textContent = `Controls: design ${v} (${DESIGNS.find((d) => d.id === v).name})`; });
+document.getElementById('copy').addEventListener('click', async (e) => {
+  const tx = out.textContent;
+  try { await navigator.clipboard.writeText(tx); e.target.textContent = 'Copied'; }
+  catch { const r = document.createRange(); r.selectNodeContents(out); const s = getSelection(); s.removeAllRanges(); s.addRange(r); e.target.textContent = 'Selected: copy it'; }
+  setTimeout(() => { e.target.textContent = 'Copy my pick'; }, 1800);
+});
+</script>

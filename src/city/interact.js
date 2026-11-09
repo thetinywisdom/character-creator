@@ -65,6 +65,7 @@ const fallOf = (who) => (who.trait === 'Aggressive' ? ANIM.fallAggressive : ANIM
 
 const SEATED = new Set(['wait', 'talk', 'seated']); // acts a bench sitter does without getting up
 
+export const MENU_OPTIONS = ['slap', 'push', 'talk', 'fart']; // keys 1-4, in the menu's order
 const REACH = 1.7;        // m: how close a person must be to act on them
 const PICK_REACH = 60;    // m: a clicked person can be anywhere you can see; you run over to them
 const RUN = 4.2;
@@ -176,7 +177,16 @@ export class Interactions {
       return;
     }
     if (ev.type === 'close') { this.closeMenu(); return; }
-    if (ev.type === 'choose') { const m = this.menu; if (m) { this.menu = null; this.go(['slap', 'push', 'talk'][ev.n], m.npc); } return; }
+    if (ev.type === 'choose') {
+      // the menu's options (also keys 1-4): slap, push, talk, fart; without the
+      // menu open they act on whoever you face (fart needs nobody)
+      const kind = MENU_OPTIONS[ev.n];
+      const who = this.menu?.npc ?? (this.facing()?.type === 'npc' ? this.facing().ref : null);
+      if (this.menu) { this.menu = null; if (kind === 'fart' && who?.act?.kind === 'wait') this.city.endAct(who); }
+      if (kind === 'fart') return this.fart();
+      if (who) this.go(kind, who);
+      return;
+    }
     if (p.riding) {
       if (['primary', 'click', 'hold'].includes(ev.type)) this.getOff();
       return;
@@ -185,21 +195,30 @@ export class Interactions {
     const t = picked ?? this.facing();
     switch (ev.type) {
       case 'primary':
-      case 'click':
+      case 'right':
+        // E / right click: the action menu for that person (again: closes it)
         if (this.menu) { const same = t?.ref === this.menu.npc; this.closeMenu(); if (same || !t) return; }
         if (t?.type === 'npc') this.openMenu(t.ref);
         else if (t?.type === 'vehicle') this.go('ride', t.ref);
         return;
-      case 'chargeStart':
-        if (t?.type === 'npc') { this.closeMenu(); this.charge = { t: 0, ref: t.ref }; }
+      case 'click':
+        // left click: talk to them (or get on a vehicle)
+        if (this.menu) { const same = t?.ref === this.menu.npc; this.closeMenu(); if (!t) return; if (same) { this.go('talk', t.ref); return; } }
+        if (t?.type === 'npc') this.go('talk', t.ref);
         else if (t?.type === 'vehicle') this.go('ride', t.ref);
         return;
+      case 'chargeStart': {
+        // hold 1 or hold-click: charge a slap on them (or on the one whose menu is open)
+        const who = this.menu?.npc ?? (t?.type === 'npc' ? t.ref : null);
+        if (who) { this.closeMenu(); this.charge = { t: 0, ref: who }; }
+        else if (t?.type === 'vehicle') this.go('ride', t.ref);
+        return;
+      }
       case 'hold':
         if (t?.type === 'npc') this.go('slap', t.ref);
         else if (t?.type === 'vehicle') this.go('ride', t.ref);
         return;
       case 'double': if (t?.type === 'npc') this.go('push', t.ref); return;
-      case 'right': if (t?.type === 'npc') this.go('talk', t.ref); return;
       case 'slap': case 'push': case 'talk':
         if (t?.type === 'npc') this.go(ev.type, t.ref);
         return;

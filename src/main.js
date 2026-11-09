@@ -282,7 +282,6 @@ pie.addEventListener('click', (e) => {
   if (b) cityInput.events.push({ type: 'choose', n: Number(b.dataset.n) });
 });
 document.querySelector('#actBtn').onclick = () => cityInput.events.push({ type: 'primary' });
-document.querySelector('#fartBtn').onclick = () => cityInput.events.push({ type: 'fart' });
 document.querySelector('#bananaBtn').onclick = () => cityInput.events.push({ type: 'banana' });
 document.querySelector('#jumpBtn').onclick = () => cityInput.events.push({ type: 'jump' });
 function screenOf(v, camera, W, H) {
@@ -290,47 +289,26 @@ function screenOf(v, camera, W, H) {
   return { x: (s.x + 1) / 2 * W, y: (1 - s.y) / 2 * H, ok: s.z < 1 && Math.abs(s.x) < 1.3 && Math.abs(s.y) < 1.3 };
 }
 /**
- * The interaction UI comes in two layers: the world layer (floating speech,
- * hit bursts, the slap charge) is painted as real pixels at the picture's
- * pixel size (ui/pixelOverlay.js); the HUD (pie menu, action buttons) can be
- * styled per game: state.ui.hud = 'pixel' | 'clean' (setUiStyle).
+ * The interaction UI is painted as real pixels at the picture's pixel size
+ * (ui/pixelOverlay.js): floating speech, hit bursts, the slap charge, the
+ * action menu and the corner buttons (owner's pick C, "ghost plates"). The
+ * page's own buttons stay on top as invisible tap areas (bigger than what you
+ * see, for fingers). state.ui.hud = 'clean' shows plain rounded page
+ * buttons instead (setUiStyle), for a game that wants that.
  */
 const pixelUi = new PixelOverlay(overlay);
-// icons on the controls: emoji, or (pixel HUD) the same emoji drawn small and
-// blown up with hard pixels, so they are pixelated like the picture
-const iconEls = [...document.querySelectorAll('#pie button, #cityActions button')].map((btn) => {
-  const t = [...btn.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
-  const i = document.createElement('i');
-  i.className = 'ico';
-  i.dataset.icon = (t?.textContent ?? btn.textContent).trim();
-  if (t) t.replaceWith(i); else { btn.textContent = ''; btn.append(i); }
-  return i;
+const MENU_LABELS = ['SLAP', 'PUSH', 'TALK', 'FART'];
+const pieBtns = [...pie.querySelectorAll('button')];
+const cornerBtns = [['#jumpBtn', 'jump', '_'], ['#bananaBtn', 'peel', 'B'], ['#actBtn', 'use', 'E']].map(([sel, icon, key]) => ({ el: document.querySelector(sel), icon, key, flash: 0 }));
+let menuHover = -1;
+pieBtns.forEach((b, i) => {
+  b.addEventListener('pointerenter', () => { menuHover = i; });
+  b.addEventListener('pointerleave', () => { if (menuHover === i) menuHover = -1; });
 });
-function paintIcon(i) {
-  if (state.ui.hud !== 'pixel') { i.textContent = i.dataset.icon; return; }
-  const cv = document.createElement('canvas'), n = 13;
-  cv.width = cv.height = n;
-  const g = cv.getContext('2d');
-  const letter = /^[A-Z]$/.test(i.dataset.icon);
-  g.font = letter ? "700 10px 'Silkscreen', monospace" : '11px sans-serif';
-  g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillStyle = '#2f3236';
-  g.fillText(i.dataset.icon, n / 2, n / 2 + 1);
-  const img = g.getImageData(0, 0, n, n);
-  for (let k = 3; k < img.data.length; k += 4) img.data[k] = img.data[k] < 110 ? 0 : 255; // hard edges
-  g.putImageData(img, 0, 0);
-  i.replaceChildren(cv);
-}
-function pixelIcons() { iconEls.forEach(paintIcon); }
-function setActIcon(t) {
-  const i = document.querySelector('#actBtn .ico');
-  if (i && i.dataset.icon !== t) { i.dataset.icon = t; paintIcon(i); }
-}
-document.fonts?.ready?.then(() => pixelIcons());
+for (const cb of cornerBtns) cb.el.addEventListener('pointerdown', () => { cb.flash = performance.now(); });
 function setUiStyle({ hud = state.ui.hud } = {}) {
   state.ui = { ...state.ui, hud };
   document.body.dataset.hud = hud;
-  pixelIcons();
 }
 function chargeInfo(c, ix, cam, W, H) {
   const ch = ix.charge;
@@ -347,7 +325,7 @@ function chargeInfo(c, ix, cam, W, H) {
   return { f, col: `rgb(${col})`, grow, shake: ch.t >= c1 + c2, s: screenOf(over, cam, W, H) };
 }
 function drawPixelOverlay(c, W, H) {
-  const ix = c.ix, cam = c.activeCamera;
+  const ix = c.ix, cam = c.activeCamera, px = Math.max(1, Math.round(style.pixelScale || 2)), pixelHud = state.ui.hud === 'pixel';
   const speech = [], bursts = [];
   for (const b of ix.bubbles) {
     if (b.age < 0) continue;
@@ -355,14 +333,26 @@ function drawPixelOverlay(c, W, H) {
     if (!s.ok) continue;
     (b.kind === 'talk' || b.kind === 'shout' ? speech : bursts).push({ b, s });
   }
-  const menu = ix.menu ? screenOf(ix.headOf(ix.menu.npc)(), cam, W, H) : null;
-  pixelUi.draw({ W, H, px: Math.max(1, Math.round(style.pixelScale || 2)), speech, bursts, pie: menu, charge: chargeInfo(c, ix, cam, W, H) });
-  pieAndShake(c, ix, cam, W, H, menu);
-}
-function pieAndShake(c, ix, cam, W, H, menu) {
-  pie.hidden = !ix.menu;
-  if (menu) { pie.style.left = `${menu.x}px`; pie.style.top = `${menu.y}px`; }
-  setActIcon(c.player.riding ? '⏏' : 'E');
+  // the action menu: a row of plates over their head; the page's buttons sit on them as tap areas
+  let menu = null;
+  const head = ix.menu ? screenOf(ix.headOf(ix.menu.npc)(), cam, W, H) : null;
+  pie.hidden = !head;
+  if (head) {
+    const pw = 42, ph = 12, gap = 3, total = 4 * pw + 3 * gap;
+    const x0 = Math.round(Math.max(2, Math.min(W / px - total - 2, head.x / px - total / 2))), y0 = Math.round(head.y / px - ph - 4);
+    const rects = MENU_LABELS.map((_, i) => ({ x: x0 + i * (pw + gap), y: y0, w: pw, h: ph }));
+    pie.style.left = '0px'; pie.style.top = '0px';
+    rects.forEach((r, i) => Object.assign(pieBtns[i].style, { left: `${r.x * px}px`, top: `${(r.y - 3) * px}px`, width: `${r.w * px}px`, height: `${(r.h + 6) * px}px`, margin: '0' }));
+    if (pixelHud) menu = { rects, labels: MENU_LABELS, hover: menuHover, box: { x0: x0 - 2, x1: x0 + total + 2, y0: y0 - 2, y1: y0 + ph + 12 } };
+  }
+  // the corner buttons: ghost tiles centred in each (bigger) tap area
+  const riding = !!c.player.riding;
+  const now = performance.now();
+  const corner = pixelHud ? cornerBtns.map((cb) => {
+    const r = cb.el.getBoundingClientRect(), s = 16;
+    return { x: Math.round((r.left + r.width / 2) / px - s / 2), y: Math.round((r.top + r.height / 2) / px - s / 2), s, icon: cb.icon === 'use' && riding ? 'eject' : cb.icon, key: cb.key, on: now - cb.flash < 160 };
+  }) : null;
+  pixelUi.draw({ W, H, px, speech, bursts, charge: chargeInfo(c, ix, cam, W, H), menu, corner });
   const sh = ix.shake ?? 0;
   canvas.style.transform = sh > 0 ? `translate(${(Math.random() - 0.5) * 14 * sh / 0.3}px, ${(Math.random() - 0.5) * 10 * sh / 0.3}px)` : '';
 }

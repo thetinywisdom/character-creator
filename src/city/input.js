@@ -14,7 +14,8 @@ export class CityInput {
     this.joy = joystickEl;
     this.knob = joystickEl.querySelector('.knob');
     this.events = []; // interaction events for interact.js (see takeEvents)
-    const KEYS = { KeyE: 'primary', KeyF: 'chargeStart', KeyG: 'push', KeyT: 'talk', KeyB: 'banana', KeyQ: 'fart', Escape: 'close', Space: 'jump' };
+    // E menu / ride; 1 slap (hold to charge), 2 push, 3 talk, 4 fart (also in the open menu)
+    const KEYS = { KeyE: 'primary', Digit1: 'chargeStart', Numpad1: 'chargeStart', KeyB: 'banana', Escape: 'close', Space: 'jump' };
 
     window.addEventListener('keydown', (e) => {
       if (!this.active) return;
@@ -22,12 +23,12 @@ export class CityInput {
       if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
       if (e.repeat) return;
       if (KEYS[e.code]) this.events.push({ type: KEYS[e.code] });
-      const n = ['Digit1', 'Digit2', 'Digit3'].indexOf(e.code);
-      if (n >= 0) this.events.push({ type: 'choose', n });
+      const n = ['Digit2', 'Digit3', 'Digit4'].indexOf(e.code) + 1 || ['Numpad2', 'Numpad3', 'Numpad4'].indexOf(e.code) + 1;
+      if (n > 0) this.events.push({ type: 'choose', n });
     });
     window.addEventListener('keyup', (e) => {
       this.keys.delete(e.code);
-      if (e.code === 'KeyF' && this.active) this.events.push({ type: 'chargeEnd' }); // release the slap
+      if ((e.code === 'Digit1' || e.code === 'Numpad1') && this.active) this.events.push({ type: 'chargeEnd' }); // release the slap
     });
     window.addEventListener('blur', () => this.keys.clear());
 

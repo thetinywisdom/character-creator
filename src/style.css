@@ -215,8 +215,10 @@ html, body {
 .ico { font-style: normal; display: grid; place-items: center; }
 .ico canvas { width: 26px; height: 26px; image-rendering: pixelated; }
 #actBtn .ico canvas { width: 30px; height: 30px; }
-/* hud 'pixel': square controls, ink borders, hard shadows, pixel font */
-body[data-hud="pixel"] #pie button { border-radius: 0; border: 3px solid #2f3236; box-shadow: 3px 3px 0 #2f3236; width: 62px; height: 62px; }
-body[data-hud="pixel"] #pie button span { font: 400 9px/1.2 'Silkscreen', monospace; text-transform: uppercase; }
-body[data-hud="pixel"] #cityActions button { border-radius: 0; border: 3px solid #2f3236; box-shadow: 3px 3px 0 #2f3236; background: #f2efe8; color: #2f3236; }
-body[data-hud="pixel"] #cityActions #actBtn { background: var(--accent); border-color: #2f3236; }
+/* hud 'pixel' (default): what you see is painted on the pixel layer; the page's
+   buttons are invisible tap areas on top. hud 'clean': plain rounded buttons. */
+body[data-hud="pixel"] #pie button, body[data-hud="pixel"] #cityActions button { background: transparent; border: 0; box-shadow: none; color: transparent; border-radius: 0; }
+body[data-hud="pixel"] #pie button { position: absolute; animation: none; }
+body[data-hud="pixel"] #cityActions #actBtn { background: transparent; border: 0; color: transparent; }
+body[data-hud="pixel"] #cityActions button:focus-visible, body[data-hud="pixel"] #pie button:focus-visible { outline: 2px solid #ffd23f; }
+body[data-hud="clean"] #pie button::after, body[data-hud="clean"] #cityActions button::after { content: attr(aria-label); font: 600 11px system-ui, sans-serif; color: #1d1d1d; }
