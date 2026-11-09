@@ -472,7 +472,7 @@ export class Interactions {
     c.ridden = true;
     c.parked = false;
     p.riding = c;
-    c.drive = { speed: 0, heading: c.obj.rotation.y };
+    c.drive = { speed: 0, heading: c.obj.rotation.y, travel: c.obj.rotation.y };
     p.body.visible = !!c.bike; // inside a car you are hidden; on a bike you sit on it
     p.speed = 0;
   }
@@ -499,13 +499,24 @@ export class Interactions {
     if (throttle > 0.1) dv.speed += (dv.speed < 0 ? 9 : 5) * throttle * dt;
     else if (throttle < -0.1) dv.speed += (dv.speed > 0 ? -9 : -3) * -throttle * dt;
     else dv.speed *= Math.max(0, 1 - dt * 0.8);
-    dv.speed = Math.max(-3, Math.min(MAX * (axes.run ? 1.25 : 1), dv.speed));
-    // steer (more grip at speed, reversed when backing up)
-    const steer = -axes.x * Math.min(1, Math.abs(dv.speed) / 3) * (c.bike ? 2.4 : 1.6);
+    const hb = axes.handbrake;
+    if (hb) dv.speed *= Math.max(0, 1 - dt * 0.9); // the handbrake bleeds speed off
+    dv.speed = Math.max(-3, Math.min(MAX, dv.speed));
+    // steer (more grip at speed, reversed when backing up; it turns harder on the handbrake)
+    const steer = -axes.x * Math.min(1, Math.abs(dv.speed) / 3) * (c.bike ? 2.4 : 1.6) * (hb ? 1.9 : 1);
     dv.heading += steer * dt * Math.sign(dv.speed || 1);
     const fx = Math.sin(dv.heading), fz = Math.cos(dv.heading);
+    // drift: the way we are actually going (dv.travel) catches up with the way we
+    // point; with grip it does so at once, on the handbrake slowly, so the back slides out
+    dv.travel ??= dv.heading;
+    let slipA = dv.heading - dv.travel;
+    slipA = Math.atan2(Math.sin(slipA), Math.cos(slipA));
+    dv.travel += slipA * Math.min(1, dt * (hb ? 1.4 : 9));
+    const tx = Math.sin(dv.travel), tz = Math.cos(dv.travel);
     const pos = c.obj.position;
-    let nx = pos.x + fx * dv.speed * dt, nz = pos.z + fz * dv.speed * dt;
+    let nx = pos.x + tx * dv.speed * dt, nz = pos.z + tz * dv.speed * dt;
+    // skid marks while sliding
+    if (Math.abs(slipA) > 0.2 && Math.abs(dv.speed) > 3) this.skid(c, nx, nz, fx, fz);
     // collide: two circles along the vehicle against buildings, props, other vehicles
     const r = c.size.hw, off = Math.max(0, c.size.hd - r);
     let hit = false;
@@ -542,6 +553,26 @@ export class Interactions {
     p.root.position.set(nx, pos.y, nz);
     p.root.rotation.y = dv.heading;
     if (c.bike) this.sitOnBike(p, c);
+  }
+
+  /** Dark tyre marks under the back wheels while drifting (the oldest fade away). */
+  skid(c, x, z, fx, fz) {
+    this.skids ??= [];
+    this.skidMat ??= new THREE.MeshBasicMaterial({ color: 0x2f3236, transparent: true, opacity: 0.6, depthWrite: false });
+    this.skidGeo ??= new THREE.PlaneGeometry(0.24, 0.42).rotateX(-Math.PI / 2);
+    const back = c.size.hd * 0.6, w = c.bike ? 0 : c.size.hw * 0.75;
+    for (const sx of c.bike ? [0] : [-1, 1]) {
+      const px = x - fx * back + fz * w * sx, pz = z - fz * back - fx * w * sx;
+      const last = this.skids[this.skids.length - 1];
+      if (last && Math.hypot(last.position.x - px, last.position.z - pz) < 0.25) continue;
+      const m = new THREE.Mesh(this.skidGeo, this.skidMat);
+      m.position.set(px, this.city.layout.groundHeight(px, pz) + 0.015, pz);
+      m.rotation.y = Math.atan2(fx, fz);
+      m.renderOrder = 1;
+      this.city.scene.add(m);
+      this.skids.push(m);
+      if (this.skids.length > 400) this.city.scene.remove(this.skids.shift());
+    }
   }
 
   /** Sit the player on a bike: hips on the seat, knees up, hands on the bars. */

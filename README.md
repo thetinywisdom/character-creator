@@ -34,7 +34,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   until it shakes red for a power slap that knocks them down; double-click to push, right-click to talk). A push knocks people over. Calm people run away;
   aggressive ones get up, chase you and hit back. **B** (🍌) drops a banana peel.
   **E** (or hold-click) next to a car, the bus, the scooter or the bicycle
-  gets you on; drive with WASD, E to get off.
+  gets you on; drive with WASD; hold Shift or the right
+  mouse button for the handbrake and steer to drift; E to get off.
 
 ## Docs
 

@@ -43,6 +43,7 @@ export class CityInput {
       if (!this.active || e.target !== canvas) return;
       if (press?.timer) clearTimeout(press.timer);
       press = { id: e.pointerId, x: e.clientX, y: e.clientY, button: e.button, moved: false, fired: false };
+      if (e.button === 2) this.rmb = true; // held right button = handbrake while driving
       // holding still starts charging a slap (released on pointerup)
       if (e.button === 0) press.timer = setTimeout(() => { if (press && !press.moved) { press.fired = true; press.charging = true; this.events.push({ type: 'chargeStart', x: press.x, y: press.y }); } }, 300);
     });
@@ -50,6 +51,7 @@ export class CityInput {
       if (press && !press.charging && e.pointerId === press.id && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 8) { press.moved = true; clearTimeout(press.timer); }
     });
     canvas.addEventListener('pointerup', (e) => {
+      if (e.button === 2) this.rmb = false;
       if (!press || e.pointerId !== press.id) return;
       clearTimeout(press.timer);
       const pr = press;
@@ -125,7 +127,9 @@ export class CityInput {
     if (k.has('KeyS') || k.has('ArrowDown')) z += 1;
     const len = Math.hypot(x, z);
     if (len > 1) { x /= len; z /= len; }
-    return { x, z, run: k.has('ShiftLeft') || k.has('ShiftRight') };
+    const shift = k.has('ShiftLeft') || k.has('ShiftRight');
+    // Shift runs on foot; Shift or a held right button is the handbrake in a vehicle
+    return { x, z, run: shift, handbrake: shift || !!this.rmb };
   }
 
   /** Interaction events since the last call (keys, clicks, taps, UI buttons). */

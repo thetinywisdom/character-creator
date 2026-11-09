@@ -241,7 +241,9 @@ slap (aggressive: slaps back, then chases; calm: runs away), push (knocked
 over like a car hit, `ix.knockDown`; they get up shouting, then aggressive:
 chase and push you over too; calm: run away), talk (both say
 a line of small talk), drop banana peels (anyone stepping on one slips), and
-ride vehicles (traffic cars, the bus, a scooter and a bicycle parked by the
+ride vehicles (Shift or a held right button is the handbrake: the vehicle
+slows and loses grip, `drive.travel` lags `drive.heading`, so it drifts and
+leaves skid marks; traffic cars, the bus, a scooter and a bicycle parked by the
 start; WASD drives, people hit fall over, you get out on the driver's side
 and the vehicle stays parked). Clicking a person or vehicle works at any distance you can see: you
 run over to them first (`player.goal`, cancelled by any movement key), then
