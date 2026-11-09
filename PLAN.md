@@ -86,6 +86,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 34. **A busier town, step 1**: 66 people with roles (roaming walkers who cross streets, people standing about, bench sitters), distance culling; after a reaction people walk back naturally to their place. Clicks work at any distance (you run over); 50 matched small-talk questions and answers; flashy hit bursts; a push knocks people over and they react.
 
+35. **A busier town, step 2**: queues outside food shops, shop promoters calling out, chatting groups with bubbles, kids in the park, police, suits downtown and school uniforms by schools (~108 people).
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.

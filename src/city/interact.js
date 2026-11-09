@@ -80,7 +80,7 @@ export class Interactions {
     const hx = Math.sin(p.heading), hz = Math.cos(p.heading);
     let best = null, bd = Infinity;
     for (const n of npcs) {
-      if (!n.pos || n.act?.kind === 'slip') continue;
+      if (!n.pos || n.act?.kind === 'slip' || !n.root.visible) continue;
       const dx = n.pos.x - p.x, dz = n.pos.z - p.z, d = Math.hypot(dx, dz);
       if (d > REACH || (dx * hx + dz * hz) / (d || 1) < 0.35) continue; // in front of you
       if (d < bd) { bd = d; best = { type: 'npc', ref: n }; }
@@ -109,7 +109,7 @@ export class Interactions {
     };
     let best = null, bd = Infinity;
     for (const n of npcs) {
-      if (!n.pos || Math.hypot(n.pos.x - p.x, n.pos.z - p.z) > PICK_REACH) continue;
+      if (!n.pos || !n.root.visible || Math.hypot(n.pos.x - p.x, n.pos.z - p.z) > PICK_REACH) continue;
       const s = toScreen(this.midOf(n)());
       const d = Math.hypot(s.x - cx, s.y - cy);
       if (s.ok && d < 55 && d < bd) { bd = d; best = { type: 'npc', ref: n }; }

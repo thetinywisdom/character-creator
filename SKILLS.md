@@ -215,7 +215,14 @@ parts tint evenly.
 **The crowd** (`src/city/crowd.js`). Every pedestrian has a role
 (`n.role.kind`): `walk` (walks a block's pavement and, at corners, sometimes
 crosses the road to another block's route, so walkers roam), `stand` (stands
-about, looks around), `bench` (sits on a park bench). Roles with a place carry
+about, looks around), `bench` (sits on a park bench), `queue` (lines up outside ramen / udon /
+sushi / takoyaki shops; the front one goes in, the rest shuffle up),
+`promote` (waves and calls out outside a shop, `CALLS`), `group` (2-4 chat
+in a circle; bubbles from `GROUP_TALK` when you are within ~22 m), `kid`
+(children running about the park), `police` (outside each koban; two more
+walk a beat). Looks fit the place: ~70% suits downtown, school uniforms by
+the school, police uniforms, aprons on promoters. Shop types of `building.shop`
+/ `mixedUse` without a `shopType` are read from their seed. Roles with a place carry
 `role.home` {x, z, heading}. People further than ~48 m from the player are
 hidden and not animated. After any reaction a person walks back to their
 place at their own pace (`City.endAct` → act 'return' → `City.finishAct`) and

@@ -144,8 +144,7 @@ export class City {
     this.npcs = [];
     this.crowd = new Crowd(this);
     this.loopInfo = new Map(city.walkLoops.map((l) => [l, loopLengths(l)]));
-    const makePerson = (look = { ...params.human, ...human.randomize(rng) }) => {
-      const loop = city.walkLoops[Math.floor(rng() * city.walkLoops.length)];
+    const makePerson = (look = { ...params.human, ...human.randomize(rng) }, loop = city.walkLoops[Math.floor(rng() * city.walkLoops.length)]) => {
       const elderly = look.bodyType === 'Grandpa' || look.bodyType === 'Grandma';
       const npc = {
         trait: look.trait ?? (rng() < 0.25 ? 'Aggressive' : 'Calm'), // how they react (interact.js)
@@ -164,11 +163,46 @@ export class City {
       this.npcs.push(npc);
       return npc;
     };
+    // looks that fit the place: suits downtown, school uniforms by the school,
+    // police uniforms, aprons on shop promoters
+    const isKid = (l) => l.bodyType === 'Boy' || l.bodyType === 'Girl';
+    const randomLook = (want = 'any') => {
+      for (let k = 0; k < 40; k++) {
+        const l = { ...params.human, ...human.randomize(rng) };
+        if (want === 'any' || (want === 'kid') === isKid(l)) return l;
+      }
+      return { ...params.human, ...human.randomize(rng) };
+    };
+    const dress = (l, what) => {
+      if (what === 'office') Object.assign(l, human.outfits['Office worker']);
+      if (what === 'police') Object.assign(l, human.outfits['Police officer'], { bodyType: l.bodyType === 'Grandma' || l.bodyType === 'Woman' ? 'Woman' : 'Man' });
+      if (what === 'student') Object.assign(l, l.bodyType === 'Girl'
+        ? { top: 'Sailor uniform', topColor: 'White', legwear: 'Skirt', legwearColor: 'Navy', outerwear: 'None', headwear: 'None' }
+        : { top: 'Gakuran', topColor: 'Black', legwear: 'Trousers', legwearColor: 'Black', outerwear: 'None', headwear: 'None' });
+      if (what === 'apron') Object.assign(l, { bodyAccessory: 'Apron', handItem: 'None', outerwear: 'None' });
+      return l;
+    };
+    const zoneOf = (loop) => city.blocks[city.walkLoops.indexOf(loop)]?.type;
     if (city.walkLoops.length) {
-      const { benches, stands } = this.crowd.spots(rng);
-      for (let i = 0; i < npcCount; i++) this.crowd.assign(makePerson(), { kind: 'walk' });
-      for (const home of stands.slice(0, 14)) this.crowd.assign(makePerson(), { kind: 'stand', home });
-      for (const home of benches) if (rng() < 0.7) this.crowd.assign(makePerson(), { kind: 'bench', home });
+      const sp = this.crowd.spots(rng);
+      for (let i = 0; i < npcCount; i++) {
+        const loop = city.walkLoops[Math.floor(rng() * city.walkLoops.length)];
+        const zone = zoneOf(loop);
+        let look;
+        if (zone === 'downtown' && rng() < 0.7) look = dress(randomLook('adult'), 'office');
+        else if (zone === 'school' && rng() < 0.65) look = dress(randomLook('kid'), 'student');
+        else look = randomLook();
+        this.crowd.assign(makePerson(look, loop), { kind: 'walk' });
+      }
+      // two officers walking a beat
+      for (let i = 0; i < 2; i++) this.crowd.assign(makePerson(dress(randomLook('adult'), 'police')), { kind: 'walk', police: true });
+      for (const home of sp.stands.slice(0, 12)) this.crowd.assign(makePerson(), { kind: 'stand', home });
+      for (const home of sp.benches) if (rng() < 0.7) this.crowd.assign(makePerson(), { kind: 'bench', home });
+      for (const role of this.crowd.plan(rng, sp)) {
+        const look = role.kid ? randomLook('kid') : role.police ? dress(randomLook('adult'), 'police')
+          : role.kind === 'promote' ? dress(randomLook('adult'), 'apron') : randomLook('adult');
+        this.crowd.assign(makePerson(look), role);
+      }
     }
 
     // cats wandering in the park
@@ -504,6 +538,7 @@ export class City {
     const ground = this.layout.groundHeight(p.x, p.z);
 
     // --- pedestrians ----------------------------------------------------------
+    this.crowd.update(dt); // queues shuffle up, groups chat
     for (const n of this.npcs) {
       if (n.act) { n.root.visible = true; this.ix.updateNpc(n, dt); continue; } // slapped, chasing, fleeing, talking, walking back
       if (n.role && n.role.kind !== 'walk') { this.crowd.updateRole(n, dt); continue; } // standing, sitting...
