@@ -49,8 +49,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   a power slap that launches them. Double-click to push. On a phone held upright the
   City asks you to turn it sideways (where the browser allows, "Go landscape"
   locks it; iPhones only rotate when you turn the phone). A push knocks people over, and anyone standing next to them goes down too. Calm people run away;
-  aggressive ones get up, chase you and hit back: they run faster than you,
-  shout threats and can shove you off a bike or scooter, but give up after 10
+  aggressive ones get up, chase you and hit back: you run 1.25 times faster than any of them, but they
+  shout threats and can shove you off a bike or scooter; they give up after 10
   seconds or once you are 300 m away. Calm people run 300 m away along the
   streets, then walk back. **B** (🍌) drops a banana peel. A slap spins them round, a full-charge slap launches them spinning into
   the air, a push sends them flying sumo-style; calm people fall feet over

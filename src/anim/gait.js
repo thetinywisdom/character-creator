@@ -86,6 +86,9 @@ export const RUN_STYLES = {
   'Ninja': { stride: 1.15, knee: 1.1, arms: 1, lean: 2.2, cadence: 1.15, mode: 'ninja' },
 };
 export const RUN_SPEED = 4.2;
+// how fast people run in the City: you are 1.25x faster than any townsperson
+export const PLAYER_RUN_SPEED = 4.6;
+export const NPC_RUN_SPEED = PLAYER_RUN_SPEED / 1.25; // 3.68 m/s
 
 // --- keyframes: [cycle fraction, degrees]; hip & knee flexion positive,
 // ankle dorsiflexion (toes up) positive ---------------------------------------

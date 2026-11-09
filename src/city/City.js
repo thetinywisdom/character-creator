@@ -10,7 +10,7 @@ import { Crowd, leanInto, pedalPose, sitPose } from './crowd.js';
 import { createAsset } from '../catalog/index.js';
 import { generateCityData } from './layout.js';
 import { buildCity } from './build.js';
-import { JOINT_NAMES, createGait, poseGait, stepGait, tuneOf } from '../anim/gait.js';
+import { JOINT_NAMES, NPC_RUN_SPEED, PLAYER_RUN_SPEED, createGait, poseGait, stepGait, tuneOf } from '../anim/gait.js';
 import { Precipitation, lampPools, setNightGlow, setSnowCover, weatherLight } from './atmosphere.js';
 import { giveHeldItem } from '../subjects/human.js';
 import { addObjectSilhouette, addSilhouette, markPerson, silhouetteMaterial } from './silhouette.js';
@@ -430,7 +430,7 @@ export class City {
       n.seg = undefined;
       return;
     }
-    const pace = n.flee ? 4.2 : n.speed;
+    const pace = n.flee ? NPC_RUN_SPEED : n.speed;
     if (n.flee) n.flee.left -= pace * dt;
     n.pos = { x: n.pos.x + (dx / d) * pace * dt, z: n.pos.z + (dz / d) * pace * dt };
     n.root.position.set(n.pos.x, this.layout.groundHeight(n.pos.x, n.pos.z), n.pos.z);
@@ -647,7 +647,7 @@ export class City {
     const mz = right.z * a.x - fwd.z * a.z;
     const moving = Math.hypot(mx, mz) > 0.05;
     // speed builds up: quick to a walk, then a slower build to a full run (and quick to stop)
-    const target = moving ? (a.run ? 4.6 : 1.6) : 0;
+    const target = moving ? (a.run ? PLAYER_RUN_SPEED : 1.6) : 0;
     const accel = target < p.speed ? 9 : p.speed < 1.6 ? 6 : 1.7;
     p.speed += Math.sign(target - p.speed) * Math.min(Math.abs(target - p.speed), accel * dt);
     if (moving) {
@@ -689,7 +689,7 @@ export class City {
       if (n.act) { n.root.visible = true; this.ix.updateNpc(n, dt); continue; } // slapped, chasing, fleeing, talking, walking back
       if (n.role && n.role.kind !== 'walk') { this.crowd.updateRole(n, dt); continue; } // standing, sitting...
       if (n.cross) { this.crossRoad(n, dt); continue; }
-      const pace = n.flee ? 4.2 : n.speed; // running away scared
+      const pace = n.flee ? NPC_RUN_SPEED : n.speed; // running away scared (you are 1.25x faster)
       if (n.flee && (n.flee.left -= pace * dt) <= 0) {
         // far enough: calm down and walk back to their place
         n.flee = null;

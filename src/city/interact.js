@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { COMEDY } from './comedy.js';
 import { leanInto, pedalPose, sitPose } from './crowd.js';
 import { bananaPeel } from '../props/extras.js';
-import { JOINT_NAMES } from '../anim/gait.js';
+import { JOINT_NAMES, NPC_RUN_SPEED, PLAYER_RUN_SPEED } from '../anim/gait.js';
 import { SMALL_TALK } from './smalltalk.js';
 
 // Character interactions and player tricks in the walkable town (City.js).
@@ -33,7 +33,7 @@ const SHOUTS = {
 // charging a slap: the first cycle (green to yellow) is a normal slap, the
 // second (yellow to red, shaking) a power slap that knocks them down
 export const CHARGE = [0.7, 0.7];
-const CHASE_SPEED = 5.4; // m/s: faster than your run (4.6): get a vehicle or hide
+const CHASE_SPEED = NPC_RUN_SPEED; // m/s: you run 1.25x faster, so you can get away
 const CHASE_YELLS = ['Get back here!', "I'll get you!", "You're DEAD!", 'Come here!!', "Don't you run!", 'COWARD!', '#@%&!!'];
 const BURSTS = {
   powerslap: ['SMAAACK!!', 'KA-POW!!', 'WHAM!!'], slap: ['SLAP!', 'WHAP!', 'SMACK!'], push: ['SHOVE!', 'WHUMP!', 'OOF!'], slip: ['WHOOPS!'], bonk: ['BONK!'], bump: ['BUMP!', 'OOF!', 'WHOA!', 'OOPS!'] };
@@ -68,7 +68,7 @@ const SEATED = new Set(['wait', 'talk', 'seated']); // acts a bench sitter does 
 export const MENU_OPTIONS = ['slap', 'push', 'talk', 'fart']; // keys 1-4, in the menu's order
 const REACH = 1.7;        // m: how close a person must be to act on them
 const PICK_REACH = 60;    // m: a clicked person can be anywhere you can see; you run over to them
-const RUN = 4.2;
+const RUN = PLAYER_RUN_SPEED; // you, running over to someone you clicked
 const MAX_PEELS = 10;
 const FART_R = 3.5;       // m: how far the stink knocks people over
 
