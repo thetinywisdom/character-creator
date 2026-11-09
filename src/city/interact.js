@@ -67,6 +67,9 @@ const SEATED = new Set(['wait', 'talk', 'seated']); // acts a bench sitter does 
 
 export const MENU_OPTIONS = ['slap', 'push', 'talk', 'fart']; // keys 1-4, in the menu's order
 const REACH = 1.7;        // m: how close a person must be to act on them
+const PICK_RAYS = [[0, 0], [5, 0], [-5, 0], [0, 5], [0, -5]]; // px: rays tried for a vehicle under the mouse
+const PICK_NDC = new THREE.Vector2();
+const pickRay = new THREE.Raycaster();
 const PICK_REACH = 60;    // m: a clicked person can be anywhere you can see; you run over to them
 const RUN = PLAYER_RUN_SPEED; // you, running over to someone you clicked
 const MAX_PEELS = 10;
@@ -120,6 +123,31 @@ export class Interactions {
   midOf(n) { return () => n.root.position.clone().add(new THREE.Vector3(0, (n.look?.height ?? 1.7) * 0.75, 0)); }
 
   // --- what are we facing / what was clicked ---------------------------------------
+  /**
+   * Is a building between the camera and this ground point? (Big colliders
+   * only, so benches and bins do not hide people; the camera's own block is
+   * skipped.) Keeps people behind or inside buildings from being picked.
+   */
+  behindBuilding(camera, pos) {
+    const cx = camera.position.x, cz = camera.position.z, dx = pos.x - cx, dz = pos.z - cz;
+    this.bigColliders ??= this.city.layout.colliders.filter((c) => c.hw > 1.5 && c.hd > 1.5);
+    for (const c of this.bigColliders) {
+      if (Math.abs(cx - c.x) < c.hw && Math.abs(cz - c.z) < c.hd) continue; // the camera is inside it
+      if (Math.abs(pos.x - c.x) < c.hw - 0.3 && Math.abs(pos.z - c.z) < c.hd - 0.3) return true; // inside a building
+      // segment vs box (slabs), the last 0.5 m before the person not counted (they stand by the wall)
+      let t0 = 0, t1 = 1 - 0.5 / (Math.hypot(dx, dz) || 1);
+      for (const [o, dd, lo, hi] of [[cx, dx, c.x - c.hw, c.x + c.hw], [cz, dz, c.z - c.hd, c.z + c.hd]]) {
+        if (Math.abs(dd) < 1e-9) { if (o < lo || o > hi) { t0 = 2; break; } continue; }
+        let a = (lo - o) / dd, b = (hi - o) / dd;
+        if (a > b) [a, b] = [b, a];
+        t0 = Math.max(t0, a); t1 = Math.min(t1, b);
+        if (t0 > t1) break;
+      }
+      if (t0 <= t1) return true;
+    }
+    return false;
+  }
+
   /**
    * Who the action buttons act on (ui/actionPad.js): the person under the
    * mouse, else the nearest person in front of you (up to 7 m, you run over);
@@ -197,7 +225,7 @@ export class Interactions {
       const tall = Math.hypot(b.x - a.x, b.y - a.y);
       const reach = Math.max(5, Math.min(14, tall * 0.2)); // about a body's width either side (small far away: tight)
       const d = segDist(a, b);
-      if (d < reach && d < bd) { bd = d; best = { type: 'npc', ref: n }; }
+      if (d < reach && d < bd && !this.behindBuilding(camera, n.pos)) { bd = d; best = { type: 'npc', ref: n }; }
     }
     if (best) return best;
     // a vehicle only when you click on it: inside its outline on screen (the
@@ -211,9 +239,15 @@ export class Interactions {
         const s = toScreen(new THREE.Vector3(x + fz * hw * sa + fx * hd * sd, y + yy, z - fx * hw * sa + fz * hd * sd));
         ok ||= s.ok; x0 = Math.min(x0, s.x); x1 = Math.max(x1, s.x); y0 = Math.min(y0, s.y); y1 = Math.max(y1, s.y);
       }
-      if (!ok || cx < x0 - 4 || cx > x1 + 4 || cy < y0 - 4 || cy > y1 + 4) continue;
-      const d = Math.hypot(cx - (x0 + x1) / 2, cy - (y0 + y1) / 2);
-      if (d < bd) { bd = d; best = { type: 'vehicle', ref: c }; }
+      if (!ok || cx < x0 - 4 || cx > x1 + 4 || cy < y0 - 4 || cy > y1 + 4 || this.behindBuilding(camera, c.obj.position)) continue;
+      // inside the box: only a hit on the vehicle's actual shape counts (a
+      // thin bicycle fills little of its box), a few pixels of give round it
+      for (const [ox, oy] of PICK_RAYS) {
+        PICK_NDC.set(((cx + ox - rect.left) / rect.width) * 2 - 1, -((cy + oy - rect.top) / rect.height) * 2 + 1);
+        pickRay.setFromCamera(PICK_NDC, camera);
+        const hit = pickRay.intersectObject(c.obj, true)[0];
+        if (hit && hit.distance < bd) { bd = hit.distance; best = { type: 'vehicle', ref: c }; break; }
+      }
     }
     return best;
   }
@@ -234,6 +268,7 @@ export class Interactions {
       return;
     }
     if (ev.type === 'close') { this.closeMenu(); return; }
+    if (ev.type === 'chargeCancel') { this.charge = null; return; } // held, then dragged the camera
     if (ev.type === 'choose') {
       // the menu's options (also keys 1-4): slap, push, talk, fart; without the
       // menu open they act on whoever you face (fart needs nobody)

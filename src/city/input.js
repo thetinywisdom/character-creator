@@ -54,6 +54,8 @@ export class CityInput {
     canvas.addEventListener('pointerleave', () => { this.hover = null; });
     canvas.addEventListener('pointermove', (e) => {
       if (press && !press.charging && e.pointerId === press.id && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 8) { press.moved = true; clearTimeout(press.timer); }
+      // held still, then dragged: that was turning the camera, not a slap
+      else if (press?.charging && e.pointerId === press.id && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 12) { press.charging = false; press.moved = true; this.events.push({ type: 'chargeCancel' }); }
     });
     canvas.addEventListener('pointerup', (e) => {
       if (e.button === 2) this.rmb = false;

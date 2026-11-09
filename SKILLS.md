@@ -348,7 +348,11 @@ double click = push; taps work the same (except a long press: a finger
 resting on the screen is not a slap; `pointerType === 'touch'` skips the
 hold timer). Picking a person on screen (`pickAt`) reaches a body's width
 either side, at least 5 and at most 14 px, so tiny far-away people need a
-precise tap. **Action buttons** (`src/ui/actionPad.js`, `ActionPad`): every
+precise tap; a vehicle is picked only by a ray hit on its actual shape
+(`PICK_RAYS`, the centre and 5 px either way), not its screen box; anything
+behind or inside a building is not pickable (`ix.behindBuilding(camera, pos)`:
+the camera-to-target segment against colliders bigger than 3 m). A hold that
+turns into a camera drag sends `chargeCancel` (no slap). **Action buttons** (`src/ui/actionPad.js`, `ActionPad`): every
 interaction has a button (USE = hand, SLAP hold-to-charge, PUSH, TALK, FART,
 JUMP, PEEL, RUN held = `cityInput.runHeld`, the handbrake when riding); they
 fire on pointerdown so they work while a thumb is on the joystick (phones
