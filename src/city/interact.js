@@ -172,11 +172,20 @@ export class Interactions {
       if (d < reach && d < bd) { bd = d; best = { type: 'npc', ref: n }; }
     }
     if (best) return best;
+    // a vehicle only when you click on it: inside its outline on screen (the
+    // corners of its box projected), not just somewhere near it
     for (const c of cars) {
       if (this.distToVehicle(c, p.x, p.z) > PICK_REACH) continue;
-      const s = toScreen(c.obj.position.clone().add(new THREE.Vector3(0, 0.8, 0)));
-      const d = Math.hypot(s.x - cx, s.y - cy);
-      if (s.ok && d < 90 && d < bd) { bd = d; best = { type: 'vehicle', ref: c }; }
+      const { x, y, z } = c.obj.position, h = c.obj.rotation.y, fx = Math.sin(h), fz = Math.cos(h);
+      const hw = c.size.hw, hd = c.size.hd, top = c.bike ? 1.1 : c.size.hd > 4 ? 3 : 1.5;
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, ok = false;
+      for (const sa of [-1, 1]) for (const sd of [-1, 1]) for (const yy of [0, top]) {
+        const s = toScreen(new THREE.Vector3(x + fz * hw * sa + fx * hd * sd, y + yy, z - fx * hw * sa + fz * hd * sd));
+        ok ||= s.ok; x0 = Math.min(x0, s.x); x1 = Math.max(x1, s.x); y0 = Math.min(y0, s.y); y1 = Math.max(y1, s.y);
+      }
+      if (!ok || cx < x0 - 4 || cx > x1 + 4 || cy < y0 - 4 || cy > y1 + 4) continue;
+      const d = Math.hypot(cx - (x0 + x1) / 2, cy - (y0 + y1) / 2);
+      if (d < bd) { bd = d; best = { type: 'vehicle', ref: c }; }
     }
     return best;
   }
@@ -208,11 +217,14 @@ export class Interactions {
       return;
     }
     if (p.riding) {
-      if (['primary', 'click', 'hold'].includes(ev.type)) this.getOff();
+      // E gets you off; a click or tap only when it is on your own vehicle
+      if (ev.type === 'primary') this.getOff();
+      else if ((ev.type === 'click' || ev.type === 'hold') && ev.x !== undefined && this.pickAt(ev.x, ev.y, camera, rect)?.ref === p.riding) this.getOff();
       return;
     }
-    const picked = ev.x !== undefined ? this.pickAt(ev.x, ev.y, camera, rect) : null;
-    const t = picked ?? this.facing();
+    // a click or tap acts on what is under it, or nothing (clicking the ground
+    // does not fall back to whoever you face); keys act on whoever you face
+    const t = ev.x !== undefined ? this.pickAt(ev.x, ev.y, camera, rect) : this.facing();
     switch (ev.type) {
       case 'primary':
       case 'right':
@@ -688,6 +700,7 @@ export class Interactions {
     const city = this.city, p = city.player, c = p.riding;
     if (!c) return;
     c.obj.rotation.z = 0; p.root.rotation.z = 0; c.lean = 0; // parked upright
+    const jj = joints(p.body); if (jj.legL) jj.legL.rotation.z = 0; if (jj.legR) jj.legR.rotation.z = 0; // knees back together
     c.ridden = false;
     c.parked = true; // stays where you left it
     p.riding = null;
@@ -901,8 +914,13 @@ export class Interactions {
   sitOnBike(p, c) {
     const j = joints(p.body);
     const hipY = j.legL?.position.y ?? 0.85;
-    p.body.position.set(0, (c.bike === 'bicycle' ? 0.86 : 0.74) - hipY + 0.05, c.bike === 'bicycle' ? -0.2 : -0.35);
+    // each vehicle's own seat (props/vehicles.js userData.seat): its height, how far
+    // back, and for a wide body (the mini scooter) knees spread either side of it
+    const seat = c.seat ?? (c.bike === 'bicycle' ? { y: 0.86, z: -0.2 } : { y: 0.76, z: -0.4 });
+    p.body.position.set(0, seat.y - hipY + 0.05, seat.z);
     p.body.rotation.set(0, 0, 0);
+    if (j.legL) j.legL.rotation.z = seat.splay ?? 0;
+    if (j.legR) j.legR.rotation.z = -(seat.splay ?? 0);
     for (const s of ['L', 'R']) {
       if (j[`leg${s}`]) j[`leg${s}`].rotation.x = -1.35;
       if (j[`shin${s}`]) j[`shin${s}`].rotation.x = 1.3;

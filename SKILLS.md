@@ -128,6 +128,8 @@ src/city/knock.js      Knockables: props tagged userData.knock (catalogue KNOCKA
                        when a vehicle hits them, blink, POOF, back in 5 s
                        Knockables.cloud(at, opts): dust / stink clouds of flat camera-facing
                        squares in three shades that pop in steps (pixel puffs)
+(vehicles: scooter variants carry userData.seat { y, z, splay } — where a
+ rider sits; the mini scooter's wide body spreads the knees; sitOnBike reads it)
 src/ui/catLab.js       the Cat lab view (🐱 mode): every cat version so far (subjects/catVersions/,
                        copies of cat.js from the project history; cat_v6.js = the lofted cat
                        with the cute options) and CUTE_CATS proposals (v6 with face / shape /
@@ -313,7 +315,9 @@ m/s² with skid marks, steering on it drifts), people hit fall over, you get out
 and the vehicle stays parked). Whoever is under the mouse gets a bright pulsing yellow ring with a dark
 edge (`ix.hoverRing`, from `CityInput.hover` and `ix.pickAt`; the pointer
 becomes a hand; `pickAt` hits a person anywhere from feet to head, about a
-body's width either side); the open menu's person keeps it; the soft ring marks whoever
+body's width either side, and a vehicle only inside its projected outline; a
+click on empty ground does nothing, it never falls back to whoever you face;
+while riding only E or a click on your own vehicle gets you off); the open menu's person keeps it; the soft ring marks whoever
 you face. Clicking a person or vehicle works at any distance you can see: you
 run over to them first (`player.goal`, cancelled by any movement key), then
 act. Input arrives as events

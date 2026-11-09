@@ -315,7 +315,7 @@ export class City {
       obj.rotation.y = 0; // side by side, facing the road
       this.silhouettes.push(...addObjectSilhouette(obj, silCars, silCache));
       this.scene.add(obj);
-      this.cars.push({ obj, size, bike, parked: true, fx: 0, fz: 1, speed: 0 });
+      this.cars.push({ obj, size, bike, parked: true, fx: 0, fz: 1, speed: 0, seat: built.userData.seat });
     });
     setDetail(1);
 
@@ -913,7 +913,7 @@ function takeRideables(city, group, colliders) {
     for (const c of colliders) {
       if (Math.hypot(c.x - pos.x, c.z - pos.z) < 0.6 && Math.max(c.hw, c.hd) < size.hd + 0.6) c.down = true;
     }
-    const car = { obj, size, parked: true, fx: Math.sin(heading), fz: Math.cos(heading), speed: 0, ...(kind === 'bicycle' || kind === 'scooter' ? { bike: kind } : {}) };
+    const car = { obj, size, parked: true, fx: Math.sin(heading), fz: Math.cos(heading), speed: 0, seat: o.userData.seat, ...(kind === 'bicycle' || kind === 'scooter' ? { bike: kind } : {}) };
     out.push(car);
   }
   return out;

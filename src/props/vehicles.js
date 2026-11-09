@@ -368,6 +368,7 @@ export const scooter = {
       handlebar(0.5, 1.08, 0.28);
       for (const sx of [-1, 1]) g.add(box(0.08, 0.06, 0.05, M.dark, [sx * 0.24, 1.16, 0.72])); // fairing mirrors
       g.userData.size = { hw: 0.4, hd: 1.1 };
+      g.userData.seat = { y: 1.0, z: -0.5 }; // where a rider sits (City: sitOnBike)
       return g;
     }
 
@@ -395,6 +396,7 @@ export const scooter = {
       for (const sx of [-1, 1]) g.add(box(0.06, 0.05, 0.05, M.amber, [sx * 0.14, 1.1, 0.52]));
       g.add(box(0.12, 0.08, 0.05, M.tail, [0, 0.76, -1.02]));
       g.userData.size = { hw: 0.35, hd: 1.0 };
+      g.userData.seat = { y: 0.94, z: -0.38 };
       return g;
     }
 
@@ -416,6 +418,7 @@ export const scooter = {
       fender(0.66, 0.17, Math.PI * 0.15, Math.PI * 0.85, 0.1, M.dark);
       mirror(0.44, 1.14, -1);
       g.userData.size = { hw: 0.25, hd: 0.7 };
+      g.userData.seat = { y: 0.84, z: -0.3, splay: 0.45 }; // a wide box body: knees out either side of it
       return g;
     }
 
@@ -451,6 +454,7 @@ export const scooter = {
       g.add(box(0.33, 0.25, 0.03, strap, [0, 0.88, 0.72]));
     }
     g.userData.size = { hw: 0.45, hd: 0.95 };
+    g.userData.seat = { y: 0.76, z: -0.4 };
     return g;
   },
 };
