@@ -216,7 +216,7 @@ function updateCityBar() {
   document.querySelector('#weatherBtn').innerHTML = `${{ Clear: '🌤', Rain: '🌧', Snow: '❄' }[state.weather]}<span> ${state.weather}</span>`;
   hint.textContent = iso
     ? 'WASD / arrows · Shift run · drag to turn · scroll or pinch to zoom · < > rotate · V third person · E interact / ride · click: menu · hold: slap · double: push · right: talk · B banana'
-    : 'WASD / arrows · Shift run · drag to look · E interact / ride · click: menu · hold: slap · double: push · right: talk · B banana · V iso';
+    : 'WASD / arrows · Shift run · drag to look · E interact / ride · Space jump · click: menu · hold: slap · double: push · right: talk · B banana · V iso';
 }
 viewBtn.onclick = () => { state.cityView = ensureCity().setViewMode(); updateCityBar(); };
 document.querySelector('#newTownBtn').onclick = () => { state.citySeed = Math.floor(Math.random() * 1000); city = null; ensureCity(); toast(`Town #${state.citySeed}`); };
@@ -284,6 +284,7 @@ pie.addEventListener('click', (e) => {
 });
 document.querySelector('#actBtn').onclick = () => cityInput.events.push({ type: 'primary' });
 document.querySelector('#bananaBtn').onclick = () => cityInput.events.push({ type: 'banana' });
+document.querySelector('#jumpBtn').onclick = () => cityInput.events.push({ type: 'jump' });
 function screenOf(v, camera, W, H) {
   const s = v.clone().project(camera);
   return { x: (s.x + 1) / 2 * W, y: (1 - s.y) / 2 * H, ok: s.z < 1 && Math.abs(s.x) < 1.3 && Math.abs(s.y) < 1.3 };

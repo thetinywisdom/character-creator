@@ -26,7 +26,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   day (at night windows, signs and lamps glow), 🌤 the weather (rain: people
   open umbrellas; snow), 🎥 (or V) switches third person / isometric (< >
   rotate); in the iso view people, cats and cars behind buildings show as
-  silhouettes (you in yellow). WASD / arrows, Shift to run, a joystick on touch screens.
+  silhouettes (you in yellow). WASD / arrows, Shift to run (it builds up speed), Space to jump, a joystick
+  on touch screens.
 - **Interactions in the City:** face a person and press **E**, or click anyone you can see (you run
   over to them)
   for a pie menu: 👋 Slap, ✋ Push, 💬 Talk (shortcuts F, G, T; hold F or hold-click to

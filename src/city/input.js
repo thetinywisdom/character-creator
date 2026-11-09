@@ -14,7 +14,7 @@ export class CityInput {
     this.joy = joystickEl;
     this.knob = joystickEl.querySelector('.knob');
     this.events = []; // interaction events for interact.js (see takeEvents)
-    const KEYS = { KeyE: 'primary', KeyF: 'chargeStart', KeyG: 'push', KeyT: 'talk', KeyB: 'banana', Escape: 'close' };
+    const KEYS = { KeyE: 'primary', KeyF: 'chargeStart', KeyG: 'push', KeyT: 'talk', KeyB: 'banana', Escape: 'close', Space: 'jump' };
 
     window.addEventListener('keydown', (e) => {
       if (!this.active) return;

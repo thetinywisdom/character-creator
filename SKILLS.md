@@ -234,6 +234,9 @@ place at their own pace (`City.endAct` → act 'return' → `City.finishAct`) an
 picks their role up again. Add a role: assign it in the City constructor
 and handle it in `Crowd.updateRole`.
 
+**Player movement.** Speed builds up: quick to a walk, then about 1.5 s to
+a full run (Shift, 4.6 m/s), quick to stop. Space jumps.
+
 **Character interactions** (`src/city/interact.js`, optional for games).
 Every person has a `trait` ('Calm' | 'Aggressive', in the human schema and
 the character JSON; about 1 in 4 are aggressive). The player can:
@@ -251,7 +254,7 @@ act. Input arrives as events
 (`CityInput.takeEvents()`): keys E (pie menu / ride), F slap (hold to charge: `CHARGE` cycles, green to
 yellow = slap, shaking yellow to red = power slap that knocks down; release
 to hit; events chargeStart / chargeEnd), G push, T talk,
-B banana, 1-3 menu, Esc; mouse click = E, hold = charge a slap, release to hit (ride on a vehicle),
+B banana, Space jump (`player.jumpY` / `vy`), 1-3 menu, Esc; mouse click = E, hold = charge a slap, release to hit (ride on a vehicle),
 double click = push, right click = talk; taps work the same. A busy person
 has `n.act` ({ kind: 'wait' | 'talk' | 'retaliate' | 'chase' | 'flee' |
 'slip' }) and is moved by `ix.updateNpc`; `City.endAct(n)` puts them back

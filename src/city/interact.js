@@ -134,6 +134,7 @@ export class Interactions {
     const p = this.city.player;
     if (p.act) return; // busy slipping or staggering
     if (ev.type === 'banana') return this.dropPeel();
+    if (ev.type === 'jump') { if (!p.riding && !(p.jumpY > 0)) { p.vy = 4.4; p.jumpY = 0.001; } return; }
     if (ev.type === 'chargeEnd') {
       const c = this.charge;
       this.charge = null;

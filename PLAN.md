@@ -90,6 +90,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 36. **A busier town, step 3**: people riding bicycles and scooters in traffic; a bus stop where the bus pulls in, people get on and off (faked).
 
+37. **Charge-ring slap, drifting, jumping**: hold to charge a slap (green-yellow slap, shaking yellow-red power slap); handbrake (Shift / right button) and drifting with skid marks; Space to jump; running builds up speed.
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.

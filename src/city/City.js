@@ -561,8 +561,10 @@ export class City {
     const mx = right.x * a.x - fwd.x * a.z;
     const mz = right.z * a.x - fwd.z * a.z;
     const moving = Math.hypot(mx, mz) > 0.05;
-    const target = moving ? (a.run ? 4.2 : 1.6) : 0;
-    p.speed += (target - p.speed) * Math.min(1, dt * 8);
+    // speed builds up: quick to a walk, then a slower build to a full run (and quick to stop)
+    const target = moving ? (a.run ? 4.6 : 1.6) : 0;
+    const accel = target < p.speed ? 9 : p.speed < 1.6 ? 6 : 1.7;
+    p.speed += Math.sign(target - p.speed) * Math.min(Math.abs(target - p.speed), accel * dt);
     if (moving) {
       const want = Math.atan2(mx, mz);
       let d = want - p.heading;
@@ -576,7 +578,19 @@ export class City {
     stepGait(p.gait, dt, p.speed);
     poseGait(p.body, p.gait, this.playerGait ?? 'natural');
     this.ix.poseActor(p, dt); // a slap or push swing
-    p.root.position.set(p.x, this.layout.groundHeight(p.x, p.z), p.z);
+    // jumping (Space): up, a tuck of the legs in the air, and down again
+    if (p.jumpY > 0 || p.vy) {
+      p.vy -= 13 * dt;
+      p.jumpY = Math.max(0, (p.jumpY ?? 0) + p.vy * dt);
+      if (p.jumpY === 0 && p.vy < 0) p.vy = 0;
+      const j = p.body.userData.joints ?? {}, f = Math.min(1, p.jumpY / 0.3);
+      for (const s of ['L', 'R']) {
+        if (j[`leg${s}`]) j[`leg${s}`].rotation.x -= 0.6 * f;
+        if (j[`shin${s}`]) j[`shin${s}`].rotation.x += 1.0 * f;
+        if (j[`arm${s}`]) j[`arm${s}`].rotation.x -= 0.7 * f;
+      }
+    }
+    p.root.position.set(p.x, this.layout.groundHeight(p.x, p.z) + (p.jumpY ?? 0), p.z);
     p.root.rotation.y = p.heading;
     }
     const ground = this.layout.groundHeight(p.x, p.z);
