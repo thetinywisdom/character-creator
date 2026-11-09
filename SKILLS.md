@@ -121,7 +121,8 @@ src/city/variety.js    shared building variety: flatsAbove, roofTop, frontExtras
 src/city/silhouette.js see-through people in the iso view (stencil + GreaterDepth copy)
 src/city/crowd.js      the crowd: roles (walk, stand, bench, ...), placed from the layout,
                        distance culling, sitPose
-src/city/knock.js      Knockables: props tagged userData.knock (boards, planters, bins) fly
+src/city/knock.js      Knockables: props tagged userData.knock (catalogue KNOCKABLE: planters,
+                       bins, street signs, cones, bollards, sandwich boards) fly
                        when a vehicle hits them, blink, POOF, back in 5 s
                        Knockables.cloud(at, opts) makes dust / stink clouds of cubes
 src/city/comedy.js     comic slap / push / fall variations (COMEDY) and ComedyStage previews
@@ -300,7 +301,10 @@ them back to their place. Bubbles (`ix.bubbles`: chat and comic bursts with an
 page elements; a game can draw its own. Speech bubbles stack
 (`stackBubbles` in main.js): older ones keep their place, newer ones that would
 overlap are lifted above and get a long tail (`.lifted`, `--lift`); bubble ids
-grow with age. People knocked down raise a dust cloud. Small talk lives in `src/city/smalltalk.js` (`SMALL_TALK`: 50
+grow with age; the open pie menu counts as taken (and sits on top). People
+knocked down raise a dust cloud. Traffic brakes at 7 m/s², so stepping out
+right in front of a moving car gets you hit (`ix.hitByCar`: thrown, flat on
+the ground, the driver shouts). Small talk lives in `src/city/smalltalk.js` (`SMALL_TALK`: 50
 [question, calm answer, aggressive answer]; every answer fits its question).
 Change the lines there and in `SHOUTS`,
 `BURSTS` and the bubble `NAMES`. Bubble kinds: 'talk', 'shout', 'burst' ('confused' draws a '?' box, unused); `ix.shake` is a screen-shake amount the viewer applies.

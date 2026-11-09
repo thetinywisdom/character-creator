@@ -107,7 +107,7 @@ games), 🏙 City (walk a generated sample town to experiment).
 44. **Domino pushes**: a push (or power slap) also knocks over the people standing around the victim, one after another (BUMP!), up to two steps on.
 
 45. **Owner's batch 22-26, 29**: no blob shadows under characters (cast shadows only); Bus and Banana peel cards in the catalogue, the bus stop card shows the shelter; bus shelters at the kerb with only the glass back solid, walkers step round behind them (no more stuck people); ride any vehicle, parked ones included; whoever was on a vehicle you take jumps out and runs away; riders who fall are thrown clear of their bike.
-46. **Comic hit variations (in progress, item 21)**: `src/city/comedy.js` holds 3 slap, 3 push and 3 fall variations, previewed with `__cc.comedy`; the owner picks, then they replace the plain ones. Owner's 30-32 (dust clouds on falls, fart, stacking bubbles) done, waiting to be published with the picks page. Items 27 (charge ring above the target's head) and 28 (one interaction design language) also wait for the owner's pick.
+46. **Comic hit variations (in progress, item 21)**: `src/city/comedy.js` holds 3 slap, 3 push and 3 fall variations, previewed with `__cc.comedy`; the owner picks, then they replace the plain ones. Owner's 30-34 (dust clouds on falls, fart, stacking bubbles, bubbles never cover the pie menu, cars can hit you; cones, signs, bollards and bins also get knocked flying) done, waiting to be published with the picks page. Items 27 (charge ring above the target's head) and 28 (one interaction design language) also wait for the owner's pick.
 
 ## Next (only when the owner asks)
 

@@ -262,6 +262,20 @@ export class Interactions {
       p.act = move === 'push' ? { kind: 'slip', t: 2.0, total: 2.0 } : { kind: 'stagger', t: 0.5 };
     }, 150);
   }
+  /** A car you stepped in front of hits you: you fly, land flat, the driver shouts. */
+  hitByCar(c) {
+    const p = this.city.player, v = c.speed;
+    const dx = p.x - c.obj.position.x, dz = p.z - c.obj.position.z;
+    const side = Math.sign(dx * c.fz - dz * c.fx) || 1; // thrown forward and off to the side you were on
+    const k = Math.min(7, 2 + v * 0.6);
+    p.kb = { x: (c.fx + c.fz * side * 0.6) * k, z: (c.fz - c.fx * side * 0.6) * k, t: 0.45 };
+    p.act = { kind: 'slip', t: 2.4, total: 2.4 };
+    c.speed *= 0.3;
+    this.say(this.midOfPlayer(), pick(['WHAM!', 'BONK!', 'KRUNCH!']), 'burst');
+    this.shake = 0.5;
+    this.say(() => c.obj.position.clone().add(new THREE.Vector3(0, 2, 0)), pick(['WATCH IT!', 'Are you crazy?!', 'Idiot!', 'Look where you\'re going!']), 'shout', 2.4, 0.5, 'DRIVER');
+    setTimeout(() => this.city.knock.cloud(new THREE.Vector3(p.x, this.city.layout.groundHeight(p.x, p.z), p.z), { n: 12, r: 0.7, life: 0.9 }), 450);
+  }
   midOfPlayer() { const p = this.city.player; return () => p.root.position.clone().add(new THREE.Vector3(0, (p.height ?? 1.7) * 0.75, 0)); }
 
   /** Someone slips (a banana peel, or hit by your vehicle). */
@@ -518,7 +532,7 @@ export class Interactions {
         n.act = { kind: 'slip', t: 3.6, total: 3.6, stunned: true, then: { kind: 'flee', t: 4, delay: 0 } };
         n.kb = { x: (dx / d) * 1.4, z: (dz / d) * 1.4, t: 0.3 };
         if (this.menu?.npc === n) this.menu = null;
-        this.say(this.headOf(n), pick(['EWWW!', 'GROSS!', '*cough* *cough*', 'MY EYES!', 'WHO DID THAT?!', '@_@']), 'shout', 2.2, 0.3 + Math.random() * 0.4, this.nameOf(n));
+        this.say(this.headOf(n), pick(['EWWW!', 'GROSS!', '*cough* *cough*', 'MY EYES!', 'WHO DID THAT?!', 'X_X']), 'shout', 2.2, 0.3 + Math.random() * 0.4, this.nameOf(n));
       }, 120 + d * 140 + (i++) * 20);
     }
   }

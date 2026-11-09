@@ -47,7 +47,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   sandwich board, planter, parked bike or bin and it goes flying, blinks and
   goes POOF, then pops back 5 seconds later. Crash on a bicycle or scooter
   and you fly off; hit someone riding one and they fall over too. You can ride
-  any vehicle: parked cars and bikes, traffic, the bus; take one from someone
+  any vehicle (cars brake, but step out right in front of one and it hits
+  you): parked cars and bikes, traffic, the bus; take one from someone
   and they jump out shouting and run away.
 
 ## Docs

@@ -803,7 +803,9 @@ export class City {
           if (ahead < 0.4) { st.wait = 5; this.crowd.busArrived(); }
         } else if (st.served && ahead > 20 && ahead < c.total - 5) st.served = false;
       }
-      c.speed += ((blocked ? 0 : cruise) - c.speed) * Math.min(1, dt * (blocked ? 6 : 1.5));
+      // brakes take time (7 m/s²): step out right in front of one and it cannot stop
+      if (blocked) c.speed = Math.max(0, c.speed - 7 * dt);
+      else c.speed += (cruise - c.speed) * Math.min(1, dt * 1.5);
       c.s += c.speed * dt;
       // the route already runs down the middle of the kerb-side lane (driving
       // on the left, block on the driver's left), so the car sits right on it
@@ -820,6 +822,8 @@ export class City {
       c.obj.position.set(qf.x - fx * wb / 2, -0.12, qf.z - fz * wb / 2);
       c.obj.rotation.y = Math.atan2(fx, fz);
       c.fx = fx; c.fz = fz; // for braking and collisions
+      // it hits you if you are on foot in its way and it is still going
+      if (!p.riding && c.speed > 2.5 && p.act?.kind !== 'slip' && this.ix.distToVehicle(c, p.x, p.z) < PLAYER_R + 0.05) this.ix.hitByCar(c);
     }
 
     // --- camera: third person, behind and above ----------------------------------

@@ -64,6 +64,9 @@ const PROP_COLLIDERS = {
   bollard: { Bollard: { hw: 0.08, hd: 0.08 }, 'Guard rail': { hw: 1.0, hd: 0.06 } },
 };
 
+/** Small street things a vehicle knocks flying in the City (they come back after 5 s). */
+const KNOCKABLE = new Set(['planter', 'trashBin', 'streetSign', 'cone', 'bollard', 'sandwichBoard']);
+
 const PROP_SIZES = { busStop: [3.4, 1.6], car: [1.8, 4.6], bus: [2.5, 10.5], bananaPeel: [0.5, 0.5], bench: [1.6, 0.5], vendingMachine: [1.1, 0.9], crosswalk: [4, 6] };
 
 const withColliders = (obj, colliders) => {
@@ -125,6 +128,7 @@ const propAssets = PROP_GROUPS.flatMap((group) => group.props.map((prop) => ({
   size: PROP_SIZES[prop.id] ?? [1, 1],
   build(p, style) {
     const obj = prop.build(p, style, p); // crosswalk reads p.length
+    if (KNOCKABLE.has(prop.id)) obj.userData.knock = true; // a vehicle knocks it flying (city/knock.js)
     const c = PROP_COLLIDERS[prop.id];
     const box = c && (c.hw !== undefined ? c : c[p.variant]);
     return withColliders(obj, box ? [box] : []);
