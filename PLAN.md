@@ -92,6 +92,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 37. **Charge-ring slap, drifting, jumping**: hold to charge a slap (green-yellow slap, shaking yellow-red power slap); handbrake (Shift / right button) and drifting with skid marks; Space to jump; running builds up speed.
 
+38. **Blackout fix, angrier chases, scared flights**: the City no longer goes black (a crash in collisions; the loop now survives errors). Chasers sprint faster than you, yell, shove you off bikes and give up after 10 s or 300 m; calm people run 300 m along the streets and then walk back.
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.

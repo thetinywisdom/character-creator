@@ -334,6 +334,34 @@ export class City {
     return best;
   }
 
+  /**
+   * A scared person runs off along the streets (crossing roads like any
+   * walker) away from you, until 300 m from where they started; then they
+   * calm down and walk back to their place.
+   */
+  startFlee(n) {
+    // their own route if they walk one; else the nearest pavement route
+    if (n.role?.kind !== 'walk' || !n.loop) {
+      let best = null, bd = Infinity;
+      for (const loop of this.layout.walkLoops) {
+        const t = { loop, ...this.loopInfo.get(loop), pos: n.pos };
+        const q = this.nearestOnRoute(t);
+        const d = Math.hypot(q.x - n.pos.x, q.z - n.pos.z);
+        if (d < bd) { bd = d; best = loop; }
+      }
+      n.loop = best;
+      Object.assign(n, this.loopInfo.get(best));
+    }
+    n.fleeRole = n.role;
+    n.role = { kind: 'walk' };
+    n.flee = { left: 300 };
+    n.act = null;
+    this.rejoinRoute(n);
+    // run whichever way along the route leads away from you
+    const q = alongLoop(n.loop, n.lengths, n.total, n.s, 0), p = this.player;
+    n.dir = (q.dx * (n.pos.x - p.x) + q.dz * (n.pos.z - p.z)) >= 0 ? 1 : -1;
+  }
+
   /** Which segment of their route a walker is on. */
   segmentAt(n) {
     let s = ((n.s % n.total) + n.total) % n.total;
@@ -353,13 +381,15 @@ export class City {
       n.seg = undefined;
       return;
     }
-    n.pos = { x: n.pos.x + (dx / d) * n.speed * dt, z: n.pos.z + (dz / d) * n.speed * dt };
+    const pace = n.flee ? 4.2 : n.speed;
+    if (n.flee) n.flee.left -= pace * dt;
+    n.pos = { x: n.pos.x + (dx / d) * pace * dt, z: n.pos.z + (dz / d) * pace * dt };
     n.root.position.set(n.pos.x, this.layout.groundHeight(n.pos.x, n.pos.z), n.pos.z);
     let h = Math.atan2(dx, dz) - n.root.rotation.y;
     h = Math.atan2(Math.sin(h), Math.cos(h));
     n.root.rotation.y += h * Math.min(1, dt * 6);
     if (this.crowd.culled(n)) return;
-    stepGait(n.gait, dt, n.speed);
+    stepGait(n.gait, dt, pace);
     poseGait(n.body, n.gait);
   }
 
@@ -368,6 +398,11 @@ export class City {
     n.act = null;
     n.kb = null;
     if (n.role?.home) { this.crowd.assign(n, n.role); return; }
+    this.rejoinRoute(n);
+  }
+
+  /** Put a walker onto the nearest point of their route, keeping them where they are (offset fades). */
+  rejoinRoute(n) {
     // the nearest point of their route; the sidestep offset carries them back smoothly
     let best = 0, bd = Infinity, acc = 0;
     const L = n.loop.length;
@@ -601,7 +636,15 @@ export class City {
       if (n.act) { n.root.visible = true; this.ix.updateNpc(n, dt); continue; } // slapped, chasing, fleeing, talking, walking back
       if (n.role && n.role.kind !== 'walk') { this.crowd.updateRole(n, dt); continue; } // standing, sitting...
       if (n.cross) { this.crossRoad(n, dt); continue; }
-      n.s += n.dir * n.speed * dt;
+      const pace = n.flee ? 4.2 : n.speed; // running away scared
+      if (n.flee && (n.flee.left -= pace * dt) <= 0) {
+        // far enough: calm down and walk back to their place
+        n.flee = null;
+        if (n.fleeRole) { n.role = n.fleeRole; n.fleeRole = null; }
+        this.endAct(n);
+        continue;
+      }
+      n.s += n.dir * pace * dt;
       // at a corner, sometimes cross to the next block (crowd.js), so walkers roam
       const seg = this.segmentAt(n);
       if (n.seg !== undefined && seg !== n.seg) {
@@ -634,7 +677,7 @@ export class City {
       n.root.position.set(pos.x, 0, pos.z);
       n.root.rotation.y = hd;
       if (this.crowd.culled(n)) continue; // far away: hidden, not animated
-      stepGait(n.gait, dt, n.speed);
+      stepGait(n.gait, dt, pace);
       poseGait(n.body, n.gait);
       if (n.action || n.flinch > 0) this.ix.poseActor(n, dt);
     }

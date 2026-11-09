@@ -31,6 +31,8 @@ const NAMES = ['DEB', 'BIG', 'KEN', 'YUKI', 'MOMO', 'TARO', 'HANA', 'JIRO', 'AYA
 // charging a slap: the first cycle (green to yellow) is a normal slap, the
 // second (yellow to red, shaking) a power slap that knocks them down
 export const CHARGE = [0.7, 0.7];
+const CHASE_SPEED = 5.4; // m/s: faster than your run (4.6): get a vehicle or hide
+const CHASE_YELLS = ['Get back here!', "I'll get you!", "You're DEAD!", 'Come here!!', "Don't you run!", 'COWARD!', '#@%&!!'];
 const BURSTS = {
   powerslap: ['SMAAACK!!', 'KA-POW!!', 'WHAM!!'], slap: ['SLAP!', 'WHAP!', 'SMACK!'], push: ['SHOVE!', 'WHUMP!', 'OOF!'], slip: ['WHOOPS!'], bonk: ['BONK!'] };
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -243,7 +245,9 @@ export class Interactions {
     const p = this.city.player;
     n.action = { kind: move, t: 0, dur: 0.4 };
     setTimeout(() => {
-      if (Math.hypot(p.x - n.pos.x, p.z - n.pos.z) > 1.5 || p.riding) return;
+      if (Math.hypot(p.x - n.pos.x, p.z - n.pos.z) > 1.8) return;
+      if (p.riding && !p.riding.bike) return; // safe inside a car
+      if (p.riding) this.getOff(); // shoved off the bike or scooter
       this.say(this.midOfPlayer(), pick(BURSTS[move]), 'burst');
       this.shake = 0.35;
       const dx = p.x - n.pos.x, dz = p.z - n.pos.z, d = Math.hypot(dx, dz) || 1;
@@ -265,7 +269,7 @@ export class Interactions {
     const agg = n.trait === 'Aggressive';
     if (word) this.say(this.midOf(n), pick(BURSTS[word]), 'burst');
     n.act = { kind: 'slip', t: 2.0, total: 2.0,
-      then: agg ? { kind: 'chase', move: 'push', t: 6, cd: 0.4 } : { kind: 'flee', t: 4, delay: 0 } };
+      then: agg ? { kind: 'chase', move: 'push', t: 10, cd: 0.4 } : { kind: 'flee', t: 4, delay: 0 } };
     n.kb = { x: kb.x, z: kb.z, t: 0.35 };
     if (this.menu?.npc === n) this.menu = null;
     // the shout comes as they get back up
@@ -294,20 +298,34 @@ export class Interactions {
       case 'retaliate':
         face = Math.atan2(toP.x, toP.z);
         if (!a.struck && a.t < 0.25) { a.struck = true; this.strikePlayer(n, a.move); }
-        if (a.t <= 0) { n.act = { kind: 'chase', move: a.move, t: 6, cd: 1.0 }; return this.updateNpc(n, 0); }
+        if (a.t <= 0) { n.act = { kind: 'chase', move: a.move, t: 10, cd: 1.0 }; return this.updateNpc(n, 0); }
         break;
-      case 'chase':
+      case 'chase': {
+        // furious: sprints faster than you run, shouts threats, leans in;
+        // gives up after 10 s or once you are 300 m away
         face = Math.atan2(toP.x, toP.z);
         a.cd -= dt;
-        if (dP > 1.0) speed = RUN;
-        else if (a.cd <= 0) { this.strikePlayer(n, a.move); a.cd = 99; a.t = Math.min(a.t, 0.8); }
-        if (dP > 16 || p.riding) a.t = Math.min(a.t, 0.3); // you got away
+        const inCar = p.riding && !p.riding.bike;
+        const reach = p.riding?.bike ? 1.4 : 1.0;
+        if (dP > reach) speed = CHASE_SPEED;
+        else if (a.cd <= 0 && !inCar) {
+          this.strikePlayer(n, p.riding ? 'push' : a.move); // on a bike: shoved off it
+          a.cd = 1.6;
+          a.hits = (a.hits ?? 0) + 1;
+          if (a.hits >= 2) a.t = Math.min(a.t, 0.8); // satisfied after a couple of hits
+        }
+        if ((a.yell = (a.yell ?? 0.6) - dt) < 0) {
+          a.yell = 2.2 + Math.random() * 1.5;
+          this.say(this.headOf(n), pick(CHASE_YELLS), 'shout', 1.6, 0, this.nameOf(n));
+        }
+        if (dP > 300) a.t = Math.min(a.t, 0.3); // you got away
         break;
+      }
       case 'flee':
         if ((a.delay -= dt) > 0) break;
-        face = Math.atan2(-toP.x, -toP.z);
-        speed = RUN;
-        break;
+        // run off along the streets until 300 m from where it started (City.startFlee)
+        city.startFlee(n);
+        return;
       case 'return': {
         // walk back to their place at their own pace, like anyone walking
         const dx = a.x - n.pos.x, dz = a.z - n.pos.z, d = Math.hypot(dx, dz);

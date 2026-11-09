@@ -33,7 +33,10 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   for a pie menu: 👋 Slap, ✋ Push, 💬 Talk (shortcuts F, G, T; hold F or hold-click to
   charge a slap: release in the green-yellow ring for a slap, keep holding
   until it shakes red for a power slap that knocks them down; double-click to push, right-click to talk). A push knocks people over. Calm people run away;
-  aggressive ones get up, chase you and hit back. **B** (🍌) drops a banana peel.
+  aggressive ones get up, chase you and hit back: they run faster than you,
+  shout threats and can shove you off a bike or scooter, but give up after 10
+  seconds or once you are 300 m away. Calm people run 300 m away along the
+  streets, then walk back. **B** (🍌) drops a banana peel.
   **E** (or hold-click) next to a car, the bus, the scooter or the bicycle
   gets you on; drive with WASD; hold Shift or the right
   mouse button for the handbrake and steer to drift; E to get off.

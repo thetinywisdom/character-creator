@@ -258,7 +258,14 @@ B banana, Space jump (`player.jumpY` / `vy`), 1-3 menu, Esc; mouse click = E, ho
 double click = push, right click = talk; taps work the same. A busy person
 has `n.act` ({ kind: 'wait' | 'talk' | 'retaliate' | 'chase' | 'flee' |
 'slip' }) and is moved by `ix.updateNpc`; `City.endAct(n)` puts them back
-on their route. Bubbles (`ix.bubbles`: chat and comic bursts with an
+on their route. Chasers are furious: they sprint at `CHASE_SPEED` (5.4 m/s,
+faster than your run), yell `CHASE_YELLS`, shove you off a bicycle or
+scooter (`getOff` + slip; a car keeps you safe), and give up after 10 s,
+two hits, or once you are 300 m away. A scared person (`act` 'flee') goes
+to `City.startFlee(n)`: they become a walker on their own or the nearest
+pavement route (`n.flee.left` = 300 m, `n.fleeRole` keeps their old role),
+run 4.2 m/s away from you, crossing roads more often, then `endAct` walks
+them back to their place. Bubbles (`ix.bubbles`: chat and comic bursts with an
 `anchor()` position) and the pie menu (`ix.menu`) are drawn by the viewer as
 page elements; a game can draw its own. Small talk lives in `src/city/smalltalk.js` (`SMALL_TALK`: 50
 [question, calm answer, aggressive answer]; every answer fits its question).

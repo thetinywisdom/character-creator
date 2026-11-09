@@ -360,7 +360,7 @@ export class Crowd {
    * nearest corner of another route straight across (along a crosswalk).
    */
   maybeCross(n, corner, rng = Math.random) {
-    if (rng() > 0.4) return null;
+    if (rng() > (n.flee ? 0.6 : 0.4)) return null; // people running away cross more
     let best = null, bd = 13;
     this.city.layout.walkLoops.forEach((loop) => {
       if (loop === n.loop) return;
