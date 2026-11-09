@@ -70,7 +70,8 @@ night glow are not snapped (they are not seen as colours).
 
 
 **Palette variants** (🎨, styles/palette.js PALETTES): the 28 swatches stay the
-structure; a variant recolours each one. Muted = the original pastels (default).
+structure; a variant recolours each one. **Golden hour is the default**
+(owner's pick); Muted = the first pastels.
 Vibrant = saturated toy town (sky #7cc7ff, grass #4f9a3f/#7ccf6a, signs #e0505a).
 Candy pop = bright sweet pastels (lavender-grey roads). Golden hour = warm,
 orange sky. Cool city = blue-hour blues and teals. Retro 16 = a 16-colour

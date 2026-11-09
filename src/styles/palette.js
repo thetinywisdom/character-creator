@@ -145,7 +145,7 @@ const snapCache = new Map(), snapBuildingCache = new Map();
 const N = Object.keys(PALETTE); // swatch order, as in PALETTE
 const swap = (...hexes) => Object.fromEntries(N.map((n, i) => [n, hexes[i]]));
 export const PALETTES = {
-  Muted: { label: 'Muted pastels (the original)', map: null },
+  Muted: { label: 'Muted pastels (the first look)', map: null },
   Vibrant: {
     label: 'Bright, saturated toy town',
     map: swap(0xfbf8f0, 0xf1ead8, 0xd9d6cf, 0xb9b5ad, 0x8f8c87, 0x5f6773, 0x3e424a, 0x23262b,
@@ -161,7 +161,7 @@ export const PALETTES = {
     skin: { saturate: 1.1, lighten: 0.08 },
   },
   'Golden hour': {
-    label: 'Warm sunset light',
+    label: 'Warm sunset light (default)',
     map: swap(0xfff1dc, 0xf6e2c4, 0xe0cbb0, 0xc7ad90, 0xa08670, 0x75605a, 0x4f3e3e, 0x33272b,
       0xffb8a0, 0xe0705a, 0xffc290, 0xff9a4a, 0xffd36a, 0xf0c890, 0xb8c070, 0xc8d8a0, 0x88b098, 0xffc89a, 0x8aa0c8, 0xd0a8c0, 0xa07898,
       0x8a9a50, 0x6a7aa0, 0x4a4870, 0xd0a070, 0x9a6848, 0x6a4634, 0xc05a40),
@@ -189,15 +189,15 @@ export const PALETTES = {
     skin: { grey: 0.94 },
   },
 };
-let ACTIVE = 'Muted';
-try { const v = localStorage.getItem('tinycity.palette'); if (PALETTES[v]) ACTIVE = v; } catch { /* no storage: Muted */ }
+let ACTIVE = 'Golden hour'; // the default (owner's pick)
+try { const v = localStorage.getItem('tinycity.palette'); if (PALETTES[v]) ACTIVE = v; } catch { /* no storage: the default */ }
 const MAP = () => PALETTES[ACTIVE].map;
 const OUT = new Set(Object.values(MAP() ?? {})); // colours of the active variant (already snapped)
 const NAME_OF = new Map(Object.entries(PALETTE).map(([n, h]) => [h, n]));
 /** The palette in use ('Muted', 'Vibrant', ...). */
 export function activePalette() { return ACTIVE; }
 /** Choose a palette for the next page load (main.js reloads). */
-export function choosePalette(name) { try { localStorage.setItem('tinycity.palette', PALETTES[name] ? name : 'Muted'); } catch { /* fine */ } }
+export function choosePalette(name) { try { localStorage.setItem('tinycity.palette', PALETTES[name] ? name : 'Golden hour'); } catch { /* fine */ } }
 /** What a named swatch looks like in the active palette. */
 export function paletteHex(name) { return MAP()?.[name] ?? PALETTE[name]; }
 /** A palette's swatch as it looks (for previews of palettes not in use). */

@@ -104,7 +104,8 @@ src/subjects/          human.js (+ human/*: frame, sculpt, hair, head, tops, arm
 src/styles/palette.js  colours: BASE roles, CLOTH / HAIR / SKIN lists, PALETTE (28 named swatches),
                        snapColor / paletteCanvas, PALETTES (variants: each swatch's colour per
                        palette, skin mood), activePalette / choosePalette (localStorage
-                       'tinycity.palette', applied on the next load) / paletteHex / swatchOf / skinTone
+                       'tinycity.palette', applied on the next load; default 'Golden hour';
+                       the 🎨 button is hidden in the City view) / paletteHex / swatchOf / skinTone
 src/anim/              gait.js (people: walk / run, wing flap, poseHold: stoop + held items;
                        setGaitEngine('New' | 'Classic'), landGait), gaitIK.js (the New engine:
                        stride by distance, foot targets + 2-bone leg IK, heel / toe roll,

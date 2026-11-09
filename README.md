@@ -49,9 +49,10 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   the road (or waits and honks if you block it); people walk round your car (and any parked car)
   instead of through it; at low speed your car stops against them, at speed
   it knocks them over.
-- **Colour palettes:** 🎨 in the top bar: Muted (the original pastels),
-  Vibrant, Candy pop, Golden hour, Cool city, Retro 16 or Manga ink. The page
-  reloads in the new colours and comes back to where you were.
+- **Colour palettes:** the town uses warm **Golden hour** colours. Other
+  palettes (Muted, Vibrant, Candy pop, Cool city, Retro 16, Manga ink) are
+  under 🎨 in the top bar outside the City (Catalogue, Characters, Cat lab);
+  the page reloads in the new colours and comes back to where you were.
 - **Tiny UI Kit:** the character designer, walk / run animation, controls
   and pixel speech are also in their own repo,
   [thetinywisdom/tiny-ui-kit](https://github.com/thetinywisdom/tiny-ui-kit),

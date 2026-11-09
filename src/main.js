@@ -257,6 +257,9 @@ function devTools() {
   try { return location.hash === '#dev' || localStorage.getItem('tinycity.dev') === '1'; } catch { return location.hash === '#dev'; }
 }
 function setView(view) {
+  // the palette picker lives outside the City (owner: keep the City's top bar clean)
+  paletteBtn.hidden = view === 'city';
+  if (view === 'city') palettePanel.hidden = true;
   state.view = view;
   const mode = MODE[view];
   document.querySelectorAll('#modes [data-mode]').forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
