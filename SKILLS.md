@@ -258,7 +258,10 @@ scooter in it falls over, its rider too (`ix.topple(c, side)`, `c.fallen`,
 `ix.updateFallen` stands it back up; getting on picks it up); Shift or a held right button is the handbrake: the vehicle
 slows and loses grip, `drive.travel` lags `drive.heading`, so it drifts and
 leaves skid marks; traffic cars, the bus, a scooter and a bicycle parked by the
-start; WASD drives, people hit fall over, you get out on the driver's side
+start; WASD drives (the pedal `drive.pedal` eases down and the pull fades
+towards top speed, `ACC` per kind: bus 1.6, bicycle 2.2, car 3.4, scooter 3.8
+m/s²; the handbrake held going straight locks the wheels and stops it at 9
+m/s² with skid marks, steering on it drifts), people hit fall over, you get out on the driver's side
 and the vehicle stays parked). Clicking a person or vehicle works at any distance you can see: you
 run over to them first (`player.goal`, cancelled by any movement key), then
 act. Input arrives as events

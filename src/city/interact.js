@@ -515,12 +515,27 @@ export class Interactions {
   drive(dt, axes) {
     const city = this.city, p = city.player, c = p.riding, dv = c.drive;
     const MAX = c.bike === 'bicycle' ? 5 : c.bike ? 9 : c.size.hd > 4 ? 8 : 12;
-    const throttle = -axes.z; // W forward
-    if (throttle > 0.1) dv.speed += (dv.speed < 0 ? 9 : 5) * throttle * dt;
-    else if (throttle < -0.1) dv.speed += (dv.speed > 0 ? -9 : -3) * -throttle * dt;
-    else dv.speed *= Math.max(0, 1 - dt * 0.8);
-    const hb = axes.handbrake;
-    if (hb) dv.speed *= Math.max(0, 1 - dt * 0.9); // the handbrake bleeds speed off
+    // the pedal goes down over a moment, and the pull fades as the vehicle
+    // nears its top speed: a bus or a bicycle gathers speed slowly, a car quicker
+    const want = -axes.z; // W forward
+    dv.pedal ??= 0;
+    dv.pedal += (want - dv.pedal) * Math.min(1, dt * (Math.abs(want) > Math.abs(dv.pedal) ? 2.5 : 8));
+    const throttle = dv.pedal;
+    const ACC = c.bike === 'bicycle' ? 2.2 : c.bike ? 3.8 : c.size.hd > 4 ? 1.6 : 3.4;
+    const hb = axes.handbrake, straight = Math.abs(axes.x) < 0.15;
+    if (hb && straight) {
+      // handbrake going straight: wheels lock and it stops
+      const dec = 9 * dt;
+      dv.speed = Math.abs(dv.speed) <= dec ? 0 : dv.speed - Math.sign(dv.speed) * dec;
+      if (Math.abs(dv.speed) > 2.5) this.skid(c, c.obj.position.x, c.obj.position.z, Math.sin(dv.heading), Math.cos(dv.heading));
+    } else if (throttle > 0.05) {
+      if (dv.speed < 0) dv.speed += 9 * throttle * dt; // braking out of reverse
+      else dv.speed += ACC * throttle * Math.max(0.12, 1 - dv.speed / MAX) * dt;
+    } else if (throttle < -0.05) {
+      if (dv.speed > 0) dv.speed -= 9 * -throttle * dt; // brakes
+      else dv.speed -= 2 * -throttle * dt;              // reverse, slowly
+    } else dv.speed *= Math.max(0, 1 - dt * 0.5);       // rolling on
+    if (hb && !straight) dv.speed *= Math.max(0, 1 - dt * 0.9); // drifting bleeds speed off
     dv.speed = Math.max(-3, Math.min(MAX, dv.speed));
     // steer (more grip at speed, reversed when backing up; it turns harder on the handbrake)
     // cars and the bus turn like real vehicles: the rate depends on the

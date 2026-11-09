@@ -100,6 +100,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 41. **Bike crashes**: a crash on a bicycle or scooter throws you off (CRASH!); a bicycle or scooter you hit falls over with its rider, who shouts and then rides on.
 
+42. **Driving feel**: vehicles gather speed gradually (the bus slowest) instead of jumping to speed; the handbrake held going straight stops the vehicle, leaving skid marks.
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.
