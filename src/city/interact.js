@@ -207,10 +207,14 @@ export class Interactions {
     setTimeout(() => {
       // the comic beat: a burst on the hit, then they shout
       this.say(this.midOf(n), pick(BURSTS[kind]), 'burst');
-      this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 0.75, this.nameOf(n));
       this.shake = 0.3;
       const dx = n.pos.x - p.x, dz = n.pos.z - p.z, d = Math.hypot(dx, dz) || 1;
-      if (kind === 'push') n.kb = { x: (dx / d) * 3.2, z: (dz / d) * 3.2, t: 0.35 };
+      if (kind === 'push') {
+        // a push knocks them over (like a car): they fall, get up shouting, then react
+        this.knockDown(n, { x: (dx / d) * 3.2, z: (dz / d) * 3.2 }, p);
+        return;
+      }
+      this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 0.75, this.nameOf(n));
       n.flinch = 0.35;
       if (agg) n.act = { kind: 'retaliate', move: kind, t: 0.55, struck: false };
       else n.act = { kind: 'flee', t: 4, delay: kind === 'push' ? 0.35 : 0.2 };
@@ -226,14 +230,31 @@ export class Interactions {
       this.say(this.midOfPlayer(), pick(BURSTS[move]), 'burst');
       this.shake = 0.35;
       const dx = p.x - n.pos.x, dz = p.z - n.pos.z, d = Math.hypot(dx, dz) || 1;
-      const k = move === 'push' ? 3.6 : 1.8;
-      p.kb = { x: (dx / d) * k, z: (dz / d) * k, t: move === 'push' ? 0.4 : 0.25 };
-      p.act = { kind: 'stagger', t: move === 'push' ? 0.7 : 0.5 };
+      const k = move === 'push' ? 3.2 : 1.8;
+      p.kb = { x: (dx / d) * k, z: (dz / d) * k, t: move === 'push' ? 0.35 : 0.25 };
+      // a push back knocks you over too; a slap makes you stagger
+      p.act = move === 'push' ? { kind: 'slip', t: 2.0, total: 2.0 } : { kind: 'stagger', t: 0.5 };
     }, 150);
   }
   midOfPlayer() { const p = this.city.player; return () => p.root.position.clone().add(new THREE.Vector3(0, (p.height ?? 1.7) * 0.75, 0)); }
 
   /** Someone slips (a banana peel, or hit by your vehicle). */
+  /**
+   * Knock a person over (a push, or your vehicle): they fly back along `kb`,
+   * fall, get up shouting, then react: aggressive ones chase you and push you
+   * back, calm ones run away.
+   */
+  knockDown(n, kb, p = this.city.player, word = null) {
+    const agg = n.trait === 'Aggressive';
+    if (word) this.say(this.midOf(n), pick(BURSTS[word]), 'burst');
+    n.act = { kind: 'slip', t: 2.0, total: 2.0,
+      then: agg ? { kind: 'chase', move: 'push', t: 6, cd: 0.4 } : { kind: 'flee', t: 4, delay: 0 } };
+    n.kb = { x: kb.x, z: kb.z, t: 0.35 };
+    if (this.menu?.npc === n) this.menu = null;
+    // the shout comes as they get back up
+    this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 1.7, this.nameOf(n));
+  }
+
   slip(who, isPlayer = false, word = 'slip') {
     if (who.act?.kind === 'slip') return;
     who.act = { kind: 'slip', t: 2.4, total: 2.4 };
@@ -294,7 +315,10 @@ export class Interactions {
     n.root.position.set(pos.x, city.layout.groundHeight(pos.x, pos.z) + 0.0, pos.z);
     n.gait && city.stepPerson(n, dt, a.kind === 'slip' ? 0 : speed);
     this.poseActor(n, dt);
-    if (n.act === a && a.t <= 0) city.endAct(n);
+    if (n.act === a && a.t <= 0) {
+      if (a.then) { n.act = a.then; n.body.rotation.x = 0; n.body.position.y = 0; } // up again: now react
+      else city.endAct(n);
+    }
   }
 
   // --- poses on top of the walk: arm swings, flinch, falling ---------------------------
@@ -475,8 +499,7 @@ export class Interactions {
         if (!n.pos || n.act?.kind === 'slip') continue;
         for (const k of [-1, 1]) {
           if (Math.hypot(n.pos.x - (nx + fx * off * k), n.pos.z - (nz + fz * off * k)) < r + 0.35) {
-            this.slip(n, false, 'bonk');
-            n.kb = { x: fx * 2.5, z: fz * 2.5, t: 0.3 };
+            this.knockDown(n, { x: fx * 2.5, z: fz * 2.5 }, p, 'bonk');
             break;
           }
         }

@@ -213,8 +213,9 @@ parts tint evenly.
 **Character interactions** (`src/city/interact.js`, optional for games).
 Every person has a `trait` ('Calm' | 'Aggressive', in the human schema and
 the character JSON; about 1 in 4 are aggressive). The player can:
-slap (aggressive: slaps back, then chases; calm: runs away), push (shoved
-back; aggressive: chases and pushes back; calm: runs away), talk (both say
+slap (aggressive: slaps back, then chases; calm: runs away), push (knocked
+over like a car hit, `ix.knockDown`; they get up shouting, then aggressive:
+chase and push you over too; calm: run away), talk (both say
 a line of small talk), drop banana peels (anyone stepping on one slips), and
 ride vehicles (traffic cars, the bus, a scooter and a bicycle parked by the
 start; WASD drives, people hit fall over, you get out on the driver's side
