@@ -389,6 +389,10 @@ No unit tests; verify by building and looking.
 - To look at one building: `openItem('building.bank')`, or place the player
   in the city with `getCity().player.position.set(...)`.
 - Check desktop (1280 × 720) and phone (390 × 844).
+- Soak test the city: fast-forward `getCity().update(0.1, fakeInput)` a few
+  thousand times in several towns and weathers (moving the player about),
+  and fail on any exception. One crash in an update used to stop the render
+  loop and black the city out; main.js now catches it, but fix the cause.
 - Watch costs: count meshes and triangles of `getCity().scene`.
 
 ## Conventions

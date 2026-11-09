@@ -498,7 +498,7 @@ export class City {
       if (d >= min || d < 1e-5) continue;
       p.x += (dx / d) * (min - d);
       p.z += (dz / d) * (min - d);
-      if (n) { n.off.x -= (dx / d) * 0.04; n.off.z -= (dz / d) * 0.04; } // they make way a little
+      if (n?.off) { n.off.x -= (dx / d) * 0.04; n.off.z -= (dz / d) * 0.04; } // walkers make way a little (people standing still have no offset)
     }
     this.pushOut(p, PLAYER_R); // never end up inside a wall after being pushed
     const lim = { x: this.layout.size.X / 2 + 20, z: this.layout.size.Z / 2 + 20 };

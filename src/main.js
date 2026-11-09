@@ -400,7 +400,8 @@ function loop(time) {
     for (const p of humanCell.pivots) { const o = p.children[0]; if (o?.name === 'human') poseGait(o, gait); }
     preview(humanCell, creator.previewRect(W, H), H);
   } else if (state.view === 'city' && city) {
-    city.update(dt, cityInput);
+    // an error in one update must never stop the picture (the city would go black)
+    try { city.update(dt, cityInput); } catch (err) { if (!loop.warned) { loop.warned = true; console.error('city update', err); } }
     city.setAspect(W / H);
     ps1.render(city, city.activeCamera, 0, 0, W, H);
     drawOverlay(city, W, H);
