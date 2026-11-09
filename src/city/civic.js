@@ -166,7 +166,7 @@ export function koban(style, rng, w, d) {
     const bike = bicycle.build({ color: 'White' }, style);
     bike.position.set(-s * (kw / 2 + 0.2), 0, front + 1.0 + i * 0.7);
     bike.rotation.y = Math.PI / 2;
-    bike.userData.knock = true;
+    bike.userData.rideable = 'bicycle';
     g.add(bike);
   }
   return { group: g, footprint: { w: kw, d: kd, z: kz }, colliders: [solid(kw, kd, kz)] };
@@ -443,6 +443,7 @@ export function gasStation(style, rng, w, d) {
     const x = xs[Math.floor(rng() * xs.length)] + 1.5;
     const c = car.build({ variant: pick(rng, ['Kei car', 'Sedan', 'Minivan', 'Taxi']), color: pick(rng, ['White', 'Gray', 'Black', 'Blue', 'Red']) }, style);
     c.position.set(x, 0, cz);
+    c.userData.rideable = 'car';
     g.add(c);
     colliders.push({ x, z: cz, hw: 0.9, hd: 2.2 });
   }

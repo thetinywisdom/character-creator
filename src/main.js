@@ -1,3 +1,4 @@
+import { ComedyStage, COMEDY } from './city/comedy.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { subjects } from './subjects/index.js';
@@ -418,6 +419,21 @@ Object.assign(window, {
     params, state, setView, openItem, CATALOG, human, getCity: () => ensureCity(), cityInput, gait,
     /** Set character settings (rules applied). */
     apply: (id, values) => { Object.assign(params[id], values); humanChanged(); reframe = true; },
+    /**
+     * Preview a comic hit variation (comedy.js) beside the player: kind
+     * 'slap' | 'push' | 'fall', n 0-2, shown at time t; null clears it.
+     */
+    COMEDY,
+    comedy: (kind, n = 0, t = 0) => {
+      const c = ensureCity();
+      if (!kind) { c.comedyStage?.dispose(); c.comedyStage = null; return null; }
+      if (!c.comedyStage) {
+        const p = c.player;
+        c.comedyStage = new ComedyStage(c, (v) => c.buildPerson(v ? { ...params.human, ...human.randomize(Math.random) } : params.human), p.x + 1.5, p.z, 0);
+      }
+      c.comedyStage.play(kind, n);
+      return c.comedyStage.at(t);
+    },
     newTown: (seed) => { state.citySeed = seed; city = null; return ensureCity(); },
     /** Orbit the preview camera by `az` radians. */
     orbit: (az) => { const t = controls.target; camera.position.sub(t).applyAxisAngle(new THREE.Vector3(0, 1, 0), az).add(t); controls.update(); },

@@ -144,7 +144,7 @@ export const postBox = {
 export const busStop = {
   id: 'busStop',
   label: 'Bus stop',
-  variants: ['Pole', 'Shelter'],
+  variants: ['Shelter', 'Pole'], // the shelter first: it is the one the City uses
   build({ variant }, style) {
     const g = new THREE.Group();
     const metal = style.material('metal');

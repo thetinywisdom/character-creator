@@ -106,6 +106,8 @@ export class City {
     this.layout = city;
     // small props you can knock over come out of the merged town (knock.js)
     this.knock = new Knockables(this, city.group, city.colliders);
+    // parked cars and bicycles in the town come out of it too, so you can ride them
+    this.parkedRides = takeRideables(this, city.group, city.colliders);
     this.scene.add(mergeByMaterial(city.group));
     // light pools under the street lamps, shown at night (atmosphere.js);
     // a lamp's head reaches 1.45 m out over the road from its post
@@ -135,6 +137,7 @@ export class City {
       if (sil) this.silhouettes.push(sil);
       return body;
     };
+    this.buildPerson = buildPerson; // for previews (comedy.js)
     this.player = { body: buildPerson(params.human, true), root: new THREE.Group(), x: 0, z: 0, heading: 0, speed: 0, gait: createGait(), height: params.human.height };
     this.player.root.add(this.player.body);
     this.scene.add(this.player.root);
@@ -167,6 +170,8 @@ export class City {
       this.npcs.push(npc);
       return npc;
     };
+    this.makePerson = makePerson; // for drivers who jump out (ejectDriver)
+    this.randomDriver = () => ({ ...params.human, ...human.randomize(Math.random) });
     // looks that fit the place: suits downtown, school uniforms by the school,
     // police uniforms, aprons on shop promoters
     const isKid = (l) => l.bodyType === 'Boy' || l.bodyType === 'Girl';
@@ -226,6 +231,7 @@ export class City {
 
     // a few cars driving round the ring road (on the left, Japanese style)
     this.cars = [];
+    this.cars.push(...this.parkedRides); // parked cars and bicycles you can ride
     const kinds = ['Kei car', 'Sedan', 'Taxi', 'Minivan', 'Hatchback', 'Bus', 'Sports car', 'Kei car'];
     const colors = ['White', 'Red', undefined, 'Blue', 'Gray', 'White', 'Yellow', 'Green'];
     const silCars = silhouetteMaterial(0x3a64b8, 0.65);
@@ -248,16 +254,26 @@ export class City {
       const loop = loops[(i * 5 + 3) % loops.length], ring = loopLengths(loop);
       const obj = mergeByMaterial(kind === 'bicycle' ? bicycle.build(prm, style) : scooter.build(prm, style));
       this.silhouettes.push(...addObjectSilhouette(obj, silCars, silCache));
-      const rider = buildPerson({ ...params.human, ...human.randomize(rng), handItem: 'None', backAccessory: 'None', bodyAccessory: 'None' });
+      const riderLook = { ...params.human, ...human.randomize(rng), handItem: 'None', backAccessory: 'None', bodyAccessory: 'None' };
+      const rider = buildPerson(riderLook);
+      rider.userData.look = riderLook;
       sitPose(rider, kind === 'bicycle' ? 0.86 : 0.74);
       rider.position.z = kind === 'bicycle' ? -0.2 : -0.35;
       for (const a of ['armL', 'armR']) { const j = rider.getObjectByName(a); if (j) j.rotation.x = -0.95; } // hands on the bars
       obj.add(rider);
       this.scene.add(obj);
-      this.cars.push({ obj, size: { hw: 0.35, hd: 0.95 }, s: rng() * ring.total, speed: speed * (0.9 + rng() * 0.2), ...ring, loop, rider: true });
+      this.cars.push({ obj, size: { hw: 0.35, hd: 0.95 }, s: rng() * ring.total, speed: speed * (0.9 + rng() * 0.2), ...ring, loop, rider: true, bike: kind, riderBody: rider, riderLook: rider.userData.look, riderSeat: { y: kind === 'bicycle' ? 0.86 : 0.74, z: rider.position.z } });
     });
 
     // a bus stop on the bus's route: the bus pulls in, people get off and on
+    // bus shelters at the kerb: walkers step round behind them (lx, lz point
+    // into the block, from the kerb point x, z)
+    this.walkAvoid = [];
+    for (const o of cityData.objects ?? []) {
+      if (o.asset !== 'prop.busStop' || o.params?.variant !== 'Shelter') continue;
+      const r = ((o.rot ?? 0) * Math.PI) / 180, ox = Math.sin(r), oz = Math.cos(r);
+      this.walkAvoid.push({ x: o.x + ox * 0.75, z: o.z + oz * 0.75, fx: oz, fz: -ox, lx: -ox, lz: -oz, half: 2.4, clear: 1.95 });
+    }
     const bus = this.cars.find((c) => c.size.hd > 4);
     if (bus) {
       let k = 0;
@@ -267,11 +283,16 @@ export class City {
       const sx = (a[0] + b[0]) / 2, sz = (a[1] + b[1]) / 2;
       const stopS = bus.lengths.slice(0, k).reduce((u, v) => u + v, 0) + len / 2;
       const shelter = createAsset('prop.busStop', { variant: 'Shelter' }, style);
-      const kx = sx + lx * 3.2, kz = sz + lz * 3.2;
+      // at the kerb (the open side to the road), so the pavement behind it stays
+      // free: only its glass back is solid, and walkers step round behind it
+      const kerb = (cityData.grid?.road ?? 6) / 4; // lane centre to kerb
+      const kx = sx + lx * (kerb + 0.75), kz = sz + lz * (kerb + 0.75);
       shelter.position.set(kx, 0, kz);
       shelter.rotation.y = Math.atan2(-lx, -lz); // facing the road
       this.scene.add(mergeByMaterial(shelter));
-      city.colliders.push({ x: kx - lx * 0.5, z: kz - lz * 0.5, hw: Math.abs(fx) > 0.5 ? 1.6 : 0.6, hd: Math.abs(fx) > 0.5 ? 0.6 : 1.6 });
+      const bx = kx + lx * 0.6, bz = kz + lz * 0.6; // the back panel
+      city.colliders.push({ x: bx, z: bz, hw: Math.abs(fx) > 0.5 ? 1.6 : 0.12, hd: Math.abs(fx) > 0.5 ? 0.12 : 1.6 });
+      this.walkAvoid.push({ x: sx + lx * kerb, z: sz + lz * kerb, fx, fz, lx, lz, half: 2.4, clear: 1.95 });
       bus.stop = { s: stopS, x: sx, z: sz, door: { x: sx + lx * 2.2 + fx * 3.5, z: sz + lz * 2.2 + fz * 3.5 }, wait: 0, served: false };
       // people waiting at the stop, facing the road
       const stopInfo = { stop: bus.stop, slots: [], waiters: [], boarded: [] };
@@ -363,6 +384,25 @@ export class City {
     // run whichever way along the route leads away from you
     const q = alongLoop(n.loop, n.lengths, n.total, n.s, 0), p = this.player;
     n.dir = (q.dx * (n.pos.x - p.x) + q.dz * (n.pos.z - p.z)) >= 0 ? 1 : -1;
+  }
+
+  /**
+   * You take a vehicle someone is riding or driving: they jump off on the
+   * driver's side, shout, and run away scared (like a calm person slapped).
+   */
+  ejectDriver(c) {
+    let look = c.riderLook;
+    if (c.riderBody) { c.riderBody.removeFromParent(); c.riderBody = null; } // also if they were lying on the road
+    c.rider = false;
+    if (!look) look = this.randomDriver();
+    const n = this.makePerson({ ...look, trait: 'Calm' });
+    const h = c.obj.rotation.y, side = c.size.hw + 0.6;
+    n.pos = { x: c.obj.position.x + Math.cos(h) * side, z: c.obj.position.z - Math.sin(h) * side };
+    n.root.position.set(n.pos.x, this.layout.groundHeight(n.pos.x, n.pos.z), n.pos.z);
+    n.root.rotation.y = h;
+    n.role = null; // startFlee puts them on the nearest pavement route, then they walk on
+    n.act = { kind: 'flee', t: 4, delay: 0.35 };
+    this.ix.say(this.ix.headOf(n), ['THIEF!!', c.bike ? 'My bike!!' : 'My car!!', "HEY! That's mine!", 'Help! Police!'][Math.floor(Math.random() * 4)], 'shout', 2.6, 0.1, this.ix.nameOf(n));
   }
 
   /** Which segment of their route a walker is on. */
@@ -665,7 +705,14 @@ export class City {
       // plus a sidestep (n.off) that steers round people and things, then
       // fades so they drift back into their lane
       n.off ??= { x: 0, z: 0 };
-      const bx = q.x + ox, bz = q.z + oz;
+      let bx = q.x + ox, bz = q.z + oz;
+      // keep clear of things on the pavement (the bus shelter): step round behind
+      for (const a of this.walkAvoid ?? []) {
+        const rx = bx - a.x, rz = bz - a.z, along = rx * a.fx + rz * a.fz, inn = rx * a.lx + rz * a.lz;
+        if (Math.abs(along) > a.half || inn >= a.clear || inn < -1) continue;
+        const k = Math.min(1, (a.half - Math.abs(along)) / 1.0); // ease in and out
+        bx += a.lx * (a.clear - inn) * k; bz += a.lz * (a.clear - inn) * k;
+      }
       const pos = { x: bx + n.off.x, z: bz + n.off.z };
       for (const o of this.npcs) {
         if (o === n || !o.pos || Math.abs(o.pos.x - pos.x) > 1 || Math.abs(o.pos.z - pos.z) > 1) continue;
@@ -815,3 +862,37 @@ export class City {
     this.key.target.updateMatrixWorld();
   }
 }
+
+/**
+ * Parked vehicles built into the town (a car in a carport, at the petrol
+ * station, bicycles outside shops and the koban), tagged
+ * `userData.rideable` = 'car' | 'bicycle': taken out of the merged town and
+ * added to the vehicles as parked, so you can ride them. Their collider is
+ * switched off (`down`), the vehicle collides as itself.
+ */
+function takeRideables(city, group, colliders) {
+  group.updateMatrixWorld(true);
+  const found = [];
+  group.traverse((o) => { if (o.userData.rideable) found.push(o); });
+  const out = [];
+  for (const o of found) {
+    const pos = new THREE.Vector3(), quat = new THREE.Quaternion(), scl = new THREE.Vector3();
+    o.matrixWorld.decompose(pos, quat, scl);
+    if (pos.y > 0.5) continue; // up in a car park: stays put
+    const kind = o.userData.rideable, size = o.userData.size ?? (kind === 'car' ? { hw: 0.9, hd: 2.3 } : { hw: 0.3, hd: 0.9 });
+    o.parent.remove(o);
+    const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(quat);
+    const heading = Math.atan2(fwd.x, fwd.z);
+    o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.scale.copy(scl);
+    const obj = mergeByMaterial(o);
+    obj.position.copy(pos); obj.rotation.set(0, heading, 0);
+    city.scene.add(obj);
+    for (const c of colliders) {
+      if (Math.hypot(c.x - pos.x, c.z - pos.z) < 0.6 && Math.max(c.hw, c.hd) < size.hd + 0.6) c.down = true;
+    }
+    const car = { obj, size, parked: true, fx: Math.sin(heading), fz: Math.cos(heading), speed: 0, ...(kind === 'bicycle' ? { bike: 'bicycle' } : {}) };
+    out.push(car);
+  }
+  return out;
+}
+

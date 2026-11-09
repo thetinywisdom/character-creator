@@ -194,6 +194,7 @@ export function house(style, rng, w, d) {
     g.add(box(3, 0.1, 4.8, style.material('glass', 0x9aa8b4), [cx, 2.35, cz]));
     const c = car.build({ variant: pick(rng, ['Kei car', 'Kei car', 'Minivan']), color: pick(rng, ['White', 'Gray', 'Blue', 'Red', 'Black']) }, style);
     c.position.set(cx, 0, cz);
+    c.userData.rideable = 'car'; // City takes it out of the merged town so you can drive it
     g.add(c);
     colliders.push({ x: cx, z: cz, hw: 1.0, hd: 2.3 });
   }

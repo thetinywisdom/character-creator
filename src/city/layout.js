@@ -142,7 +142,7 @@ export function blockObjects(grid, block) {
     place('ground.paving', { w: BLOCK - WALK * 2 - 0.2, d: BLOCK - WALK * 2 - D * 2 }, cx, cz, [0, 1]);
     // a bus stop on some mixed blocks
     if (type === 'mixed' && rng() < 0.4) {
-      place('prop.busStop', { variant: 'Shelter' }, cx, z1 - 1.2, [0, 1]);
+      place('prop.busStop', { variant: 'Shelter' }, cx, z1 - 0.75, [0, 1]); // at the kerb: walkers pass behind
       place('prop.streetSign', { variant: 'Street name' }, x1 - 1, z1 - 0.5, [0, 1]);
     }
   }

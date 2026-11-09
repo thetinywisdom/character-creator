@@ -23,7 +23,7 @@ spot the characters.**
 | Fog | **Off** | Clear air; distance is shown by size, not haze |
 | Lighting | Lambert (simple diffuse), one sun + sky light | Matches the era's flat, vertex-lit look |
 | Real shadows | 512 px shadow map (deliberately blocky) | Grounds objects without looking modern |
-| Blob shadows | **On for characters**: soft dark disc under people and animals | Reads even when the real shadow is lost |
+| Blob shadows | **Off** (owner's call): the real cast shadows are enough; `blobShadows: true` in the style turns the disc back on | |
 | Geometry detail | **0.3×** the smooth segment counts | Low-poly everywhere |
 
 ## 2. Colour: the palette (a rule)
@@ -503,7 +503,7 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 
 - [ ] Visible at street distance on the sidewalk, in Day **and** Night lighting
 - [ ] Clothing colours contrast with the sidewalk and buildings
-- [ ] Gets a blob shadow (`isCharacter: true` on the subject)
+- [ ] Marked `isCharacter: true` on the subject (outlines; blob shadow if ever turned back on)
 - [ ] Silhouette recognisable with outlines on
 
 ## 5. Character size

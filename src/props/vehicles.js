@@ -280,6 +280,15 @@ export const bicycle = {
   },
 };
 
+/** The town bus, on its own card too (it is also a Car variant). */
+export const bus = {
+  id: 'bus',
+  label: 'Bus',
+  variants: ['City bus'],
+  colors: VEHICLE_COLORS,
+  build({ color }, style) { return buildBus(color, style); },
+};
+
 export const scooter = {
   id: 'scooter',
   label: 'Motorbike',

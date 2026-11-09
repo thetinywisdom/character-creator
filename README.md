@@ -11,7 +11,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
 
 - **📦 Catalogue** (home): the 🎨 colour palette everything uses, and every
   item a game can place, in tabs (Buildings,
-  Street, Traffic, Extras, Nature, Animals, Vehicles, Areas). Tap one to turn
+  Street, Traffic, Extras, Nature, Animals, Vehicles, Areas), including the
+  bus, the bus stop shelter and the banana peel. Tap one to turn
   it around, try its types, colours and looks, and copy the `createAsset(...)`
   line that builds it. 🎲 New look gives a really different building (shape,
   height, roof, layout), not just a new colour. The cat has patterns, tail, ear and coat types, and Still / Walk / Run /
@@ -43,7 +44,9 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   holding it to drift). Vehicles pick up speed gradually, the bus slowest; E to get off. Hit a
   sandwich board, planter, parked bike or bin and it goes flying, blinks and
   goes POOF, then pops back 5 seconds later. Crash on a bicycle or scooter
-  and you fly off; hit someone riding one and they fall over too.
+  and you fly off; hit someone riding one and they fall over too. You can ride
+  any vehicle: parked cars and bikes, traffic, the bus; take one from someone
+  and they jump out shouting and run away.
 
 ## Docs
 

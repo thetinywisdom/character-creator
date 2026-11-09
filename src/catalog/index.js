@@ -48,7 +48,8 @@ const PROP_COLLIDERS = {
   trashBin: { hw: 0.4, hd: 0.3 },
   hydrant: { hw: 0.15, hd: 0.15 },
   postBox: { hw: 0.25, hd: 0.25 },
-  busStop: { Shelter: { hw: 1.6, hd: 0.7, z: -0.4 }, Pole: { hw: 0.15, hd: 0.15 } },
+  busStop: { Shelter: { hw: 1.6, hd: 0.12, z: -0.6 }, // only the glass back is solid
+    Pole: { hw: 0.15, hd: 0.15 } },
   trafficLight: { hw: 0.2, hd: 0.2 },
   streetSign: { hw: 0.1, hd: 0.1 },
   vendingMachine: { hw: 0.55, hd: 0.45 },
@@ -56,13 +57,14 @@ const PROP_COLLIDERS = {
   utilityPole: { hw: 0.2, hd: 0.2 },
   car: { 'Kei car': { hw: 0.74, hd: 1.7 }, Sedan: { hw: 0.89, hd: 2.35 }, Hatchback: { hw: 0.86, hd: 2.0 }, Minivan: { hw: 0.86, hd: 2.35 }, Taxi: { hw: 0.85, hd: 2.2 }, 'Sports car': { hw: 0.79, hd: 1.98 }, Bus: { hw: 1.25, hd: 5.25 } },
   bicycle: { hw: 0.3, hd: 0.85 },
+  bus: { hw: 1.25, hd: 5.25 },
   scooter: { '50cc': { hw: 0.45, hd: 0.95 }, Delivery: { hw: 0.45, hd: 0.95 }, 'Step-through': { hw: 0.35, hd: 1.0 }, Motorcycle: { hw: 0.4, hd: 1.1 }, 'Mini scooter': { hw: 0.25, hd: 0.65 } },
   planter: { 'Planter box': { hw: 0.7, hd: 0.25 }, 'Potted plant': { hw: 0.22, hd: 0.22 } },
   cone: { Cone: { hw: 0.18, hd: 0.18 }, Barrier: { hw: 1.1, hd: 0.18 } },
   bollard: { Bollard: { hw: 0.08, hd: 0.08 }, 'Guard rail': { hw: 1.0, hd: 0.06 } },
 };
 
-const PROP_SIZES = { busStop: [3.4, 1.6], car: [1.8, 4.6], bench: [1.6, 0.5], vendingMachine: [1.1, 0.9], crosswalk: [4, 6] };
+const PROP_SIZES = { busStop: [3.4, 1.6], car: [1.8, 4.6], bus: [2.5, 10.5], bananaPeel: [0.5, 0.5], bench: [1.6, 0.5], vendingMachine: [1.1, 0.9], crosswalk: [4, 6] };
 
 const withColliders = (obj, colliders) => {
   obj.userData.colliders = colliders.map((c) => ({ x: c.x ?? 0, z: c.z ?? 0, hw: c.hw, hd: c.hd }));

@@ -127,3 +127,21 @@ export function wire(a, b, style, sag = 0.5) {
   g.add(capsuleBetween(mid.toArray(), b, 0.012, m, 3));
   return g;
 }
+
+/** A banana peel (the one you drop in the City with B), oversized so it reads when tiny. */
+export const bananaPeel = {
+  id: 'bananaPeel',
+  label: 'Banana peel',
+  variants: ['Peel'],
+  build(_p, style) {
+    const g = new THREE.Group();
+    const yellow = style.material('signage', 0xece0aa), tip = style.material('wood', 0x8a7462);
+    for (let k = 0; k < 4; k++) {
+      const a = (k * Math.PI) / 2 + 0.4;
+      g.add(box(0.06, 0.02, 0.16, yellow, [Math.sin(a) * 0.08, 0.015, Math.cos(a) * 0.08], [0, a, 0]));
+    }
+    g.add(box(0.05, 0.05, 0.05, tip, [0, 0.03, 0]));
+    g.scale.setScalar(1.6);
+    return g;
+  },
+};

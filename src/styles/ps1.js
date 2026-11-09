@@ -160,5 +160,5 @@ export const ps1Clear = createPs1Style({
   pixelSize: 2,
   wobble: 0.4,
   outline: true,
-  blobShadows: true,
+  blobShadows: false, // off: the real cast shadows are enough (owner, item 22)
 });

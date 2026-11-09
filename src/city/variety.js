@@ -115,7 +115,8 @@ export function frontExtras(g, style, rng, bw, front, { keepClear = [], max = 2,
     else { o = bikeRack.build({ variant: '3 bikes' }, style); c = { hw: 1.2, hd: 0.5 }; }
     const z = front + (kind === 'vending' ? 0.55 : 0.6);
     o.position.set(x, 0, kind === 'lantern' ? front - 0.3 : z);
-    if (kind === 'board' || kind === 'planter' || kind === 'bike') o.userData.knock = true; // vehicles knock these over
+    if (kind === 'board' || kind === 'planter') o.userData.knock = true; // vehicles knock these over
+    if (kind === 'bike') o.userData.rideable = 'bicycle';               // you can ride it off
     g.add(o);
     if (c) colliders.push({ x, z, ...c });
   }

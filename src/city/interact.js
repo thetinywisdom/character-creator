@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { sitPose } from './crowd.js';
+import { bananaPeel } from '../props/extras.js';
 import { JOINT_NAMES } from '../anim/gait.js';
 import { SMALL_TALK } from './smalltalk.js';
 
@@ -490,16 +492,7 @@ export class Interactions {
   dropPeel() {
     const p = this.city.player;
     if (p.riding) return;
-    const g = new THREE.Group();
-    const yellow = this.style.material('signage', 0xece0aa), tip = this.style.material('wood', 0x8a7462);
-    for (let k = 0; k < 4; k++) {
-      const leaf = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 0.16), yellow);
-      leaf.position.set(Math.sin((k * Math.PI) / 2 + 0.4) * 0.08, 0.015, Math.cos((k * Math.PI) / 2 + 0.4) * 0.08);
-      leaf.rotation.y = (k * Math.PI) / 2 + 0.4;
-      g.add(leaf);
-    }
-    g.add(new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), tip).translateY(0.03));
-    g.scale.setScalar(1.6); // oversized so it reads when tiny
+    const g = bananaPeel.build({}, this.style); // props/extras.js (also in the catalogue)
     const x = p.x - Math.sin(p.heading) * 0.35, z = p.z - Math.cos(p.heading) * 0.35; // just behind you
     g.position.set(x, this.city.layout.groundHeight(x, z) + 0.01, z);
     this.city.scene.add(g);
@@ -517,6 +510,8 @@ export class Interactions {
     const p = this.city.player;
     if (c.ridden) return;
     this.closeMenu();
+    // taking it from someone (traffic, a rider): they jump off and run
+    if (!c.parked && (c.loop || c.rider)) { this.city.ejectDriver(c); c.loop = null; }
     c.ridden = true;
     c.parked = false;
     c.fallen = null; c.obj.rotation.z = 0; // picked up if it had fallen over
@@ -683,6 +678,21 @@ export class Interactions {
     if (c.fallen || !(c.bike || c.rider)) return;
     c.fallen = { t: 0, side, dur: c.rider ? 3.5 : 4.5 };
     c.speed = 0;
+    if (c.riderBody) {
+      // the rider is thrown clear of the bike (forward and to the far side) and lands on their back
+      const rb = c.riderBody, P = c.obj.position, h = c.obj.rotation.y;
+      const fx = Math.sin(h), fz = Math.cos(h), sx = Math.cos(h) * -side, sz = -Math.sin(h) * -side;
+      c.obj.remove(rb);
+      this.city.scene.add(rb);
+      rb.rotation.order = 'YXZ';
+      c.fallen.rider = { from: new THREE.Vector3(P.x, P.y + 0.3, P.z), to: new THREE.Vector3(P.x + fx * 2.0 + sx * 1.1, P.y, P.z + fz * 2.0 + sz * 1.1), h: h + (Math.random() - 0.5) * 1.2 };
+      const j = joints(rb);
+      for (const s of ['L', 'R']) {
+        if (j[`leg${s}`]) j[`leg${s}`].rotation.x = s === 'L' ? -0.9 : -0.4;
+        if (j[`shin${s}`]) j[`shin${s}`].rotation.x = 0.3;
+        if (j[`arm${s}`]) j[`arm${s}`].rotation.x = -2.6;
+      }
+    }
     if (c.rider) {
       const at = () => c.obj.position.clone().add(new THREE.Vector3(0, 1.4, 0));
       this.say(at, pick(['CRASH!', 'WHAM!', 'KRUNCH!']), 'burst');
@@ -695,7 +705,26 @@ export class Interactions {
     f.t += dt;
     const down = f.t < f.dur ? Math.min(1, f.t / 0.25) : Math.max(0, 1 - (f.t - f.dur) / 0.4);
     c.obj.rotation.z = f.side * 1.4 * (down < 1 && f.t < f.dur ? down * down : down);
-    if (f.t >= f.dur + 0.4) { c.fallen = null; c.obj.rotation.z = 0; }
+    if (f.rider) {
+      // flying off, flat on the back, then (as the bike rights) back in the saddle
+      const rb = c.riderBody, r = f.rider, u = Math.min(1, f.t / 0.4);
+      rb.position.lerpVectors(r.from, r.to, u);
+      rb.position.y = r.from.y + (r.to.y + 0.12 - r.from.y) * u + Math.sin(Math.PI * u) * 0.6;
+      rb.rotation.set(-1.45 * Math.min(1, u * 1.3), r.h, 0);
+    }
+    if (f.t >= f.dur + 0.4) {
+      c.fallen = null; c.obj.rotation.z = 0;
+      if (f.rider && c.riderBody) {
+        const rb = c.riderBody;
+        this.city.scene.remove(rb);
+        c.obj.add(rb);
+        rb.rotation.set(0, 0, 0);
+        sitPose(rb, c.riderSeat.y);
+        rb.position.z = c.riderSeat.z;
+        const j = joints(rb);
+        for (const s of ['L', 'R']) if (j[`arm${s}`]) j[`arm${s}`].rotation.x = -0.95; // hands on the bars
+      }
+    }
   }
 
   sitOnBike(p, c) {

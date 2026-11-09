@@ -121,8 +121,9 @@ src/city/variety.js    shared building variety: flatsAbove, roofTop, frontExtras
 src/city/silhouette.js see-through people in the iso view (stencil + GreaterDepth copy)
 src/city/crowd.js      the crowd: roles (walk, stand, bench, ...), placed from the layout,
                        distance culling, sitPose
-src/city/knock.js      Knockables: props tagged userData.knock (boards, planters, parked
-                       bikes, bins) fly when a vehicle hits them, blink, POOF, back in 5 s
+src/city/knock.js      Knockables: props tagged userData.knock (boards, planters, bins) fly
+                       when a vehicle hits them, blink, POOF, back in 5 s
+src/city/comedy.js     comic slap / push / fall variations (COMEDY) and ComedyStage previews
 src/city/interact.js   character interactions: traits, slap / push / talk (pie menu), chat
                        bubbles + comic bursts, banana peels, riding vehicles
 src/city/atmosphere.js night glow (setNightGlow), snow cover (setSnowCover), rain / snow
@@ -227,8 +228,17 @@ in a circle; bubbles from `GROUP_TALK` when you are within ~22 m), `kid`
 walk a beat). Looks fit the place: ~70% suits downtown, school uniforms by
 the school, police uniforms, aprons on promoters. Shop types of `building.shop`
 / `mixedUse` without a `shopType` are read from their seed. Riders: people
-sitting on bicycles and scooters in the traffic (`cars` with `rider: true`).
-Bus stop: a shelter on the bus route; the bus slows in and waits 5 s
+sitting on bicycles and scooters in the traffic (`cars` with `rider: true`,
+`bike`, `riderBody`, `riderLook`). Every vehicle can be ridden: take one from
+someone and `City.ejectDriver(c)` makes them jump out on the driver's side,
+shout and run away scared (a new walker); parked cars (carports, petrol
+stations) and bicycles outside shops and the koban are tagged
+`userData.rideable` and taken out of the merged town (`takeRideables`) into
+`cars` as parked. A rider who falls is thrown clear of the bike and lies on
+the road, then is back in the saddle when the bike rights.
+Bus stop: a shelter at the kerb on the bus route (only its glass back is
+solid; `City.walkAvoid` zones make walkers step round behind any shelter,
+also the ones in the town data); the bus slows in and waits 5 s
 (`bus.stop`), `Crowd.busArrived` hides one or two waiters (got on) and lets
 earlier ones off by the door as walkers (`busWait` role; faked, nobody is
 tracked inside); passing walkers top the stop up. Roles with a place carry
@@ -410,7 +420,9 @@ No unit tests; verify by building and looking.
   `openItem(id, params)`, `CATALOG`, `human` (presets, outfits), `apply('human', values)`, `orbit(az)`,
   `gait.lock = fraction` (freeze the walk), `getCity()` (`player`, `npcs`,
   `cars`, `cats`, `cam`, `iso`, `setViewMode('iso'|'third')`, `setWeather(kind)`, `ix` interactions),
-  `newTown(seed)`, `cityInput`. The app bar's ☀ / 🌤 buttons switch light and weather.
+  `newTown(seed)`, `cityInput`, `COMEDY` and `comedy(kind, n, t)` (show comic hit
+  variation n of 'slap' | 'push' | 'fall' from `src/city/comedy.js` on two people
+  beside you, at time t; `comedy(null)` clears it). The app bar's ☀ / 🌤 buttons switch light and weather.
 - To look at one building: `openItem('building.bank')`, or place the player
   in the city with `getCity().player.position.set(...)`.
 - Check desktop (1280 × 720) and phone (390 × 844).
