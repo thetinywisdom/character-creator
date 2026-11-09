@@ -755,10 +755,17 @@ export class City {
       c.s += c.speed * dt;
       // the route already runs down the middle of the kerb-side lane (driving
       // on the left, block on the driver's left), so the car sits right on it
-      const q = alongLoop(c.loop, c.lengths, c.total, c.s, 3);
-      const len = Math.hypot(q.dx, q.dz) || 1;
-      const fx = q.dx / len, fz = q.dz / len;
-      c.obj.position.set(q.x, -0.12, q.z);
+      // the front axle follows the lane and the rear axle is towed behind it
+      // (no sideways slide), so long vehicles like the bus swing round a
+      // corner with the back cutting in, instead of spinning on the spot
+      const wb = c.size.hd * 1.2;
+      const qf = alongLoop(c.loop, c.lengths, c.total, c.s + wb / 2, c.size.hd > 4 ? 6 : 3);
+      if (!c.rear) { const q0 = alongLoop(c.loop, c.lengths, c.total, c.s - wb / 2, 3); c.rear = { x: q0.x, z: q0.z }; }
+      let fx = qf.x - c.rear.x, fz = qf.z - c.rear.z;
+      const len = Math.hypot(fx, fz) || 1;
+      fx /= len; fz /= len;
+      c.rear.x = qf.x - fx * wb; c.rear.z = qf.z - fz * wb;
+      c.obj.position.set(qf.x - fx * wb / 2, -0.12, qf.z - fz * wb / 2);
       c.obj.rotation.y = Math.atan2(fx, fz);
       c.fx = fx; c.fz = fz; // for braking and collisions
     }

@@ -244,7 +244,10 @@ slap (aggressive: slaps back, then chases; calm: runs away), push (knocked
 over like a car hit, `ix.knockDown`; they get up shouting, then aggressive:
 chase and push you over too; calm: run away), talk (both say
 a line of small talk), drop banana peels (anyone stepping on one slips), and
-ride vehicles (Shift or a held right button is the handbrake: the vehicle
+ride vehicles (cars and the bus steer like real vehicles: the turn rate
+depends on the wheelbase, `size.hd * 1.3`, and the body pivots round the rear
+axle; traffic tows `c.rear` behind a front axle that follows the lane, so the
+bus swings round corners; Shift or a held right button is the handbrake: the vehicle
 slows and loses grip, `drive.travel` lags `drive.heading`, so it drifts and
 leaves skid marks; traffic cars, the bus, a scooter and a bicycle parked by the
 start; WASD drives, people hit fall over, you get out on the driver's side

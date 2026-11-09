@@ -522,8 +522,19 @@ export class Interactions {
     if (hb) dv.speed *= Math.max(0, 1 - dt * 0.9); // the handbrake bleeds speed off
     dv.speed = Math.max(-3, Math.min(MAX, dv.speed));
     // steer (more grip at speed, reversed when backing up; it turns harder on the handbrake)
-    const steer = -axes.x * Math.min(1, Math.abs(dv.speed) / 3) * (c.bike ? 2.4 : 1.6) * (hb ? 1.9 : 1);
-    dv.heading += steer * dt * Math.sign(dv.speed || 1);
+    // cars and the bus turn like real vehicles: the rate depends on the
+    // wheelbase (a bus turns wider), and the body pivots round the rear axle
+    const wb = c.size.hd * 1.3;
+    const rate = c.bike ? 2.4 * Math.min(1, Math.abs(dv.speed) / 3) : Math.min(1.6, Math.abs(dv.speed) * Math.tan(0.6) / wb);
+    const steer = -axes.x * rate * (hb ? 1.9 : 1);
+    const turn = steer * dt * Math.sign(dv.speed || 1);
+    if (!c.bike && !hb) {
+      const b = c.size.hd * 0.6; // centre to rear axle
+      const h0 = dv.heading;
+      c.obj.position.x += (Math.sin(h0 + turn) - Math.sin(h0)) * b;
+      c.obj.position.z += (Math.cos(h0 + turn) - Math.cos(h0)) * b;
+    }
+    dv.heading += turn;
     const fx = Math.sin(dv.heading), fz = Math.cos(dv.heading);
     // drift: the way we are actually going (dv.travel) catches up with the way we
     // point; with grip it does so at once, on the handbrake slowly, so the back slides out

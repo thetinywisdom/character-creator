@@ -94,6 +94,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 38. **Blackout fix, angrier chases, scared flights**: the City no longer goes black (a crash in collisions; the loop now survives errors). Chasers sprint faster than you, yell, shove you off bikes and give up after 10 s or 300 m; calm people run 300 m along the streets and then walk back.
 
+39. **The bus turns properly**: traffic and the cars you drive turn round the rear axle instead of spinning on their centre; the bus takes wider corners.
+
 ## Next (only when the owner asks)
 
 Ideas, not commitments. The owner decides what to add.
