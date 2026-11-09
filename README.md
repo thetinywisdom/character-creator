@@ -43,6 +43,11 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   follow the distance walked, heels strike and toes push off, real airtime
   when running, a dip when stopping) and the Classic one. (The Walk lab for tuning them is a dev tool:
   add #dev to the address to show its 🚶 button.)
+- **Park playground:** kids swing on the swings, climb the ladder and go
+  down the curved slide, and climb and sit on the climbing frame.
+- **Driving among people:** people walk round your car (and any parked car)
+  instead of through it; at low speed your car stops against them, at speed
+  it knocks them over.
 - **Interactions in the City:** point at someone and a yellow ring lights up
   under them (and under the person whose menu is open). Left-click anyone you can see to talk to them
   (you run over first); right-click them, or face them and press **E**, for

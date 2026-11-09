@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { setDetail } from '../lib/shapes.js';
 import { mergeByMaterial } from '../lib/merge.js';
+import { takeSwings } from './playground.js';
 import { Knockables } from './knock.js';
 import { skinCharacter, vertexColorMaterial } from '../lib/skin.js';
 import { mulberry32 } from '../lib/rng.js';
@@ -108,6 +109,8 @@ export class City {
     this.knock = new Knockables(this, city.group, city.colliders);
     // parked cars and bicycles in the town come out of it too, so you can ride them
     this.parkedRides = takeRideables(this, city.group, city.colliders);
+    // the swing seats too, so they swing (playground.js)
+    this.swings = takeSwings(this, city.group);
     this.scene.add(mergeByMaterial(city.group));
     // light pools under the street lamps, shown at night (atmosphere.js);
     // a lamp's head reaches 1.45 m out over the road from its post
@@ -433,6 +436,7 @@ export class City {
     const pace = n.flee ? NPC_RUN_SPEED : n.speed;
     if (n.flee) n.flee.left -= pace * dt;
     n.pos = { x: n.pos.x + (dx / d) * pace * dt, z: n.pos.z + (dz / d) * pace * dt };
+    this.walkRoundCars(n.pos, pace * dt);
     n.root.position.set(n.pos.x, this.layout.groundHeight(n.pos.x, n.pos.z), n.pos.z);
     let h = Math.atan2(dx, dz) - n.root.rotation.y;
     h = Math.atan2(Math.sin(h), Math.cos(h));
@@ -440,6 +444,25 @@ export class City {
     if (this.crowd.culled(n)) return;
     stepGait(n.gait, dt, pace, n.tune);
     poseGait(n.body, n.gait, 'natural', n.tune);
+  }
+
+  /**
+   * A person on foot meets a car (parked, stopped, or the one you are in):
+   * pushed out of it, they slide along its side towards the nearer end, so
+   * they walk round it instead of through it or getting stuck.
+   */
+  walkRoundCars(pos, step) {
+    for (const c of this.cars) {
+      if (c.fallen || Math.abs(c.obj.position.x - pos.x) > 6 || Math.abs(c.obj.position.z - pos.z) > 6) continue;
+      const ox = pos.x, oz = pos.z;
+      this.pushOutOfCar(pos, PERSON_R + 0.05, c);
+      if (pos.x === ox && pos.z === oz) continue;
+      const fx = c.fx ?? 0, fz = c.fz ?? 1;
+      const along = (pos.x - c.obj.position.x) * fx + (pos.z - c.obj.position.z) * fz;
+      const s = along >= 0 ? 1 : -1;
+      pos.x += fx * s * step; pos.z += fz * s * step;
+      this.pushOutOfCar(pos, PERSON_R + 0.05, c);
+    }
   }
 
   /** Back at their place: pick their role up again. */
@@ -734,6 +757,8 @@ export class City {
       }
       { const dx = pos.x - p.x, dz = pos.z - p.z, d = Math.hypot(dx, dz), min = PERSON_R + PLAYER_R + 0.05;
         if (d < min && d > 1e-5) { pos.x += (dx / d) * (min - d); pos.z += (dz / d) * (min - d); } }
+      // and round cars, the one you are in too (they used to walk through it)
+      this.walkRoundCars(pos, pace * dt);
       this.pushOut(pos, PERSON_R);
       n.off.x = (pos.x - bx) * (1 - Math.min(1, dt * 0.8));
       n.off.z = (pos.z - bz) * (1 - Math.min(1, dt * 0.8));

@@ -1,7 +1,10 @@
 import * as THREE from 'three';
+import { FRAME, SLIDE, playWorld, updatePlayKid, updateSwings } from './playground.js';
 import { JOINT_NAMES } from '../anim/gait.js';
 import { mulberry32 } from '../lib/rng.js';
 import { SHOP_TYPES } from './buildings.js';
+
+const PLAY_KINDS = new Set(['swing', 'slide', 'climb']); // kids on the playground (playground.js)
 
 // The crowd: who is out in the town and what they are doing (City.js).
 // Every pedestrian has a role (n.role.kind):
@@ -202,7 +205,7 @@ export class Crowd {
     for (const o of layout.data.objects ?? []) {
       const r = ((o.rot ?? 0) * Math.PI) / 180, out = [Math.sin(r), Math.cos(r)];
       const key = o.asset.split('.')[1];
-      if (o.asset === 'area.park') parks.push({ x: o.x, z: o.z, w: o.params.w, d: o.params.d });
+      if (o.asset === 'area.park') parks.push({ x: o.x, z: o.z, w: o.params.w, d: o.params.d, rot: r });
       if (o.asset === 'building.koban') kobans.push({ o, out });
       if (!o.asset.startsWith('building.')) continue;
       // shop / mixedUse pick their shop type from the seed when none is given (buildings.js)
@@ -262,7 +265,15 @@ export class Crowd {
     // kids running about the park
     for (const pk of sp.parks) {
       const rect = { x0: pk.x - pk.w / 2 + 2, x1: pk.x + pk.w / 2 - 2, z0: pk.z - pk.d / 2 + 2, z1: pk.z + pk.d / 2 - 2 };
-      for (let i = 0; i < 5; i++) {
+      // on the playground (playground.js): a kid on each swing, one on the slide, one on the climbing frame
+      for (const s of this.city.swings ?? []) {
+        if (Math.abs(s.x - pk.x) > pk.w / 2 || Math.abs(s.z - pk.z) > pk.d / 2) continue;
+        roles.push({ kind: 'swing', park: pk, swing: s, amp: 0.55 + rng() * 0.35, kid: true, home: { x: s.x + Math.sin(s.yaw) * 1.2, z: s.z + Math.cos(s.yaw) * 1.2, heading: s.yaw } });
+      }
+      const slideEnd = playWorld(pk, SLIDE.x, SLIDE.chute1 + 0.4), frameOut = playWorld(pk, FRAME.x0 + FRAME.cell * FRAME.n / 2, FRAME.z0 - 0.3);
+      roles.push({ kind: 'slide', park: pk, kid: true, home: { ...slideEnd, heading: pk.rot } });
+      roles.push({ kind: 'climb', park: pk, kid: true, home: { ...frameOut, heading: pk.rot } });
+      for (let i = 0; i < 3; i++) {
         const x = rect.x0 + rng() * (rect.x1 - rect.x0), z = rect.z0 + rng() * (rect.z1 - rect.z0);
         roles.push({ kind: 'kid', rect, home: { x, z, heading: rng() * 6.28 }, kid: true });
       }
@@ -303,6 +314,7 @@ export class Crowd {
   /** Queues move, groups chat: once a frame. */
   update(dt) {
     const city = this.city, p = city.player, ix = city.ix;
+    updateSwings(city.swings ?? [], dt);
     // the bus stop fills up again with passing walkers
     const b = this.busStop;
     if (b && b.waiters.length < 3 && Math.random() < dt * 0.3) {
@@ -366,6 +378,7 @@ export class Crowd {
   /** Give a person their role (called once, when the crowd is made). */
   assign(n, role) {
     n.role = role;
+    if (PLAY_KINDS.has(role.kind)) { role.st = null; role.path = null; } // start their play again from the ground
     if (role.queue && !role.queue.members.includes(n)) role.queue.members.push(n);
     if (role.group && !role.group.members.includes(n)) role.group.members.push(n);
     if (role.kind === 'busWait' && role.slot !== -1 && this.busStop && !this.busStop.waiters.includes(n)) this.busStop.waiters.push(n);
@@ -406,6 +419,7 @@ export class Crowd {
       return;
     }
     if (r.kind === 'kid') { this.runAbout(n, dt); return; }
+    if (PLAY_KINDS.has(r.kind) && updatePlayKid(this.city, n, dt)) return;
     if (r.kind === 'queue' || r.kind === 'group' || r.kind === 'police' || r.kind === 'busWait') {
       // stand facing the shop / the group; small weight shifts, glances
       r.look = (r.look ?? Math.random() * 10) + dt;

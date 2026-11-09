@@ -396,6 +396,23 @@ pads of needles), **weeping willow** (round crown, thin curtains to near the
 ground) and **bamboo** (a clump of thin green canes with leaf tufts). Parks
 mix all of them; shrine groves use old giants, zelkova and pines.
 
+**Park playground** (`city/playground.js`), in bright signage colours:
+- **Swings:** a red A-frame and top bar (2.4 m), two wooden seats on thin
+  metal chains (1.86 m) that really swing (a pendulum, ~2.7 s a swing). A kid
+  on each swings high (30–50°), legs straight out going forward and tucked
+  going back, leaning back, hands up on the chains. An empty seat sways a
+  little and settles.
+- **Slide:** a blue tower (1.5 m platform, 1 m square, posts, yellow side
+  rails, a little red pyramid roof), a ladder with yellow rungs up the back,
+  and a yellow chute with raised sides that curves down (steepest in the
+  middle) and runs out flat at 0.3 m. A kid walks round, climbs the ladder,
+  sits at the top a moment, slides down leaning back with hands up, and goes
+  round again.
+- **Climbing frame (ジャングルジム):** a green cube of 3 × 3 × 3 cells
+  (0.6 m), every bar meeting a post at a ball joint. A kid climbs up a face,
+  sits on the top edge kicking their legs, climbs down and tries another face.
+- A sandbox beside the slide; the other park kids still run about.
+
 ## 3e-3. Atmosphere
 
 - **Night:** a dark blue sky and dim light; windows glow only where a room is

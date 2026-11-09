@@ -117,12 +117,17 @@ src/city/civic.js      udon/soba, family restaurant, takoyaki, koban, post offic
                        clinic, fire station, karaoke, wooden apartment, parking, gas station
 src/city/interiors.js  painted shop interiors and curtains
 src/city/facades.js    painted office facades, roof clutter, roof signs
-src/city/City.js       walkable town: player, people, cars, cats, collisions, cameras,
+src/city/City.js       walkable town: player, people, cars, cats, collisions (walkRoundCars: people
+                       on foot step round any car, the one you drive too), cameras,
                        setWeather('Clear'|'Rain'|'Snow'), night via applyLighting
 src/city/backs.js      dresses bare backs and sides of every building (windows, AC units,
                        back door, drain pipe, emergency stairs), found with rays
 src/city/variety.js    shared building variety: flatsAbove, roofTop, frontExtras, side, pick, between
 src/city/silhouette.js see-through people in the iso view (stencil + GreaterDepth copy)
+src/city/playground.js park playground: swings (seats on pivot groups, userData.swing, taken out
+                       of the merged town by takeSwings, swung by updateSwings), slide (chuteAt
+                       curve), climbing frame; kid roles swing / slide / climb (updatePlayKid);
+                       playWorld(park, lx, lz) = playground-local to world
 src/city/crowd.js      the crowd: roles (walk, stand, bench, ...), placed from the layout,
                        distance culling, sitPose, pedalPose(body, phase) (legs going round
                        on a bicycle), leanInto(obj, heading, speed, dt) (roll into turns:
@@ -264,7 +269,8 @@ one per 1.2 s, quick reactions (third item `true`) 0.35 s after the line
 before, 3-5 s between conversations, none repeating until all are used; the
 `four: true` ones need a group of four; bench pairs (`benchPairs`) use the
 same, C's part going to A), `kid`
-(children running about the park), `police` (outside each koban; two more
+(children running about the park), `swing` / `slide` / `climb` (kids on
+the playground's swings, slide and climbing frame: `src/city/playground.js`), `police` (outside each koban; two more
 walk a beat). Looks fit the place: ~70% suits downtown, school uniforms by
 the school, police uniforms, aprons on promoters. Shop types of `building.shop`
 / `mixedUse` without a `shopType` are read from their seed. Riders: people

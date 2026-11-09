@@ -1,10 +1,10 @@
 import * as THREE from 'three';
-import { capsuleBetween } from '../lib/shapes.js';
 import { bench, streetLamp, trashBin } from '../props/furniture.js';
 import { vendingMachine } from '../props/extras.js';
 import { tree } from '../subjects/tree.js';
 import { defaultsFor } from '../viewer/params.js';
-import { box, cyl, tiledBox } from '../props/util.js';
+import { box, tiledBox } from '../props/util.js';
+import { PLAY_AT, buildPlayground } from './playground.js';
 
 // A Japanese neighbourhood park (公園): grass, a cross of paths, trees round
 // the edge, benches, a playground (slide, swings, sandbox, climbing frame),
@@ -47,35 +47,14 @@ export function park(style, rng, w, d) {
   }
 
   // playground in one quarter
-  const px = w / 4 + 1, pz = d / 4 + 1;
+  const [px, pz] = PLAY_AT(w, d);
   const play = new THREE.Group();
   play.position.set(px, 0, pz);
-  const red = style.material('signage', 0xd8443c);
-  const blue = style.material('signage', 0x3f7fd6);
-  const yellow = style.material('signage', 0xf2c230);
-  // slide: ladder tower and a sloped chute
-  play.add(box(1.2, 1.8, 1.2, blue, [-3, 0.9, -2]));
-  play.add(box(0.7, 0.05, 3.2, yellow, [-3, 0.95, -0.15], [-0.5, 0, 0]));
-  // swings: an A-frame with two seats
-  for (const sx of [-1, 1]) {
-    play.add(capsuleBetween([3 + sx * 1.6, 0, -2.6], [3 + sx * 1.6, 2.4, -2], 0.06, red, 6));
-    play.add(capsuleBetween([3 + sx * 1.6, 0, -1.4], [3 + sx * 1.6, 2.4, -2], 0.06, red, 6));
-  }
-  play.add(capsuleBetween([1.4, 2.4, -2], [4.6, 2.4, -2], 0.06, red, 6));
-  for (const sx of [-0.7, 0.7]) {
-    play.add(capsuleBetween([3 + sx, 2.4, -2], [3 + sx, 0.55, -2], 0.015, style.material('metal'), 4));
-    play.add(box(0.5, 0.06, 0.25, style.material('wood'), [3 + sx, 0.52, -2]));
-  }
-  // sandbox and a climbing frame
-  play.add(box(3, 0.25, 3, style.material('wood'), [-2.6, 0.12, 2.4]));
-  play.add(box(2.7, 0.27, 2.7, style.material('sidewalk', 0xe6d2a0), [-2.6, 0.12, 2.4]));
-  for (let i = 0; i < 3; i++) {
-    for (let k = 0; k < 3; k++) play.add(cyl(0.04, 0.04, 1.6, yellow, [2 + i * 0.7, 0.8, 1.8 + k * 0.7], { segments: 5 }));
-    play.add(box(1.5, 0.05, 0.05, yellow, [2.7, 0.5 + i * 0.5, 1.8]));
-    play.add(box(1.5, 0.05, 0.05, yellow, [2.7, 0.5 + i * 0.5, 3.2]));
-  }
+  // swings, slide and climbing frame (playground.js), and a sandbox
+  for (const c of buildPlayground(play, style)) colliders.push({ x: px + c.x, z: pz + c.z, hw: c.hw, hd: c.hd });
+  play.add(box(3, 0.25, 3, style.material('wood'), [-2.6, 0.12, 3.2]));
+  play.add(box(2.7, 0.27, 2.7, style.material('sidewalk', 0xe6d2a0), [-2.6, 0.12, 3.2]));
   g.add(play);
-  colliders.push({ x: px - 3, z: pz - 2, hw: 0.6, hd: 0.6 }, { x: px + 3, z: pz - 2, hw: 1.8, hd: 0.7 });
 
   // toilet hut and a vending machine in the opposite quarter
   const hut = new THREE.Group();

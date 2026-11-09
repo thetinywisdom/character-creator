@@ -807,6 +807,16 @@ export class Interactions {
         return;
       }
     }
+    // slow: people are in the way like posts (the car stops against them; walkers step round it)
+    if (Math.abs(dv.speed) <= 1.5) {
+      for (const n of city.npcs) {
+        if (!n.pos || n.act?.kind === 'slip' || n.role?.kind === 'bench' || !n.root.visible) continue;
+        for (const k of [-1, 1]) {
+          const cx = nx + fx * off * k, cz = nz + fz * off * k, dx = cx - n.pos.x, dz = cz - n.pos.z, d = Math.hypot(dx, dz), min = r + 0.3;
+          if (d < min && d > 1e-5) { nx += (dx / d) * (min - d); nz += (dz / d) * (min - d); dv.speed *= 0.5; }
+        }
+      }
+    }
     // knock over people in the way
     if (Math.abs(dv.speed) > 1.5) {
       for (const n of city.npcs) {
