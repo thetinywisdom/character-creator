@@ -213,8 +213,8 @@ html, body {
 }
 .burst i { position: absolute; inset: 0; clip-path: polygon(50% 0%, 60% 24%, 84% 6%, 78% 32%, 100% 34%, 82% 54%, 98% 78%, 70% 70%, 64% 100%, 50% 78%, 34% 98%, 30% 72%, 2% 82%, 18% 56%, 0% 34%, 24% 30%, 14% 4%, 40% 22%); }
 .burst .b-out { background: #2f3236; }                                   /* ink outline */
-.burst .b-out + .b-in { inset: 6px; background: #ece0aa; }               /* butter */
-.burst .b-in::after { content: ''; position: absolute; inset: 22% 24%; background: #c99c98;   /* dusty rose core */
+.burst .b-out + .b-in { inset: 6px; background: #ffd23f; }               /* flashy yellow: the owner's exception to the palette, for drama */
+.burst .b-in::after { content: ''; position: absolute; inset: 20% 22%; background: #f4508c;   /* hot pink core */
   clip-path: polygon(50% 0%, 62% 30%, 96% 22%, 74% 50%, 98% 84%, 62% 70%, 50% 100%, 38% 70%, 4% 84%, 26% 50%, 2% 22%, 38% 30%); }
 .burst b {
   position: relative; font: 700 24px/1 'Silkscreen', monospace; color: #f2efe8; letter-spacing: .02em;

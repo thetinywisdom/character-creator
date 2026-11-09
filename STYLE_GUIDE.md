@@ -415,7 +415,8 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 ## 3e-4. Interactions
 
 - **The comic beat of a hit** (after the owner's example): a spiky burst
-  (black ink outline, butter star, dusty rose core, tilted) with white pixel
+  (black ink outline, a flashy yellow `#ffd23f` star, a hot pink `#f4508c`
+  core, tilted; the one deliberate exception to the palette, for drama) with white pixel
   capitals outlined in ink (SLAP!, WHAP!, SMACK!, SHOVE!, WHUMP!, OOF!,
   WHOOPS!, BONK!), popping big, settling, fading in under a second; then the victim shouts in a speech bubble with
   a small name tag and red (brick) text: censored swearing from aggressive
