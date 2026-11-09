@@ -38,7 +38,10 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   shape, Paw size, Cheek fluff.
 - **Walk and run styles:** in the character creator pick a walk (Natural,
   Brisk, Swagger, Sneak) and, separately, a run (Natural, Ninja, Panic);
-  townspeople get a random mix. (The Walk lab for tuning them is a dev tool:
+  townspeople get a random mix. **Animation (everyone)** switches between the
+  New walk (feet planted on the ground, taken from the iso-city game: steps
+  follow the distance walked, heels strike and toes push off, real airtime
+  when running, a dip when stopping) and the Classic one. (The Walk lab for tuning them is a dev tool:
   add #dev to the address to show its 🚶 button.)
 - **Interactions in the City:** point at someone and a yellow ring lights up
   under them (and under the person whose menu is open). Left-click anyone you can see to talk to them

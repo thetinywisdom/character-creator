@@ -605,7 +605,7 @@ export class Interactions {
       city.collide(p);
       city.stepPerson(p, dt, p.speed);
       p.root.position.set(p.x, city.layout.groundHeight(p.x, p.z), p.z);
-      p.root.rotation.y = p.heading; p.root.rotation.z = leanInto(p, p.heading, p.speed, dt); // leaning into the turn
+      p.root.rotation.y = p.heading; p.gait.turn = leanInto(p, p.heading, p.speed, dt); // leaning into the turn
       return true;
     }
     if (p.act) {

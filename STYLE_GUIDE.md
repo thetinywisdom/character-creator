@@ -444,7 +444,7 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   second round it keeps growing (to about twice its size) with a slow, rising
   tremble; full red is the climax: a little bigger again and a hard shake.
 - **Leaning:** people on foot roll into a turn (up to ~0.3 rad when running,
-  0.2 for walkers); bicycles and scooters lean with their rider (up to
+  0.2 for walkers), inside the body so their feet stay on the ground; bicycles and scooters lean with their rider (up to
   ~0.45 rad); all eased, upright again when parked.
 - **Controls (owner's pick C, "ghost plates"):** the action menu is a row of
   four plates over the person (SLAP 1, PUSH 2, TALK 3, FART 4): see-through
@@ -518,6 +518,34 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 ## 3g. Animation
 
 - Characters have real joints: hip → knee → ankle, shoulder → elbow.
+- **New engine (default; "Animation: New" in the creator):** learnt from the
+  owner's previous game (iso-city). It decides where each foot goes and bends
+  hip and knee to reach it (2-bone IK), so a planted foot never slides:
+  - The stride advances by **distance**, not time: one cycle (two steps) is
+    about 1.8× the leg length walking at 1.6 m/s and 3.6× running at 4.6 m/s,
+    so a walk is ~2.4 steps a second and a run ~3.5. Shorter legs (children)
+    take quicker steps at the same speed. A style's stride / cadence changes
+    the step length (0.75–1.35×).
+  - **Time on the ground:** a foot is planted 60% of the cycle walking (both
+    feet down at each step), 30% running (both feet off the ground between
+    steps). Heel strike with the toes up (18° walk, 8° run), foot flat, then
+    the heel rises and the foot rolls over the toes (30° walk, 45° run).
+  - The swinging foot leaves and lands moving back at ground speed; running,
+    the heel kicks up behind (lift ~0.4 leg length) before the leg reaches
+    forward. Walking lift ~0.1 leg length.
+  - **Hips:** as high as the planted leg allows (slightly bent knee), which
+    makes the walk dip at each double support and rise over the planted foot;
+    the knee soaks up a little after each heel strike (more with Bounce). A
+    run sinks into each landing and floats between steps.
+  - **Weight:** a quick dip when stopping hard, a squash when landing a jump,
+    a lean forward when speeding up (back when slowing), a lean into turns
+    inside the body (hips 65%, spine 35%; the feet stay on the ground).
+  - Arms: a bigger swing forward than back, slightly behind the legs; walking
+    elbows bend more on the back swing, running arms pump at ~85°.
+  - Head kept steady and level against the lean; standing still, people
+    breathe and look around now and then.
+  - Walk and run are blended as settings (2.0–3.3 m/s), never as poses.
+- **Classic engine** ("Animation: Classic"), the earlier one:
 - **Natural walk and run** are keyed from classic animation pose sequences
   (contact → down → passing → up → contact, per step), and the lowest heel or
   toe is pinned to the ground so the standing foot stays planted.

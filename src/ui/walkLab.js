@@ -4,7 +4,7 @@
 // with sliders; auto-walk shows the character from the side, walking or
 // running in a big circle. Settings are kept in this browser (localStorage)
 // and can be copied as JSON to hand over.
-import { RUN_STYLES, WALK_STYLES } from '../anim/gait.js';
+import { RUN_STYLES, WALK_STYLES, gaitEngine, setGaitEngine } from '../anim/gait.js';
 
 const SLIDERS = [
   ['stride', 'Stride', 0.5, 1.6, 0.05, 'how far the legs reach'],
@@ -51,6 +51,7 @@ export class WalkLab {
     const chips = (list, sel, name) => Object.keys(list).map((k) => `<button type="button" data-${name}="${k}" class="${k === sel ? 'on' : ''}">${k}</button>`).join('');
     this.panel.innerHTML = `
       <div class="wl-head"><h2>Walk lab</h2><span>WASD + Shift, or the joystick</span></div>
+      <h3>Engine (everyone)</h3><div class="chips">${['New', 'Classic'].map((e) => `<button type="button" data-engine="${e}" class="${gaitEngine() === e ? 'on' : ''}">${e === 'New' ? 'New (feet planted, IK)' : 'Classic (keyframes)'}</button>`).join('')}</div>
       <h3>Walk style</h3><div class="chips">${chips(WALK_STYLES, s.walkStyle, 'walk')}</div>
       <h3>Run style</h3><div class="chips">${chips(RUN_STYLES, s.runStyle, 'run')}</div>
       <h3>Fine-tune</h3>
@@ -59,7 +60,7 @@ export class WalkLab {
         const v = cur[k] ?? (k === 'bounce' ? 0 : 1);
         return `<label class="wl-row" for="wl-${k}" title="${hint}"><span>${label}</span><input id="wl-${k}" type="range" min="${min}" max="${max}" step="${step}" value="${v}" data-k="${k}"><output>${(+v).toFixed(2)}</output></label>`;
       }).join('')}
-      <h3>Walk to run</h3>
+      <h3>Walk to run (Classic only)</h3>
       <label class="wl-row" for="wl-runAt"><span>Run starts at</span><input id="wl-runAt" type="range" min="1.6" max="4" step="0.1" value="${s.runAt}" data-g="runAt"><output>${s.runAt.toFixed(1)} m/s</output></label>
       <label class="wl-row" for="wl-blend"><span>Blend over</span><input id="wl-blend" type="range" min="0.2" max="2.5" step="0.1" value="${s.blend}" data-g="blend"><output>${s.blend.toFixed(1)} m/s</output></label>
       <h3>Frame rate</h3>
@@ -70,6 +71,7 @@ export class WalkLab {
     const P = this.panel;
     P.querySelectorAll('[data-walk]').forEach((b) => { b.onclick = () => this.set({ walkStyle: b.dataset.walk, walk: {}, tab: 'walk' }); });
     P.querySelectorAll('[data-run]').forEach((b) => { b.onclick = () => this.set({ runStyle: b.dataset.run, run: {}, tab: 'run' }); });
+    P.querySelectorAll('[data-engine]').forEach((b) => { b.onclick = () => { setGaitEngine(b.dataset.engine); this.render(); }; });
     P.querySelectorAll('[data-tab]').forEach((b) => { b.onclick = () => this.set({ tab: b.dataset.tab }); });
     P.querySelectorAll('[data-fps]').forEach((b) => { b.onclick = () => this.set({ fps: +b.dataset.fps }); });
     P.querySelectorAll('[data-auto]').forEach((b) => { b.onclick = () => this.set({ auto: b.dataset.auto }); });

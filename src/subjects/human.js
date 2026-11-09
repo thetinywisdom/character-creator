@@ -39,6 +39,7 @@ export const human = {
     trait:         { group: 'Body', value: 'Calm', options: ['Calm', 'Aggressive'], label: 'Trait (how they react)' },
     walkStyle:     { group: 'Body', value: 'Natural', options: Object.keys(WALKS), label: 'Walk' },
     runStyle:      { group: 'Body', value: 'Natural', options: Object.keys(RUNS), label: 'Run' },
+    animation:     { group: 'Body', value: 'New', options: ['New', 'Classic'], label: 'Animation (everyone)' },
     build:         { group: 'Body', value: 'Normal', options: BUILDS, label: 'Build' },
     headsTall:     { group: 'Body', value: 7.5,   min: 2.5,   max: 7.5,  step: 0.1,   label: 'Heads tall' },
     height:        { group: 'Body', value: 1.6,   min: 1.0,   max: 2.0,  step: 0.01,  label: 'Height (m)' },

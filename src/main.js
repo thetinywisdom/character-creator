@@ -18,7 +18,7 @@ import { generateCityData } from './city/layout.js';
 import { setNightGlow, setSnowCover } from './city/atmosphere.js';
 import { SHOP_TYPES } from './city/buildings.js';
 import { Creator } from './creator/Creator.js';
-import { RUN_SPEED, WALK_SPEED, createGait, poseGait, stepGait, tuneOf } from './anim/gait.js';
+import { RUN_SPEED, WALK_SPEED, createGait, poseGait, setGaitEngine, stepGait, tuneOf } from './anim/gait.js';
 import { CAT_RUN_SPEED, CAT_WALK_SPEED, createCatGait, poseCat, stepCatGait } from './anim/catGait.js';
 import { saveFile, openTextFile } from './lib/saveFile.js';
 import { CLOTH_COLORS, PALETTE } from './styles/palette.js';
@@ -157,10 +157,12 @@ const humanCell = new Cell({ entries: [{ subject: human }], style, renderer });
 humanCell.rebuild(params);
 humanCell.applyLighting(lightingPresets[state.lighting]);
 let lastHuman = { ...params.human };
+setGaitEngine(params.human.animation);
 /** After any change: apply the character rules, rebuild the preview, remember the settings. */
 function humanChanged(key) {
   if (key) human.adjust?.(params.human, key, lastHuman[key]);
   human.applyRules?.(params.human);
+  setGaitEngine(params.human.animation); // New (foot targets + IK) or Classic, for everyone
   lastHuman = { ...params.human };
   humanCell.rebuild(params);
   saveParams(params);
@@ -451,7 +453,7 @@ requestAnimationFrame(loop);
 // Debug hooks for agents and tests (see SKILLS.md, "Testing and checking")
 Object.assign(window, {
   __cc: {
-    params, state, setView, openItem, CATALOG, human, getCity: () => ensureCity(), cityInput, gait,
+    params, state, setView, openItem, CATALOG, human, getCity: () => ensureCity(), cityInput, gait, tuneOf,
     /** Set character settings (rules applied). */
     apply: (id, values) => { Object.assign(params[id], values); humanChanged(); reframe = true; },
     /**

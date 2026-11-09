@@ -101,7 +101,11 @@ src/catalog/index.js   ASSET CATALOGUE: every placeable item behind one interfac
 src/catalog/thumbs.js  catalogue pictures (drawn on demand, cached in the browser)
 src/subjects/          human.js (+ human/*: frame, sculpt, hair, head, tops, arms, legwear,
                        footwear, outerwear, accessories, handheld, rules), cat.js, tree.js
-src/anim/              gait.js (people: walk / run, wing flap, poseHold: stoop + held items),
+src/anim/              gait.js (people: walk / run, wing flap, poseHold: stoop + held items;
+                       setGaitEngine('New' | 'Classic'), landGait), gaitIK.js (the New engine:
+                       stride by distance, foot targets + 2-bone leg IK, heel / toe roll,
+                       hip height from the planted leg, stop dip, landing squash, turn lean
+                       in the body via gait.turn, look-around when idle),
                        catGait.js (cat walk / run), skirt.js (skirt stretch)
 src/city/format.js     town JSON format, grid geometry, validation
 src/city/layout.js     generator: generateCityData(seed), blockObjects, streetObjects, roadNetwork
@@ -135,14 +139,16 @@ src/ui/catLab.js       the Cat lab view (🐱 mode): every cat version so far (s
                        with the cute options) and CUTE_CATS proposals (v6 with face / shape /
                        pawSize / cheeks); 7 = today's cat (v6 body + v2 head), one tile each,
                        all on the cat rig: Still / Walk / Run / Sit / Loaf / Sleep
-src/ui/walkLab.js      dev tool (hidden; #dev in the address or __cc.devTools(true)): the Walk lab (City, 🚶 button): walk / run styles (WALK_STYLES,
+src/ui/walkLab.js      dev tool (hidden; #dev in the address or __cc.devTools(true)): the Walk lab (City, 🚶 button): engine New / Classic (everyone), walk / run styles (WALK_STYLES,
                        RUN_STYLES in anim/gait.js), sliders, walk-to-run blend, frame
                        rate, auto-walk side view; sets city.playerTune (the main
                        character only, while open); kept in localStorage, Copy settings = JSON.
                        The styles people actually have: WALKS (Natural, Brisk, Swagger,
                        Sneak) and RUNS (Natural, Ninja, Panic) in anim/gait.js, picked
                        separately in the creator (human walkStyle / runStyle); tuneOf(look)
-                       gives the tune; everyone runs from 1.6 m/s, blending over 0.2;
+                       gives the tune; Classic: everyone runs from 1.6 m/s, blending over 0.2;
+                       New: walk-to-run blends 2.0-3.3 m/s (human `animation` param
+                       'New' | 'Classic' = the engine for everyone, set in main.js);
                        townspeople get a random mix, mostly Natural
 src/ui/pixelOverlay.js the world layer of the interaction UI: floating speech, bursts,
                        charge dial painted on a canvas at the picture's pixel size;
@@ -493,7 +499,7 @@ No unit tests; verify by building and looking.
   `openItem(id, params)`, `CATALOG`, `human` (presets, outfits), `apply('human', values)`, `orbit(az)`,
   `gait.lock = fraction` (freeze the walk), `getCity()` (`player`, `npcs`,
   `cars`, `cats`, `cam`, `iso`, `setViewMode('iso'|'third')`, `setWeather(kind)`, `ix` interactions),
-  `newTown(seed)`, `cityInput`, `setUiStyle({ world, hud })`, `COMEDY` and `comedy(kind, n, t)` (show comic hit
+  `newTown(seed)`, `cityInput`, `tuneOf(look)` (a walk / run tune), `setUiStyle({ world, hud })`, `COMEDY` and `comedy(kind, n, t)` (show comic hit
   variation n of 'slap' | 'push' | 'fall' from `src/city/comedy.js` on two people
   beside you, at time t; `comedy(null)` clears it). The app bar's ☀ / 🌤 buttons switch light and weather.
 - To look at one building: `openItem('building.bank')`, or place the player

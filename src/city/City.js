@@ -10,7 +10,7 @@ import { Crowd, leanInto, pedalPose, sitPose } from './crowd.js';
 import { createAsset } from '../catalog/index.js';
 import { generateCityData } from './layout.js';
 import { buildCity } from './build.js';
-import { JOINT_NAMES, NPC_RUN_SPEED, PLAYER_RUN_SPEED, createGait, poseGait, stepGait, tuneOf } from '../anim/gait.js';
+import { JOINT_NAMES, NPC_RUN_SPEED, PLAYER_RUN_SPEED, createGait, landGait, poseGait, stepGait, tuneOf } from '../anim/gait.js';
 import { Precipitation, lampPools, setNightGlow, setSnowCover, weatherLight } from './atmosphere.js';
 import { giveHeldItem } from '../subjects/human.js';
 import { addObjectSilhouette, addSilhouette, markPerson, silhouetteMaterial } from './silhouette.js';
@@ -673,7 +673,7 @@ export class City {
     if (p.jumpY > 0 || p.vy) {
       p.vy -= 13 * dt;
       p.jumpY = Math.max(0, (p.jumpY ?? 0) + p.vy * dt);
-      if (p.jumpY === 0 && p.vy < 0) p.vy = 0;
+      if (p.jumpY === 0 && p.vy < 0) { landGait(p.gait, p.vy); p.vy = 0; } // landing: the legs squash
       const j = p.body.userData.joints ?? {}, f = Math.min(1, p.jumpY / 0.3);
       for (const s of ['L', 'R']) {
         if (j[`leg${s}`]) j[`leg${s}`].rotation.x -= 0.6 * f;
@@ -683,7 +683,7 @@ export class City {
     }
     p.root.position.set(p.x, this.layout.groundHeight(p.x, p.z) + (p.jumpY ?? 0), p.z);
     p.root.rotation.y = p.heading;
-    p.root.rotation.z = leanInto(p, p.heading, p.speed, dt); // leaning into the turn, more when running
+    p.gait.turn = leanInto(p, p.heading, p.speed, dt); // leaning into the turn inside the body (feet stay down), more when running
     }
     const ground = this.layout.groundHeight(p.x, p.z);
 
@@ -740,7 +740,7 @@ export class City {
       n.pos = pos;
       n.root.position.set(pos.x, 0, pos.z);
       n.root.rotation.y = hd;
-      n.root.rotation.z = leanInto(n, hd, pace, dt, 0.05, 0.2);
+      n.gait.turn = leanInto(n, hd, pace, dt, 0.05, 0.2);
       if (this.crowd.culled(n)) continue; // far away: hidden, not animated
       stepGait(n.gait, dt, pace, n.tune);
       poseGait(n.body, n.gait, 'natural', n.tune);

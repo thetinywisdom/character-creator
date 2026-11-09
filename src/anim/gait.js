@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { poseIK, landGait } from './gaitIK.js';
 import { stretchSkirt } from './skirt.js';
 
 // Procedural walk / run for the human rig.
@@ -143,12 +144,23 @@ function sample(keys, u) {
   return 0.5 * (2 * p1 + (-p0 + p2) * s + (2 * p0 - 5 * p1 + 4 * p2 - p3) * s * s + (-p0 + 3 * p1 - 3 * p2 + p3) * s * s * s);
 }
 
+/**
+ * Which gait engine people use: 'New' (foot targets + IK, learnt from
+ * iso-city: gaitIK.js) or 'Classic' (keyframed legs, the lowest foot pinned).
+ * Set from the character creator (Animation) and the Walk lab.
+ */
+let ENGINE = 'New';
+export function setGaitEngine(e) { ENGINE = e === 'Classic' ? 'Classic' : 'New'; }
+export function gaitEngine() { return ENGINE; }
+export { landGait };
+
 export function createGait(phase = 0) {
   return { phase, amount: 0, run: 0, t: Math.random() * 10 };
 }
 
 /** Advance the cycle for an entity moving at `speed` m/s. */
 export function stepGait(g, dt, speed, tune = null) {
+  g.dt = (g.dt ?? 0) + dt; g.speed = speed; // the New engine advances its stride by distance (gaitIK.js)
   const amountTarget = clamp01(speed / 0.6);
   // when running starts and how long walk and run are blended (Walk lab: runAt, blend)
   const runTarget = clamp01((speed - (tune?.runAt ?? 2.2)) / (tune?.blend ?? 1.6));
@@ -252,7 +264,7 @@ function poseNatural(body, g, tune = null) {
   const lean = (lerp(2, 16, run) * tv('lean') + 14 * crouch) * D * a;
   body.rotation.x = 5 * D * run * a * tv('lean');  // plus some whole-body lean from the ankles
   body.rotation.y = -pelvis * c0;             // left hip forward at left heel strike
-  body.rotation.z = (1.5 + 4 * swagT + 6 * stiffT) * D * Math.sin(Math.PI * 2 * u) * a * (1 - run) * Math.max(1, sway * 0.6); // side sway (a waddle for the toy)
+  body.rotation.z = (g.turn ?? 0) + (1.5 + 4 * swagT + 6 * stiffT) * D * Math.sin(Math.PI * 2 * u) * a * (1 - run) * Math.max(1, sway * 0.6); // side sway (a waddle for the toy)
   if (j.spine) {
     j.spine.rotation.x = lean;
     j.spine.rotation.y = (pelvis + shoulders) * c0; // undo the pelvis, then turn the shoulders the other way
@@ -319,6 +331,7 @@ function poseSkate(body, g) {
 /** Pose `body` (the character root) for gait state `g`. style: 'natural' | 'skate'. */
 export function poseGait(body, g, style = 'natural', tune = null) {
   if (style === 'skate') poseSkate(body, g);
+  else if (ENGINE === 'New' && jointsOf(body).footL?.userData.sole) poseIK(body, g, tune, jointsOf(body));
   else poseNatural(body, g, tune);
   poseHold(body, body.userData.hold ?? {});
   flapWings(body, g);
