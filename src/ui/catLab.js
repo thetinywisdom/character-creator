@@ -25,7 +25,7 @@ export const CAT_VERSIONS = [
   ['4 · Cuter proportions', v4, coat],
   ['5 · Big round head', v5, coat],
   ['6 · Lofted (calico)', v6, { furColor: 'White', pattern: 'Calico' }],
-  ['7 · NEW: 2 + jointed legs', cat, { furColor: 'White', pattern: 'Calico' }],
+  ['7 · NEW: 6 body + 2 head', cat, { furColor: 'White', pattern: 'Calico' }],
 ];
 
 /** Cute proposals: version 6 with its cute options turned up (face, shape, paws, cheeks). */

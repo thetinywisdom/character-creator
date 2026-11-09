@@ -29,8 +29,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   rotate); in the iso view people, cats and cars behind buildings show as
   silhouettes (you in yellow). WASD / arrows, Shift to run (it builds up speed), Space to jump, a joystick
   on touch screens.
-- **Cats:** the owner's pick: version 2's soft rounded body and head with
-  jointed legs that are thick at the top and taper to small paws.
+- **Cats:** the owner's pick: version 6's lofted body and jointed legs with
+  version 2's round head (cheeks, a little muzzle, small ears).
 - **🐱 Cat lab:** every cat version made so far side by side, and cute
   proposals (Mochi, Loaf, Chibi, Pudding, Tiny tux, Bao, Calico mochi) with
   faces, round bean or loaf bodies, big paws and cheek fluff; make them all

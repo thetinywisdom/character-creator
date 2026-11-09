@@ -460,9 +460,9 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   yellow. Their tap areas are bigger than the tiles.
 - **Earshot:** speech is full size near you, then shrinks to half and fades
   out with distance (talk gone past ~22 m, shouts ~34 m).
-- **The cat:** a soft, rounded body (waist, deep chest, round haunches) and
-  a round head with cheeks and a little muzzle; legs thick where they join
-  the body (shoulder, haunch), tapering to a slim ankle and a small paw.
+- **The cat:** the faceted lofted body and slim jointed legs of version 6,
+  with version 2's head: a round, slightly wide skull, round cheeks low on
+  the sides, a small soft muzzle and small pointed ears.
 - **Cute cats (proposals):** dot or sparkle eyes (ink, a paper glint), a
   blush nose, blush cheeks, round bean or boxy loaf bodies, big paws, cheek
   fluff; the same faceted, palette-painted look and the same rig.

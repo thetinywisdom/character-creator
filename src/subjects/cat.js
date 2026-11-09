@@ -1,19 +1,24 @@
 import * as THREE from 'three';
-import { capsuleBetween, ellipsoid, seg } from '../lib/shapes.js';
+import { ellipsoid, seg } from '../lib/shapes.js';
 import { vertexColorMaterial } from '../lib/skin.js';
 import { PALETTE, snapColor } from '../styles/palette.js';
 
 // A cat, standing on all fours. Faces +z (head at +z, tail at -z).
+// The owner's pick from the Cat lab: version 6's lofted body and jointed legs
+// with version 2's round head (skull, cheeks, muzzle, ears).
 // Joints for the walk, run and poses (anim/catGait.js): legFL, legFR, legBL,
-// legBR (top of each leg), lowFL, lowFR, lowBL, lowBR (elbow / hock: the lower
-// leg folds), head, tail.
+// legBR, head, tail.
 //
-// The owner's pick from the Cat lab: version 2's soft, rounded body and head
-// ("Better shape": a waist, a deep chest, round haunches, a round head with
-// cheeks and a little muzzle) with version 6's jointed legs, made thick where
-// they join the body and tapering down to a small paw.
-// Options: coat pattern (calico is the owner's "mostly white"), tail type,
-// ear type, short or long (fluffy) coat.
+// Built like a low-poly cat model, not from blobs: the torso and neck are
+// ONE lofted shape (rings along the spine: narrow rump, haunches, a tucked
+// waist, a deep chest, shoulders, neck), the head another (back of the
+// skull, wide cheeks, a short muzzle; no eyes or face), tall triangle ears,
+// long slim legs (the back ones bent at the hock) and a tail that hangs back
+// and lifts at the tip. Flat-shaded faces, like the reference.
+// Options: coat pattern, tail type, ear type, short or long (fluffy) coat.
+// Patterns are painted per face from the palette (vertex colours), so a cat
+// stays one material, and one skinned mesh in the city (lib/skin.js keeps
+// the face colours).
 
 // fur colours (palette colours); patterns like calico or tuxedo bring their own
 export const CAT_FUR = { Ginger: 0xdcb08c, Gray: 0x918f8a, Black: 0x4a4d52, White: 0xf2efe8, Brown: 0x8a7462, Cream: 0xecccb0 };
@@ -21,12 +26,13 @@ export const CAT_PATTERNS = ['Solid', 'Tabby', 'Calico', 'Tuxedo', 'Bicolour', '
 export const CAT_TAILS = ['Long', 'Curled', 'Bobtail'];
 export const CAT_EARS = ['Pointed', 'Tufted', 'Folded'];
 export const CAT_COATS = ['Short', 'Long'];
+// cute options (the Cat lab): a face, a body shape, big paws, cheek fluff
+export const CAT_FACES = ['None', 'Dots', 'Sparkle', 'Sleepy', 'Smile'];
+export const CAT_SHAPES = ['Natural', 'Bean', 'Loaf'];
 
 const WHITE = PALETTE['Off white'], BLUSH = PALETTE.Blush;
 const darker = (hex, k = 0.62) => snapColor(new THREE.Color(hex).multiplyScalar(k).getHex());
 const lighter = (hex) => snapColor(new THREE.Color(hex).lerp(new THREE.Color(0xffffff), 0.45).getHex());
-// a fixed hash for blocky patches (calico)
-const hash = (x, y, z) => { const s = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return s - Math.floor(s); };
 
 export const cat = {
   id: 'cat',
@@ -35,25 +41,29 @@ export const cat = {
   // drawn 1.5x real size so it reads from across a street (style guide §5)
   exaggeration: 1.5,
   schema: {
-    bodyLength: { value: 0.42, min: 0.25, max: 0.6,  step: 0.01, label: 'Body length (m)' },
+    bodyLength: { value: 0.34, min: 0.22, max: 0.6,  step: 0.01, label: 'Body length (m)' },
     chubbiness: { value: 1,    min: 0.7,  max: 1.6,  step: 0.01, label: 'Chubbiness' },
-    legLength:  { value: 0.16, min: 0.08, max: 0.24, step: 0.005, label: 'Leg length (m)' },
-    headSize:   { value: 1,    min: 0.7,  max: 1.5,  step: 0.01, label: 'Head size' },
+    legLength:  { value: 0.13, min: 0.08, max: 0.24, step: 0.005, label: 'Leg length (m)' },
+    headSize:   { value: 1.05, min: 0.7,  max: 1.5,  step: 0.01, label: 'Head size' },
     earSize:    { value: 1,    min: 0.5,  max: 1.8,  step: 0.01, label: 'Ear size' },
     tailLength: { value: 0.34, min: 0.1,  max: 0.5,  step: 0.01, label: 'Tail length (m)' },
-    tailUp:     { value: 0.6,  min: 0,    max: 1,    step: 0.01, label: 'Tail raise' },
-    tailCurl:   { value: 0.5,  min: 0,    max: 1,    step: 0.01, label: 'Tail curl' },
+    tailUp:     { value: 0.3,  min: 0,    max: 1,    step: 0.01, label: 'Tail raise' },
+    tailCurl:   { value: 0.35, min: 0,    max: 1,    step: 0.01, label: 'Tail curl' },
     furColor:   { value: 'Ginger', options: Object.keys(CAT_FUR), label: 'Fur colour' },
     pattern:    { value: 'Solid', options: CAT_PATTERNS, label: 'Pattern' },
     tailType:   { value: 'Long', options: CAT_TAILS, label: 'Tail' },
     earType:    { value: 'Pointed', options: CAT_EARS, label: 'Ears' },
     coat:       { value: 'Short', options: CAT_COATS, label: 'Coat' },
+    face:       { value: 'None', options: CAT_FACES, label: 'Face' },
+    shape:      { value: 'Natural', options: CAT_SHAPES, label: 'Body shape' },
+    pawSize:    { value: 1,    min: 0.8,  max: 2.2,  step: 0.05, label: 'Paw size' },
+    cheeks:     { value: 0,    min: 0,    max: 1,    step: 0.05, label: 'Cheek fluff' },
   },
   presets: {
-    Housecat: { bodyLength: 0.42, chubbiness: 1,    legLength: 0.16, headSize: 1,    earSize: 1,   tailLength: 0.34 },
-    Kitten:   { bodyLength: 0.28, chubbiness: 0.9,  legLength: 0.1,  headSize: 1.35, earSize: 1.3, tailLength: 0.2 },
+    Housecat: { bodyLength: 0.34, chubbiness: 1.05, legLength: 0.13, headSize: 1.05, earSize: 1,   tailLength: 0.3 },
+    Kitten:   { bodyLength: 0.28, chubbiness: 0.95, legLength: 0.09, headSize: 1.3,  earSize: 1.25, tailLength: 0.2 },
     Chonk:    { bodyLength: 0.45, chubbiness: 1.55, legLength: 0.1,  headSize: 1.05, earSize: 0.8, tailLength: 0.26 },
-    Lanky:    { bodyLength: 0.55, chubbiness: 0.75, legLength: 0.23, headSize: 0.9,  earSize: 1.45, tailLength: 0.45 },
+    Lanky:    { bodyLength: 0.5,  chubbiness: 0.8,  legLength: 0.19, headSize: 0.95, earSize: 1.35, tailLength: 0.42 },
   },
 
   /** A random cat (for the city): pattern, colour, tail, ears, coat. */
@@ -72,78 +82,73 @@ export const cat = {
   build(p, style) {
     const root = new THREE.Group();
     root.name = 'cat';
-    const fluff = p.coat === 'Long' ? 1.18 : 1;
+    const fluff = p.coat === 'Long' ? 1.15 : 1;
     const part = (mesh, name) => { mesh.userData.part = name; return mesh; };
     const M = style.material('fur', 0xffffff); // replaced by the painted coat at the end
 
-    const L = p.bodyLength;
-    const c = p.chubbiness;
-    const bodyR = 0.075 * c * fluff;
-    const legLen = p.legLength;
-    const legR = 0.018 * Math.pow(c, 0.6) * (fluff > 1 ? 1.1 : 1);
-    const bodyY = legLen + bodyR * 0.55 / fluff;
+    const L = p.bodyLength, c = p.chubbiness, legLen = p.legLength, hs = p.headSize;
+    const g = 0.085 * c * fluff;                // girth: a little round
+    const yc = legLen + g * 0.95;               // the torso's centre line
 
-    // --- body: waist, a deep chest in front, round haunches behind -------
-    const zb = Math.min(-L / 2 + bodyR, 0);
-    const zf = Math.max(L / 2 - bodyR, 0);
-    // (cut into rings along its length, so stripes and patches paint in blocks)
-    const waistGeo = new THREE.CapsuleGeometry(bodyR * 0.82, Math.max(zf - zb, 0.001), seg(6, 2), seg(14, 6), 8);
-    waistGeo.rotateX(Math.PI / 2);
-    const waist = part(new THREE.Mesh(waistGeo, M), 'body');
-    waist.position.set(0, bodyY + bodyR * 0.075, (zb + zf) / 2);
-    waist.scale.x = 0.86;
-    root.add(waist);
-    root.add(part(ellipsoid(bodyR * 1.06, [0.84, 1.04, 1.0], M, { position: [0, bodyY + bodyR * 0.02, zf - bodyR * 0.05] }), 'chest'));
-    root.add(part(ellipsoid(bodyR * 0.98, [0.92, 0.98, 1.0], M, { position: [0, bodyY + bodyR * 0.12, zb + bodyR * 0.05] }), 'body'));
-    if (c > 1.2) root.add(part(ellipsoid(bodyR * 0.75, [0.95, 0.8, 1.3], M, { position: [0, bodyY - bodyR * 0.35, 0] }), 'body')); // a tummy
-
-    // --- legs: each hangs from a joint at the top (legFL, ... legBR), the lower
-    // leg from its own joint (lowF*: elbow, lowB*: hock), so poses fold them.
-    // Thick at the top where they join the body, tapering to a small paw.
-    const legZ = { F: L / 2 - bodyR * 0.75, B: -L / 2 + bodyR * 0.95 };
-    const topY = bodyY - bodyR * 0.2;
-    const legH = topY; // pivot to the ground
-    for (const [which, z] of Object.entries(legZ)) {
-      for (const sx of [-1, 1]) {
-        const leg = new THREE.Group();
-        leg.name = `leg${which}${sx < 0 ? 'R' : 'L'}`;
-        leg.position.set(sx * bodyR * 0.46, topY, z);
-        const front = which === 'F';
-        const foot = [0, -legH + legR * 0.45, front ? 0.004 : -0.012];
-        const knee = front ? [0, -legH * 0.48, -0.004] : [0, -legH * 0.56, -0.045 * (L / 0.42)];
-        // upper leg: wide at the body (a shoulder in front, a haunch behind)
-        if (front) leg.add(part(taper([0, bodyR * 0.25, 0], knee, legR * 2.0, legR * 1.15, 7), 'leg'));
-        else leg.add(part(taper([0, bodyR * 0.3, 0.012], knee, legR * 2.6, legR * 1.2, 7), 'leg'));
-        const low = new THREE.Group();
-        low.name = `low${which}${sx < 0 ? 'R' : 'L'}`;
-        low.position.set(...knee);
-        const rel = (q) => [q[0] - knee[0], q[1] - knee[1], q[2] - knee[2]];
-        // lower leg: down to a slim ankle
-        low.add(part(taper([0, 0, 0], rel(foot), legR * 1.15, legR * 0.72, 7), 'leg'));
-        const paw = part(new THREE.Mesh(new THREE.BoxGeometry(legR * 1.75, legR * 0.85, legR * 2.3), M), 'paw');
-        paw.position.set(...rel([0, -legH + legR * 0.42, foot[2] + legR * 0.45]));
-        low.add(paw);
-        leg.add(low);
-        root.add(leg);
-      }
+    // --- torso + neck: one lofted shape [z (× L), y offset, half width, half height]
+    const torso = [
+      [-0.5, 0.012, 0.5, 0.55],   // rump
+      [-0.42, 0.02, 1.0, 1.02],   // round haunches, the back highest here
+      [-0.25, 0.014, 0.96, 0.96],
+      [-0.05, 0.01, 0.9, 0.88],   // a soft waist (round reads cute)
+      [0.14, -0.004, 0.98, 1.02],
+      [0.3, -0.014, 1.04, 1.14],  // a deep chest
+      [0.42, 0.004, 0.86, 1.0],   // shoulders
+      [0.49, 0.035, 0.74, 0.82],  // base of the neck
+      [0.525, 0.058, 0.66, 0.68], // a short, thick neck
+    ].map(([z, y, w, h]) => [z * L, yc + y, w * g, h * g]);
+    // cute shapes: a round bean (no waist, round ends) or a boxy loaf of bread
+    if (p.shape === 'Bean' || p.shape === 'Loaf') {
+      const box = p.shape === 'Loaf';
+      const prof = box ? [0.72, 1.06, 1.12, 1.12, 1.12, 1.12, 1.06, 0.84, 0.7] : [0.55, 0.95, 1.12, 1.18, 1.18, 1.12, 0.98, 0.8, 0.68];
+      torso.forEach((st, i) => { st[2] = prof[i] * g * (box ? 1.1 : 1); st[3] = prof[i] * g * (box ? 0.95 : 1); });
     }
+    const neck = torso[torso.length - 1];
+    const R = 0.058 * hs; // skull radius
+    const headPos = [0, neck[1] + R * 0.6, neck[0] + R * 0.3]; // low on a short neck
+    // the neck runs on up into the skull (its last ring hidden inside), so
+    // head and body flow together instead of a ball sitting on a tube
+    torso.push([headPos[2] - R * 0.25, headPos[1] - R * 0.2, R * 0.85, R * 0.8]);
+    root.add(part(new THREE.Mesh(loft(torso, p.shape === 'Loaf' ? 6 : 10), M), 'body'));
 
-    // --- neck and head ----------------------------------------------------
-    const hr = 0.062 * p.headSize;
+    // --- head: big, round and upright, a small muzzle at the front (cute) --
     const head = new THREE.Group();
     head.name = 'head';
-    const headY = bodyY + bodyR * 0.75 + hr * 0.35, headZ = L / 2 + hr * 0.1;
-    head.position.set(0, headY, headZ);
+    head.position.set(...headPos);
     root.add(head);
-    root.add(part(capsuleBetween([0, bodyY + bodyR * 0.3, zf + bodyR * 0.3], [0, headY - hr * 0.3, headZ - hr * 0.3], hr * 0.6 * fluff, M, 10), 'chest'));
-    if (fluff > 1) root.add(part(ellipsoid(hr * 1.05, [1.15, 0.9, 0.8], M, { position: [0, headY - hr * 0.75, headZ - hr * 0.55] }), 'ruff')); // the long coat's ruff
-    const rx = hr * 1.1, ry = hr * 0.92, rz = hr * 0.95;
+    // the head of version 2 ("Better shape", the owner's pick): a round,
+    // slightly wide skull, round cheeks low on the sides, a small soft muzzle
+    const hr = R * 1.07, rx = hr * 1.1, ry = hr * 0.92, rz = hr * 0.95;
     head.add(part(ellipsoid(1, [rx, ry, rz], M), 'head'));
     for (const sx of [-1, 1]) head.add(part(ellipsoid(hr * 0.5, [1, 0.78, 0.9], M, { position: [sx * rx * 0.48, -ry * 0.32, rz * 0.32] }), 'cheek'));
-    // a small muzzle keeps the profile readable; no eyes or nose
     head.add(part(ellipsoid(hr * 0.32, [1.3, 0.8, 0.85], M, { position: [0, -hr * 0.36, rz * 0.82] }), 'muzzle'));
+    if (fluff > 1) root.add(part(ellipsoid(g * 0.95, [1.15, 0.85, 0.8], M, { position: [0, neck[1] - g * 0.35, neck[0] - g * 0.2], segments: 10 }), 'ruff'));
+    // cheek fluff: round puffs on both sides of the face
+    if (p.cheeks > 0) for (const sx of [-1, 1]) head.add(part(ellipsoid(R * 0.42 * (0.6 + 0.4 * p.cheeks), [1.1, 0.8, 0.8], M, { position: [sx * R * 0.78, -R * 0.3, R * 0.25], segments: 8 }), 'cheekFluff'));
+    // a face (cute cats): eyes, a little nose, blush
+    if (p.face && p.face !== 'None') {
+      const fz = (x, y) => Math.sqrt(Math.max(0, 1 - (x / R) ** 2 - (y / R) ** 2)) * R * 0.95 + R * 0.04; // on the skull's front
+      const add = (w, h, d, x, y, name, zOff = 0) => { const m = part(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M), name); m.position.set(x, y, fz(x, y) + zOff); head.add(m); return m; };
+      const ex = R * 0.36, ey = R * 0.08;
+      for (const sx of [-1, 1]) {
+        if (p.face === 'Sleepy') add(R * 0.3, R * 0.07, R * 0.08, sx * ex, ey - R * 0.04, 'eye');
+        else if (p.face === 'Smile') { add(R * 0.26, R * 0.07, R * 0.08, sx * ex, ey + R * 0.03, 'eye').rotation.z = sx * 0.35; }
+        else {
+          const big = p.face === 'Sparkle' ? 1.35 : 1;
+          add(R * 0.17 * big, R * 0.22 * big, R * 0.1, sx * ex, ey, 'eye');
+          if (p.face === 'Sparkle') add(R * 0.08, R * 0.08, R * 0.04, sx * ex - R * 0.04, ey + R * 0.07, 'eyeShine', R * 0.05);
+        }
+        if (p.face !== 'Dots') add(R * 0.22, R * 0.1, R * 0.04, sx * R * 0.55, -R * 0.2, 'blush', -R * 0.02);
+      }
+      add(R * 0.14, R * 0.09, R * 0.08, 0, -R * 0.3, 'nose', R * 0.2);
+    }
 
-    // --- ears: pointed, tufted (a dark tip) or folded forward -------------
+    // --- ears (version 2): pointed, tufted (a dark tip) or folded forward ---
     for (const sx of [-1, 1]) {
       const folded = p.earType === 'Folded';
       const er_ = hr * 0.42 * p.earSize, eh = hr * (folded ? 0.38 : 0.62) * p.earSize;
@@ -166,52 +171,130 @@ export const cat = {
       head.add(ear);
     }
 
-    // --- tail: long, curled up over the back, or a short bob --------------
-    const bob = p.tailType === 'Bobtail', curled = p.tailType === 'Curled';
-    const tailLen = bob ? Math.min(0.07, p.tailLength) : p.tailLength;
-    const tailR = 0.019 * Math.pow(c, 0.6) * (fluff > 1 ? 1.6 : 1);
-    const n = bob ? 6 : 24;
-    const segLen = tailLen / n;
-    const up = curled ? 0.95 : p.tailUp, curl = curled ? 1 : p.tailCurl;
-    const a0 = 0.15 + up * 1.2; // angle above horizontal, pointing back
-    const pts = [new THREE.Vector3(0, bodyY + bodyR * 0.35, -L / 2 + bodyR * 0.25)];
-    for (let i = 1; i <= n; i++) {
-      const t = i / n;
-      const a = a0 + curl * (curled ? 5.2 : 3.6) * Math.pow(t, curled ? 1.6 : 2.5); // curl mostly near the tip
-      pts.push(pts[i - 1].clone().add(new THREE.Vector3(0, Math.sin(a), -Math.cos(a)).multiplyScalar(segLen)));
-    }
-    const curve = new THREE.CatmullRomCurve3(pts);
-    const tubular = seg(bob ? 8 : 48, 6), radial = seg(10, 4);
-    const tube = new THREE.TubeGeometry(curve, tubular, tailR, radial, false);
-    const pos = tube.attributes.position;
-    const v = new THREE.Vector3();
-    for (let i = 0; i <= tubular; i++) {
-      const u = i / tubular;
-      const centre = curve.getPointAt(u);
-      const taper = 1.25 - 0.75 * u; // thick at the base, thin at the tip
-      for (let j = 0; j <= radial; j++) {
-        const k = i * (radial + 1) + j;
-        v.fromBufferAttribute(pos, k).sub(centre).multiplyScalar(taper).add(centre);
-        pos.setXYZ(k, v.x, v.y, v.z);
+    // --- legs: long and slim; each hangs from a joint at the top -----------
+    const legR = 0.015 * Math.pow(c, 0.6) * (fluff > 1 ? 1.12 : 1); // slim legs
+    const topY = yc - g * 0.25;
+    const legH = topY; // pivot to the ground
+    const legZ = { F: 0.37 * L, B: -0.4 * L };
+    for (const [which, z] of Object.entries(legZ)) {
+      for (const sx of [-1, 1]) {
+        const leg = new THREE.Group();
+        leg.name = `leg${which}${sx < 0 ? 'R' : 'L'}`;
+        leg.position.set(sx * g * 0.52, topY, z);
+        const foot = [0, -legH + legR * 0.5, which === 'F' ? 0.004 : -0.012];
+        // the lower leg hangs from its own joint (low**: elbow in front, hock
+        // behind), so poses can fold the legs instead of swinging them stiff
+        const knee = which === 'F' ? [0, -legH * 0.45, -0.006] : [0, -legH * 0.58, -0.04 * (L / 0.42)];
+        if (which === 'F') leg.add(part(taper([0, g * 0.2, 0], knee, legR * 1.35, legR, 6), 'leg'));
+        else leg.add(part(taper([0, g * 0.25, 0.01], knee, legR * 1.75, legR * 0.95, 6), 'leg'));
+        const low = new THREE.Group();
+        low.name = `low${which}${sx < 0 ? 'R' : 'L'}`;
+        low.position.set(...knee);
+        const rel = (q) => [q[0] - knee[0], q[1] - knee[1], q[2] - knee[2]];
+        low.add(part(taper([0, 0, 0], rel(foot), legR * (which === 'F' ? 1 : 0.95), legR * 0.78, 6), 'leg'));
+        const ps = p.pawSize ?? 1; // big round paws read cute
+        const paw = part(new THREE.Mesh(new THREE.BoxGeometry(legR * 1.7 * ps, legR * 0.85 * Math.sqrt(ps), legR * 2.3 * ps), M), 'paw');
+        paw.position.set(...rel([0, -legH + legR * 0.42 * Math.sqrt(ps), foot[2] + legR * 0.45 * ps]));
+        low.add(paw);
+        leg.add(low);
+        root.add(leg);
       }
     }
-    // the tail hangs from a joint at its base so it can sway
+
+    // --- tail: hangs back from the rump and lifts at the tip; curled up over
+    // the back; or a short bob
+    const bob = p.tailType === 'Bobtail', curled = p.tailType === 'Curled';
+    const tailLen = bob ? Math.min(0.06, p.tailLength) : p.tailLength;
+    const tailR = 0.016 * Math.pow(c, 0.6) * (fluff > 1 ? 1.7 : 1);
+    const n = bob ? 4 : 16;
+    const segLen = tailLen / n;
+    const up = curled ? 1 : p.tailUp, curl = curled ? 1 : p.tailCurl;
+    const a0 = -1.15 + up * 2.2; // angle above horizontal, pointing back (default: hanging down-back)
+    const pts = [new THREE.Vector3(0, torso[0][1] + g * 0.35, torso[0][0] + g * 0.15)];
+    for (let i = 1; i <= n; i++) {
+      const t = i / n;
+      const a = a0 + curl * (curled ? 4.6 : 2.4) * t * t; // bends more toward the tip
+      pts.push(pts[i - 1].clone().add(new THREE.Vector3(0, Math.sin(a), -Math.cos(a)).multiplyScalar(segLen)));
+    }
     const tail = new THREE.Group();
     tail.name = 'tail';
     tail.position.copy(pts[0]);
-    tube.translate(-pts[0].x, -pts[0].y, -pts[0].z);
-    tail.add(part(new THREE.Mesh(tube, M), 'tail'));
-    tail.add(part(ellipsoid(tailR * (bob ? 2.4 : 0.55), [1, 1, 1], M, { position: pts[n].clone().sub(pts[0]).toArray() }), bob ? 'tail' : 'tailTip'));
+    const local = pts.map((q) => q.clone().sub(pts[0]));
+    for (let i = 0; i < n; i++) {
+      const r0 = tailR * (1 - 0.55 * (i / n)), r1 = tailR * (1 - 0.55 * ((i + 1) / n));
+      tail.add(part(taper(local[i].toArray(), local[i + 1].toArray(), r0, r1, 6), i === n - 1 ? 'tailTip' : 'tail'));
+    }
+    if (bob) tail.add(part(ellipsoid(tailR * 2.2, [1, 1, 1], M, { position: local[n].toArray(), segments: 8 }), 'tail'));
     root.add(tail);
 
-    // measurements the poses need (anim/catGait.js)
-    // tailPose: the poses were made for a tail hanging down-back (about -0.5 rad);
-    // this one points up, so they lower it by the difference first
-    root.userData.cat = { legH, topY, bodyY, bodyR, L, hr, tailPose: -(a0 + 0.5) };
-    paintCoat(root, p, style, { bodyY, bodyR, zf, zb, legH, headY, hr, tailBase: pts[0] });
+    // measurements the poses and the coat need
+    root.userData.cat = { legH, topY, bodyY: yc, bodyR: g, L, hr: R };
+    root.updateMatrixWorld(true);
+    paintCoat(root, p, style, {
+      bodyY: yc, bodyR: g, zf: 0.22 * L, legH, headY: head.position.y, hr: R,
+      muzzleZ: head.position.z + R * 0.9, tailBase: pts[0],
+    });
     return root;
   },
 };
+
+/**
+ * A lofted shape: elliptical rings [z, y, half width, half height] joined
+ * along z, closed at both ends. Few sides, so it reads faceted.
+ */
+function loft(stations0, sides = 10, between = 2) {
+  // in-between rings (smoothly interpolated) so coat patterns paint in bands
+  const stations = [];
+  for (let i = 0; i < stations0.length - 1; i++) {
+    const p0 = stations0[Math.max(0, i - 1)], p1 = stations0[i], p2 = stations0[i + 1], p3 = stations0[Math.min(stations0.length - 1, i + 2)];
+    for (let k = 0; k <= between; k++) {
+      const t = k / (between + 1);
+      stations.push(p1.map((_, j) => 0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t * t + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t * t * t)));
+    }
+  }
+  stations.push(stations0[stations0.length - 1]);
+  const pos = [], idx = [];
+  for (const [z, y, w, h] of stations) {
+    for (let k = 0; k < sides; k++) {
+      const a = (k / sides) * Math.PI * 2;
+      // a slightly flatter underside, like a real belly
+      const sy = Math.sin(a);
+      pos.push(Math.cos(a) * w, y + sy * h * (sy < 0 ? 0.92 : 1), z);
+    }
+  }
+  const ring = (i, k) => i * sides + (k % sides);
+  for (let i = 0; i < stations.length - 1; i++) {
+    for (let k = 0; k < sides; k++) {
+      const a = ring(i, k), b = ring(i, k + 1), c = ring(i + 1, k), d = ring(i + 1, k + 1);
+      idx.push(a, b, c, b, d, c); // wound so the faces point outward (inside-out showed the body see-through)
+    }
+  }
+  // caps: a point just past each end
+  const first = stations[0], last = stations[stations.length - 1];
+  const s0 = pos.length / 3; pos.push(0, first[1], first[0] - first[3] * 0.4);
+  const s1 = pos.length / 3; pos.push(0, last[1], last[0] + last[3] * 0.4);
+  const lastRing = stations.length - 1;
+  for (let k = 0; k < sides; k++) {
+    idx.push(s0, ring(0, k + 1), ring(0, k));
+    idx.push(s1, ring(lastRing, k), ring(lastRing, k + 1));
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  return geo;
+}
+
+/** A tapered limb from a to b (radius r0 to r1), with few sides. */
+function taper(a, b, r0, r1, sides = 6) {
+  const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b);
+  const len = A.distanceTo(B) || 1e-4;
+  const geo = new THREE.CylinderGeometry(r1, r0, len, sides, 1);
+  const m = new THREE.Mesh(geo);
+  m.position.copy(A).add(B).multiplyScalar(0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), B.clone().sub(A).normalize());
+  return m;
+}
 
 /**
  * Paint the coat: every face gets one palette colour from its part and where
@@ -221,10 +304,17 @@ function paintCoat(root, p, style, m) {
   const base = CAT_FUR[p.furColor] ?? CAT_FUR.Ginger;
   const pat = p.pattern ?? 'Solid';
   const dark = darker(base), light = lighter(base);
-  const colourOf = (partName, P) => {
+  const colourOf = (partName0, P) => {
+    // the torso and head are single shapes: find the chest, muzzle and cheeks by position
+    let partName = partName0;
+    if (partName === 'body' && P.z > m.zf) partName = 'chest';
+    if (partName === 'head') partName = P.z > m.muzzleZ ? 'muzzle' : P.y < m.headY - m.hr * 0.2 ? 'cheek' : 'head';
     const low = P.y < m.bodyY - m.bodyR * 0.45; // belly
     const tailD = P.distanceTo(m.tailBase);
-    if (partName === 'earInner') return BLUSH;
+    if (partName === 'earInner' || partName === 'blush' || partName === 'nose') return BLUSH;
+    if (partName === 'eye') return PALETTE.Ink;
+    if (partName === 'eyeShine') return WHITE;
+    if (partName === 'cheekFluff') partName = 'cheek';
     switch (pat) {
       case 'Tabby':
         if (partName === 'tuft') return dark;
@@ -233,13 +323,13 @@ function paintCoat(root, p, style, m) {
         if (partName === 'paw' || partName === 'muzzle') return light;
         if (partName === 'head') return P.y > m.headY + m.hr * 0.25 && Math.sin(P.x * 95) > 0.2 ? dark : base;
         if (low) return light;
-        return Math.sin(P.z * 52 + Math.abs(P.x) * 20) > 0.3 ? dark : base;
+        return Math.sin(P.z * 52) > 0.3 ? dark : base; // stripes follow the body's rings
       case 'Calico': {
+        const white = low || ['paw', 'muzzle', 'ruff'].includes(partName) || (partName === 'chest' && P.y < m.bodyY + m.bodyR * 0.3)
+          || (partName === 'cheek') || (partName === 'leg' && P.y < m.legH * 0.8);
+        if (white) return WHITE;
         // the owner's pick ("mostly white"): a white cat with a split apricot /
         // charcoal cap on the head, one charcoal patch on the back, an apricot tail
-        const white = low || ['paw', 'muzzle', 'ruff', 'cheek'].includes(partName) || (partName === 'chest' && P.y < m.bodyY + m.bodyR * 0.3)
-          || (partName === 'leg' && P.y < m.legH * 0.8);
-        if (white) return WHITE;
         const OR = PALETTE.Apricot, BK = PALETTE.Charcoal;
         if (partName === 'head' || partName === 'ear' || partName === 'tuft') return P.y > m.headY - m.hr * 0.15 ? (P.x < 0 ? BK : OR) : WHITE;
         if (partName === 'tail') return OR;
@@ -279,29 +369,19 @@ function paintCoat(root, p, style, m) {
     const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
     const posA = g.attributes.position, n = posA.count;
     const colours = new Float32Array(n * 3);
-    for (let i = 0; i < n; i += 3) {
-      // the face's centre in cat space decides its colour
-      a.fromBufferAttribute(posA, i).applyMatrix4(o.matrixWorld);
-      b.fromBufferAttribute(posA, i + 1).applyMatrix4(o.matrixWorld);
-      cc.fromBufferAttribute(posA, i + 2).applyMatrix4(o.matrixWorld);
-      const P = a.add(b).add(cc).multiplyScalar(1 / 3);
+    // colour whole quads (the two triangles of each square face together), so
+    // pattern edges follow the rings and run straight or round, not zig-zag
+    const step = n % 6 === 0 ? 6 : 3;
+    for (let i = 0; i < n; i += step) {
+      const P = new THREE.Vector3();
+      for (let k = 0; k < step; k++) P.add(a.fromBufferAttribute(posA, i + k).applyMatrix4(o.matrixWorld));
+      P.multiplyScalar(1 / step);
       col.setHex(colourOf(o.userData.part, P));
-      for (let k = 0; k < 3; k++) colours.set([col.r, col.g, col.b], (i + k) * 3);
+      for (let k = 0; k < step; k++) colours.set([col.r, col.g, col.b], (i + k) * 3);
     }
     g.setAttribute('color', new THREE.BufferAttribute(colours, 3));
+    g.computeVertexNormals(); // non-indexed: one normal per face, flat-shaded like the reference
     o.geometry = g;
     o.material = mat;
   });
 }
-
-/** A tapered limb from a to b (radius r0 to r1), with few sides. */
-function taper(a, b, r0, r1, sides = 6) {
-  const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b);
-  const len = A.distanceTo(B) || 1e-4;
-  const geo = new THREE.CylinderGeometry(r1, r0, len, sides, 1);
-  const m = new THREE.Mesh(geo);
-  m.position.copy(A).add(B).multiplyScalar(0.5);
-  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), B.clone().sub(A).normalize());
-  return m;
-}
-
