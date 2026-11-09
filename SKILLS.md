@@ -123,6 +123,7 @@ src/city/crowd.js      the crowd: roles (walk, stand, bench, ...), placed from t
                        distance culling, sitPose
 src/city/knock.js      Knockables: props tagged userData.knock (boards, planters, bins) fly
                        when a vehicle hits them, blink, POOF, back in 5 s
+                       Knockables.cloud(at, opts) makes dust / stink clouds of cubes
 src/city/comedy.js     comic slap / push / fall variations (COMEDY) and ComedyStage previews
 src/city/interact.js   character interactions: traits, slap / push / talk (pie menu), chat
                        bubbles + comic bursts, banana peels, riding vehicles
@@ -282,7 +283,8 @@ act. Input arrives as events
 (`CityInput.takeEvents()`): keys E (pie menu / ride), F slap (hold to charge: `CHARGE` cycles, green to
 yellow = slap, shaking yellow to red = power slap that knocks down; release
 to hit; events chargeStart / chargeEnd), G push, T talk,
-B banana, Space jump (`player.jumpY` / `vy`), 1-3 menu, Esc; mouse click = E, hold = charge a slap, release to hit (ride on a vehicle),
+B banana, Q fart (`ix.fart`: a green cloud, everyone within `FART_R` 3.5 m
+falls over stunned for 3.6 s, then runs off; 2.5 s cooldown), Space jump (`player.jumpY` / `vy`), 1-3 menu, Esc; mouse click = E, hold = charge a slap, release to hit (ride on a vehicle),
 double click = push, right click = talk; taps work the same. A busy person
 has `n.act` ({ kind: 'wait' | 'talk' | 'retaliate' | 'chase' | 'flee' |
 'slip' }) and is moved by `ix.updateNpc`; `City.endAct(n)` puts them back
@@ -295,7 +297,10 @@ pavement route (`n.flee.left` = 300 m, `n.fleeRole` keeps their old role),
 run 4.2 m/s away from you, crossing roads more often, then `endAct` walks
 them back to their place. Bubbles (`ix.bubbles`: chat and comic bursts with an
 `anchor()` position) and the pie menu (`ix.menu`) are drawn by the viewer as
-page elements; a game can draw its own. Small talk lives in `src/city/smalltalk.js` (`SMALL_TALK`: 50
+page elements; a game can draw its own. Speech bubbles stack
+(`stackBubbles` in main.js): older ones keep their place, newer ones that would
+overlap are lifted above and get a long tail (`.lifted`, `--lift`); bubble ids
+grow with age. People knocked down raise a dust cloud. Small talk lives in `src/city/smalltalk.js` (`SMALL_TALK`: 50
 [question, calm answer, aggressive answer]; every answer fits its question).
 Change the lines there and in `SHOUTS`,
 `BURSTS` and the bubble `NAMES`. Bubble kinds: 'talk', 'shout', 'burst' ('confused' draws a '?' box, unused); `ix.shake` is a screen-shake amount the viewer applies.

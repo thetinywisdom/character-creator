@@ -429,6 +429,11 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 - **Bike crashes:** CRASH! / WHAM! / KRUNCH! burst and a bigger shake; the
   bike tips onto its side with the rider still in the saddle pose, lies
   there a few seconds, then swings back upright.
+- **Clouds:** dust is a ring of pale sand cubes billowing out low and
+  fading in under a second; a fart is two waves of big translucent
+  yellow-green cubes that linger ~2 s.
+- **Stacked bubbles:** when bubbles would overlap, newer ones sit above and
+  a long ink wedge tail reaches down to the speaker.
 - **Speech bubbles:** pixel font (Silkscreen), off-white with a thick ink
   border, a hard drop shadow, a tail pointing at the speaker, a small name
   tag (YOU for the player); they pop in with a bounce and fade after ~3 s.

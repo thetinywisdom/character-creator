@@ -37,7 +37,9 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   aggressive ones get up, chase you and hit back: they run faster than you,
   shout threats and can shove you off a bike or scooter, but give up after 10
   seconds or once you are 300 m away. Calm people run 300 m away along the
-  streets, then walk back. **B** (🍌) drops a banana peel.
+  streets, then walk back. **B** (🍌) drops a banana peel. **Q** (💨) farts: everyone near you
+  falls over, stunned, then runs off. When lots of people talk at once their
+  bubbles stack up instead of covering each other.
   **E** (or hold-click) next to a car, the bus, the scooter or the bicycle
   gets you on; drive with WASD; hold Shift or the right
   mouse button for the handbrake (it stops you going straight; steer while

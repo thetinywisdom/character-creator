@@ -284,15 +284,48 @@ pie.addEventListener('click', (e) => {
   if (b) cityInput.events.push({ type: 'choose', n: Number(b.dataset.n) });
 });
 document.querySelector('#actBtn').onclick = () => cityInput.events.push({ type: 'primary' });
+document.querySelector('#fartBtn').onclick = () => cityInput.events.push({ type: 'fart' });
 document.querySelector('#bananaBtn').onclick = () => cityInput.events.push({ type: 'banana' });
 document.querySelector('#jumpBtn').onclick = () => cityInput.events.push({ type: 'jump' });
 function screenOf(v, camera, W, H) {
   const s = v.clone().project(camera);
   return { x: (s.x + 1) / 2 * W, y: (1 - s.y) / 2 * H, ok: s.z < 1 && Math.abs(s.x) < 1.3 && Math.abs(s.y) < 1.3 };
 }
+/**
+ * Speech bubbles never cover each other: the oldest keeps its place over its
+ * speaker, each newer one that would overlap is lifted above, and its tail
+ * stretches down to its speaker (--lift), so in a crowd everyone is heard at once.
+ * The pie menu, when open, counts as already taken.
+ */
+function stackBubbles(list, pie) {
+  const placed = [];
+  if (pie?.ok) placed.push({ x0: pie.x - 115, x1: pie.x + 115, y0: pie.y - 120, y1: pie.y + 6 });
+  list.sort((a, b) => a.b.id - b.b.id);
+  for (const { b, el, s } of list) {
+    const w = el.offsetWidth, h = el.offsetHeight;
+    const fx = b.side === 'left' ? 0.88 : b.side === 'right' ? 0.12 : 0.5;
+    const x0 = s.x - w * fx - 4, x1 = x0 + w + 8;
+    let y1 = s.y + 4, lift = 0;
+    for (let guard = 0; guard < 12; guard++) {
+      const hit = placed.find((r) => r.x0 < x1 && r.x1 > x0 && r.y0 < y1 && r.y1 > y1 - h - 8);
+      if (!hit) break;
+      y1 = hit.y0 - 2;
+      lift = s.y + 4 - y1;
+    }
+    placed.push({ x0, x1, y0: y1 - h - 8, y1 });
+    // ease towards the new height so bubbles slide rather than jump
+    const cur = Number(el.dataset.lift ?? 0), next = cur + (lift - cur) * 0.35;
+    el.dataset.lift = String(next);
+    el.style.marginTop = `${-next}px`;
+    el.style.setProperty('--lift', `${next}px`);
+    el.classList.toggle('lifted', next > 6);
+  }
+}
+
 function drawOverlay(c, W, H) {
   const ix = c.ix, cam = c.activeCamera;
   const live = new Set();
+  const talk = []; // speech bubbles on screen, stacked after this loop
   for (const b of ix.bubbles) {
     if (b.age < 0) continue;
     live.add(b.id);
@@ -320,7 +353,9 @@ function drawOverlay(c, W, H) {
     el.style.left = `${s.x}px`;
     el.style.top = `${s.y}px`;
     if (b.kind === 'talk') el.style.opacity = String(Math.min(1, (b.life - b.age) / 0.4));
+    if (s.ok && (b.kind === 'talk' || b.kind === 'shout')) talk.push({ b, el, s });
   }
+  stackBubbles(talk, ix.menu ? screenOf(ix.headOf(ix.menu.npc)(), cam, W, H) : null);
   for (const [id, el] of bubbleEls) if (!live.has(id)) { el.remove(); bubbleEls.delete(id); }
   // the pie menu pops out of the person you chose
   pie.hidden = !ix.menu;

@@ -246,6 +246,15 @@ html, body {
 }
 #cityActions #actBtn { width: 76px; height: 76px; background: var(--accent); color: #1d1d1d; border-color: var(--accent); }
 
+/* stacked bubbles (main.js stackBubbles): lifted above others, a long ink
+   tail reaches down to the speaker */
+.bubble.lifted::before {
+  content: ''; position: absolute; left: calc(50% - 7px); top: calc(100% - 2px); width: 14px; height: calc(var(--lift, 0px) + 12px);
+  background: #2f3236; clip-path: polygon(0 0, 100% 0, 55% 100%, 45% 100%);
+}
+.bubble.left.lifted::before { left: auto; right: 6px; }
+.bubble.right.lifted::before { left: 8px; }
+
 /* two people talking: the bubbles lean apart (tails still point at each speaker) */
 .bubble.left { transform: translate(-88%, -100%); }
 .bubble.left::after { left: auto; right: 4px; }

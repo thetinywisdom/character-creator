@@ -71,6 +71,26 @@ export class Knockables {
     ix.shake = Math.max(ix.shake ?? 0, 0.15);
   }
 
+  /**
+   * A cloud of cubes billowing out low from `at` (dust when someone hits the
+   * ground, a green stink cloud for a fart): `color`, `n` cubes, spread
+   * radius `r` m, lasting `life` s.
+   */
+  cloud(at, { color = 0xd8cfb8, n = 10, r = 0.6, life = 0.8, size = 0.32, rise = 0.5, opacity = 0.9 } = {}) {
+    for (let i = 0; i < n; i++) {
+      const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false });
+      const m = new THREE.Mesh(this.puffGeo, mat);
+      const a = (i / n) * Math.PI * 2 + Math.random() * 0.5;
+      m.position.set(at.x + Math.cos(a) * r * 0.4, at.y + 0.15 + Math.random() * 0.25, at.z + Math.sin(a) * r * 0.4);
+      m.userData.v = new THREE.Vector3(Math.cos(a) * r * 2.4, rise * (0.4 + Math.random()), Math.sin(a) * r * 2.4);
+      m.userData.t = 0; m.userData.life = life; m.userData.size = size; m.userData.op = opacity;
+      m.rotation.set(Math.random(), Math.random(), Math.random());
+      m.scale.setScalar(size * 0.6);
+      this.city.scene.add(m);
+      this.puffs.push(m);
+    }
+  }
+
   puff(at, n = 7) {
     for (let i = 0; i < n; i++) {
       const m = new THREE.Mesh(this.puffGeo, this.puffMat.clone());
@@ -136,11 +156,13 @@ export class Knockables {
       }
     }
     for (const m of [...this.puffs]) {
-      const u = (m.userData.t += dt) / 0.6;
+      const u = (m.userData.t += dt) / (m.userData.life ?? 0.6);
       m.position.addScaledVector(m.userData.v, dt);
       m.userData.v.multiplyScalar(Math.max(0, 1 - dt * 3));
-      m.scale.setScalar(0.25 + u * 0.5);
-      m.material.opacity = Math.max(0, 1 - u);
+      const sz = m.userData.size ?? 0.25;
+      m.scale.setScalar(sz + u * sz * 2);
+      m.rotation.y += dt * 1.5;
+      m.material.opacity = Math.max(0, 1 - u) * (m.userData.op ?? 1);
       if (u >= 1) { this.city.scene.remove(m); m.material.dispose(); this.puffs.splice(this.puffs.indexOf(m), 1); }
     }
   }

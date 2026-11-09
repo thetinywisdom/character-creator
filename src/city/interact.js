@@ -43,6 +43,7 @@ const REACH = 1.7;        // m: how close a person must be to act on them
 const PICK_REACH = 60;    // m: a clicked person can be anywhere you can see; you run over to them
 const RUN = 4.2;
 const MAX_PEELS = 10;
+const FART_R = 3.5;       // m: how far the stink knocks people over
 
 /** Joint groups of a (skinned) person, cached. */
 function joints(body) {
@@ -74,7 +75,7 @@ export class Interactions {
   /** kind: 'talk' | 'shout' (red, angry) | 'confused' (a ? box) | 'burst' (SLAP!). name: a tag on the bubble. */
   say(anchor, text, kind = 'talk', life = kind === 'burst' ? 0.9 : kind === 'confused' ? 0.9 : 3.2, delay = 0, name = null, side = null) {
     // side: 'left' / 'right' leans a talk bubble away from the other speaker's, so they don't overlap
-    this.bubbles.push({ anchor, text, kind, name, side, age: -delay, life, id: Math.random() });
+    this.bubbles.push({ anchor, text, kind, name, side, age: -delay, life, id: (this.nextId = (this.nextId ?? 0) + 1) }); // ids grow: older bubbles keep their place (main.js stackBubbles)
   }
   nameOf(n) { return (n.name ??= NAMES[Math.floor(Math.random() * NAMES.length)]); }
   headOf(n) { return () => n.root.position.clone().add(new THREE.Vector3(0, (n.look?.height ?? 1.7) + 0.3, 0)); }
@@ -138,6 +139,7 @@ export class Interactions {
     const p = this.city.player;
     if (p.act) return; // busy slipping or staggering
     if (ev.type === 'banana') return this.dropPeel();
+    if (ev.type === 'fart') return this.fart();
     if (ev.type === 'jump') { if (!p.riding && !(p.jumpY > 0)) { p.vy = 4.4; p.jumpY = 0.001; } return; }
     if (ev.type === 'chargeEnd') {
       const c = this.charge;
@@ -275,6 +277,8 @@ export class Interactions {
       then: agg ? { kind: 'chase', move: 'push', t: 10, cd: 0.4 } : { kind: 'flee', t: 4, delay: 0 } };
     n.kb = { x: kb.x, z: kb.z, t: 0.35 };
     if (this.menu?.npc === n) this.menu = null;
+    // a cloud of dust where they hit the ground
+    setTimeout(() => n.pos && this.city.knock.cloud(new THREE.Vector3(n.pos.x, this.city.layout.groundHeight(n.pos.x, n.pos.z), n.pos.z), { n: 12, r: 0.7, life: 0.9 }), 330);
     // the shout comes as they get back up
     this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 1.7, this.nameOf(n));
   }
@@ -434,6 +438,7 @@ export class Interactions {
       if (j.legR) j.legR.rotation.x = -0.6 * down;
       if (j.armL) j.armL.rotation.x = -1.2 * down;
       if (j.armR) j.armR.rotation.x = -1.0 * down;
+      if (a.stunned && j.head) j.head.rotation.y = Math.sin(t * 9) * 0.6 * down; // dizzy, head rolling
     } else if (a?.kind === 'stagger') {
       if (j.spine) j.spine.rotation.x -= 0.4 * Math.max(0, a.t);
     }
@@ -486,6 +491,36 @@ export class Interactions {
       return true;
     }
     return false;
+  }
+
+  // --- fart ---------------------------------------------------------------------------
+  /**
+   * A green stink cloud round you: everyone within FART_R falls over and lies
+   * there stunned (dizzy), then gets up, holds their nose and runs off.
+   */
+  fart() {
+    const city = this.city, p = city.player;
+    if ((this.fartCd ?? 0) > 0) return;
+    this.fartCd = 2.5;
+    const at = new THREE.Vector3(p.x, city.layout.groundHeight(p.x, p.z) + 0.3, p.z);
+    city.knock.cloud(at, { color: 0x9cbf5a, n: 16, r: 1.1, life: 2.2, size: 0.55, rise: 0.35, opacity: 0.75 });
+    setTimeout(() => city.knock.cloud(at, { color: 0xb8cf6a, n: 10, r: 1.6, life: 2.0, size: 0.7, rise: 0.25, opacity: 0.6 }), 250);
+    this.say(this.midOfPlayer(), pick(['PFFRRT!', 'BRAAAP!', 'PFFT!', 'TOOT!']), 'burst');
+    this.shake = 0.2;
+    let i = 0;
+    for (const n of city.npcs) {
+      if (!n.pos || n.act?.kind === 'slip' || n.role?.kind === 'bench') continue;
+      const dx = n.pos.x - p.x, dz = n.pos.z - p.z, d = Math.hypot(dx, dz);
+      if (d > FART_R || d < 1e-3) continue;
+      // further away, a beat later: the cloud spreads
+      setTimeout(() => {
+        if (n.act?.kind === 'slip') return;
+        n.act = { kind: 'slip', t: 3.6, total: 3.6, stunned: true, then: { kind: 'flee', t: 4, delay: 0 } };
+        n.kb = { x: (dx / d) * 1.4, z: (dz / d) * 1.4, t: 0.3 };
+        if (this.menu?.npc === n) this.menu = null;
+        this.say(this.headOf(n), pick(['EWWW!', 'GROSS!', '*cough* *cough*', 'MY EYES!', 'WHO DID THAT?!', '@_@']), 'shout', 2.2, 0.3 + Math.random() * 0.4, this.nameOf(n));
+      }, 120 + d * 140 + (i++) * 20);
+    }
   }
 
   // --- banana peels -----------------------------------------------------------------
@@ -745,6 +780,7 @@ export class Interactions {
   // --- every frame ------------------------------------------------------------------------
   update(dt) {
     const city = this.city, p = city.player;
+    if (this.fartCd > 0) this.fartCd -= dt;
     // peels: arm once the dropper has stepped away; anyone stepping on one slips
     for (const peel of [...this.peels]) {
       const dP = Math.hypot(p.x - peel.x, p.z - peel.z);
