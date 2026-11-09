@@ -120,6 +120,34 @@ export class Interactions {
   midOf(n) { return () => n.root.position.clone().add(new THREE.Vector3(0, (n.look?.height ?? 1.7) * 0.75, 0)); }
 
   // --- what are we facing / what was clicked ---------------------------------------
+  /**
+   * Who the action buttons act on (ui/actionPad.js): the person under the
+   * mouse, else the nearest person in front of you (up to 7 m, you run over);
+   * withVehicles: a vehicle within 2.5 m comes first (the USE button).
+   */
+  buttonTarget(withVehicles = false) {
+    const { player: p, npcs, cars } = this.city;
+    if (p.riding) return { type: 'vehicle', ref: p.riding };
+    if (withVehicles) {
+      let bv = null, bd = 2.5;
+      for (const c of cars) { if (c.fallen) continue; const d = this.distToVehicle(c, p.x, p.z); if (d < bd) { bd = d; bv = c; } }
+      if (bv) return { type: 'vehicle', ref: bv };
+    }
+    if (this.mouseHover?.type === 'npc') return this.mouseHover;
+    const hx = Math.sin(p.heading), hz = Math.cos(p.heading);
+    let best = null, bs = Infinity;
+    for (const n of npcs) {
+      if (!n.pos || n.act?.kind === 'slip' || !n.root.visible || n.role?.kind === 'swing') continue;
+      const dx = n.pos.x - p.x, dz = n.pos.z - p.z, d = Math.hypot(dx, dz);
+      if (d > 7) continue;
+      const dot = (dx * hx + dz * hz) / (d || 1);
+      if (dot < -0.1 && d > 1.2) continue; // behind you (unless right next to you)
+      const score = d * (1.6 - dot); // close and in front first
+      if (score < bs) { bs = score; best = { type: 'npc', ref: n }; }
+    }
+    return best;
+  }
+
   facing() {
     const { player: p, npcs, cars } = this.city;
     if (p.riding) return { type: 'vehicle', ref: p.riding };
@@ -167,7 +195,7 @@ export class Interactions {
       const a = toScreen(foot), b = toScreen(top);
       if (!a.ok && !b.ok) continue;
       const tall = Math.hypot(b.x - a.x, b.y - a.y);
-      const reach = Math.max(14, tall * 0.2); // about a body's width either side
+      const reach = Math.max(5, Math.min(14, tall * 0.2)); // about a body's width either side (small far away: tight)
       const d = segDist(a, b);
       if (d < reach && d < bd) { bd = d; best = { type: 'npc', ref: n }; }
     }
@@ -210,7 +238,8 @@ export class Interactions {
       // the menu's options (also keys 1-4): slap, push, talk, fart; without the
       // menu open they act on whoever you face (fart needs nobody)
       const kind = MENU_OPTIONS[ev.n];
-      const who = this.menu?.npc ?? (this.facing()?.type === 'npc' ? this.facing().ref : null);
+      const f = ev.btn ? this.buttonTarget() : this.facing();
+      const who = this.menu?.npc ?? (f?.type === 'npc' ? f.ref : null);
       if (this.menu) { this.menu = null; if (kind === 'fart' && who?.act?.kind === 'wait') this.city.endAct(who); }
       if (kind === 'fart') return this.fart();
       if (who) this.go(kind, who);
@@ -224,7 +253,14 @@ export class Interactions {
     }
     // a click or tap acts on what is under it, or nothing (clicking the ground
     // does not fall back to whoever you face); keys act on whoever you face
-    const t = ev.x !== undefined ? this.pickAt(ev.x, ev.y, camera, rect) : this.facing();
+    const t = ev.x !== undefined ? this.pickAt(ev.x, ev.y, camera, rect) : ev.btn ? this.buttonTarget(ev.type === 'primary') : this.facing();
+    // the USE (hand) button: get on a vehicle next to you, else talk to them
+    if (ev.btn && ev.type === 'primary') {
+      this.closeMenu();
+      if (t?.type === 'vehicle') this.go('ride', t.ref);
+      else if (t?.type === 'npc') this.go('talk', t.ref);
+      return;
+    }
     switch (ev.type) {
       case 'primary':
       case 'right':

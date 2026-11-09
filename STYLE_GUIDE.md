@@ -471,14 +471,25 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   four plates over the person (SLAP 1, PUSH 2, TALK 3, FART 4): see-through
   the pixel way (three navy pixels in four) inside a solid 1 px navy edge, outlined white
   words, key numbers in sky blue; the one under the pointer goes solid navy
-  with yellow words and a 2 px yellow edge. Corner buttons are 24 px ghost
-  tiles with the 9x9 pixel icons drawn at twice the size and their key in a
-  corner; on a phone held upright they stack in a column on the right. The
+  with yellow words and a 2 px yellow edge. **Action buttons** (ui/actionPad.js):
+  every interaction has a ghost tile exactly the size of its tap area:
+  USE (a skin-coloured hand, 1.25x bigger; OFF with the eject arrow while
+  riding), SLAP, PUSH, TALK, FART, JUMP, PEEL, RUN (BRAKE while riding); an
+  11x11 pixel icon (twice its size when the tile is 32+ px) over a
+  white-outlined label, the key in sky blue in a corner on keyboards only.
+  Finger size on touch screens: 52–76 px (15–17% of the short side), 52 px
+  with a mouse. People buttons fade to 55% when there is nobody to act on.
+  Four layouts (🎮 Buttons in the toolbar; Arc is the default): **Arc** (the
+  hand in the corner, slap / push / talk round it, the rest in an outer ring),
+  **Grid** (two rows: people buttons on top), **Split** (run / jump / peel
+  above the joystick, people buttons in a 2x2 beside the hand), **Bar** (one
+  strip along the bottom); on a phone held upright each has a narrow version
+  that keeps clear of the joystick. The
   walk joystick is pixels too: a see-through navy ring and a paper knob with
   a navy edge and a sky glint (yellow while you steer). Phones held upright
   in the City get a pixel card asking to turn sideways (Go landscape / Play
   anyway); a press flashes them
-  yellow. Their tap areas are bigger than the tiles.
+  yellow.
 - **Earshot:** speech is full size near you, then shrinks to half and fades
   out with distance (talk gone past ~22 m, shouts ~34 m).
 - **The cat:** the faceted lofted body and slim jointed legs of version 6,

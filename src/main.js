@@ -1,6 +1,7 @@
 import { CatLab } from './ui/catLab.js';
 import { WalkLab } from './ui/walkLab.js';
 import { PixelOverlay } from './ui/pixelOverlay.js';
+import { ActionPad, PAD_LAYOUTS } from './ui/actionPad.js';
 import { ComedyStage, COMEDY } from './city/comedy.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -299,9 +300,14 @@ pie.addEventListener('click', (e) => {
   const b = e.target.closest('[data-n]');
   if (b) cityInput.events.push({ type: 'choose', n: Number(b.dataset.n) });
 });
-document.querySelector('#actBtn').onclick = () => cityInput.events.push({ type: 'primary' });
-document.querySelector('#bananaBtn').onclick = () => cityInput.events.push({ type: 'banana' });
-document.querySelector('#jumpBtn').onclick = () => cityInput.events.push({ type: 'jump' });
+// the action buttons (ui/actionPad.js): every interaction has one; four layouts
+const actionPad = new ActionPad(document.querySelector('#cityActions'), cityInput);
+const padBtn = document.querySelector('#padBtn');
+const showPadName = () => { padBtn.innerHTML = `🎮<span> Buttons: ${actionPad.layout}</span>`; };
+showPadName();
+padBtn.onclick = () => { actionPad.setLayout(PAD_LAYOUTS[(PAD_LAYOUTS.indexOf(actionPad.layout) + 1) % PAD_LAYOUTS.length]); showPadName(); toast(`Buttons: ${actionPad.layout}`); };
+const safeProbe = Object.assign(document.createElement('div'), { style: 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)' });
+document.body.appendChild(safeProbe);
 function screenOf(v, camera, W, H) {
   const s = v.clone().project(camera);
   return { x: (s.x + 1) / 2 * W, y: (1 - s.y) / 2 * H, ok: s.z < 1 && Math.abs(s.x) < 1.3 && Math.abs(s.y) < 1.3 };
@@ -317,13 +323,11 @@ function screenOf(v, camera, W, H) {
 const pixelUi = new PixelOverlay(overlay);
 const MENU_LABELS = ['SLAP', 'PUSH', 'TALK', 'FART'];
 const pieBtns = [...pie.querySelectorAll('button')];
-const cornerBtns = [['#jumpBtn', 'jump', '_'], ['#bananaBtn', 'peel', 'B'], ['#actBtn', 'use', 'E']].map(([sel, icon, key]) => ({ el: document.querySelector(sel), icon, key, flash: 0 }));
 let menuHover = -1;
 pieBtns.forEach((b, i) => {
   b.addEventListener('pointerenter', () => { menuHover = i; });
   b.addEventListener('pointerleave', () => { if (menuHover === i) menuHover = -1; });
 });
-for (const cb of cornerBtns) cb.el.addEventListener('pointerdown', () => { cb.flash = performance.now(); });
 function setUiStyle({ hud = state.ui.hud } = {}) {
   state.ui = { ...state.ui, hud };
   document.body.dataset.hud = hud;
@@ -365,12 +369,14 @@ function drawPixelOverlay(c, W, H) {
     rects.forEach((r, i) => Object.assign(pieBtns[i].style, { left: `${r.x * px}px`, top: `${(r.y - 3) * px}px`, width: `${r.w * px}px`, height: `${(r.h + 6) * px}px`, margin: '0' }));
     if (pixelHud) menu = { rects, labels: MENU_LABELS, hover: menuHover, box: { x0: x0 - 2, x1: x0 + total + 2, y0: y0 - 2, y1: y0 + ph + 12 } };
   }
-  // the corner buttons: ghost tiles centred in each (bigger) tap area
+  // the action buttons: laid out for this screen; tiles drawn exactly on their tap areas
   const riding = !!c.player.riding;
-  const now = performance.now();
-  const corner = pixelHud ? cornerBtns.map((cb) => {
-    const r = cb.el.getBoundingClientRect(), s = 24;
-    return { x: Math.round((r.left + r.width / 2) / px - s / 2), y: Math.round((r.top + r.height / 2) / px - s / 2), s, icon: cb.icon === 'use' && riding ? 'eject' : cb.icon, key: cb.key, on: now - cb.flash < 160 };
+  const touch = matchMedia('(pointer: coarse)').matches || W < 900;
+  const cs = getComputedStyle(safeProbe), safe = { l: parseFloat(cs.paddingLeft) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0 };
+  actionPad.place(W, H, { touch, riding, safe, joy: joystick.hidden ? null : joystick.getBoundingClientRect() });
+  const pad = pixelHud ? actionPad.tiles({ riding, target: ix.padTarget }).map((t) => {
+    const x = Math.round(t.x / px), y = Math.round(t.y / px);
+    return { ...t, x, y, s: Math.round((t.x + t.s) / px) - x };
   }) : null;
   // the walk joystick (touch screens), drawn at the page joystick's place
   let stick = null;
@@ -378,7 +384,7 @@ function drawPixelOverlay(c, W, H) {
     const r = joystick.getBoundingClientRect(), k = joystick.querySelector('.knob').getBoundingClientRect();
     stick = { cx: Math.round((r.left + r.width / 2) / px), cy: Math.round((r.top + r.height / 2) / px), r: Math.round(r.width / 2 / px), kx: Math.round((k.left + k.width / 2) / px), ky: Math.round((k.top + k.height / 2) / px), kr: Math.round(k.width / 2 / px), active: cityInput.move.x !== 0 || cityInput.move.z !== 0 };
   }
-  pixelUi.draw({ W, H, px, speech, bursts, charge: chargeInfo(c, ix, cam, W, H), menu, corner, stick });
+  pixelUi.draw({ W, H, px, speech, bursts, charge: chargeInfo(c, ix, cam, W, H), menu, pad, showKeys: !touch, stick });
   const sh = ix.shake ?? 0;
   canvas.style.transform = sh > 0 ? `translate(${(Math.random() - 0.5) * 14 * sh / 0.3}px, ${(Math.random() - 0.5) * 10 * sh / 0.3}px)` : '';
 }

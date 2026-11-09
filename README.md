@@ -49,6 +49,12 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   the road (or waits and honks if you block it); people walk round your car (and any parked car)
   instead of through it; at low speed your car stops against them, at speed
   it knocks them over.
+- **Action buttons (phones and desktop):** every interaction has its own
+  button: a hand (USE: get on or off a vehicle, or talk), SLAP (hold to
+  charge), PUSH, TALK, FART, JUMP, PEEL and RUN (hold; the handbrake when
+  riding). They act on the person with the yellow ring (the nearest one in
+  front of you) and work while your other thumb is on the joystick. Pick a
+  layout with **🎮 Buttons** in the toolbar: Arc, Grid, Split or Bar.
 - **Interactions in the City:** point at someone and a yellow ring lights up
   under them (and under the person whose menu is open). Left-click anyone you can see to talk to them
   (you run over first); right-click them, or face them and press **E**, for

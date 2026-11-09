@@ -45,8 +45,9 @@ export class CityInput {
       if (press?.timer) clearTimeout(press.timer);
       press = { id: e.pointerId, x: e.clientX, y: e.clientY, button: e.button, moved: false, fired: false };
       if (e.button === 2) this.rmb = true; // held right button = handbrake while driving
-      // holding still starts charging a slap (released on pointerup)
-      if (e.button === 0) press.timer = setTimeout(() => { if (press && !press.moved) { press.fired = true; press.charging = true; this.events.push({ type: 'chargeStart', x: press.x, y: press.y }); } }, 300);
+      // holding still starts charging a slap (released on pointerup); mouse only:
+      // a finger resting on the screen is not a slap (phones have the SLAP button)
+      if (e.button === 0 && e.pointerType !== 'touch') press.timer = setTimeout(() => { if (press && !press.moved) { press.fired = true; press.charging = true; this.events.push({ type: 'chargeStart', x: press.x, y: press.y }); } }, 300);
     });
     // where the mouse is (not fingers): the City highlights who is under it
     canvas.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') this.hover = { x: e.clientX, y: e.clientY }; });
@@ -133,7 +134,8 @@ export class CityInput {
     if (len > 1) { x /= len; z /= len; }
     const shift = k.has('ShiftLeft') || k.has('ShiftRight');
     // Shift runs on foot; Shift or a held right button is the handbrake in a vehicle
-    return { x, z, run: shift, handbrake: shift || !!this.rmb };
+    // the RUN button (ui/actionPad.js) is held like Shift
+    return { x, z, run: shift || !!this.runHeld, handbrake: shift || !!this.rmb || !!this.runHeld };
   }
 
   /** Interaction events since the last call (keys, clicks, taps, UI buttons). */

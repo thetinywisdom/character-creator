@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { box, cyl } from '../props/util.js';
 import { capsuleBetween } from '../lib/shapes.js';
+import { JOINT_NAMES } from '../anim/gait.js';
 
 // The park playground (公園の遊具): swings, a slide and a climbing frame
 // (ジャングルジム), and the kids who play on them.
@@ -156,7 +157,15 @@ export function playWorld(pk, lx, lz) {
   return { x: pk.x + x * c + z * s, z: pk.z - x * s + z * c };
 }
 
-function J(body) { return body.userData.joints ?? {}; }
+/** The body's joints (found once; a kid who never walked has none cached yet). */
+function J(body) {
+  if (!body.userData.joints) {
+    const j = {};
+    body.traverse((o) => { if (JOINT_NAMES.includes(o.name)) j[o.name] = o; });
+    body.userData.joints = j;
+  }
+  return body.userData.joints;
+}
 
 /** Sit pose on a swing seat; legs out going forward, tucked going back; hands up on the chains. */
 function swingPose(body, j, seatY, vel) {

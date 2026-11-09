@@ -22,6 +22,7 @@
       <button id="newTownBtn" class="city-only" type="button" title="Generate a different town" hidden>🎲<span> New town</span></button>
       <button id="lightBtn" class="city-only" type="button" title="Time of day" hidden>☀<span> Day</span></button>
       <button id="weatherBtn" class="city-only" type="button" title="Weather" hidden>🌤<span> Clear</span></button>
+      <button id="padBtn" class="city-only" type="button" title="Button layout" hidden>🎮<span> Buttons</span></button>
       <button id="viewBtn" class="city-only" type="button" title="Isometric / third person (V)" hidden>🎥<span> Iso view</span></button>
       <button id="walkLabBtn" class="city-only dev-only" type="button" title="Try ways of walking and running" hidden>🚶<span> Walk lab</span></button>
     </header>
@@ -39,11 +40,7 @@
       <button type="button" data-n="2" title="Talk (3)" aria-label="Talk"></button>
       <button type="button" data-n="3" title="Fart (4)" aria-label="Fart"></button>
     </div></div>
-    <div id="cityActions" hidden>
-      <button type="button" id="jumpBtn" title="Jump (Space)" aria-label="Jump"></button>
-      <button type="button" id="bananaBtn" title="Drop a banana peel (B)" aria-label="Banana peel"></button>
-      <button type="button" id="actBtn" title="Menu / ride (E)" aria-label="Menu or ride"></button>
-    </div>
+    <div id="cityActions" hidden><!-- the action buttons (ui/actionPad.js) --></div>
     <div id="rotateHint" role="dialog" aria-label="Turn your phone sideways" hidden>
       <div class="rot-card">
         <div class="rot-phone" aria-hidden="true"></div>

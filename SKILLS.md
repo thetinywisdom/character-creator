@@ -157,6 +157,7 @@ src/ui/walkLab.js      dev tool (hidden; #dev in the address or __cc.devTools(tr
                        New: walk-to-run blends 2.0-3.3 m/s (human `animation` param
                        'New' | 'Classic' = the engine for everyone, set in main.js);
                        townspeople get a random mix, mostly Natural
+src/ui/actionPad.js    the action buttons: one per interaction, four layouts, pointerdown events
 src/ui/pixelOverlay.js the world layer of the interaction UI: floating speech, bursts,
                        charge dial painted on a canvas at the picture's pixel size;
                        main.js setUiStyle({ hud: 'pixel'|'clean' }) styles the controls
@@ -343,8 +344,21 @@ full red (and shaking) a power slap (the dial grows through the second round,
 `MENU_OPTIONS`; with the menu open they pick its option, else act on whoever
 you face), B banana, fart (`ix.fart`: squat and strain `FART_WINDUP` 0.65 s, then a green pixel cloud, everyone within `FART_R` 3.5 m
 falls over stunned for 3.6 s, then runs off; 2.5 s cooldown), Space jump (`player.jumpY` / `vy`), Esc; mouse click = talk (ride on a vehicle), right click = the action menu, hold = charge a slap, release to hit,
-double click = push; taps work the same. The menu (SLAP, PUSH, TALK, FART)
-and the corner buttons (jump, peel, E) are painted on the pixel layer as
+double click = push; taps work the same (except a long press: a finger
+resting on the screen is not a slap; `pointerType === 'touch'` skips the
+hold timer). Picking a person on screen (`pickAt`) reaches a body's width
+either side, at least 5 and at most 14 px, so tiny far-away people need a
+precise tap. **Action buttons** (`src/ui/actionPad.js`, `ActionPad`): every
+interaction has a button (USE = hand, SLAP hold-to-charge, PUSH, TALK, FART,
+JUMP, PEEL, RUN held = `cityInput.runHeld`, the handbrake when riding); they
+fire on pointerdown so they work while a thumb is on the joystick (phones
+send no clicks with two fingers down); events carry `btn: true` and act on
+`ix.buttonTarget()` (the person under the mouse, else the nearest one in
+front within 7 m, you run over; USE takes a vehicle within 2.5 m first, else
+talks), shown with the hover ring (`ix.padTarget`). Layouts `PAD_LAYOUTS`
+Arc / Grid / Split / Bar (`actionPad.setLayout`, kept in localStorage
+`tinycity.pad`, 🎮 toolbar button). The menu (SLAP, PUSH, TALK, FART)
+and the action buttons are painted on the pixel layer as
 "ghost plates" (owner's pick C of the controls lab): see-through dithered
 plates, no border, white words with key numbers, the pointed-at one solid with
 yellow; the page's buttons are invisible tap areas on top (`setUiStyle({ hud:

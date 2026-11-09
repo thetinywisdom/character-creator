@@ -21,10 +21,18 @@ const ICONS = {
   peel: ['.......kk', '......kyk', '.....kyk.', '...kkyyk.', '.kkyyyk..', 'kyyyyk...', '.kkkk....', '.........', '.........'],
   use: ['kkkkkkk..', 'kwwwwwk..', 'kwkkkkk..', 'kwwwwk...', 'kwkkkkk..', 'kwwwwwk..', 'kkkkkkk..', '.........', '.........'],
   eject: ['....k....', '...kwk...', '..kwwwk..', '.kwwwwwk.', 'kkkkkkkkk', '.........', 'kkkkkkkkk', 'kwwwwwwwk', 'kkkkkkkkk'],
+  // 11 x 11 action pad icons (ui/actionPad.js)
+  hand: ['..k.k.k....', '.ksksksk...', '.kskskskk..', '.ksksksksk.', 'kkkssssssk.', 'kssssssssk.', '.kssssssk..', '..ksssssk..', '..ksssssk..', '..kkkkkkk..', '...........'],
+  slap: ['..k.k.k...y', '.ksksksk...', '.kskskskk.y', '.ksksksksk.', 'kkkssssssky', 'kssssssssk.', '.kssssssk.y', '..ksssssk..', '..ksssssk.y', '..kkkkkkk..', '...........'],
+  push: ['.........k.', '.....k...k.', '.....kk..k.', 'kkkkkkwk.k.', 'kwwwwwwwkk.', 'kwwwwwwwwkk', 'kwwwwwwwkk.', 'kkkkkkwk.k.', '.....kk..k.', '.....k...k.', '.........k.'],
+  talk: ['.kkkkkkkkk.', 'kwwwwwwwwwk', 'kwkkwkkkwwk', 'kwwwwwwwwwk', 'kwkkkwkkwwk', 'kwwwwwwwwwk', '.kkwkkkkkk.', '..kwk......', '..kk.......', '..k........', '...........'],
+  fart: ['......ggg..', '.....gwwwg.', '.gg..gwwwg.', 'gwwgggwwwwg', 'gwwwwwwwwwg', 'gwwwwwwwwg.', '.gwwwwwwg..', '..gggggg...', '...........', '.g..g..g...', '...........'],
+  run: ['...........', '....kkk....', '...kwwwk...', 'yy.kwwwk...', '...kwwwwkk.', 'yyykwwwwwwk', '...kwwwwwwk', 'yy.kkkkkkkk', '...........', '...........', '...........'],
+  brake: ['...........', '..kkkkkkk..', '.kyyyyyyyk.', 'kyykkkkkyyk', 'kyykwwwkyyk', 'kyykkkkkyyk', 'kyykwwwkyyk', 'kyykkkkkyyk', '.kyyyyyyyk.', '..kkkkkkk..', '...........'],
 };
 const ICOL = { k: INK, w: PAPER, s: SKIN, y: YELLOW, g: GREEN };
 // a 3x5 pixel font for the little key numbers
-const DIGITS = { 1: '010110010010111', 2: '110001010100111', 3: '110001010001110', 4: '101101111001001', E: '111100110100111', B: '110101110101101', _: '000000000000111' };
+const DIGITS = { 1: '010110010010111', 2: '110001010100111', 3: '110001010001110', 4: '101101111001001', E: '111100110100111', S: '111100111001111', B: '110101110101101', _: '000000000000111' };
 function digit(g, ch, x, y, col) { const m = DIGITS[ch]; if (!m) return; g.fillStyle = col; for (let k = 0; k < 15; k++) if (m[k] === '1') g.fillRect(x + (k % 3), y + Math.floor(k / 3), 1, 1); }
 /** See-through the pixel way: a checkerboard of dark pixels. */
 function dither(g, x, y, w, h, col = NAVY) { g.fillStyle = col; for (let j = 0; j < h; j++) for (let i = (j + x + y) & 1; i < w; i += 2) g.fillRect(x + i, y + j, 1, 1); }
@@ -224,15 +232,28 @@ export class PixelOverlay {
       digit(g, String(i + 1), r.x + r.w - 6, r.y + Math.round((r.h - 5) / 2), SKY);
     });
   }
-  /** Corner buttons: small see-through squares with a pixel icon and their key; pressed ones flash yellow. */
-  drawCorner(tiles) {
+  /**
+   * The action pad (ui/actionPad.js): see-through tiles exactly where the tap
+   * areas are, a pixel icon (twice its size when there is room), a label and,
+   * for keyboards, the key. Pressed tiles flash yellow; people buttons with
+   * nobody to act on are dimmed. Rects in low-res pixels.
+   */
+  drawPad(tiles, showKeys) {
     const g = this.g;
     for (const t of tiles) {
-      if (t.on) { g.fillStyle = YELLOW; g.fillRect(t.x, t.y, t.s, t.s); } else ghost(g, t.x, t.y, t.s, t.s);
-      // the icon at twice its size: easy to read on a phone
-      const ox = t.x + Math.round((t.s - 18) / 2), oy = t.y + Math.round((t.s - 18) / 2);
-      ICONS[t.icon].forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== '.') { g.fillStyle = ICOL[ch]; g.fillRect(ox + i * 2, oy + j * 2, 2, 2); } }));
-      digit(g, t.key, t.x + 2, t.y + 2, t.on ? INK : SKY);
+      const { x, y, s } = t;
+      if (t.on) { g.fillStyle = YELLOW; g.fillRect(x, y, s, s); } else ghost(g, x, y, s, s);
+      g.globalAlpha = t.dim ? 0.55 : 1;
+      const icon = ICONS[t.icon], n = icon.length;
+      const k = s >= 32 ? 2 : 1, label = s >= 20;
+      const ox = x + Math.round((s - n * k) / 2), oy = y + Math.max(1, Math.round((s - n * k - (label ? 8 : 0)) / 2));
+      icon.forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== '.') { g.fillStyle = ICOL[ch]; g.fillRect(ox + i * k, oy + j * k, k, k); } }));
+      if (label) {
+        const sp = this.wordSprite(t.label, t.on ? INK : PAPER, !t.on);
+        g.drawImage(sp.cv, x + Math.round((s - sp.w) / 2), y + s - sp.h);
+      }
+      g.globalAlpha = 1;
+      if (showKeys) digit(g, t.key, x + 2, y + 2, t.on ? INK : SKY);
     }
   }
   /** The walk joystick as pixels: a see-through dark ring and a solid knob with a dark edge. */
@@ -265,7 +286,7 @@ export class PixelOverlay {
    * points s (CSS px); pie: the open pie menu's screen point; charge:
    * { s, f, col } or null. px: the picture's pixel size.
    */
-  draw({ W, H, px, speech, bursts, pie, charge, menu, corner, stick }) {
+  draw({ W, H, px, speech, bursts, pie, charge, menu, pad, showKeys, stick }) {
     const cw = Math.ceil(W / px), ch = Math.ceil(H / px);
     if (this.canvas.width !== cw || this.canvas.height !== ch) { this.canvas.width = cw; this.canvas.height = ch; }
     const g = this.g;
@@ -275,7 +296,7 @@ export class PixelOverlay {
 
     this.drawFloating(speech, menu?.box ?? null, L);
     if (menu) this.drawMenu(menu.rects, menu.labels, menu.hover);
-    if (corner) this.drawCorner(corner);
+    if (pad) this.drawPad(pad, showKeys);
     if (stick) this.drawStick(stick);
 
     // --- bursts: pop big, settle, fade; tilted (rotated with hard pixels)

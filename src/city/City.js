@@ -662,7 +662,10 @@ export class City {
     const rect = this.renderer.domElement.getBoundingClientRect();
     // who is under the mouse (a highlight ring, interact.js)
     const hv = input.hover && !p.riding ? this.ix.pickAt(input.hover.x, input.hover.y, this.activeCamera, rect) : null;
-    this.ix.hover = hv;
+    this.ix.mouseHover = hv;
+    // who the action buttons would act on (ui/actionPad.js): ringed too, so you can see it
+    this.ix.padTarget = p.riding ? null : this.ix.buttonTarget();
+    this.ix.hover = hv ?? this.ix.padTarget;
     this.renderer.domElement.style.cursor = hv ? 'pointer' : '';
     for (const ev of input.takeEvents?.() ?? []) this.ix.handle(ev, this.activeCamera, rect);
     const busy = this.ix.updatePlayer(dt, a); // riding, staggering or slipping
