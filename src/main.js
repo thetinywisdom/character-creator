@@ -8,6 +8,7 @@ import { createPs1Renderer } from './render/ps1.js';
 import { ASSETS, CATALOG, createAsset } from './catalog/index.js';
 import { thumbInto } from './catalog/thumbs.js';
 import { City } from './city/City.js';
+import { CHARGE } from './city/interact.js';
 import { CityInput } from './city/input.js';
 import { generateCityData } from './city/layout.js';
 import { setNightGlow, setSnowCover } from './city/atmosphere.js';
@@ -274,6 +275,8 @@ window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.view
 // ---------------------------------------------------------------------------
 const overlay = document.querySelector('#overlay');
 const pie = document.querySelector('#pie');
+const chargeEl = Object.assign(document.createElement('div'), { id: 'charge', hidden: true });
+overlay.appendChild(chargeEl);
 const bubbleEls = new Map();
 pie.addEventListener('click', (e) => {
   const b = e.target.closest('[data-n]');
@@ -325,6 +328,22 @@ function drawOverlay(c, W, H) {
     pie.style.top = `${s.y}px`;
   }
   document.querySelector('#actBtn').textContent = c.player.riding ? '⏏' : 'E';
+  // the slap charge ring round your character: green to yellow (slap), then shaking yellow to red (power slap)
+  const ch = ix.charge;
+  chargeEl.hidden = !ch;
+  if (ch) {
+    const [c1, c2] = CHARGE;
+    const second = ch.t >= c1;
+    const f = second ? Math.min(1, (ch.t - c1) / c2) : ch.t / c1;
+    const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+    const col = second ? mix([255, 210, 63], [232, 64, 47], f) : mix([90, 200, 110], [255, 210, 63], f);
+    chargeEl.style.setProperty('--col', `rgb(${col})`);
+    chargeEl.style.setProperty('--deg', `${f * 360}deg`);
+    chargeEl.classList.toggle('shake', second);
+    const s = screenOf(c.player.root.position.clone().add(new THREE.Vector3(0, (c.player.height ?? 1.7) * 0.55, 0)), cam, W, H);
+    chargeEl.style.left = `${s.x}px`;
+    chargeEl.style.top = `${s.y}px`;
+  }
   // a quick screen shake on a hit
   const sh = ix.shake ?? 0;
   canvas.style.transform = sh > 0 ? `translate(${(Math.random() - 0.5) * 14 * sh / 0.3}px, ${(Math.random() - 0.5) * 10 * sh / 0.3}px)` : '';

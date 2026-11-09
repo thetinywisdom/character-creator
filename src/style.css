@@ -251,3 +251,14 @@ html, body {
 .bubble.left::after { left: auto; right: 4px; }
 .bubble.right { transform: translate(-12%, -100%); }
 .bubble.right::after { left: 10px; margin-left: 0; }
+
+/* the slap charge ring */
+#charge {
+  position: absolute; width: 92px; height: 92px; margin: -46px 0 0 -46px; border-radius: 50%;
+  background: conic-gradient(var(--col) var(--deg), rgba(47, 50, 54, .35) 0);
+  -webkit-mask: radial-gradient(circle, transparent 54%, #000 56%); mask: radial-gradient(circle, transparent 54%, #000 56%);
+  filter: drop-shadow(0 0 2px #2f3236);
+}
+#charge[hidden] { display: none; }
+#charge.shake { animation: charge-shake .08s linear infinite; }
+@keyframes charge-shake { 25% { translate: -3px 2px; } 50% { translate: 3px -2px; } 75% { translate: -2px -3px; } }

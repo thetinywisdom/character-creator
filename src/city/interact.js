@@ -28,7 +28,11 @@ const SHOUTS = {
 };
 // short names shown on speech bubbles (a little name tag, like a comic)
 const NAMES = ['DEB', 'BIG', 'KEN', 'YUKI', 'MOMO', 'TARO', 'HANA', 'JIRO', 'AYA', 'SORA', 'RIKU', 'NANA', 'GEN', 'MAI', 'KOTA', 'EMI'];
-const BURSTS = { slap: ['SLAP!', 'WHAP!', 'SMACK!'], push: ['SHOVE!', 'WHUMP!', 'OOF!'], slip: ['WHOOPS!'], bonk: ['BONK!'] };
+// charging a slap: the first cycle (green to yellow) is a normal slap, the
+// second (yellow to red, shaking) a power slap that knocks them down
+export const CHARGE = [0.7, 0.7];
+const BURSTS = {
+  powerslap: ['SMAAACK!!', 'KA-POW!!', 'WHAM!!'], slap: ['SLAP!', 'WHAP!', 'SMACK!'], push: ['SHOVE!', 'WHUMP!', 'OOF!'], slip: ['WHOOPS!'], bonk: ['BONK!'] };
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
 const REACH = 1.7;        // m: how close a person must be to act on them
@@ -130,6 +134,12 @@ export class Interactions {
     const p = this.city.player;
     if (p.act) return; // busy slipping or staggering
     if (ev.type === 'banana') return this.dropPeel();
+    if (ev.type === 'chargeEnd') {
+      const c = this.charge;
+      this.charge = null;
+      if (c) this.go(c.t >= CHARGE[0] ? 'powerslap' : 'slap', c.ref);
+      return;
+    }
     if (ev.type === 'close') { this.closeMenu(); return; }
     if (ev.type === 'choose') { const m = this.menu; if (m) { this.menu = null; this.go(['slap', 'push', 'talk'][ev.n], m.npc); } return; }
     if (p.riding) {
@@ -143,6 +153,10 @@ export class Interactions {
       case 'click':
         if (this.menu) { const same = t?.ref === this.menu.npc; this.closeMenu(); if (same || !t) return; }
         if (t?.type === 'npc') this.openMenu(t.ref);
+        else if (t?.type === 'vehicle') this.go('ride', t.ref);
+        return;
+      case 'chargeStart':
+        if (t?.type === 'npc') { this.closeMenu(); this.charge = { t: 0, ref: t.ref }; }
         else if (t?.type === 'vehicle') this.go('ride', t.ref);
         return;
       case 'hold':
@@ -193,7 +207,7 @@ export class Interactions {
   doAction(kind, n) {
     const p = this.city.player;
     p.heading = Math.atan2(n.pos.x - p.x, n.pos.z - p.z); // turn to them
-    p.action = { kind, t: 0, dur: kind === 'talk' ? 0.01 : 0.4 };
+    p.action = { kind: kind === 'powerslap' ? 'slap' : kind, t: 0, dur: kind === 'talk' ? 0.01 : 0.4 };
     const agg = n.trait === 'Aggressive';
     if (kind === 'talk') {
       // a question and an answer that fits it (smalltalk.js), from a calm or a grumpy person
@@ -209,9 +223,11 @@ export class Interactions {
       this.say(this.midOf(n), pick(BURSTS[kind]), 'burst');
       this.shake = 0.3;
       const dx = n.pos.x - p.x, dz = n.pos.z - p.z, d = Math.hypot(dx, dz) || 1;
-      if (kind === 'push') {
+      if (kind === 'push' || kind === 'powerslap') {
         // a push knocks them over (like a car): they fall, get up shouting, then react
-        this.knockDown(n, { x: (dx / d) * 3.2, z: (dz / d) * 3.2 }, p);
+        const k = kind === 'powerslap' ? 4.2 : 3.2;
+        if (kind === 'powerslap') this.shake = 0.5;
+        this.knockDown(n, { x: (dx / d) * k, z: (dz / d) * k }, p);
         return;
       }
       this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 0.75, this.nameOf(n));
@@ -560,6 +576,7 @@ export class Interactions {
     }
     // bubbles age and go
     for (const b of this.bubbles) b.age += dt;
+    if (this.charge) this.charge.t += dt;
     this.shake = Math.max(0, (this.shake ?? 0) - dt);
     this.bubbles = this.bubbles.filter((b) => b.age < b.life);
     // the menu closes if you walk away

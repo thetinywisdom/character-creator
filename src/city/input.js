@@ -14,7 +14,7 @@ export class CityInput {
     this.joy = joystickEl;
     this.knob = joystickEl.querySelector('.knob');
     this.events = []; // interaction events for interact.js (see takeEvents)
-    const KEYS = { KeyE: 'primary', KeyF: 'slap', KeyG: 'push', KeyT: 'talk', KeyB: 'banana', Escape: 'close' };
+    const KEYS = { KeyE: 'primary', KeyF: 'chargeStart', KeyG: 'push', KeyT: 'talk', KeyB: 'banana', Escape: 'close' };
 
     window.addEventListener('keydown', (e) => {
       if (!this.active) return;
@@ -25,7 +25,10 @@ export class CityInput {
       const n = ['Digit1', 'Digit2', 'Digit3'].indexOf(e.code);
       if (n >= 0) this.events.push({ type: 'choose', n });
     });
-    window.addEventListener('keyup', (e) => this.keys.delete(e.code));
+    window.addEventListener('keyup', (e) => {
+      this.keys.delete(e.code);
+      if (e.code === 'KeyF' && this.active) this.events.push({ type: 'chargeEnd' }); // release the slap
+    });
     window.addEventListener('blur', () => this.keys.clear());
 
     // drag to look; two fingers pinch to zoom
@@ -40,16 +43,18 @@ export class CityInput {
       if (!this.active || e.target !== canvas) return;
       if (press?.timer) clearTimeout(press.timer);
       press = { id: e.pointerId, x: e.clientX, y: e.clientY, button: e.button, moved: false, fired: false };
-      if (e.button === 0) press.timer = setTimeout(() => { if (press && !press.moved) { press.fired = true; this.events.push({ type: 'hold', x: press.x, y: press.y }); } }, 450);
+      // holding still starts charging a slap (released on pointerup)
+      if (e.button === 0) press.timer = setTimeout(() => { if (press && !press.moved) { press.fired = true; press.charging = true; this.events.push({ type: 'chargeStart', x: press.x, y: press.y }); } }, 300);
     });
     canvas.addEventListener('pointermove', (e) => {
-      if (press && e.pointerId === press.id && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 8) { press.moved = true; clearTimeout(press.timer); }
+      if (press && !press.charging && e.pointerId === press.id && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 8) { press.moved = true; clearTimeout(press.timer); }
     });
     canvas.addEventListener('pointerup', (e) => {
       if (!press || e.pointerId !== press.id) return;
       clearTimeout(press.timer);
       const pr = press;
       press = null;
+      if (pr.charging) { this.events.push({ type: 'chargeEnd' }); return; }
       if (pr.moved || pr.fired || touches.size > 1) return;
       if (pr.button === 2) { this.events.push({ type: 'right', x: pr.x, y: pr.y }); return; }
       if (pr.button !== 0) return;

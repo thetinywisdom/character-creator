@@ -425,6 +425,8 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 - **Speech bubbles:** pixel font (Silkscreen), off-white with a thick ink
   border, a hard drop shadow, a tail pointing at the speaker, a small name
   tag (YOU for the player); they pop in with a bounce and fade after ~3 s.
+- **Slap charge ring:** a ring round your character filling clockwise, green
+  to yellow (a slap), then shaking, yellow to red (a power slap).
 - **Pie menu:** three round off-white buttons (icon + word) fanned above the
   person's head, popping out one after another.
 - **Target ring:** a soft butter ring on the ground under who or what you

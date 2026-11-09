@@ -29,8 +29,9 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   silhouettes (you in yellow). WASD / arrows, Shift to run, a joystick on touch screens.
 - **Interactions in the City:** face a person and press **E**, or click anyone you can see (you run
   over to them)
-  for a pie menu: 👋 Slap, ✋ Push, 💬 Talk (shortcuts F, G, T; or hold-click
-  to slap, double-click to push, right-click to talk). A push knocks people over. Calm people run away;
+  for a pie menu: 👋 Slap, ✋ Push, 💬 Talk (shortcuts F, G, T; hold F or hold-click to
+  charge a slap: release in the green-yellow ring for a slap, keep holding
+  until it shakes red for a power slap that knocks them down; double-click to push, right-click to talk). A push knocks people over. Calm people run away;
   aggressive ones get up, chase you and hit back. **B** (🍌) drops a banana peel.
   **E** (or hold-click) next to a car, the bus, the scooter or the bicycle
   gets you on; drive with WASD, E to get off.

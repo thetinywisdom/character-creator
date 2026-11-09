@@ -246,8 +246,10 @@ start; WASD drives, people hit fall over, you get out on the driver's side
 and the vehicle stays parked). Clicking a person or vehicle works at any distance you can see: you
 run over to them first (`player.goal`, cancelled by any movement key), then
 act. Input arrives as events
-(`CityInput.takeEvents()`): keys E (pie menu / ride), F slap, G push, T talk,
-B banana, 1-3 menu, Esc; mouse click = E, hold = slap (ride on a vehicle),
+(`CityInput.takeEvents()`): keys E (pie menu / ride), F slap (hold to charge: `CHARGE` cycles, green to
+yellow = slap, shaking yellow to red = power slap that knocks down; release
+to hit; events chargeStart / chargeEnd), G push, T talk,
+B banana, 1-3 menu, Esc; mouse click = E, hold = charge a slap, release to hit (ride on a vehicle),
 double click = push, right click = talk; taps work the same. A busy person
 has `n.act` ({ kind: 'wait' | 'talk' | 'retaliate' | 'chase' | 'flee' |
 'slip' }) and is moved by `ix.updateNpc`; `City.endAct(n)` puts them back
