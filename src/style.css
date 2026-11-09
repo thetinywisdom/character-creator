@@ -262,3 +262,14 @@ body[data-hud="pixel"] #joystick .knob { background: transparent; }
 #walkLab .wl-foot { display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px; }
 #walkLabBtn.on { background: var(--accent); color: #1d1d1d; }
 @media (max-width: 700px) { #walkLab { top: auto; bottom: 8px; left: 8px; right: 8px; width: auto; max-height: 45vh; } }
+
+/* --- Cat lab ------------------------------------------------------------------ */
+#catLab { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+#catLab[hidden] { display: none; }
+#catLab .cl-bar { position: absolute; top: 64px; left: 50%; translate: -50% 0; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; pointer-events: auto;
+  background: color-mix(in srgb, var(--panel) 90%, transparent); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; color: var(--text); }
+#catLab .cl-bar b { font: 700 12px 'Silkscreen', monospace; margin-right: 4px; }
+#catLab .cl-bar button { font: 600 12px system-ui, sans-serif; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: inherit; cursor: pointer; }
+#catLab .cl-bar button.on { background: var(--accent); color: #1d1d1d; border-color: var(--accent); }
+#catLab .cl-row { position: absolute; font: 700 12px 'Silkscreen', monospace; color: #f2efe8; text-shadow: 1px 0 #2f3236, -1px 0 #2f3236, 0 1px #2f3236, 0 -1px #2f3236; }
+#catLab .cl-tag { position: absolute; translate: -50% 0; white-space: nowrap; font: 400 10px 'Silkscreen', monospace; color: #f2efe8; text-shadow: 1px 0 #2f3236, -1px 0 #2f3236, 0 1px #2f3236, 0 -1px #2f3236; }

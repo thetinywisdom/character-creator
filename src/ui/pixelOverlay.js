@@ -171,7 +171,13 @@ export class PixelOverlay {
     const live = new Map();
     speech.sort((a, b) => a.b.id - b.b.id);
     for (const { b, s } of speech) {
-      const sp = this.floatSprite(b), w = sp.w, h = sp.h;
+      // earshot: full size within NEAR m of you, then smaller and fainter, gone past FAR (shouts carry further)
+      const near = b.kind === 'shout' ? 12 : 7, far = b.kind === 'shout' ? 34 : 22;
+      const f = Math.max(0, Math.min(1, ((s.dist ?? 0) - near) / (far - near)));
+      if (f >= 1) continue;
+      const k = 1 - 0.5 * f, fade = 1 - f;
+      const sp0 = this.floatSprite(b), w = Math.max(1, Math.round(sp0.w * k)), h = Math.max(1, Math.round(sp0.h * k));
+      const sp = { cv: sp0.cv, w, h };
       const ax = L(s.x), ay = L(s.y) - 2 - Math.min(3, Math.floor(b.age * 6)); // rises a touch as it appears
       let best = null;
       for (let ring = 0; ring < 14 && !best; ring++) {
@@ -183,10 +189,10 @@ export class PixelOverlay {
       best ??= { dx: 0, dy: -14 * h };
       const x0 = ax - Math.round(w / 2) + best.dx, y0 = ay + best.dy - h;
       placed.push({ x0, x1: x0 + w, y0, y1: y0 + h });
-      live.set(b.id, { who: b.anchor.who, sp, x0, y0 });
+      live.set(b.id, { who: b.anchor.who, sp, x0, y0, fade });
       const shake = b.kind === 'shout' && b.age < 0.6 ? (Math.floor(now * 30) % 2 ? 1 : -1) : 0;
-      g.globalAlpha = Math.max(0, Math.min(1, (b.life - b.age) / 0.45)); // fades out
-      g.drawImage(sp.cv, x0 + shake, y0);
+      g.globalAlpha = Math.max(0, Math.min(1, (b.life - b.age) / 0.45)) * fade; // fades out (and with distance)
+      g.drawImage(sp.cv, x0 + shake, y0, w, h);
       g.globalAlpha = 1;
     }
     // lines replaced by the same person: drift up and blink away
@@ -197,7 +203,7 @@ export class PixelOverlay {
     this.lastFloat = live;
     const dt = Math.min(0.1, now - (this.ghostT ?? now)); this.ghostT = now;
     this.ghosts = this.ghosts.filter((gh) => (gh.t += dt) < 0.5);
-    for (const gh of this.ghosts) { g.globalAlpha = Math.max(0, 1 - gh.t / 0.5); g.drawImage(gh.sp.cv, gh.x0, Math.round(gh.y0 - gh.t * 40)); }
+    for (const gh of this.ghosts) { g.globalAlpha = Math.max(0, 1 - gh.t / 0.5) * (gh.fade ?? 1); g.drawImage(gh.sp.cv, gh.x0, Math.round(gh.y0 - gh.t * 40), gh.sp.w, gh.sp.h); }
     g.globalAlpha = 1;
   }
 

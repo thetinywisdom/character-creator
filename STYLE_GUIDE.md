@@ -458,6 +458,11 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   in the City get a pixel card asking to turn sideways (Go landscape / Play
   anyway); a press flashes them
   yellow. Their tap areas are bigger than the tiles.
+- **Earshot:** speech is full size near you, then shrinks to half and fades
+  out with distance (talk gone past ~22 m, shouts ~34 m).
+- **Cute cats (proposals):** dot or sparkle eyes (ink, a paper glint), a
+  blush nose, blush cheeks, round bean or boxy loaf bodies, big paws, cheek
+  fluff; the same faceted, palette-painted look and the same rig.
 - **Speech:** floating text, no box (owner's pick, design B of
   labs/bubble-lab.html): Silkscreen 8 px on whole pixels with a 1 px ink
   outline; talk off-white, shouts yellow with a short shake; a line rises a

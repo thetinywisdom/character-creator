@@ -1,3 +1,4 @@
+import { CatLab } from './ui/catLab.js';
 import { WalkLab } from './ui/walkLab.js';
 import { PixelOverlay } from './ui/pixelOverlay.js';
 import { ComedyStage, COMEDY } from './city/comedy.js';
@@ -246,7 +247,8 @@ window.addEventListener('keydown', (e) => {
 // ---------------------------------------------------------------------------
 // Views and the app bar
 // ---------------------------------------------------------------------------
-const MODE = { catalog: 'catalog', item: 'catalog', creator: 'characters', city: 'city' };
+const MODE = { catalog: 'catalog', item: 'catalog', creator: 'characters', city: 'city', catlab: 'catlab' };
+let catLab = null; // the Cat lab (ui/catLab.js), made the first time you open it
 function setView(view) {
   state.view = view;
   const mode = MODE[view];
@@ -265,12 +267,18 @@ function setView(view) {
   if (view === 'catalog') { hint.textContent = 'Tap an item to turn it around and see its settings'; renderCatalog(); }
   if (view === 'item' || view === 'creator') { hint.textContent = 'Drag to turn · scroll or pinch to zoom'; reframe = true; }
   if (view === 'city') { ensureCity(); updateCityBar(); }
+  document.querySelector('#catLab').hidden = view !== 'catlab';
+  if (view === 'catlab') {
+    catLab ??= new CatLab({ style, renderer, el: document.querySelector('#catLab') });
+    catLab.applyLighting(lightingPresets[state.lighting]);
+    hint.textContent = 'Every cat so far, and cute proposals on the same rig';
+  }
   // snow lies on shared materials: show it only in the city
   if (city) setSnowCover(city.scene, view === 'city' && state.weather === 'Snow');
 }
 document.querySelector('#modes').onclick = (e) => {
   const m = e.target.closest('[data-mode]')?.dataset.mode;
-  if (m) setView({ catalog: 'catalog', characters: 'creator', city: 'city' }[m]);
+  if (m) setView({ catalog: 'catalog', characters: 'creator', city: 'city', catlab: 'catlab' }[m]);
 };
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.view === 'item') setView('catalog'); });
 
@@ -332,8 +340,10 @@ function drawPixelOverlay(c, W, H) {
   const speech = [], bursts = [];
   for (const b of ix.bubbles) {
     if (b.age < 0) continue;
-    const s = screenOf(b.anchor(), cam, W, H);
+    const at = b.anchor();
+    const s = screenOf(at, cam, W, H);
     if (!s.ok) continue;
+    s.dist = Math.hypot(at.x - c.player.x, at.z - c.player.z); // speech fades with distance from you
     (b.kind === 'talk' || b.kind === 'shout' ? speech : bursts).push({ b, s });
   }
   // the action menu: a row of plates over their head; the page's buttons sit on them as tap areas
@@ -416,6 +426,8 @@ function loop(time) {
     if (gait.lock != null) gait.phase = gait.lock * Math.PI * 2; // debug: freeze at a cycle fraction
     for (const p of humanCell.pivots) { const o = p.children[0]; if (o?.name === 'human') poseGait(o, gait); }
     preview(humanCell, creator.previewRect(W, H), H);
+  } else if (state.view === 'catlab' && catLab) {
+    try { catLab.render(ps1, dt, W, H); } catch (err) { if (!loop.warnedCat) { loop.warnedCat = true; console.error('cat lab', err); } }
   } else if (state.view === 'city' && city) {
     // an error in one update must never stop the picture (the city would go black)
     if (city.playerTune === undefined) walkLab.apply();

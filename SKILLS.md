@@ -128,6 +128,10 @@ src/city/knock.js      Knockables: props tagged userData.knock (catalogue KNOCKA
                        when a vehicle hits them, blink, POOF, back in 5 s
                        Knockables.cloud(at, opts): dust / stink clouds of flat camera-facing
                        squares in three shades that pop in steps (pixel puffs)
+src/ui/catLab.js       the Cat lab view (🐱 mode): every cat version so far (subjects/catVersions/,
+                       copies of cat.js from the project history) and CUTE_CATS proposals
+                       (today's cat with face / shape / pawSize / cheeks), one tile each,
+                       all on the cat rig: Still / Walk / Run / Sit / Loaf / Sleep
 src/ui/walkLab.js      the Walk lab (City, 🚶 button): walk / run styles (WALK_STYLES,
                        RUN_STYLES in anim/gait.js), sliders, walk-to-run blend, frame
                        rate, auto-walk side view; sets city.playerTune (the main
@@ -332,6 +336,8 @@ page elements; a game can draw its own. Speech is floating pixel text over the h
 each other (the oldest keeps its place, newer ones move up or aside); one
 line per person (anchors from `headOf` / `playerHead` carry `who`, a new
 line replaces the old, which drifts up fading); lines fade out at the end.
+Earshot: full size within 7 m of you (shouts 12 m), then smaller (to half)
+and fainter, gone past 22 m (shouts 34 m).
 Speech is quick: answers after 0.45 s, shouts within 0.2 s, group chat every
 0.7-1.6 s (sometimes two at once), bench chat every 0.8-2 s; the open pie menu counts as taken (and sits on top). People
 knocked down raise a dust cloud. Hits are animated by `poseActor` from

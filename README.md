@@ -29,6 +29,11 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   rotate); in the iso view people, cats and cars behind buildings show as
   silhouettes (you in yellow). WASD / arrows, Shift to run (it builds up speed), Space to jump, a joystick
   on touch screens.
+- **🐱 Cat lab:** every cat version made so far side by side, and cute
+  proposals (Mochi, Loaf, Chibi, Pudding, Tiny tux, Bao, Calico mochi) with
+  faces, round bean or loaf bodies, big paws and cheek fluff; make them all
+  walk, run, sit, loaf or sleep. Cats got new options for this: Face, Body
+  shape, Paw size, Cheek fluff.
 - **Walk lab (🚶 in the City bar):** try ways of walking and running on your
   character: walk styles (Natural, Relaxed stroll, Bouncy cartoon, Power walk,
   Sneak, Swagger, Stiff toy), run styles (Natural sprint, Jog, Cartoon wheel,

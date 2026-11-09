@@ -24,6 +24,9 @@ export const CAT_PATTERNS = ['Solid', 'Tabby', 'Calico', 'Tuxedo', 'Bicolour', '
 export const CAT_TAILS = ['Long', 'Curled', 'Bobtail'];
 export const CAT_EARS = ['Pointed', 'Tufted', 'Folded'];
 export const CAT_COATS = ['Short', 'Long'];
+// cute options (the Cat lab): a face, a body shape, big paws, cheek fluff
+export const CAT_FACES = ['None', 'Dots', 'Sparkle', 'Sleepy', 'Smile'];
+export const CAT_SHAPES = ['Natural', 'Bean', 'Loaf'];
 
 const WHITE = PALETTE['Off white'], BLUSH = PALETTE.Blush;
 const darker = (hex, k = 0.62) => snapColor(new THREE.Color(hex).multiplyScalar(k).getHex());
@@ -49,6 +52,10 @@ export const cat = {
     tailType:   { value: 'Long', options: CAT_TAILS, label: 'Tail' },
     earType:    { value: 'Pointed', options: CAT_EARS, label: 'Ears' },
     coat:       { value: 'Short', options: CAT_COATS, label: 'Coat' },
+    face:       { value: 'None', options: CAT_FACES, label: 'Face' },
+    shape:      { value: 'Natural', options: CAT_SHAPES, label: 'Body shape' },
+    pawSize:    { value: 1,    min: 0.8,  max: 2.2,  step: 0.05, label: 'Paw size' },
+    cheeks:     { value: 0,    min: 0,    max: 1,    step: 0.05, label: 'Cheek fluff' },
   },
   presets: {
     Housecat: { bodyLength: 0.34, chubbiness: 1.05, legLength: 0.13, headSize: 1.05, earSize: 1,   tailLength: 0.3 },
@@ -93,13 +100,19 @@ export const cat = {
       [0.49, 0.035, 0.74, 0.82],  // base of the neck
       [0.525, 0.058, 0.66, 0.68], // a short, thick neck
     ].map(([z, y, w, h]) => [z * L, yc + y, w * g, h * g]);
+    // cute shapes: a round bean (no waist, round ends) or a boxy loaf of bread
+    if (p.shape === 'Bean' || p.shape === 'Loaf') {
+      const box = p.shape === 'Loaf';
+      const prof = box ? [0.72, 1.06, 1.12, 1.12, 1.12, 1.12, 1.06, 0.84, 0.7] : [0.55, 0.95, 1.12, 1.18, 1.18, 1.12, 0.98, 0.8, 0.68];
+      torso.forEach((st, i) => { st[2] = prof[i] * g * (box ? 1.1 : 1); st[3] = prof[i] * g * (box ? 0.95 : 1); });
+    }
     const neck = torso[torso.length - 1];
     const R = 0.058 * hs; // skull radius
     const headPos = [0, neck[1] + R * 0.6, neck[0] + R * 0.3]; // low on a short neck
     // the neck runs on up into the skull (its last ring hidden inside), so
     // head and body flow together instead of a ball sitting on a tube
     torso.push([headPos[2] - R * 0.25, headPos[1] - R * 0.2, R * 0.85, R * 0.8]);
-    root.add(part(new THREE.Mesh(loft(torso, 10), M), 'body'));
+    root.add(part(new THREE.Mesh(loft(torso, p.shape === 'Loaf' ? 6 : 10), M), 'body'));
 
     // --- head: big, round and upright, a small muzzle at the front (cute) --
     const head = new THREE.Group();
@@ -123,6 +136,25 @@ export const cat = {
     mz.position.z = R * 0.68;
     head.add(mz);
     if (fluff > 1) root.add(part(ellipsoid(g * 0.95, [1.15, 0.85, 0.8], M, { position: [0, neck[1] - g * 0.35, neck[0] - g * 0.2], segments: 10 }), 'ruff'));
+    // cheek fluff: round puffs on both sides of the face
+    if (p.cheeks > 0) for (const sx of [-1, 1]) head.add(part(ellipsoid(R * 0.42 * (0.6 + 0.4 * p.cheeks), [1.1, 0.8, 0.8], M, { position: [sx * R * 0.78, -R * 0.3, R * 0.25], segments: 8 }), 'cheekFluff'));
+    // a face (cute cats): eyes, a little nose, blush
+    if (p.face && p.face !== 'None') {
+      const fz = (x, y) => Math.sqrt(Math.max(0, 1 - (x / R) ** 2 - (y / R) ** 2)) * R * 0.95 + R * 0.04; // on the skull's front
+      const add = (w, h, d, x, y, name, zOff = 0) => { const m = part(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M), name); m.position.set(x, y, fz(x, y) + zOff); head.add(m); return m; };
+      const ex = R * 0.36, ey = R * 0.08;
+      for (const sx of [-1, 1]) {
+        if (p.face === 'Sleepy') add(R * 0.3, R * 0.07, R * 0.08, sx * ex, ey - R * 0.04, 'eye');
+        else if (p.face === 'Smile') { add(R * 0.26, R * 0.07, R * 0.08, sx * ex, ey + R * 0.03, 'eye').rotation.z = sx * 0.35; }
+        else {
+          const big = p.face === 'Sparkle' ? 1.35 : 1;
+          add(R * 0.17 * big, R * 0.22 * big, R * 0.1, sx * ex, ey, 'eye');
+          if (p.face === 'Sparkle') add(R * 0.08, R * 0.08, R * 0.04, sx * ex - R * 0.04, ey + R * 0.07, 'eyeShine', R * 0.05);
+        }
+        if (p.face !== 'Dots') add(R * 0.22, R * 0.1, R * 0.04, sx * R * 0.55, -R * 0.2, 'blush', -R * 0.02);
+      }
+      add(R * 0.14, R * 0.09, R * 0.08, 0, -R * 0.3, 'nose', R * 0.2);
+    }
 
     // --- ears: tall triangles; tufted (a dark tip) or folded forward ----------
     for (const sx of [-1, 1]) {
@@ -171,8 +203,9 @@ export const cat = {
         low.position.set(...knee);
         const rel = (q) => [q[0] - knee[0], q[1] - knee[1], q[2] - knee[2]];
         low.add(part(taper([0, 0, 0], rel(foot), legR * (which === 'F' ? 1 : 0.95), legR * 0.78, 6), 'leg'));
-        const paw = part(new THREE.Mesh(new THREE.BoxGeometry(legR * 1.7, legR * 0.85, legR * 2.3), M), 'paw');
-        paw.position.set(...rel([0, -legH + legR * 0.42, foot[2] + legR * 0.45]));
+        const ps = p.pawSize ?? 1; // big round paws read cute
+        const paw = part(new THREE.Mesh(new THREE.BoxGeometry(legR * 1.7 * ps, legR * 0.85 * Math.sqrt(ps), legR * 2.3 * ps), M), 'paw');
+        paw.position.set(...rel([0, -legH + legR * 0.42 * Math.sqrt(ps), foot[2] + legR * 0.45 * ps]));
         low.add(paw);
         leg.add(low);
         root.add(leg);
@@ -289,7 +322,10 @@ function paintCoat(root, p, style, m) {
     if (partName === 'head') partName = P.z > m.muzzleZ ? 'muzzle' : P.y < m.headY - m.hr * 0.2 ? 'cheek' : 'head';
     const low = P.y < m.bodyY - m.bodyR * 0.45; // belly
     const tailD = P.distanceTo(m.tailBase);
-    if (partName === 'earInner') return BLUSH;
+    if (partName === 'earInner' || partName === 'blush' || partName === 'nose') return BLUSH;
+    if (partName === 'eye') return PALETTE.Ink;
+    if (partName === 'eyeShine') return WHITE;
+    if (partName === 'cheekFluff') partName = 'cheek';
     switch (pat) {
       case 'Tabby':
         if (partName === 'tuft') return dark;
