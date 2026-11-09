@@ -155,6 +155,7 @@ export class City {
       const elderly = look.bodyType === 'Grandpa' || look.bodyType === 'Grandma';
       const npc = {
         trait: look.trait ?? (rng() < 0.25 ? 'Aggressive' : 'Calm'), // how they react (interact.js)
+        name: look.name ?? null, // optional; not shown for now
         body: buildPerson(look),
         look,
         root: new THREE.Group(),

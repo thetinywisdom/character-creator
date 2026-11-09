@@ -236,7 +236,12 @@ sushi / takoyaki shops, 1.5 m out from the real storefront, found by walking
 out from the lot centre to the far edge of the building's collider; the front
 one goes in, the rest shuffle up),
 `promote` (waves and calls out outside a shop, `CALLS`), `group` (2-4 chat
-in a circle; bubbles from `GROUP_TALK` when you are within ~22 m), `kid`
+in a circle holding short scripted conversations from `CONVERSATIONS` in
+crowd.js when you are within ~22 m; `playConversation` plays lines in order,
+one per 1.2 s, quick reactions (third item `true`) 0.35 s after the line
+before, 3-5 s between conversations, none repeating until all are used; the
+`four: true` ones need a group of four; bench pairs (`benchPairs`) use the
+same, C's part going to A), `kid`
 (children running about the park), `police` (outside each koban; two more
 walk a beat). Looks fit the place: ~70% suits downtown, school uniforms by
 the school, police uniforms, aprons on promoters. Shop types of `building.shop`
@@ -333,7 +338,8 @@ right in front of a moving car gets you hit (`ix.hitByCar`: thrown, flat on
 the ground, the driver shouts). Small talk lives in `src/city/smalltalk.js` (`SMALL_TALK`: 50
 [question, calm answer, aggressive answer]; every answer fits its question).
 Change the lines there and in `SHOUTS`,
-`BURSTS` and the bubble `NAMES`. Bubble kinds: 'talk', 'shout', 'burst' ('confused' draws a '?' box, unused); `ix.shake` is a screen-shake amount the viewer applies.
+`BURSTS`. People have an optional `name` (from the look / character JSON
+`name`, else none; `ix.nameOf`), not shown for now; lines never use names. Bubble kinds: 'talk', 'shout', 'burst' ('confused' draws a '?' box, unused); `ix.shake` is a screen-shake amount the viewer applies.
 
 **Night and weather.** Night is the `Night` lighting preset (`night: true`):
 `setNightGlow(root, on)` makes lamps, signs, shop interiors and lit windows

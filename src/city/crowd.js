@@ -39,16 +39,73 @@ const CALLS = {
   familyRestaurant: ['Kids eat free!', 'Irasshaimase!'],
 };
 // what groups chat about (bubbles take turns)
-export const GROUP_TALK = [
-  'Did you see the game last night?', 'No way!', 'Haha, same.', "Let's get ramen after.", 'I am so tired today.',
-  'That new cafe is nice.', 'Really? I should go.', 'My boss is the worst.', 'Weekend plans?', 'Karaoke, obviously!',
-  'Is it going to rain?', 'I forgot my umbrella...', 'Look at that cat!', 'So cute!', 'I need a holiday.',
-  'Same here.', 'Did you finish the report?', 'Not yet... ', 'The festival is next week!', "Can't wait!",
-  'Who wants takoyaki?', 'Me! Me!', 'Shh, here he comes.', 'Wait, really?', 'I knew it!',
+/**
+ * Short scripted conversations for groups and bench pairs (owner-approved).
+ * Each line is [speaker, text] or [speaker, text, true] for a quick reaction
+ * that pops up over the line before it. Speakers: 0 = A, 1 = B, 2 = C, 3 = D.
+ * Lines are generic: no names (people have an optional `name`, unused for now).
+ * `four`: written for a group of four (only used by groups of four).
+ */
+export const CONVERSATIONS = [
+  { lines: [[0, 'Did you see the game last night?'], [1, 'No, I fell asleep.'], [0, 'We won in the last second!'], [2, 'No way!', true]] },
+  { lines: [[0, "I'm starving."], [1, 'Ramen after this?'], [2, 'Yes please!', true], [0, 'Extra garlic for me.']] },
+  { lines: [[0, 'My boss yelled at me again.'], [1, 'What did you do this time?'], [0, 'Nothing! I was just late.'], [1, '...Again?']] },
+  { lines: [[0, 'Is it going to rain?'], [1, 'The TV said sunny.'], [0, 'Then why is it so dark?'], [2, 'I forgot my umbrella...']] },
+  { lines: [[0, 'Look at that cat!'], [1, 'So cute!', true], [2, "It's always here."], [0, "I'm calling it Mochi."]] },
+  { lines: [[0, 'Any weekend plans?'], [1, 'Karaoke, obviously.'], [2, 'Again?!', true], [1, 'I have to practise!']] },
+  { lines: [[0, 'Have you tried the new cafe?'], [1, 'Not yet. Is it good?'], [0, 'The pudding is amazing.'], [1, "Okay, I'm going today."]] },
+  { lines: [[0, "I'm so tired today."], [1, 'Did you sleep at all?'], [0, 'I watched videos till 3.'], [1, 'Haha, same.', true]] },
+  { lines: [[0, 'Did you finish the report?'], [1, 'What report?'], [0, "It's due today!"], [1, 'Oh no.', true]] },
+  { lines: [[0, 'The festival is next week!'], [1, 'Are you wearing a yukata?'], [0, 'Of course!'], [2, 'I want takoyaki!', true]] },
+  { lines: [[0, 'Did you hear about our neighbour?'], [1, 'No, what happened?'], [0, 'He got a girlfriend!'], [1, 'No way!', true], [2, 'I knew it!']] },
+  { lines: [[0, "I'm on a diet now."], [1, 'Since when?'], [0, 'Since this morning.'], [2, 'Haha!', true]] },
+  { lines: [[0, "Where's my phone?!"], [1, 'In your hand.'], [0, '...Oh.']] },
+  { lines: [[0, 'Shh, here he comes.'], [1, 'Act normal.'], [2, 'I am normal!', true]] },
+  { lines: [[0, 'I need a holiday.'], [1, 'Where would you go?'], [0, 'Okinawa. Beach. Sleep.'], [1, 'Take me with you.']] },
+  { lines: [[0, 'The train was packed today.'], [1, 'Mine was late again.'], [0, "Let's just walk."], [1, "It's 10 km!"]] },
+  { lines: [[0, 'Konbini run?'], [1, 'Get me an onigiri.'], [2, 'Me too! Salmon!', true], [0, 'You owe me 300 yen.']] },
+  { lines: [[0, "It's the boss's birthday today."], [1, 'We should get a cake!'], [2, 'Strawberry shortcake!'], [0, 'Yes!', true]] },
+  { lines: [[0, "It's so hot today."], [1, "I'm melting..."], [2, 'Ice cream?'], [0, 'Ice cream!', true]] },
+  { lines: [[0, "What's your karaoke song?"], [1, 'Something by the old idols.'], [0, 'Sing it now!'], [1, 'Not here!']] },
+  // groups of four
+  { four: true, lines: [[0, 'Who ate my pudding?'], [1, 'Not me.'], [2, 'Not me either.'], [3, '...It was really good though.'], [0, 'YOU!', true]] },
+  { four: true, lines: [[0, 'Where should we eat?'], [1, 'Ramen!'], [2, 'Sushi!', true], [3, 'Curry!', true], [0, '...Konbini it is.']] },
+  { four: true, lines: [[0, 'Group photo! Everyone in!'], [1, 'Wait, my hair!'], [2, "Who's taking it?"], [3, "I'll do it!", true], [0, "You're not in it then!"]] },
+  { four: true, lines: [[0, 'I have big news.'], [1, "You're getting married?!"], [0, 'No. I got a cat.'], [2, 'Even better!', true], [3, 'Name?'], [0, 'Mochi.']] },
+  { four: true, lines: [[0, "Who's paying today?"], [1, 'Not me, I paid last time.'], [2, 'I forgot my wallet.'], [3, 'Again?!', true], [0, 'Rock, paper, scissors!']] },
+  { four: true, lines: [[0, 'Scary movie tonight?'], [1, 'Yes!'], [2, "No way, I'll cry."], [3, 'Haha, she cried last time.', true], [2, 'I did NOT!']] },
+  { four: true, lines: [[0, 'Where are we going?'], [1, 'I thought you knew.'], [2, "I'm following him."], [3, "I'm following her."], [0, "...We're lost."]] },
+  { four: true, lines: [[0, 'Summer trip, all four of us?'], [1, 'Beach!'], [2, 'Mountains!', true], [3, 'Onsen!', true], [0, 'Onsen it is!', true]] },
 ];
+const LINE_GAP = 1.2;     // s between lines of a conversation
+const REACT_GAP = 0.35;   // s for a quick reaction over the line before
+const CONVO_PAUSE = [3, 5]; // s of quiet between conversations
+
+/**
+ * Play conversations for a group of people (a chat circle, a bench pair):
+ * lines in order, each by its speaker, quick reactions overlapping; then a
+ * pause and the next conversation, none repeating until all have been used.
+ */
+export function playConversation(g, members, dt, say) {
+  if ((g.t = (g.t ?? Math.random() * 3) - dt) > 0) return;
+  if (!g.conv || g.line >= g.conv.lines.length) {
+    if (g.conv) { g.conv = null; g.t = CONVO_PAUSE[0] + Math.random() * (CONVO_PAUSE[1] - CONVO_PAUSE[0]); return; }
+    const four = members.length >= 4;
+    const pool = CONVERSATIONS.filter((c) => (four ? true : !c.four));
+    g.deck = (g.deck ?? []).filter((c) => pool.includes(c));
+    if (!g.deck.length) g.deck = pool.filter((c) => !four || c.four || Math.random() < 0.35).sort(() => Math.random() - 0.5);
+    g.conv = g.deck.pop(); g.line = 0;
+    g.cast = [...members].sort(() => Math.random() - 0.5); // who plays A, B, C, D this time
+  }
+  const [who, text] = g.conv.lines[g.line];
+  const speaker = g.cast[who % g.cast.length]; // a pair: C plays A's part
+  say(speaker, text);
+  g.line++;
+  const next = g.conv.lines[g.line];
+  g.t = next ? (next[2] ? REACT_GAP : LINE_GAP) : LINE_GAP;
+}
 const FOOD_QUEUES = new Set(['Ramen', 'udonSoba', 'sushi', 'takoyaki']);
 const PROMOTE = new Set(['Izakaya', 'Cafe', 'Bakery', 'Bookshop', 'Konbini', 'karaoke', 'pharmacy', 'kissaten', 'familyRestaurant']);
-const NAMES = ['DEB', 'BIG', 'KEN', 'YUKI', 'MOMO', 'TARO', 'HANA', 'JIRO', 'AYA', 'SORA', 'RIKU', 'NANA', 'GEN', 'MAI', 'KOTA', 'EMI'];
 
 const CULL = 48; // m: people further than this from the player are hidden
 
@@ -282,28 +339,28 @@ export class Crowd {
         n.act = { kind: 'return', x: n.role.home.x, z: n.role.home.z, t: 20 };
       }
     }
-    // people side by side on a bench chat now and then (when you are near)
-    this.benchT = (this.benchT ?? 3) - dt;
-    if (this.benchT < 0 && ix) {
-      this.benchT = 0.8 + Math.random() * 1.2;
-      const sitters = city.npcs.filter((n) => n.role?.kind === 'bench' && !n.act && n.pos && n.root.visible && Math.hypot(n.pos.x - p.x, n.pos.z - p.z) < 22);
-      const n = sitters[Math.floor(Math.random() * sitters.length)];
-      if (n) {
-        n.role.chat = 2.4;
-        ix.say(ix.headOf(n), GROUP_TALK[Math.floor(Math.random() * GROUP_TALK.length)], 'talk', 2.4, 0, ix.nameOf(n));
+    // chat circles and people side by side on benches hold short scripted
+    // conversations (CONVERSATIONS), only when you are near
+    if (ix) {
+      const say = (n, text) => { if (n.role?.kind === 'bench') n.role.chat = 2.0; ix.say(ix.headOf(n), text, 'talk', 2.4, 0, ix.nameOf(n)); };
+      if (!this.benchPairs) {
+        // people whose bench seats are side by side share a conversation
+        this.benchPairs = [];
+        const sitters = city.npcs.filter((n) => n.role?.kind === 'bench');
+        for (const n of sitters) {
+          if (this.benchPairs.some((g) => g.members.includes(n))) continue;
+          const m = sitters.find((o) => o !== n && !this.benchPairs.some((g) => g.members.includes(o)) && Math.hypot(o.role.home.x - n.role.home.x, o.role.home.z - n.role.home.z) < 1.2);
+          if (m) this.benchPairs.push({ members: [n, m] });
+        }
+      }
+      for (const g of [...(this.groups ?? []), ...this.benchPairs]) {
+        const here = g.members.filter((n) => (n.role.group === g || n.role.kind === 'bench') && !n.act && n.pos);
+        const near = here.some((n) => Math.hypot(n.pos.x - p.x, n.pos.z - p.z) < 22);
+        if (here.length < 2 || here.length < g.members.length && g.conv || !near) { g.conv = null; continue; } // interrupted: start afresh later
+        playConversation(g, here, dt, say);
       }
     }
     for (const n of city.npcs) if (n.role?.kind === 'bench' && n.role.chat > 0) n.role.chat -= dt;
-    for (const g of this.groups ?? []) {
-      if ((g.t -= dt) > 0) continue;
-      // quick back and forth, sometimes two at once, like a real chat
-      g.t = 0.7 + Math.random() * 0.9;
-      const here = g.members.filter((n) => n.role.group === g && !n.act);
-      if (here.length < 2) continue;
-      const n = Math.random() < 0.3 ? here[Math.floor(Math.random() * here.length)] : here[g.turn++ % here.length];
-      if (Math.hypot(n.pos.x - p.x, n.pos.z - p.z) > 22) continue; // only groups near you talk
-      ix?.say(ix.headOf(n), GROUP_TALK[Math.floor(Math.random() * GROUP_TALK.length)], 'talk', 2.4, 0, ix.nameOf(n), g.turn % 2 ? 'left' : 'right');
-    }
   }
 
   /** Give a person their role (called once, when the crowd is made). */

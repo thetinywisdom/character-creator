@@ -30,7 +30,6 @@ const SHOUTS = {
   Calm: ['Ow! Why?!', 'Eek!!', 'H-help!', 'Wh-what did I do?!', 'Mommy...', 'Not again!'],
 };
 // short names shown on speech bubbles (a little name tag, like a comic)
-const NAMES = ['DEB', 'BIG', 'KEN', 'YUKI', 'MOMO', 'TARO', 'HANA', 'JIRO', 'AYA', 'SORA', 'RIKU', 'NANA', 'GEN', 'MAI', 'KOTA', 'EMI'];
 // charging a slap: the first cycle (green to yellow) is a normal slap, the
 // second (yellow to red, shaking) a power slap that knocks them down
 export const CHARGE = [0.7, 0.7];
@@ -104,7 +103,8 @@ export class Interactions {
     // side: 'left' / 'right' leans a talk bubble away from the other speaker's, so they don't overlap
     this.bubbles.push({ anchor, text, kind, name, side, age: -delay, life, id: (this.nextId = (this.nextId ?? 0) + 1) }); // ids grow: older bubbles keep their place (main.js stackBubbles)
   }
-  nameOf(n) { return (n.name ??= NAMES[Math.floor(Math.random() * NAMES.length)]); }
+  /** A person's name, if they have one (optional: `name` on the person or in their look / character JSON). */
+  nameOf(n) { return n?.name ?? n?.look?.name ?? null; }
   headOf(n) { const f = () => n.root.position.clone().add(new THREE.Vector3(0, (n.look?.height ?? 1.7) + 0.3, 0)); f.who = n; return f; }
   playerHead() { const p = this.city.player; const f = () => p.root.position.clone().add(new THREE.Vector3(0, (p.height ?? 1.7) + 0.3, 0)); f.who = p; return f; }
   midOf(n) { return () => n.root.position.clone().add(new THREE.Vector3(0, (n.look?.height ?? 1.7) * 0.75, 0)); }
@@ -828,7 +828,7 @@ export class Interactions {
     if (c.rider) {
       const at = () => c.obj.position.clone().add(new THREE.Vector3(0, 1.4, 0));
       this.say(at, pick(['CRASH!', 'WHAM!', 'KRUNCH!']), 'burst');
-      this.say(at, pick(SHOUTS[Math.random() < 0.5 ? 'Aggressive' : 'Calm']), 'shout', 2.4, 0.1, pick(NAMES));
+      this.say(at, pick(SHOUTS[Math.random() < 0.5 ? 'Aggressive' : 'Calm']), 'shout', 2.4, 0.1, null);
     }
   }
   /** Fallen bikes lie down, then stand back up (traffic riders ride on). */
