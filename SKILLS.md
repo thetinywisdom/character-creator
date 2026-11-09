@@ -120,7 +120,9 @@ src/city/backs.js      dresses bare backs and sides of every building (windows, 
 src/city/variety.js    shared building variety: flatsAbove, roofTop, frontExtras, side, pick, between
 src/city/silhouette.js see-through people in the iso view (stencil + GreaterDepth copy)
 src/city/crowd.js      the crowd: roles (walk, stand, bench, ...), placed from the layout,
-                       distance culling, sitPose
+                       distance culling, sitPose, pedalPose(body, phase) (legs going round
+                       on a bicycle), leanInto(obj, heading, speed, dt) (roll into turns:
+                       you and walkers on foot, bikes and scooters with their riders)
 src/city/knock.js      Knockables: props tagged userData.knock (catalogue KNOCKABLE: planters,
                        bins, street signs, cones, bollards, sandwich boards) fly
                        when a vehicle hits them, blink, POOF, back in 5 s

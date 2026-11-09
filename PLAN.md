@@ -110,6 +110,7 @@ games), 🏙 City (walk a generated sample town to experiment).
 46. **Comic hits (owner's picks)**: slap = Windmill spin, power slap = Launch, push = Sumo send-off, falls: calm Feet over head, aggressive Faceplant (all 9 kept in `comedy.js` for other games). Slap charge = small dial over the target's head (27). Fart wind-up squat, pixel dust and stink clouds, bench sitters chat and react with hands on laps, one bubble per person.
 47. **Real pixel UI (28)**: the owner picked the all-pixel look, split under the hood into two layers a game can choose: `world` (bubbles, tails, bursts, charge; 'pixel' paints them on a low-res canvas at the picture's pixel size, 'html' keeps page elements) and `hud` (pie menu, buttons; 'pixel' or 'clean'). Hit bursts stay spiky stars in every look.
 49. **Floating speech (owner's pick, design B)**: speech is floating pixel text over heads; the speech balloons are removed (owner hates them) and the HTML world layer with them. The bubble lab is kept as `labs/bubble-lab.html` for future game design.
+50. **Pedalling and leaning**: bicycle riders (you and traffic) pedal at a rate set by their speed; you and walkers lean into turns, bikes and scooters lean into corners with their rider.
 48. **Bench sitters stay seated** for the menu, talk and slaps (a push still knocks them off).
 
 ## Next (only when the owner asks)

@@ -6,7 +6,7 @@ import { skinCharacter, vertexColorMaterial } from '../lib/skin.js';
 import { mulberry32 } from '../lib/rng.js';
 import { bicycle, car, scooter } from '../props/vehicles.js';
 import { Interactions } from './interact.js';
-import { Crowd, sitPose } from './crowd.js';
+import { Crowd, leanInto, pedalPose, sitPose } from './crowd.js';
 import { createAsset } from '../catalog/index.js';
 import { generateCityData } from './layout.js';
 import { buildCity } from './build.js';
@@ -673,6 +673,7 @@ export class City {
     }
     p.root.position.set(p.x, this.layout.groundHeight(p.x, p.z) + (p.jumpY ?? 0), p.z);
     p.root.rotation.y = p.heading;
+    p.root.rotation.z = leanInto(p, p.heading, p.speed, dt); // leaning into the turn, more when running
     }
     const ground = this.layout.groundHeight(p.x, p.z);
 
@@ -729,6 +730,7 @@ export class City {
       n.pos = pos;
       n.root.position.set(pos.x, 0, pos.z);
       n.root.rotation.y = hd;
+      n.root.rotation.z = leanInto(n, hd, pace, dt, 0.05, 0.2);
       if (this.crowd.culled(n)) continue; // far away: hidden, not animated
       stepGait(n.gait, dt, pace);
       poseGait(n.body, n.gait);
@@ -823,6 +825,11 @@ export class City {
       c.rear.x = qf.x - fx * wb; c.rear.z = qf.z - fz * wb;
       c.obj.position.set(qf.x - fx * wb / 2, -0.12, qf.z - fz * wb / 2);
       c.obj.rotation.y = Math.atan2(fx, fz);
+      if (c.bike) {
+        // bikes lean into corners; bicycle riders pedal
+        c.obj.rotation.z = leanInto(c, c.obj.rotation.y, c.speed, dt, 0.08, 0.45);
+        if (c.riderBody && c.bike === 'bicycle') pedalPose(c.riderBody, (c.pedal = (c.pedal ?? 0) + c.speed * 1.5 * dt));
+      }
       c.fx = fx; c.fz = fz; // for braking and collisions
       // it hits you if you are on foot in its way and it is still going
       if (!p.riding && c.speed > 2.5 && p.act?.kind !== 'slip' && this.ix.distToVehicle(c, p.x, p.z) < PLAYER_R + 0.05) this.ix.hitByCar(c);

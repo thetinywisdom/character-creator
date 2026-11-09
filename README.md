@@ -48,7 +48,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   mouse button for the handbrake (it stops you going straight; steer while
   holding it to drift). Vehicles pick up speed gradually, the bus slowest; E to get off. Hit a
   sandwich board, planter, parked bike or bin and it goes flying, blinks and
-  goes POOF, then pops back 5 seconds later. Crash on a bicycle or scooter
+  goes POOF, then pops back 5 seconds later. On a bicycle your legs pedal; you lean into turns on foot, on a bicycle and
+  on a scooter. Crash on a bicycle or scooter
   and you fly off; hit someone riding one and they fall over too. You can ride
   any vehicle (cars brake, but step out right in front of one and it hits
   you): parked cars and bikes, traffic, the bus; take one from someone

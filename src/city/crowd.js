@@ -62,6 +62,32 @@ function joints(body) {
   return body.userData.crowdJoints;
 }
 
+/** Feet on the pedals going round (phase in radians): thighs and knees work in turn. */
+export function pedalPose(body, phase) {
+  const j = joints(body);
+  for (const [s, off] of [['L', 0], ['R', Math.PI]]) {
+    const a = Math.sin(phase + off);
+    if (j[`leg${s}`]) j[`leg${s}`].rotation.x = -1.3 - 0.38 * a;  // the raised knee
+    if (j[`shin${s}`]) j[`shin${s}`].rotation.x = 1.2 + 0.5 * a;  // bends more as it comes up
+    if (j[`foot${s}`]) j[`foot${s}`].rotation.x = 0.15 * Math.cos(phase + off);
+  }
+}
+
+/**
+ * Lean into a turn: from how fast the heading changes (rad/s) and the speed,
+ * a roll towards the inside of the turn, eased. obj.lean keeps the state;
+ * returns the roll for rotation.z (a turn to the left rolls left).
+ */
+export function leanInto(obj, heading, speed, dt, k = 0.05, max = 0.3) {
+  if (obj.leanHeading === undefined || dt <= 0) { obj.leanHeading = heading; obj.lean ??= 0; return obj.lean; }
+  let d = heading - obj.leanHeading;
+  d = Math.atan2(Math.sin(d), Math.cos(d));
+  obj.leanHeading = heading;
+  const want = -Math.max(-max, Math.min(max, (d / dt) * speed * k));
+  obj.lean = (obj.lean ?? 0) + (want - (obj.lean ?? 0)) * Math.min(1, dt * 6);
+  return obj.lean;
+}
+
 /** Sit a person down: hips on a seat at seatY, thighs forward, hands on the lap. */
 export function sitPose(body, seatY) {
   const j = joints(body);

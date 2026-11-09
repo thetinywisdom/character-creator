@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { COMEDY } from './comedy.js';
-import { sitPose } from './crowd.js';
+import { leanInto, pedalPose, sitPose } from './crowd.js';
 import { bananaPeel } from '../props/extras.js';
 import { JOINT_NAMES } from '../anim/gait.js';
 import { SMALL_TALK } from './smalltalk.js';
@@ -554,7 +554,7 @@ export class Interactions {
       city.collide(p);
       city.stepPerson(p, dt, p.speed);
       p.root.position.set(p.x, city.layout.groundHeight(p.x, p.z), p.z);
-      p.root.rotation.y = p.heading;
+      p.root.rotation.y = p.heading; p.root.rotation.z = leanInto(p, p.heading, p.speed, dt); // leaning into the turn
       return true;
     }
     if (p.act) {
@@ -569,7 +569,7 @@ export class Interactions {
       this.poseActor(p, dt);
       const ground = city.layout.groundHeight(p.x, p.z);
       p.root.position.set(p.x, ground, p.z);
-      p.root.rotation.y = p.heading;
+      p.root.rotation.y = p.heading; p.root.rotation.z = 0;
       if (p.act.t <= 0) { p.act = null; p.body.rotation.set(0, 0, 0); p.body.position.set(0, 0, 0); }
       return true;
     }
@@ -648,6 +648,7 @@ export class Interactions {
   getOff() {
     const city = this.city, p = city.player, c = p.riding;
     if (!c) return;
+    c.obj.rotation.z = 0; p.root.rotation.z = 0; c.lean = 0; // parked upright
     c.ridden = false;
     c.parked = true; // stays where you left it
     p.riding = null;
@@ -774,7 +775,13 @@ export class Interactions {
     p.x = nx; p.z = nz; p.heading = dv.heading; p.speed = 0;
     p.root.position.set(nx, pos.y, nz);
     p.root.rotation.y = dv.heading;
-    if (c.bike) this.sitOnBike(p, c);
+    if (c.bike) {
+      // lean into the turn (bike and rider together), pedal a bicycle
+      const lean = leanInto(c, dv.heading, Math.abs(dv.speed), dt, 0.08, 0.45);
+      c.obj.rotation.z = lean; p.root.rotation.z = lean;
+      this.sitOnBike(p, c);
+      if (c.bike === 'bicycle') pedalPose(p.body, (c.pedal = (c.pedal ?? 0) + dv.speed * 1.5 * dt));
+    }
   }
 
   /** Dark tyre marks under the back wheels while drifting (the oldest fade away). */

@@ -444,6 +444,9 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   paper), filling clockwise twice: green to yellow, then yellow to red. In the
   second round it keeps growing (to about twice its size) with a slow, rising
   tremble; full red is the climax: a little bigger again and a hard shake.
+- **Leaning:** people on foot roll into a turn (up to ~0.3 rad when running,
+  0.2 for walkers); bicycles and scooters lean with their rider (up to
+  ~0.45 rad); all eased, upright again when parked.
 - **Speech:** floating text, no box (owner's pick, design B of
   labs/bubble-lab.html): Silkscreen 8 px on whole pixels with a 1 px ink
   outline; talk off-white, shouts yellow with a short shake; a line rises a
