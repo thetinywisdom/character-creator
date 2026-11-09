@@ -485,7 +485,7 @@ requestAnimationFrame(loop);
 // Debug hooks for agents and tests (see SKILLS.md, "Testing and checking")
 Object.assign(window, {
   __cc: {
-    params, state, setView, openItem, CATALOG, human, getCity: () => ensureCity(), cityInput, gait, tuneOf, THREE,
+    params, state, setView, openItem, CATALOG, human, getCity: () => ensureCity(), cityInput, gait, tuneOf,
     /** Set character settings (rules applied). */
     apply: (id, values) => { Object.assign(params[id], values); humanChanged(); reframe = true; },
     /**

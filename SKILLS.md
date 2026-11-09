@@ -533,7 +533,7 @@ No unit tests; verify by building and looking.
   `openItem(id, params)`, `CATALOG`, `human` (presets, outfits), `apply('human', values)`, `orbit(az)`,
   `gait.lock = fraction` (freeze the walk), `getCity()` (`player`, `npcs`,
   `cars`, `cats`, `cam`, `iso`, `setViewMode('iso'|'third')`, `setWeather(kind)`, `ix` interactions),
-  `newTown(seed)`, `cityInput`, `tuneOf(look)` (a walk / run tune), `THREE` (three.js, for tests: raycasts), `setUiStyle({ world, hud })`, `COMEDY` and `comedy(kind, n, t)` (show comic hit
+  `newTown(seed)`, `cityInput`, `tuneOf(look)` (a walk / run tune), `setUiStyle({ world, hud })`, `COMEDY` and `comedy(kind, n, t)` (show comic hit
   variation n of 'slap' | 'push' | 'fall' from `src/city/comedy.js` on two people
   beside you, at time t; `comedy(null)` clears it). The app bar's ☀ / 🌤 buttons switch light and weather.
 - To look at one building: `openItem('building.bank')`, or place the player
