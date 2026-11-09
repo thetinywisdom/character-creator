@@ -18,6 +18,7 @@
         <button type="button" data-mode="catlab">🐱<span> Cat lab</span></button>
       </nav>
       <span id="hint"></span>
+      <button id="paletteBtn" type="button" title="Colour palette">🎨<span> Colours</span></button>
       <span class="spacer"></span>
       <button id="newTownBtn" class="city-only" type="button" title="Generate a different town" hidden>🎲<span> New town</span></button>
       <button id="lightBtn" class="city-only" type="button" title="Time of day" hidden>☀<span> Day</span></button>
@@ -40,6 +41,7 @@
       <button type="button" data-n="2" title="Talk (3)" aria-label="Talk"></button>
       <button type="button" data-n="3" title="Fart (4)" aria-label="Fart"></button>
     </div></div>
+    <div id="palettePanel" hidden role="dialog" aria-label="Colour palette"></div>
     <div id="cityActions" hidden><!-- the action buttons (ui/actionPad.js) --></div>
     <div id="rotateHint" role="dialog" aria-label="Turn your phone sideways" hidden>
       <div class="rot-card">

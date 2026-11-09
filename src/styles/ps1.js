@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BUILDING_ROLES, roleColor, snapColor } from './palette.js';
+import { BUILDING_ROLES, paletteHex, roleColor, skinTone, snapColor } from './palette.js';
 
 // PS1 low-poly – the look of 1990s console 3D:
 //  - very few polygons (detail multiplier)
@@ -91,6 +91,7 @@ export function createPs1Style({
         else if (!vivid && environment) adjust(color, environment);
         // THE PALETTE: every colour snaps to it (skin keeps its natural tones)
         if (!map && role !== 'skin') color.setHex(snapColor(color.getHex(), { building: BUILDING_ROLES.has(role) }));
+        if (role === 'skin') color.setHex(skinTone(color.getHex())); // natural, with the palette's mood
         // Lambert = simple diffuse lighting, close to the period's Gouraud shading
         const m = new THREE.MeshLambertMaterial({ color, map });
         // lamps glow a little by day; a sign face (a texture) barely, or its text washes out (full glow at night: atmosphere.js)
@@ -141,6 +142,8 @@ export function createPs1Style({
       return { objects: [h, k, k.target], key: k, hemi: h };
     },
   };
+  // the sky is the palette's Sky swatch (palette variants: palette.js)
+  if (background === 0xbcd2e0) Object.defineProperty(style, 'background', { get: () => paletteHex('Sky'), enumerable: true });
   return style;
 }
 

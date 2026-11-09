@@ -272,3 +272,16 @@ body[data-hud="pixel"] #joystick .knob { background: transparent; }
 #catLab .cl-bar button.on { background: var(--accent); color: #1d1d1d; border-color: var(--accent); }
 #catLab .cl-row { position: absolute; font: 700 12px 'Silkscreen', monospace; color: #f2efe8; text-shadow: 1px 0 #2f3236, -1px 0 #2f3236, 0 1px #2f3236, 0 -1px #2f3236; }
 #catLab .cl-tag { position: absolute; translate: -50% 0; white-space: nowrap; font: 400 10px 'Silkscreen', monospace; color: #f2efe8; text-shadow: 1px 0 #2f3236, -1px 0 #2f3236, 0 1px #2f3236, 0 -1px #2f3236; }
+
+/* --- colour palette picker (🎨, main.js) ----------------------------------- */
+#palettePanel { position: fixed; z-index: 20; top: calc(var(--hud-h, 56px) + 6px); right: 8px; width: min(360px, calc(100vw - 16px)); max-height: calc(100vh - var(--hud-h, 56px) - 20px); overflow-y: auto;
+  background: rgba(24,24,28,.95); border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: grid; gap: 8px; }
+#palettePanel[hidden] { display: none; }
+#palettePanel h3 { margin: 2px 4px 2px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+#palettePanel button { display: grid; gap: 4px; text-align: left; padding: 10px 12px; min-height: 44px; border-radius: 10px; cursor: pointer;
+  background: #33363d; color: var(--text); border: 2px solid #4a4e57; font: inherit; }
+#palettePanel button.on { border-color: var(--accent); }
+#palettePanel b { font-size: 15px; }
+#palettePanel small { color: var(--muted); font-size: 12px; }
+#palettePanel .strip { display: flex; height: 18px; border-radius: 4px; overflow: hidden; }
+#palettePanel .strip i { flex: 1; }

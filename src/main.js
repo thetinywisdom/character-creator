@@ -22,7 +22,7 @@ import { Creator } from './creator/Creator.js';
 import { RUN_SPEED, WALK_SPEED, createGait, poseGait, setGaitEngine, stepGait, tuneOf } from './anim/gait.js';
 import { CAT_RUN_SPEED, CAT_WALK_SPEED, createCatGait, poseCat, stepCatGait } from './anim/catGait.js';
 import { saveFile, openTextFile } from './lib/saveFile.js';
-import { CLOTH_COLORS, PALETTE } from './styles/palette.js';
+import { CLOTH_COLORS, PALETTE, PALETTES, activePalette, choosePalette, swatchOf } from './styles/palette.js';
 import './style.css';
 
 // Tiny City Builder: a viewer for the foundation that games are built on.
@@ -300,6 +300,25 @@ pie.addEventListener('click', (e) => {
   const b = e.target.closest('[data-n]');
   if (b) cityInput.events.push({ type: 'choose', n: Number(b.dataset.n) });
 });
+// colour palettes (styles/palette.js PALETTES): 🎨 opens a list with a strip of
+// each palette's colours; choosing one reloads the page in those colours
+const paletteBtn = document.querySelector('#paletteBtn'), palettePanel = document.querySelector('#palettePanel');
+const STRIP = ['Sky', 'Sage', 'Moss', 'Butter', 'Apricot', 'Dusty rose', 'Powder blue', 'Lilac', 'Brick', 'Tan', 'Paper', 'Charcoal'];
+paletteBtn.innerHTML = `🎨<span> ${activePalette()}</span>`;
+palettePanel.innerHTML = `<h3>Colour palette</h3>${Object.entries(PALETTES).map(([name, p]) => `
+  <button type="button" data-palette="${name}" class="${name === activePalette() ? 'on' : ''}">
+    <b>${name}</b><small>${p.label}</small>
+    <span class="strip">${STRIP.map((n) => `<i style="background:#${swatchOf(name, n).toString(16).padStart(6, '0')}"></i>`).join('')}</span>
+  </button>`).join('')}`;
+paletteBtn.onclick = () => { palettePanel.hidden = !palettePanel.hidden; };
+palettePanel.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-palette]');
+  if (!b) return;
+  if (b.dataset.palette === activePalette()) { palettePanel.hidden = true; return; }
+  choosePalette(b.dataset.palette);
+  try { sessionStorage.setItem('tinycity.back', JSON.stringify({ view: state.view, citySeed: state.citySeed, lighting: state.lighting, weather: state.weather })); } catch { /* fine */ }
+  location.reload();
+});
 // the action buttons (ui/actionPad.js): every interaction has one; four layouts
 const actionPad = new ActionPad(document.querySelector('#cityActions'), cityInput);
 const padBtn = document.querySelector('#padBtn');
@@ -453,7 +472,11 @@ function loop(time) {
   requestAnimationFrame(loop);
 }
 
-setView('catalog');
+// back where you were after a palette change (the page reloads to rebuild everything)
+let back = null;
+try { back = JSON.parse(sessionStorage.getItem('tinycity.back') ?? 'null'); sessionStorage.removeItem('tinycity.back'); } catch { /* fine */ }
+if (back) Object.assign(state, { citySeed: back.citySeed ?? state.citySeed, lighting: back.lighting ?? state.lighting, weather: back.weather ?? state.weather });
+setView(back?.view && back.view !== 'item' ? back.view : 'catalog');
 requestAnimationFrame(loop);
 
 // Debug hooks for agents and tests (see SKILLS.md, "Testing and checking")

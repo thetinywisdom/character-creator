@@ -68,6 +68,16 @@ night glow are not snapped (they are not seen as colours).
   not by loud colour.
 - To add a colour, add it to `PALETTE` (and keep it muted or pastel).
 
+
+**Palette variants** (🎨, styles/palette.js PALETTES): the 28 swatches stay the
+structure; a variant recolours each one. Muted = the original pastels (default).
+Vibrant = saturated toy town (sky #7cc7ff, grass #4f9a3f/#7ccf6a, signs #e0505a).
+Candy pop = bright sweet pastels (lavender-grey roads). Golden hour = warm,
+orange sky. Cool city = blue-hour blues and teals. Retro 16 = a 16-colour
+console palette (skin two tones). Manga ink = greys from white to near black
+with one red (signs, brick), grey skin, a paper-white sky. Building walls keep
+the neutral building rule in every variant.
+
 ## 3. Modelling rules
 
 1. **Low-poly, built from simple shapes.** Spheres, capsules, cones, boxes. Detail

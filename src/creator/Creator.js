@@ -1,4 +1,4 @@
-import { CLOTH_COLORS, HAIR_COLORS, SKIN_TONES } from '../styles/palette.js';
+import { CLOTH_COLORS, HAIR_COLORS, SKIN_TONES, skinTone, snapColor } from '../styles/palette.js';
 
 // Character creator panel (Characters mode): every setting of the character
 // as tappable chips, colour swatches and big sliders, in four tabs. It is
@@ -141,7 +141,7 @@ export class Creator {
           if (colours) {
             b.className += ' cr-swatch';
             b.title = v;
-            b.style.background = hex(colours[v]);
+            b.style.background = hex(key === 'skin' ? skinTone(colours[v]) : snapColor(colours[v])); // as the active palette shows it
           } else b.textContent = nice(v);
           row.appendChild(b);
         }

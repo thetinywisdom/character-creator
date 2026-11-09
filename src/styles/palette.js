@@ -135,13 +135,93 @@ const PAL = Object.values(PALETTE).map((h) => [h, lab(h)]);
 const PAL_BUILDING = BUILDING_PALETTE.map((n) => [PALETTE[n], lab(PALETTE[n])]);
 const snapCache = new Map(), snapBuildingCache = new Map();
 
+// ---------------------------------------------------------------------------
+// PALETTE VARIANTS (owner: "I want more vibrant, and other variants"): a
+// palette swap, the retro way. Every colour still snaps to one of the 28
+// named swatches above; a variant then says what each swatch looks like.
+// So the whole game (buildings, clothes, signs, cars, the cat, the sky)
+// changes together and stays harmonious. Chosen with the 🎨 button (main.js),
+// kept in localStorage 'tinycity.palette'; the page reloads to rebuild.
+const N = Object.keys(PALETTE); // swatch order, as in PALETTE
+const swap = (...hexes) => Object.fromEntries(N.map((n, i) => [n, hexes[i]]));
+export const PALETTES = {
+  Muted: { label: 'Muted pastels (the original)', map: null },
+  Vibrant: {
+    label: 'Bright, saturated toy town',
+    map: swap(0xfbf8f0, 0xf1ead8, 0xd9d6cf, 0xb9b5ad, 0x8f8c87, 0x5f6773, 0x3e424a, 0x23262b,
+      0xff9fb2, 0xe0505a, 0xffb38a, 0xff8c3a, 0xffd93d, 0xe8c47a, 0x7ccf6a, 0x6fe0c0, 0x2fb3a0, 0x7cc7ff, 0x4a90e8, 0xb9a4ff, 0x8c63e0,
+      0x4f9a3f, 0x3f6fb8, 0x2b3f75, 0xc99a62, 0x8a5a3a, 0x5a3b2a, 0xc0503c),
+    skin: { saturate: 1.15 },
+  },
+  'Candy pop': {
+    label: 'Sweet, bright pastels',
+    map: swap(0xfffaf4, 0xfff1e2, 0xe6e2f0, 0xcbc6da, 0xa39fb8, 0x7c7898, 0x514c6e, 0x35304a,
+      0xffc2d6, 0xff7aa2, 0xffd0b0, 0xffad7a, 0xfff07a, 0xffe0a8, 0xb4f08c, 0xa8f5dc, 0x6ee0c8, 0xa8dcff, 0x7ab4ff, 0xdcc8ff, 0xb28cff,
+      0x7ccf6a, 0x6a8cf0, 0x4a4fa8, 0xe8b88a, 0xb07a5a, 0x7a5040, 0xe8746a),
+    skin: { saturate: 1.1, lighten: 0.08 },
+  },
+  'Golden hour': {
+    label: 'Warm sunset light',
+    map: swap(0xfff1dc, 0xf6e2c4, 0xe0cbb0, 0xc7ad90, 0xa08670, 0x75605a, 0x4f3e3e, 0x33272b,
+      0xffb8a0, 0xe0705a, 0xffc290, 0xff9a4a, 0xffd36a, 0xf0c890, 0xb8c070, 0xc8d8a0, 0x88b098, 0xffc89a, 0x8aa0c8, 0xd0a8c0, 0xa07898,
+      0x8a9a50, 0x6a7aa0, 0x4a4870, 0xd0a070, 0x9a6848, 0x6a4634, 0xc05a40),
+    skin: { saturate: 1.1, warm: 0.08 },
+  },
+  'Cool city': {
+    label: 'Blue hour: cool blues and teals',
+    map: swap(0xeef4f8, 0xdde8ee, 0xc4d2dc, 0xa6b6c4, 0x8495a6, 0x5c6c80, 0x3a4658, 0x232c3a,
+      0xf0b8c8, 0xd86a8a, 0xf0c8b0, 0xf0a070, 0xf0e08a, 0xd8d0b0, 0x8ed0a0, 0xa0f0e0, 0x40c0c0, 0x9ad8f0, 0x5aa0e0, 0xb8b0f0, 0x8070d0,
+      0x4a9a80, 0x3a78b0, 0x24406a, 0xb0a090, 0x7a6a68, 0x504850, 0xb0605a),
+  },
+  'Retro 16': {
+    label: 'A 16-colour console palette',
+    // each swatch -> the nearest of the 16 (fixed by hand where nearest looked wrong)
+    map: swap(0xfff1e8, 0xfff1e8, 0xc2c3c7, 0xc2c3c7, 0x83769c, 0x5f574f, 0x5f574f, 0x1d2b53,
+      0xffccaa, 0xff77a8, 0xffccaa, 0xffa300, 0xffec27, 0xffccaa, 0x00e436, 0xc2c3c7, 0x008751, 0x29adff, 0x29adff, 0xc2c3c7, 0x83769c,
+      0x008751, 0x29adff, 0x1d2b53, 0xab5236, 0xab5236, 0x5f574f, 0x7e2553),
+    skin: { snap: [0xffccaa, 0xab5236] },
+  },
+  'Manga ink': {
+    label: 'Black and white, one red: a printed comic',
+    map: swap(0xffffff, 0xf2f2f2, 0xdcdcdc, 0xc4c4c4, 0x9a9a9a, 0x6e6e6e, 0x444444, 0x111111,
+      0xe8e8e8, 0xd83a34, 0xe2e2e2, 0xbdbdbd, 0xf0f0f0, 0xd6d6d6, 0xcfcfcf, 0xe6e6e6, 0xaaaaaa, 0xf7f7f7, 0xb4b4b4, 0xdedede, 0x9e9e9e,
+      0x8a8a8a, 0x8c8c8c, 0x555555, 0xb0b0b0, 0x7a7a7a, 0x4e4e4e, 0xd83a34),
+    skin: { grey: 0.94 },
+  },
+};
+let ACTIVE = 'Muted';
+try { const v = localStorage.getItem('tinycity.palette'); if (PALETTES[v]) ACTIVE = v; } catch { /* no storage: Muted */ }
+const MAP = () => PALETTES[ACTIVE].map;
+const OUT = new Set(Object.values(MAP() ?? {})); // colours of the active variant (already snapped)
+const NAME_OF = new Map(Object.entries(PALETTE).map(([n, h]) => [h, n]));
+/** The palette in use ('Muted', 'Vibrant', ...). */
+export function activePalette() { return ACTIVE; }
+/** Choose a palette for the next page load (main.js reloads). */
+export function choosePalette(name) { try { localStorage.setItem('tinycity.palette', PALETTES[name] ? name : 'Muted'); } catch { /* fine */ } }
+/** What a named swatch looks like in the active palette. */
+export function paletteHex(name) { return MAP()?.[name] ?? PALETTE[name]; }
+/** A palette's swatch as it looks (for previews of palettes not in use). */
+export function swatchOf(palette, name) { return PALETTES[palette]?.map?.[name] ?? PALETTE[name]; }
+/** Skin keeps natural tones, but follows the palette's mood a little (manga: grey). */
+export function skinTone(hex) {
+  const t = PALETTES[ACTIVE].skin;
+  if (!t) return hex;
+  const c = new THREE.Color(hex);
+  if (t.grey !== undefined) { const l = c.getHSL({}).l; return new THREE.Color().setHSL(0, 0, Math.max(t.grey, l)).getHex(); }
+  if (t.snap) { const [light, dark] = t.snap; return c.getHSL({}).l > 0.55 ? light : dark; }
+  const hsl = c.getHSL({});
+  c.setHSL(hsl.h - (t.warm ?? 0) * 0.1, Math.min(1, hsl.s * (t.saturate ?? 1)), hsl.l + (1 - hsl.l) * (t.lighten ?? 0));
+  return c.getHex();
+}
+
 /**
  * The palette colour nearest to `hex` (bright colours are tamed first, so a
- * red sign becomes dusty rose, not grey). building: true snaps to the
- * building palette (greys, brick, wood browns).
+ * red sign becomes dusty rose, not grey), as the active palette variant shows
+ * it. building: true snaps to the building palette (greys, brick, wood browns).
  */
 export function snapColor(hex, { building = false } = {}) {
   hex &= 0xffffff;
+  if (OUT.has(hex)) return hex; // already a colour of the active variant (snapping twice changes nothing)
   const cache = building ? snapBuildingCache : snapCache;
   if (cache.has(hex)) return cache.get(hex);
   let [L, a, b] = lab(hex);
@@ -154,6 +234,7 @@ export function snapColor(hex, { building = false } = {}) {
     const d = (L - l2) ** 2 * 0.6 + (a - a2) ** 2 + (b - b2) ** 2;
     if (d < bd) { bd = d; best = h; }
   }
+  if (MAP()) best = MAP()[NAME_OF.get(best)] ?? best; // the variant's colour for that swatch
   cache.set(hex, best);
   return best;
 }
