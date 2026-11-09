@@ -40,6 +40,14 @@
       <button type="button" id="bananaBtn" title="Drop a banana peel (B)" aria-label="Banana peel"></button>
       <button type="button" id="actBtn" title="Menu / ride (E)" aria-label="Menu or ride"></button>
     </div>
+    <div id="rotateHint" role="dialog" aria-label="Turn your phone sideways" hidden>
+      <div class="rot-card">
+        <div class="rot-phone" aria-hidden="true"></div>
+        <p>TURN YOUR PHONE SIDEWAYS</p>
+        <small>The city plays best in landscape.</small>
+        <div class="rot-btns"><button type="button" id="rotateGo">GO LANDSCAPE</button><button type="button" id="rotateSkip">PLAY ANYWAY</button></div>
+      </div>
+    </div>
     <div id="toast" role="status" hidden></div>
     <script type="module" src="/src/main.js"></script>
   </body>

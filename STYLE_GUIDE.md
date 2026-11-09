@@ -448,10 +448,15 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   ~0.45 rad); all eased, upright again when parked.
 - **Controls (owner's pick C, "ghost plates"):** the action menu is a row of
   four plates over the person (SLAP 1, PUSH 2, TALK 3, FART 4): see-through
-  the pixel way (a checkerboard of navy pixels), no border, outlined white
+  the pixel way (three navy pixels in four) inside a solid 1 px navy edge, outlined white
   words, key numbers in sky blue; the one under the pointer goes solid navy
-  with yellow words and a 2 px yellow edge. Corner buttons are 16 px ghost
-  tiles with 9x9 pixel icons and their key in a corner; a press flashes them
+  with yellow words and a 2 px yellow edge. Corner buttons are 24 px ghost
+  tiles with the 9x9 pixel icons drawn at twice the size and their key in a
+  corner; on a phone held upright they stack in a column on the right. The
+  walk joystick is pixels too: a see-through navy ring and a paper knob with
+  a navy edge and a sky glint (yellow while you steer). Phones held upright
+  in the City get a pixel card asking to turn sideways (Go landscape / Play
+  anyway); a press flashes them
   yellow. Their tap areas are bigger than the tiles.
 - **Speech:** floating text, no box (owner's pick, design B of
   labs/bubble-lab.html): Silkscreen 8 px on whole pixels with a 1 px ink

@@ -222,3 +222,24 @@ body[data-hud="pixel"] #pie button { position: absolute; animation: none; }
 body[data-hud="pixel"] #cityActions #actBtn { background: transparent; border: 0; color: transparent; }
 body[data-hud="pixel"] #cityActions button:focus-visible, body[data-hud="pixel"] #pie button:focus-visible { outline: 2px solid #ffd23f; }
 body[data-hud="clean"] #pie button::after, body[data-hud="clean"] #cityActions button::after { content: attr(aria-label); font: 600 11px system-ui, sans-serif; color: #1d1d1d; }
+
+/* pixel HUD: the joystick is painted on the pixel layer too; the page's one is the touch area */
+body[data-hud="pixel"] #joystick { background: transparent; border-color: transparent; box-shadow: none; }
+body[data-hud="pixel"] #joystick .knob { background: transparent; }
+/* phones held upright: the corner buttons stack in a column on the right, clear of the joystick */
+@media (orientation: portrait) and (max-width: 700px) {
+  #cityActions { flex-direction: column-reverse; align-items: center; gap: 10px; }
+}
+/* "turn your phone sideways" (phones held upright, City view): a pixel card */
+#rotateHint { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: rgba(38, 43, 58, .82);
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+#rotateHint[hidden] { display: none; }
+.rot-card { display: grid; gap: 12px; justify-items: center; text-align: center; color: #f2efe8; font: 400 14px/1.4 'Silkscreen', monospace; }
+.rot-card p { margin: 0; font-size: 18px; text-shadow: 2px 2px 0 #2f3236; }
+.rot-card small { font: 400 11px 'Silkscreen', monospace; color: #9ad8f0; }
+.rot-phone { width: 36px; height: 60px; border: 4px solid #f2efe8; border-radius: 0; box-shadow: 4px 4px 0 #2f3236; animation: rot-turn 2.4s steps(1) infinite; }
+@keyframes rot-turn { 0%, 45% { rotate: 0deg; } 50%, 95% { rotate: -90deg; } }
+.rot-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.rot-btns button { font: 400 12px 'Silkscreen', monospace; padding: 10px 14px; border: 0; cursor: pointer; background: #262b3a; color: #f2efe8; box-shadow: inset 0 0 0 1px #9ad8f0; }
+.rot-btns button:first-child { background: #ffd23f; color: #2f3236; box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .rot-phone { animation: none; rotate: -90deg; } }

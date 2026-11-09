@@ -28,6 +28,25 @@ const DIGITS = { 1: '010110010010111', 2: '110001010100111', 3: '110001010001110
 function digit(g, ch, x, y, col) { const m = DIGITS[ch]; if (!m) return; g.fillStyle = col; for (let k = 0; k < 15; k++) if (m[k] === '1') g.fillRect(x + (k % 3), y + Math.floor(k / 3), 1, 1); }
 /** See-through the pixel way: a checkerboard of dark pixels. */
 function dither(g, x, y, w, h, col = NAVY) { g.fillStyle = col; for (let j = 0; j < h; j++) for (let i = (j + x + y) & 1; i < w; i += 2) g.fillRect(x + i, y + j, 1, 1); }
+/** A ghost plate: three dark pixels in four (see-through, but easy to read) inside a solid 1 px dark edge. */
+function ghost(g, x, y, w, h, col = NAVY) {
+  g.fillStyle = col;
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (((x + i) & 1) || ((y + j) & 1)) g.fillRect(x + i, y + j, 1, 1);
+  g.fillRect(x, y, w, 1); g.fillRect(x, y + h - 1, w, 1); g.fillRect(x, y, 1, h); g.fillRect(x + w - 1, y, 1, h);
+}
+/** A pixel disc (filled circle) of radius r at (cx, cy); dithered = see-through. */
+function disc(g, cx, cy, r, col, dithered = false) {
+  g.fillStyle = col;
+  for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) {
+    if (i * i + j * j > r * r + r * 0.6) continue;
+    if (dithered && !(((cx + i) & 1) || ((cy + j) & 1))) continue;
+    g.fillRect(cx + i, cy + j, 1, 1);
+  }
+}
+function ring(g, cx, cy, r, col) {
+  g.fillStyle = col;
+  for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) { const d = i * i + j * j; if (d <= r * r + r * 0.6 && d > (r - 1) * (r - 1) + (r - 1) * 0.6) g.fillRect(cx + i, cy + j, 1, 1); }
+}
 
 /** Hard edges and the UI's own inks only: what makes a sprite read as pixels. */
 function crisp(cv) {
@@ -193,7 +212,7 @@ export class PixelOverlay {
     rects.forEach((r, i) => {
       const on = i === hover;
       if (on) { g.fillStyle = NAVY; g.fillRect(r.x, r.y, r.w, r.h); g.fillStyle = YELLOW; g.fillRect(r.x, r.y, 2, r.h); }
-      else dither(g, r.x, r.y, r.w, r.h);
+      else ghost(g, r.x, r.y, r.w, r.h);
       const sp = this.wordSprite(labels[i], on ? YELLOW : PAPER, !on);
       g.drawImage(sp.cv, r.x + 5, r.y + Math.round((r.h - sp.h) / 2));
       digit(g, String(i + 1), r.x + r.w - 6, r.y + Math.round((r.h - 5) / 2), SKY);
@@ -203,11 +222,21 @@ export class PixelOverlay {
   drawCorner(tiles) {
     const g = this.g;
     for (const t of tiles) {
-      if (t.on) { g.fillStyle = YELLOW; g.fillRect(t.x, t.y, t.s, t.s); } else dither(g, t.x, t.y, t.s, t.s);
-      const ox = t.x + Math.round((t.s - 9) / 2), oy = t.y + Math.round((t.s - 9) / 2);
-      ICONS[t.icon].forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== '.') { g.fillStyle = ICOL[ch]; g.fillRect(ox + i, oy + j, 1, 1); } }));
-      digit(g, t.key, t.x + 1, t.y + 1, t.on ? INK : SKY);
+      if (t.on) { g.fillStyle = YELLOW; g.fillRect(t.x, t.y, t.s, t.s); } else ghost(g, t.x, t.y, t.s, t.s);
+      // the icon at twice its size: easy to read on a phone
+      const ox = t.x + Math.round((t.s - 18) / 2), oy = t.y + Math.round((t.s - 18) / 2);
+      ICONS[t.icon].forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== '.') { g.fillStyle = ICOL[ch]; g.fillRect(ox + i * 2, oy + j * 2, 2, 2); } }));
+      digit(g, t.key, t.x + 2, t.y + 2, t.on ? INK : SKY);
     }
+  }
+  /** The walk joystick as pixels: a see-through dark ring and a solid knob with a dark edge. */
+  drawStick(st) {
+    const g = this.g;
+    disc(g, st.cx, st.cy, st.r, NAVY, true);
+    ring(g, st.cx, st.cy, st.r, NAVY);
+    disc(g, st.kx, st.ky, st.kr + 1, NAVY);
+    disc(g, st.kx, st.ky, st.kr, st.active ? YELLOW : PAPER);
+    disc(g, st.kx - Math.round(st.kr / 3), st.ky - Math.round(st.kr / 3), Math.max(1, Math.round(st.kr / 4)), st.active ? PAPER : SKY); // a glint
   }
   /** A word in the pixel font, plain or with an ink outline (over see-through plates). */
   wordSprite(text, col, outline) {
@@ -230,7 +259,7 @@ export class PixelOverlay {
    * points s (CSS px); pie: the open pie menu's screen point; charge:
    * { s, f, col } or null. px: the picture's pixel size.
    */
-  draw({ W, H, px, speech, bursts, pie, charge, menu, corner }) {
+  draw({ W, H, px, speech, bursts, pie, charge, menu, corner, stick }) {
     const cw = Math.ceil(W / px), ch = Math.ceil(H / px);
     if (this.canvas.width !== cw || this.canvas.height !== ch) { this.canvas.width = cw; this.canvas.height = ch; }
     const g = this.g;
@@ -241,6 +270,7 @@ export class PixelOverlay {
     this.drawFloating(speech, menu?.box ?? null, L);
     if (menu) this.drawMenu(menu.rects, menu.labels, menu.hover);
     if (corner) this.drawCorner(corner);
+    if (stick) this.drawStick(stick);
 
     // --- bursts: pop big, settle, fade; tilted (rotated with hard pixels)
     for (const { b, s } of bursts) {

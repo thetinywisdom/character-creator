@@ -258,6 +258,7 @@ function setView(view) {
   joystick.hidden = !(view === 'city' && (matchMedia('(pointer: coarse)').matches || window.innerWidth < 900));
   overlay.hidden = view !== 'city';
   document.querySelector('#cityActions').hidden = view !== 'city';
+  updateRotateHint();
   controls.enabled = view === 'item' || view === 'creator';
   if (view === 'catalog') { hint.textContent = 'Tap an item to turn it around and see its settings'; renderCatalog(); }
   if (view === 'item' || view === 'creator') { hint.textContent = 'Drag to turn · scroll or pinch to zoom'; reframe = true; }
@@ -338,7 +339,7 @@ function drawPixelOverlay(c, W, H) {
   const head = ix.menu ? screenOf(ix.headOf(ix.menu.npc)(), cam, W, H) : null;
   pie.hidden = !head;
   if (head) {
-    const pw = 42, ph = 12, gap = 3, total = 4 * pw + 3 * gap;
+    const pw = 42, ph = 14, gap = 3, total = 4 * pw + 3 * gap;
     const x0 = Math.round(Math.max(2, Math.min(W / px - total - 2, head.x / px - total / 2))), y0 = Math.round(head.y / px - ph - 4);
     const rects = MENU_LABELS.map((_, i) => ({ x: x0 + i * (pw + gap), y: y0, w: pw, h: ph }));
     pie.style.left = '0px'; pie.style.top = '0px';
@@ -349,10 +350,16 @@ function drawPixelOverlay(c, W, H) {
   const riding = !!c.player.riding;
   const now = performance.now();
   const corner = pixelHud ? cornerBtns.map((cb) => {
-    const r = cb.el.getBoundingClientRect(), s = 16;
+    const r = cb.el.getBoundingClientRect(), s = 24;
     return { x: Math.round((r.left + r.width / 2) / px - s / 2), y: Math.round((r.top + r.height / 2) / px - s / 2), s, icon: cb.icon === 'use' && riding ? 'eject' : cb.icon, key: cb.key, on: now - cb.flash < 160 };
   }) : null;
-  pixelUi.draw({ W, H, px, speech, bursts, charge: chargeInfo(c, ix, cam, W, H), menu, corner });
+  // the walk joystick (touch screens), drawn at the page joystick's place
+  let stick = null;
+  if (pixelHud && !joystick.hidden) {
+    const r = joystick.getBoundingClientRect(), k = joystick.querySelector('.knob').getBoundingClientRect();
+    stick = { cx: Math.round((r.left + r.width / 2) / px), cy: Math.round((r.top + r.height / 2) / px), r: Math.round(r.width / 2 / px), kx: Math.round((k.left + k.width / 2) / px), ky: Math.round((k.top + k.height / 2) / px), kr: Math.round(k.width / 2 / px), active: cityInput.move.x !== 0 || cityInput.move.z !== 0 };
+  }
+  pixelUi.draw({ W, H, px, speech, bursts, charge: chargeInfo(c, ix, cam, W, H), menu, corner, stick });
   const sh = ix.shake ?? 0;
   canvas.style.transform = sh > 0 ? `translate(${(Math.random() - 0.5) * 14 * sh / 0.3}px, ${(Math.random() - 0.5) * 10 * sh / 0.3}px)` : '';
 }
@@ -450,3 +457,22 @@ Object.assign(window, {
 });
 
 setUiStyle(); // pixel world layer and pixel controls by default (owner's pick)
+
+// Phones held upright in the City: ask to turn sideways. Where the browser
+// allows it (fullscreen + orientation lock, mostly Android), "Go landscape"
+// locks it; iPhones cannot be rotated by a web page, so the card asks.
+function updateRotateHint() { // (a function declaration: setView calls it during start-up)
+  const el = document.querySelector('#rotateHint');
+  const phone = matchMedia('(pointer: coarse)').matches;
+  const upright = matchMedia('(orientation: portrait)').matches;
+  el.hidden = !(state.view === 'city' && phone && upright && el.dataset.skipped !== '1');
+}
+document.querySelector('#rotateGo').onclick = async () => {
+  try { await document.documentElement.requestFullscreen?.(); await screen.orientation?.lock?.('landscape'); } catch { /* not allowed here: the card stays until you turn the phone */ }
+  updateRotateHint();
+};
+document.querySelector('#rotateSkip').onclick = () => { document.querySelector('#rotateHint').dataset.skipped = '1'; updateRotateHint(); };
+matchMedia('(orientation: portrait)').addEventListener?.('change', updateRotateHint);
+window.addEventListener('resize', updateRotateHint);
+updateRotateHint();
+
