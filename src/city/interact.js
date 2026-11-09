@@ -248,7 +248,7 @@ export class Interactions {
       // a question and an answer that fits it (smalltalk.js), from a calm or a grumpy person
       const [q, calm, grumpy] = pick(SMALL_TALK);
       this.say(this.playerHead(), q, 'talk', 3.4, 0, 'YOU', 'left');
-      this.say(this.headOf(n), agg ? grumpy : calm, 'talk', 3.2, 1.1, this.nameOf(n), 'right');
+      this.say(this.headOf(n), agg ? grumpy : calm, 'talk', 3.2, 0.45, this.nameOf(n), 'right'); // answers straight back
       n.act = { kind: 'talk', t: 4.2 };
       return;
     }
@@ -269,13 +269,13 @@ export class Interactions {
       }
       if (n.role?.kind === 'bench' && !n.act?.kind?.match(/slip/)) {
         // sitting: a jump in the seat, arms up, and a shout; they stay put
-        this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 0.4, this.nameOf(n));
+        this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 0.1, this.nameOf(n));
         n.startle = 1.4;
         n.act = { kind: 'seated', t: 1.6 };
         return;
       }
       // a slap spins them round on the spot, dizzy; then they react
-      this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 0.75, this.nameOf(n));
+      this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 0.15, this.nameOf(n));
       n.root.rotation.y = Math.atan2(-dx, -dz); // facing you as it lands
       n.comic = { spec: ANIM.slap.victim, t: 0 };
       const then = agg ? { kind: 'retaliate', move: kind, t: 0.55, struck: false } : { kind: 'flee', t: 4, delay: 0 };
@@ -313,7 +313,7 @@ export class Interactions {
     c.speed *= 0.3;
     this.say(this.midOfPlayer(), pick(['WHAM!', 'BONK!', 'KRUNCH!']), 'burst');
     this.shake = 0.5;
-    this.say(() => c.obj.position.clone().add(new THREE.Vector3(0, 2, 0)), pick(['WATCH IT!', 'Are you crazy?!', 'Idiot!', 'Look where you\'re going!']), 'shout', 2.4, 0.5, 'DRIVER');
+    this.say(() => c.obj.position.clone().add(new THREE.Vector3(0, 2, 0)), pick(['WATCH IT!', 'Are you crazy?!', 'Idiot!', 'Look where you\'re going!']), 'shout', 2.4, 0.15, 'DRIVER');
     setTimeout(() => this.city.knock.cloud(new THREE.Vector3(p.x, this.city.layout.groundHeight(p.x, p.z), p.z), { n: 22, r: 0.7, life: 0.9, size: 0.2 }), 450);
   }
   midOfPlayer() { const p = this.city.player; return () => p.root.position.clone().add(new THREE.Vector3(0, (p.height ?? 1.7) * 0.75, 0)); }
@@ -340,7 +340,7 @@ export class Interactions {
     // a cloud of dust where they hit the ground
     setTimeout(() => n.pos && this.city.knock.cloud(new THREE.Vector3(n.pos.x, this.city.layout.groundHeight(n.pos.x, n.pos.z), n.pos.z), { n: 22, r: 0.7, life: 0.9, size: 0.2 }), 330);
     // the shout comes as they get back up
-    this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 1.7, this.nameOf(n));
+    this.say(this.headOf(n), pick(SHOUTS[agg ? 'Aggressive' : 'Calm']), 'shout', 2.6, 0.2, this.nameOf(n)); // yelling as they go down
   }
 
   /**
@@ -378,7 +378,7 @@ export class Interactions {
       if (Math.hypot(m.pos.x - x, m.pos.z - z) > r) continue;
       m.startle = 1.4;
       const agg = m.trait === 'Aggressive';
-      this.say(this.headOf(m), pick(lines ?? (agg ? ['HEY! WATCH IT!', 'What the h*ll?!', 'Unbelievable!'] : ['Oh my!', 'Eek!!', 'Goodness!', 'Somebody help!'])), 'shout', 2.2, 0.2 + Math.random() * 0.4, this.nameOf(m));
+      this.say(this.headOf(m), pick(lines ?? (agg ? ['HEY! WATCH IT!', 'What the h*ll?!', 'Unbelievable!'] : ['Oh my!', 'Eek!!', 'Goodness!', 'Somebody help!'])), 'shout', 2.2, Math.random() * 0.15, this.nameOf(m));
     }
   }
 
@@ -608,8 +608,8 @@ export class Interactions {
         n.act = { kind: 'slip', t: 3.6, total: 3.6, stunned: true, then: { kind: 'flee', t: 4, delay: 0 } };
         n.kb = { x: (dx / d) * 1.4, z: (dz / d) * 1.4, t: 0.3 };
         if (this.menu?.npc === n) this.menu = null;
-        this.say(this.headOf(n), pick(['EWWW!', 'GROSS!', '*cough* *cough*', 'MY EYES!', 'WHO DID THAT?!', 'X_X']), 'shout', 2.2, 0.3 + Math.random() * 0.4, this.nameOf(n));
-      }, 120 + d * 140 + (i++) * 20);
+        this.say(this.headOf(n), pick(['EWWW!', 'GROSS!', '*cough* *cough*', 'MY EYES!', 'WHO DID THAT?!', 'X_X']), 'shout', 2.2, Math.random() * 0.1, this.nameOf(n));
+      }, 60 + d * 40 + (i++) * 10);
     }
   }
 
@@ -828,7 +828,7 @@ export class Interactions {
     if (c.rider) {
       const at = () => c.obj.position.clone().add(new THREE.Vector3(0, 1.4, 0));
       this.say(at, pick(['CRASH!', 'WHAM!', 'KRUNCH!']), 'burst');
-      this.say(at, pick(SHOUTS[Math.random() < 0.5 ? 'Aggressive' : 'Calm']), 'shout', 2.4, 0.6, pick(NAMES));
+      this.say(at, pick(SHOUTS[Math.random() < 0.5 ? 'Aggressive' : 'Calm']), 'shout', 2.4, 0.1, pick(NAMES));
     }
   }
   /** Fallen bikes lie down, then stand back up (traffic riders ride on). */

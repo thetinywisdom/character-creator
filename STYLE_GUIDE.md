@@ -450,8 +450,10 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 - **Speech:** floating text, no box (owner's pick, design B of
   labs/bubble-lab.html): Silkscreen 8 px on whole pixels with a 1 px ink
   outline; talk off-white, shouts yellow with a short shake; a line rises a
-  touch as it appears, blinks out at the end; a replaced line drifts up
-  blinking. No speech balloons (owner: removed).
+  touch as it appears and fades out at the end (no blinking); a replaced
+  line drifts up fading. Timing is snappy: answers and shouts come almost at
+  once (0-0.45 s), groups chat back and forth every ~1 s, often over each
+  other. No speech balloons (owner: removed).
 - **Slap charge ring:** a ring round your character filling clockwise, green
   to yellow (a slap), then shaking, yellow to red (a power slap).
 - **Pie menu:** three round off-white buttons (icon + word) fanned above the

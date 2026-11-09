@@ -316,7 +316,9 @@ page elements; a game can draw its own. Speech is floating pixel text over the h
 1 px ink outline, talk light, shouts yellow and shaking; lines never cover
 each other (the oldest keeps its place, newer ones move up or aside); one
 line per person (anchors from `headOf` / `playerHead` carry `who`, a new
-line replaces the old, which drifts up blinking); the open pie menu counts as taken (and sits on top). People
+line replaces the old, which drifts up fading); lines fade out at the end.
+Speech is quick: answers after 0.45 s, shouts within 0.2 s, group chat every
+0.7-1.6 s (sometimes two at once), bench chat every 0.8-2 s; the open pie menu counts as taken (and sits on top). People
 knocked down raise a dust cloud. Hits are animated by `poseActor` from
 `ANIM` (attacker swing in `who.action`, slap reaction in `who.comic`, falls
 in act 'slip' with `anim` or by temper, the lying part stretched to fit the

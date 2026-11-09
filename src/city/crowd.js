@@ -285,7 +285,7 @@ export class Crowd {
     // people side by side on a bench chat now and then (when you are near)
     this.benchT = (this.benchT ?? 3) - dt;
     if (this.benchT < 0 && ix) {
-      this.benchT = 2.5 + Math.random() * 2.5;
+      this.benchT = 0.8 + Math.random() * 1.2;
       const sitters = city.npcs.filter((n) => n.role?.kind === 'bench' && !n.act && n.pos && n.root.visible && Math.hypot(n.pos.x - p.x, n.pos.z - p.z) < 22);
       const n = sitters[Math.floor(Math.random() * sitters.length)];
       if (n) {
@@ -296,10 +296,11 @@ export class Crowd {
     for (const n of city.npcs) if (n.role?.kind === 'bench' && n.role.chat > 0) n.role.chat -= dt;
     for (const g of this.groups ?? []) {
       if ((g.t -= dt) > 0) continue;
-      g.t = 2.6 + Math.random() * 2;
+      // quick back and forth, sometimes two at once, like a real chat
+      g.t = 0.7 + Math.random() * 0.9;
       const here = g.members.filter((n) => n.role.group === g && !n.act);
       if (here.length < 2) continue;
-      const n = here[g.turn++ % here.length];
+      const n = Math.random() < 0.3 ? here[Math.floor(Math.random() * here.length)] : here[g.turn++ % here.length];
       if (Math.hypot(n.pos.x - p.x, n.pos.z - p.z) > 22) continue; // only groups near you talk
       ix?.say(ix.headOf(n), GROUP_TALK[Math.floor(Math.random() * GROUP_TALK.length)], 'talk', 2.4, 0, ix.nameOf(n), g.turn % 2 ? 'left' : 'right');
     }

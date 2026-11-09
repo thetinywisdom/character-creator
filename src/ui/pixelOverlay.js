@@ -125,7 +125,7 @@ export class PixelOverlay {
    * box, outlined pixel words over the head; talk light, shouts yellow and
    * shaking. Lines never cover each other (the oldest keeps its place, newer
    * ones move up or aside). A line replaced by the same person's next one
-   * drifts up, blinking, and is gone in half a second.
+   * drifts up, fading, and is gone in half a second.
    */
   drawFloating(speech, pie, L) {
     const g = this.g;
@@ -150,9 +150,10 @@ export class PixelOverlay {
       const x0 = ax - Math.round(w / 2) + best.dx, y0 = ay + best.dy - h;
       placed.push({ x0, x1: x0 + w, y0, y1: y0 + h });
       live.set(b.id, { who: b.anchor.who, sp, x0, y0 });
-      if (b.life - b.age < 0.3 && Math.floor(now * 12) % 2) continue; // blinks out
       const shake = b.kind === 'shout' && b.age < 0.6 ? (Math.floor(now * 30) % 2 ? 1 : -1) : 0;
+      g.globalAlpha = Math.max(0, Math.min(1, (b.life - b.age) / 0.45)); // fades out
       g.drawImage(sp.cv, x0 + shake, y0);
+      g.globalAlpha = 1;
     }
     // lines replaced by the same person: drift up and blink away
     for (const [id, was] of this.lastFloat ?? []) {
@@ -162,7 +163,8 @@ export class PixelOverlay {
     this.lastFloat = live;
     const dt = Math.min(0.1, now - (this.ghostT ?? now)); this.ghostT = now;
     this.ghosts = this.ghosts.filter((gh) => (gh.t += dt) < 0.5);
-    for (const gh of this.ghosts) if (Math.floor(now * 16) % 2) g.drawImage(gh.sp.cv, gh.x0, Math.round(gh.y0 - gh.t * 40));
+    for (const gh of this.ghosts) { g.globalAlpha = Math.max(0, 1 - gh.t / 0.5); g.drawImage(gh.sp.cv, gh.x0, Math.round(gh.y0 - gh.t * 40)); }
+    g.globalAlpha = 1;
   }
 
   /**
