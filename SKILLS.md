@@ -101,6 +101,8 @@ src/catalog/index.js   ASSET CATALOGUE: every placeable item behind one interfac
 src/catalog/thumbs.js  catalogue pictures (drawn on demand, cached in the browser)
 src/subjects/          human.js (+ human/*: frame, sculpt, hair, head, tops, arms, legwear,
                        footwear, outerwear, accessories, handheld, rules), cat.js, tree.js
+scripts/publish-pages.sh  build + publish to GitHub Pages (gh-pages branch, a normal commit):
+                       https://thetinywisdom.github.io/character-creator/
 src/styles/palette.js  colours: BASE roles, CLOTH / HAIR / SKIN lists, PALETTE (28 named swatches),
                        snapColor / paletteCanvas, PALETTES (variants: each swatch's colour per
                        palette, skin mood), activePalette / choosePalette (localStorage

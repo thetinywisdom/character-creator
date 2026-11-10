@@ -1,5 +1,7 @@
 # Tiny City Builder
 
+
+**Play it:** https://thetinywisdom.github.io/character-creator/ (GitHub Pages, updated with `scripts/publish-pages.sh`).
 A foundation for games set in a small Japanese town, in a PS1 look, made with
 three.js. It is a set of reusable modules (buildings, street props, people,
 cars, cats, walking, collisions, the PS1 render step) for the owner and AI
