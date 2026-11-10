@@ -91,11 +91,23 @@ check it loads, and publish to the same artifact URL each time.
 The page declares the `downloads` capability (character JSON export goes
 through `src/lib/saveFile.js`).
 
+Branches and the public page: `main` is Tiny City Builder (keep it equal to
+the working branch: push the branch, then `git push origin <branch>:main`, a
+fast-forward). The game is also on GitHub Pages,
+https://thetinywisdom.github.io/character-creator/ : after a change run
+`scripts/publish-pages.sh` (builds, adds a normal commit to `gh-pages`).
+Publish to the Artifact, `main` and GitHub Pages after every task.
+
 ## Code map
 
 ```
 src/main.js            the viewer: three modes, render loop, debug hooks (not reused by games)
-src/render/ps1.js      createPs1Renderer: low-res render + dither + outlines (reuse this)
+src/render/ps1.js      createPs1Renderer: low-res render + dither + outlines (reuse this).
+                       Outlines read the alpha the materials write: characters 1 (strong dark
+                       edge x0.28), everything else 0.5 (styles/ps1.js sets opacity 0.5 on
+                       non-character roles, still opaque): a soft x0.8 shade fading out
+                       18-55 m. Pixel size: style.pixelScale follows the screen (short side
+                       / 300, at most the style's 2: phones 1); the UI layer always uses 2
 src/styles/            ps1.js (materials by role, lights), palette.js, lightingPresets
 src/catalog/index.js   ASSET CATALOGUE: every placeable item behind one interface
 src/catalog/thumbs.js  catalogue pictures (drawn on demand, cached in the browser)
@@ -338,7 +350,7 @@ m/s² with skid marks, steering on it drifts), people hit fall over, you get out
 and the vehicle stays parked). Whoever is under the mouse gets a bright pulsing yellow ring with a dark
 edge (`ix.hoverRing`, from `CityInput.hover` and `ix.pickAt`; the pointer
 becomes a hand; `pickAt` hits a person anywhere from feet to head, about a
-body's width either side, and a vehicle only inside its projected outline; a
+body's width either side (see the hitbox below), and a vehicle only by a ray hit on its shape; a
 click on empty ground does nothing, it never falls back to whoever you face;
 while riding only E or a click on your own vehicle gets you off); the open menu's person keeps it; the soft ring marks whoever
 you face. Clicking a person or vehicle works at any distance you can see: you

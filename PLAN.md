@@ -150,6 +150,13 @@ Ideas, not commitments. The owner decides what to add.
 ## Known issues and small ideas
 
 - The third-person camera cannot look up at tall buildings (the iso view covers this).
+- Phones have no action buttons for now (owner switched them off): on a phone
+  you can talk (tap someone) and push (double tap), but not slap, fart, jump,
+  run or drop a peel. Bring the pad back (`SHOW_PAD` in main.js) or design new
+  phone controls when the owner asks.
+- The previous project's 7 `cursor/*` branches are still on GitHub: the
+  session was not allowed to delete branches; the owner deletes them on
+  GitHub (Branches page).
 
 ## Open questions for the owner
 
