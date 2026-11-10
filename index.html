@@ -1,37 +1,58 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Base body</title>
-    <script type="module" crossorigin src="./assets/index-lATXhr74.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-C__YqXPX.css">
+    <title>Tiny City Builder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" />
+    <script type="module" crossorigin src="./assets/index-C7y5w9MR.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index--BBZvYtl.css">
   </head>
   <body>
-    <div id="app">
-      <aside id="panel">
-        <header>
-          <p class="eyebrow">Character creator</p>
-          <h1>Base body</h1>
-          <p id="stats" class="stats">Measuring…</p>
-        </header>
-        <div id="sections"></div>
-        <div class="doc">
-          <div class="doc-actions">
-            <button type="button" id="copy-json">Copy JSON</button>
-            <button type="button" id="paste-json">Paste JSON</button>
-          </div>
-          <textarea id="document" spellcheck="false" aria-label="Character JSON"></textarea>
-          <p id="document-error" class="error" hidden></p>
-        </div>
-      </aside>
-      <div id="stage">
-        <canvas id="view"></canvas>
-        <div id="view-toggle" role="group" aria-label="Camera">
-          <button type="button" id="view-orbit">Close-up</button>
-          <button type="button" id="view-city">City</button>
-        </div>
+    <canvas id="c"></canvas>
+    <header id="hud">
+      <div class="title"><strong>Tiny City Builder</strong></div>
+      <nav id="modes" aria-label="Mode">
+        <button type="button" data-mode="catalog">📦<span> Catalogue</span></button>
+        <button type="button" data-mode="characters">👤<span> Characters</span></button>
+        <button type="button" data-mode="city">🏙<span> City</span></button>
+        <button type="button" data-mode="catlab">🐱<span> Cat lab</span></button>
+      </nav>
+      <span id="hint"></span>
+      <button id="paletteBtn" type="button" title="Colour palette">🎨<span> Colours</span></button>
+      <span class="spacer"></span>
+      <button id="newTownBtn" class="city-only" type="button" title="Generate a different town" hidden>🎲<span> New town</span></button>
+      <button id="lightBtn" class="city-only" type="button" title="Time of day" hidden>☀<span> Day</span></button>
+      <button id="weatherBtn" class="city-only" type="button" title="Weather" hidden>🌤<span> Clear</span></button>
+      <button id="padBtn" class="city-only" type="button" title="Button layout" hidden>🎮<span> Buttons</span></button>
+      <button id="viewBtn" class="city-only" type="button" title="Isometric / third person (V)" hidden>🎥<span> Iso view</span></button>
+      <button id="walkLabBtn" class="city-only dev-only" type="button" title="Try ways of walking and running" hidden>🚶<span> Walk lab</span></button>
+    </header>
+    <main id="catalog" hidden>
+      <div class="cat-tabs"></div>
+      <div class="cat-grid"></div>
+    </main>
+    <aside id="item" hidden></aside>
+    <aside id="walkLab" hidden></aside>
+    <div id="catLab" hidden></div>
+    <div id="joystick" hidden><div class="knob"></div></div>
+    <div id="overlay" hidden><div id="pie" hidden>
+      <button type="button" data-n="0" title="Slap (1, hold to charge)" aria-label="Slap"></button>
+      <button type="button" data-n="1" title="Push (2)" aria-label="Push"></button>
+      <button type="button" data-n="2" title="Talk (3)" aria-label="Talk"></button>
+      <button type="button" data-n="3" title="Fart (4)" aria-label="Fart"></button>
+    </div></div>
+    <div id="palettePanel" hidden role="dialog" aria-label="Colour palette"></div>
+    <div id="cityActions" hidden><!-- the action buttons (ui/actionPad.js) --></div>
+    <div id="rotateHint" role="dialog" aria-label="Turn your phone sideways" hidden>
+      <div class="rot-card">
+        <div class="rot-phone" aria-hidden="true"></div>
+        <p>TURN YOUR PHONE SIDEWAYS</p>
+        <small>The city plays best in landscape.</small>
+        <div class="rot-btns"><button type="button" id="rotateGo">GO LANDSCAPE</button><button type="button" id="rotateSkip">PLAY ANYWAY</button></div>
       </div>
     </div>
+    <div id="toast" role="status" hidden></div>
   </body>
 </html>
