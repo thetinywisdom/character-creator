@@ -59,7 +59,7 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   and pixel speech are also in their own repo,
   [thetinywisdom/tiny-ui-kit](https://github.com/thetinywisdom/tiny-ui-kit),
   with a play demo to build a new game on.
-- **Action buttons (phones and desktop):** every interaction has its own
+- **Action buttons (switched off for now):** every interaction has its own
   button: a hand (USE: get on or off a vehicle, or talk), SLAP (hold to
   charge), PUSH, TALK, FART, JUMP, PEEL and RUN (hold; the handbrake when
   riding). They act on the person with the yellow ring (the nearest one in

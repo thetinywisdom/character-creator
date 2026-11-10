@@ -272,7 +272,8 @@ function setView(view) {
   cityInput.active = view === 'city';
   joystick.hidden = !(view === 'city' && (matchMedia('(pointer: coarse)').matches || window.innerWidth < 900));
   overlay.hidden = view !== 'city';
-  document.querySelector('#cityActions').hidden = view !== 'city';
+  document.querySelector('#cityActions').hidden = !SHOW_PAD || view !== 'city';
+  padBtn.hidden = !SHOW_PAD || view !== 'city';
   updateRotateHint();
   controls.enabled = view === 'item' || view === 'creator';
   if (view === 'catalog') { hint.textContent = 'Tap an item to turn it around and see its settings'; renderCatalog(); }
@@ -323,6 +324,8 @@ palettePanel.addEventListener('click', (e) => {
   location.reload();
 });
 // the action buttons (ui/actionPad.js): every interaction has one; four layouts
+// Off for now (owner: "remove all buttons for now"): the code stays, turn it back on here.
+const SHOW_PAD = false;
 const actionPad = new ActionPad(document.querySelector('#cityActions'), cityInput);
 const padBtn = document.querySelector('#padBtn');
 const showPadName = () => { padBtn.innerHTML = `🎮<span> Buttons: ${actionPad.layout}</span>`; };
@@ -369,7 +372,7 @@ function chargeInfo(c, ix, cam, W, H) {
   return { f, col: `rgb(${col})`, grow, shake: ch.t >= c1 + c2, s: screenOf(over, cam, W, H) };
 }
 function drawPixelOverlay(c, W, H) {
-  const ix = c.ix, cam = c.activeCamera, px = Math.max(1, Math.round(style.pixelScale || 2)), pixelHud = state.ui.hud === 'pixel';
+  const ix = c.ix, cam = c.activeCamera, px = 2 /* the UI's own pixel size: speech stays readable when the picture gets finer pixels on a phone */, pixelHud = state.ui.hud === 'pixel';
   const speech = [], bursts = [];
   for (const b of ix.bubbles) {
     if (b.age < 0) continue;
@@ -395,8 +398,9 @@ function drawPixelOverlay(c, W, H) {
   const riding = !!c.player.riding;
   const touch = matchMedia('(pointer: coarse)').matches || W < 900;
   const cs = getComputedStyle(safeProbe), safe = { l: parseFloat(cs.paddingLeft) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0 };
-  actionPad.place(W, H, { touch, riding, safe, joy: joystick.hidden ? null : joystick.getBoundingClientRect() });
-  const pad = pixelHud ? actionPad.tiles({ riding, target: ix.padTarget }).map((t) => {
+  if (SHOW_PAD) actionPad.place(W, H, { touch, riding, safe, joy: joystick.hidden ? null : joystick.getBoundingClientRect() });
+  c.padOn = SHOW_PAD;
+  const pad = pixelHud && SHOW_PAD ? actionPad.tiles({ riding, target: ix.padTarget }).map((t) => {
     const x = Math.round(t.x / px), y = Math.round(t.y / px);
     return { ...t, x, y, s: Math.round((t.x + t.s) / px) - x };
   }) : null;

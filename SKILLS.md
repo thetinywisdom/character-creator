@@ -165,6 +165,7 @@ src/ui/walkLab.js      dev tool (hidden; #dev in the address or __cc.devTools(tr
                        'New' | 'Classic' = the engine for everyone, set in main.js);
                        townspeople get a random mix, mostly Natural
 src/ui/actionPad.js    the action buttons: one per interaction, four layouts, pointerdown events
+                       (switched off: SHOW_PAD = false in main.js; the code is kept)
 src/ui/pixelOverlay.js the world layer of the interaction UI: floating speech, bursts,
                        charge dial painted on a canvas at the picture's pixel size;
                        main.js setUiStyle({ hud: 'pixel'|'clean' }) styles the controls

@@ -664,7 +664,7 @@ export class City {
     const hv = input.hover && !p.riding ? this.ix.pickAt(input.hover.x, input.hover.y, this.activeCamera, rect) : null;
     this.ix.mouseHover = hv;
     // who the action buttons would act on (ui/actionPad.js): ringed too, so you can see it
-    this.ix.padTarget = p.riding ? null : this.ix.buttonTarget();
+    this.ix.padTarget = p.riding || this.padOn === false ? null : this.ix.buttonTarget();
     this.ix.hover = hv ?? this.ix.padTarget;
     this.renderer.domElement.style.cursor = hv ? 'pointer' : '';
     for (const ev of input.takeEvents?.() ?? []) this.ix.handle(ev, this.activeCamera, rect);

@@ -36,7 +36,8 @@ export function createPs1Renderer(renderer) {
         return float(m[i]) / 16.0;
       }
       void main() {
-        vec4 c = linearToOutputTexel(texture2D(tDiffuse, vUv));
+        vec4 raw = texture2D(tDiffuse, vUv);
+        vec4 c = linearToOutputTexel(raw);
         if (outline > 0.5) {
           // Silhouette test: 1/depth changes linearly across a flat surface, so
           // its second difference is ~0 on floors and walls and large where a
@@ -48,14 +49,20 @@ export function createPs1Renderer(renderer) {
           float ic = 1.0 / d;
           float lap = abs(1.0 / l + 1.0 / r - 2.0 * ic) + abs(1.0 / dn + 1.0 / up - 2.0 * ic);
           float farthest = max(max(l, r), max(dn, up));
-          if (lap > ic * 0.12 && farthest > d * 1.02) c.rgb *= 0.28;
+          // characters (alpha 1): a strong dark edge, so tiny people read;
+          // everything else (alpha 0.5): a soft darker shade that fades out
+          // with distance, so poles, wires and windows do not turn into black lines
+          if (lap > ic * 0.12 && farthest > d * 1.02) {
+            float soft = mix(0.8, 1.0, smoothstep(18.0, 55.0, d));
+            c.rgb *= raw.a > 0.75 ? 0.28 : soft;
+          }
         }
         if (dither > 0.5) {
           vec2 px = floor(vUv * size);
           c.rgb += (bayer4(px) - 0.5) / 31.0;
           c.rgb = floor(clamp(c.rgb, 0.0, 1.0) * 31.0 + 0.5) / 31.0;
         }
-        gl_FragColor = c;
+        gl_FragColor = vec4(c.rgb, 1.0);
       }`,
     depthTest: false,
     depthWrite: false,

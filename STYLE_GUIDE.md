@@ -478,6 +478,13 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 - **Leaning:** people on foot roll into a turn (up to ~0.3 rad when running,
   0.2 for walkers), inside the body so their feet stay on the ground; bicycles and scooters lean with their rider (up to
   ~0.45 rad); all eased, upright again when parked.
+- **Outlines:** 1 picture pixel; characters (people, cats) get a strong dark
+  edge (x0.28), everything else a soft darker shade (x0.8) that fades out
+  between ~18 and ~55 m, so poles, wires and windows never read as black lines.
+- **Pixel size follows the screen:** phones (short side under 600 px) draw at 1
+  screen px per picture pixel, desktops at 2; the UI layer (speech, bursts)
+  always uses 2.
+- **Action buttons are switched off for now** (owner); the joystick stays.
 - **Controls (owner's pick C, "ghost plates"):** the action menu is a row of
   four plates over the person (SLAP 1, PUSH 2, TALK 3, FART 4): see-through
   the pixel way (three navy pixels in four) inside a solid 1 px navy edge, outlined white

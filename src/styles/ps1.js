@@ -66,7 +66,16 @@ export function createPs1Style({
     },
     setOption() { /* read live from options */ },
 
-    get pixelScale() { return this.options.pixelSize.value; },
+    /**
+     * Screen px per picture pixel. Small screens get finer pixels: a phone
+     * (short side under 600 px) draws at 1, so the picture keeps ~400 rows
+     * instead of ~200 (owner: on a phone everything was black lines).
+     */
+    get pixelScale() {
+      const base = this.options.pixelSize.value;
+      const short = typeof window === 'undefined' ? 1000 : Math.min(window.innerWidth, window.innerHeight);
+      return Math.max(1, Math.min(base, Math.floor(short / 300)));
+    },
     get outline() { return this.options.outline.value; },
     get dither() { return this.options.dither.value; },
 
@@ -112,6 +121,9 @@ export function createPs1Style({
         m.stencilRef = 0;
         m.stencilZPass = THREE.ReplaceStencilOp;
         m.userData.role = role;
+        // alpha as a flag for the outline pass (render/ps1.js): characters 1,
+        // everything else 0.5 (not blended: the material stays opaque)
+        if (!CHARACTER_ROLES.has(role)) m.opacity = 0.5;
         cache.set(key, m);
       }
       return cache.get(key);
