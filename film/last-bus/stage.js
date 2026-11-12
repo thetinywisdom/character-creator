@@ -36,9 +36,9 @@ const DRY = { x: GP.x, z: GP.z, r: 1.15 };
 // Umbrella tilt and the look toward the bus. Signs get flipped after a still
 // if a joint turns the wrong way; positive head yaw faces his left (the bus).
 const HEAD_YAW = 1.05;
-const ARM_Z = 0.48;
-const ARM_X = -0.32;
-const UMBRELLA_Z = -0.7;
+const ARM_Z = 0.9;
+const ARM_X = -0.2;
+const UMBRELLA_Z = -0.85;
 
 function beam(length, radius, color, opacity, forward) {
   const geo = new THREE.ConeGeometry(radius, length, 12, 1, true);
@@ -60,18 +60,17 @@ function splashAmount(t) {
 }
 
 function screenRainOpacity(t) {
-  // The kitten's face stays dry: no screen-space veil on the close-up,
-  // and almost none once the crane has found him.
+  // Thin veil. The kitten close-up has none of it, so the face stays dry.
   if (t >= 25.6 && t < 30.05) return 0;
-  if (t >= 21.0 && t < 26.0) return 0.04;
-  return 0.2;
+  if (t >= 21.0 && t < 26.0) return 0.015;
+  return 0.055;
 }
 
 function rimRain(n) {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 2 * 3), 3));
   const lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
-    color: 0xd5e2f2, transparent: true, opacity: 0.85,
+    color: 0xd5e2f2, transparent: true, opacity: 0.32,
   }));
   lines.frustumCulled = false;
   lines.userData.noShadow = true;
@@ -153,14 +152,14 @@ function placeBuilding(scene, built, x, z, rotY, rng) {
 
 export function buildLastBus() {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x070b16);
-  // Light enough that a bus still reads 80 m down the street.
-  scene.fog = new THREE.FogExp2(0x070b16, 0.0045);
+  scene.background = new THREE.Color(0x243552);
+  scene.fog = new THREE.FogExp2(0x243552, 0.0024);
 
-  const roadMat = style.material('road', 0x2a2e34);
-  roadMat.color.multiplyScalar(0.55);
-  const walkMat = style.material('sidewalk', 0xb3b0a8);
-  walkMat.color.multiplyScalar(0.72);
+  const roadMat = style.material('road', 0x5a6a80).clone();
+  roadMat.emissive = new THREE.Color(0x3a5270);
+  roadMat.emissiveIntensity = 0.7;
+  const walkMat = style.material('sidewalk', 0xc4c0b6);
+  walkMat.color.multiplyScalar(0.95);
   const curbMat = style.material('concrete', 0x918f8a);
 
   // Near sidewalk (the stop), far sidewalk, and the wet road between them.
@@ -224,8 +223,10 @@ export function buildLastBus() {
   const f = measure(gpParams);
   f.mats = { trim: style.material('accent', 0x2a2a30) };
   const stick = buildHandItem(f, 'Walking stick', style.material('cloth', CLOTH_COLORS.Brown), new THREE.Vector3(), new THREE.Vector3(0, -1, 0), style);
-  stick.position.set(0.18, 0.52, 4.62);
-  stick.rotation.set(0.55, 0.2, 0.85);
+  // Flat on the road side of the right shoe. The kitten stays on the other
+  // side, so the shaft does not cross the loaf in the reveal.
+  stick.position.set(GP.x + 0.02, 0.22, GP.z - 0.32);
+  stick.rotation.set(1.35, 0.4, 0.15);
   scene.add(stick);
   stick.updateMatrixWorld(true);
   const stickBox = new THREE.Box3().setFromObject(stick);
@@ -247,8 +248,11 @@ export function buildLastBus() {
   const kitten = new THREE.Group();
   kitten.add(kittenInner);
   kitten.scale.setScalar(cat.exaggeration ?? 1.5);
-  // Between his shoes, street side, so the wide shots don't give the reveal away.
-  kitten.position.set(GP.x + 0.05, 0, GP.z - 0.08);
+  // His left side, beside the shoes, under the umbrella. Clear of both feet
+  // and of the stick, which stays on his right.
+  // Tucked against his left shoe, under the umbrella's rim. Farther out
+  // and he reads as a second figure beside the shelter, not under it.
+  kitten.position.set(GP.x - 0.62, 0, GP.z + 0.14);
   kitten.rotation.y = Math.PI; // sleepy face toward the road
   scene.add(kitten);
   const gait = { phase: 0, amount: 0, run: 0, t: 0, pose: 'loaf', poseW: 1 };
@@ -266,37 +270,91 @@ export function buildLastBus() {
   bus.position.y = ROAD_Y;
   scene.add(bus);
   const L2 = 10.5 / 2;
+  const headSpots = [];
+  const headCones = [];
   for (const sx of [-1, 1]) {
-    const cone = beam(18, 1.9, 0xfff3d2, 0.07, true);
-    cone.position.set(sx * 0.9, 0.78, L2 + 0.05);
+    const cone = beam(16, 2.1, 0xfff6d8, 0.055, true);
+    cone.position.set(sx * 0.9, 0.82, L2 + 0.05);
     bus.add(cone);
-    const spot = new THREE.SpotLight(0xfff1cc, 110, 55, 0.72, 0.6, 2);
-    spot.position.set(sx * 0.9, 0.78, L2 + 0.05);
-    spot.target.position.set(sx * 0.15, 0.15, L2 + 16);
+    headCones.push(cone);
+    const lampMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.28, 10, 8),
+      new THREE.MeshBasicMaterial({ color: 0xfff4d2 }),
+    );
+    lampMesh.position.set(sx * 0.9, 0.78, L2 + 0.2);
+    lampMesh.userData.noShadow = true;
+    bus.add(lampMesh);
+    const spot = new THREE.SpotLight(0xfff1cc, 70, 48, 0.7, 0.55, 2);
+    spot.position.set(sx * 0.9, 0.82, L2 + 0.05);
+    spot.target.position.set(sx * 0.2, -0.4, L2 + 22);
     spot.userData.noShadow = true;
     bus.add(spot, spot.target);
-    const tail = new THREE.PointLight(0xff2a2a, 6, 10, 2);
+    headSpots.push(spot);
+    // A wet streak of the beam on the asphalt, lying in the road.
+    const streak = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.45, 6),
+      new THREE.MeshBasicMaterial({
+        color: 0xfff0c4, transparent: true, opacity: 0.09, depthWrite: false,
+        blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      }),
+    );
+    streak.rotation.x = -Math.PI / 2;
+    streak.position.set(sx * 0.85, 0.04, L2 + 3.4);
+    streak.userData.noShadow = true;
+    bus.add(streak);
+    const tail = new THREE.PointLight(0xff2a2a, 10, 14, 2);
     tail.position.set(sx * 1.05, 1.05, -L2 - 0.05);
     bus.add(tail);
-    const tailCone = beam(2.4, 0.42, 0xff3028, 0.22, false);
+    const tailCone = beam(2.8, 0.5, 0xff3028, 0.28, false);
     tailCone.position.set(sx * 1.05, 1.02, -L2 - 0.08);
     bus.add(tailCone);
   }
 
-  const lampSpot = new THREE.SpotLight(0xffa45a, 85, 16, 1.05, 0.5, 2);
+  const lampSpot = new THREE.SpotLight(0xffb06a, 55, 16, 1.05, 0.5, 2);
   lampSpot.position.copy(head);
-  lampSpot.target.position.set(GP.x, 0.4, GP.z);
+  lampSpot.target.position.set(GP.x, 0.5, GP.z);
   scene.add(lampSpot, lampSpot.target);
-  const lampPoint = new THREE.PointLight(0xffb060, 8, 12, 2);
+  const lampPoint = new THREE.PointLight(0xffc080, 7, 12, 2);
   lampPoint.position.copy(head);
   scene.add(lampPoint);
 
+  // Cool fill so shadows keep detail. No shadow of its own.
+  const roadFill = new THREE.PointLight(0xd5e2f4, 16, 40, 2);
+  roadFill.position.set(2, 6.5, 0);
+  roadFill.userData.noShadow = true;
+  scene.add(roadFill);
+  const fill = new THREE.DirectionalLight(0xc5d4ee, 0.85);
+  fill.position.set(-4, 8, -6);
+  fill.userData.noShadow = true;
+  scene.add(fill);
+
+  // A small warm key for the kitten's face. Quiet until the close-up.
+  const shoeFill = new THREE.PointLight(0xffc9a0, 0.35, 2.4, 2);
+  shoeFill.position.set(GP.x + 0.15, 0.9, GP.z - 0.35);
+  shoeFill.userData.noShadow = true;
+  scene.add(shoeFill);
+  const faceKey = new THREE.PointLight(0xffd8b0, 0.15, 1.6, 2);
+  faceKey.position.set(GP.x - 0.9, 0.55, GP.z - 0.15);
+  faceKey.userData.noShadow = true;
+  scene.add(faceKey);
+
   const puddleZ = BUS_Z - 1.1; // the wheels on the camera side of the pass
-  const puddle = new THREE.Mesh(new THREE.CircleGeometry(1.15, 18), style.material('road', 0x141820));
+  const puddle = new THREE.Mesh(new THREE.CircleGeometry(1.15, 18), style.material('road', 0x6a788c));
   puddle.rotation.x = -Math.PI / 2;
-  puddle.scale.set(1.55, 1.05, 1);
-  puddle.position.set(PUDDLE_X, ROAD_Y + 0.025, puddleZ);
+  puddle.scale.set(1.7, 1.15, 1);
+  puddle.position.set(PUDDLE_X, ROAD_Y + 0.03, puddleZ);
   scene.add(puddle);
+  const puddleShine = new THREE.Mesh(
+    new THREE.CircleGeometry(1.05, 18),
+    new THREE.MeshBasicMaterial({
+      color: 0xffe6c2, transparent: true, opacity: 0.12, depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }),
+  );
+  puddleShine.rotation.x = -Math.PI / 2;
+  puddleShine.position.set(PUDDLE_X, ROAD_Y + 0.04, puddleZ);
+  puddleShine.userData.noShadow = true;
+  scene.add(puddleShine);
   const splash = buildSplash();
   splash.position.set(PUDDLE_X, ROAD_Y + 0.02, puddleZ);
   scene.add(splash);
@@ -304,11 +362,11 @@ export function buildLastBus() {
   const rain = createRain({
     seed: 11,
     dry: DRY,
-    wide: { count: 900, region: [-50, 70, -14, 16] },
-    local: { count: 2600, region: [-8, 9, -1, 9] },
+    wide: { count: 280, region: [-50, 70, -14, 16] },
+    local: { count: 640, region: [-8, 9, -1, 9] },
   });
   scene.add(rain.object);
-  const rim = rimRain(80);
+  const rim = rimRain(22);
   scene.add(rim);
 
   const lights = style.createLights();
@@ -318,10 +376,10 @@ export function buildLastBus() {
   lights.key.color.set(0xfff6e6).multiply(new THREE.Color(preset.keyColor));
   // Absolute levels. The weather preset's fraction, times a spot in candela,
   // either crushed the street or clipped it white (no filmic tonemap here).
-  lights.key.intensity = 1.15;
-  lights.hemi.intensity = 1.05;
-  lights.hemi.color.set(0x93a8d4);
-  lights.hemi.groundColor.set(0x241c14);
+  lights.key.intensity = 1.85;
+  lights.hemi.intensity = 1.65;
+  lights.hemi.color.set(0xb7c6e4);
+  lights.hemi.groundColor.set(0x4a3a2c);
   // From the open side of the street, so the bus flank the pass-by camera sees is lit.
   const moon = new THREE.Vector3(0.2, 1, -0.65).normalize();
   lights.key.shadow.mapSize.set(512, 512);
@@ -348,12 +406,13 @@ export function buildLastBus() {
     joints.head.rotation.y += HEAD_YAW * turn;
     joints.head.rotation.x += -0.14 * turn;
     // Shot 6: the umbrella tips toward the kitten and stays there.
-    const tilt = smoothstep(18.4, 21.0, t);
-    joints.armR.rotation.z = joints.armR.userData.filmBaseZ + ARM_Z * tilt;
-    joints.armR.rotation.x += ARM_X * tilt;
+    const tilt = smoothstep(18.0, 21.2, t);
+    // Negative z swings the right arm across toward his left, where the kitten is.
+    joints.armR.rotation.z = joints.armR.userData.filmBaseZ - 1.45 * tilt;
+    joints.armR.rotation.x += -0.25 * tilt;
     joints.handItem.quaternion.copy(joints.handItem.userData.filmBaseQ);
-    joints.handItem.rotateZ(UMBRELLA_Z * tilt);
-    joints.handItem.rotateX(0.12 * tilt);
+    joints.handItem.rotateZ(0.85 * tilt);
+    joints.handItem.rotateX(0.45 * tilt);
   }
 
   function fitMoon(camera) {
@@ -367,6 +426,23 @@ export function buildLastBus() {
     sh.near = 0.4; sh.far = 50;
     sh.updateProjectionMatrix();
     lights.key.updateMatrixWorld();
+  }
+
+  const aimWorld = new THREE.Vector3();
+  const aimLocal = new THREE.Vector3();
+  function aimHeadlights(t) {
+    // The opening sweeps the beam onto grandpa, then the lamps face down the road.
+    const sweep = smoothstep(0.05, 1.45, t) * (1 - smoothstep(2.5, 4.6, t));
+    aimWorld.set(bus.position.x + 16, 0.3, BUS_Z).lerp(new THREE.Vector3(GP.x, 0.35, GP.z), sweep);
+    bus.updateMatrixWorld(true);
+    bus.worldToLocal(aimLocal.copy(aimWorld));
+    for (const spot of headSpots) spot.target.position.copy(aimLocal);
+    for (const cone of headCones) {
+      const dir = aimLocal.clone().sub(cone.position);
+      const yaw = Math.atan2(dir.x, dir.z);
+      const pitch = Math.atan2(dir.y, Math.hypot(dir.x, dir.z));
+      cone.rotation.set(-pitch, yaw, 0);
+    }
   }
 
   const stage = {
@@ -393,6 +469,8 @@ export function buildLastBus() {
       bus.position.x = x;
       bus.position.z = BUS_Z;
       poseSplash(splash, splashAmount(t));
+      aimHeadlights(t);
+      faceKey.intensity = t >= 25.4 ? 0.7 : (t >= 18 ? 0.28 : 0.08);
       rain.update(t, camera, screenRainOpacity(t));
       poseRim(rim, t, kittenHead);
       fitMoon(camera);
@@ -410,9 +488,12 @@ export function buildLastBus() {
       return {
         feet: put(GP.x, 0.08, GP.z),
         head: put(GP.x, 1.55, GP.z),
+        umbrella: put(GP.x, 2.15, GP.z),
         kitten: put(kittenHead.x, kittenHead.y, kittenHead.z),
         bus: put(bus.position.x, 1.5, bus.position.z),
-        stick: put(stick.position.x, 0.15, stick.position.z),
+        stick: put(stick.position.x, 0.12, stick.position.z),
+        shoeR: put(GP.x + 0.22, 0.08, GP.z),
+        coffee: put(-9, 4.0, -15.5),
       };
     },
     bounds() {

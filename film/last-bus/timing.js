@@ -12,8 +12,13 @@ export const BLACK_FRAME = 1072;
 export const BUS_LENGTH = 10.5;
 export const WHEEL_FORWARD = BUS_LENGTH / 2 - 2.2;
 
-/** Brisk town pace. Constant, so the bus never slows for the stop. */
-export const BUS_SPEED = 8;
+/**
+ * The bus is already close in the wide (headlights about 20 m out) and does
+ * not stop. It creeps through the opening so the beams can cross the frame,
+ * then accelerates. The front wheel is on the puddle at WHEEL_HIT_T, so the
+ * splash cut stays at 10s. BUS_SPEED is the speed at that moment.
+ */
+export const BUS_SPEED = 6.4;
 /** Front wheel crosses the puddle centre. The splash keeps rising until the cut. */
 export const WHEEL_HIT_T = 9.82;
 export const SPLASH_START = 9.55;
@@ -24,7 +29,19 @@ export const BUS_Z = 1.15;
 
 /** centre x of the bus at time t (seconds). */
 export function busCenterX(t) {
-  return PUDDLE_X - WHEEL_FORWARD - BUS_SPEED * (WHEEL_HIT_T - t);
+  const hit = PUDDLE_X - WHEEL_FORWARD;
+  const start = hit - 22;
+  const creepEnd = 6.2;
+  const creepTo = start + 8;
+  if (t <= 0) return start;
+  if (t < creepEnd) return start + (creepTo - start) * (t / creepEnd);
+  const span = WHEEL_HIT_T - creepEnd;
+  if (t < WHEEL_HIT_T) {
+    const u = (t - creepEnd) / span;
+    return creepTo + (hit - creepTo) * (u ** 1.65);
+  }
+  const speed = 1.65 * (hit - creepTo) / span;
+  return hit + speed * (t - WHEEL_HIT_T);
 }
 
 export function frameTime(frame) {

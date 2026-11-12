@@ -29,7 +29,7 @@ function makeWorld(count, region, seed, dry) {
       x, z,
       speed: 12 + rng() * 8,
       phase: rng() * 48,
-      len: 0.55 + rng() * 0.9,
+      len: 0.28 + rng() * 0.38,
       drift: (rng() - 0.5) * 0.35,
     });
   }
@@ -37,7 +37,7 @@ function makeWorld(count, region, seed, dry) {
   const pos = new Float32Array(count * 6);
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   const mat = new THREE.LineBasicMaterial({
-    color: 0xc9d7e8, transparent: true, opacity: 0.42, depthWrite: false,
+    color: 0xc9d7e8, transparent: true, opacity: 0.16, depthWrite: false,
   });
   const lines = new THREE.LineSegments(geo, mat);
   lines.frustumCulled = false;
@@ -73,7 +73,7 @@ function makeScreen(count, seed) {
   const pos = new Float32Array(count * 6);
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   const mat = new THREE.LineBasicMaterial({
-    color: 0xd5e2f0, transparent: true, opacity: 0.4, depthTest: false, depthWrite: false,
+    color: 0xd5e2f0, transparent: true, opacity: 0.22, depthTest: false, depthWrite: false,
   });
   const lines = new THREE.LineSegments(geo, mat);
   lines.frustumCulled = false;
@@ -95,7 +95,7 @@ function makeScreen(count, seed) {
         v -= 1.1;
         const x = s[0] * halfW;
         const y = v * halfH;
-        const len = 0.045 * halfH;
+        const len = 0.026 * halfH;
         const o = i * 6;
         pos[o] = x;
         pos[o + 1] = y;
@@ -115,7 +115,7 @@ function makeScreen(count, seed) {
 export function createRain({ seed = 11, dry, wide, local }) {
   const far = makeWorld(wide.count, wide.region, seed, dry);
   const near = makeWorld(local.count, local.region, seed + 17, dry);
-  const screen = makeScreen(320, seed + 90);
+  const screen = makeScreen(90, seed + 90);
   const group = new THREE.Group();
   group.name = 'filmRain';
   group.add(far.object, near.object, screen.object);

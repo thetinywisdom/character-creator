@@ -23,10 +23,10 @@ export function lastBusShots() {
       ease: 'smooth',
       // Across the stop, angled so the street (and the bus) opens to frame left.
       // High and to the side, looking down the street the bus is on.
-      from: [6.8, 4.4, 7.6],
-      to: [4.8, 3.6, 6.9],
-      look: [-16, 0.45, 1.1],
-      lookTo: [-8, 0.6, 2.0],
+      from: [5.4, 3.6, 7.2],
+      to: [3.6, 3.05, 6.6],
+      look: [-8, 0.75, 2.6],
+      lookTo: [-4.5, 0.85, 3.0],
       near: 0.15,
     },
     {
@@ -34,9 +34,9 @@ export function lastBusShots() {
       start: 3,
       end: 7,
       focal: 85,
-      // Outside the shelter, over his left shoulder, so the head-turn reads.
-      from: [-1.55, 1.5, 6.15],
-      look: [0.12, 1.42, 4.85],
+      // Far enough back that the umbrella sits under the top caption band.
+      from: [-1.85, 1.48, 6.25],
+      look: [0.08, 1.58, 4.9],
       near: 0.05,
     },
     {
@@ -53,11 +53,9 @@ export function lastBusShots() {
         cam.aspect = ASPECT;
         cam.near = 0.12;
         cam.far = 160;
-        const dive = u * u;
-        // Low three-quarter on the open side of the bus, closing on the puddle.
-        cam.position.set(x - 3.4 + dive * 1.2, 1.05 - 0.35 * dive, BUS_Z - 5.1);
+        cam.position.set(x + 0.2, 1.55, BUS_Z - 5.6);
         cam.up.set(0, 1, 0);
-        cam.lookAt(x + 2.2, 1.15 - 0.7 * dive, BUS_Z + 0.2);
+        cam.lookAt(x + 2.6, 0.55, BUS_Z + 0.1);
         cam.updateProjectionMatrix();
       },
     },
@@ -76,10 +74,10 @@ export function lastBusShots() {
       end: 18,
       focal: 100,
       ease: 'smooth',
-      from: [1.2, 0.46, 3.05],
-      to: [0.82, 0.34, 3.55],
-      look: [0.22, 0.1, 4.72],
-      lookTo: [0.2, 0.08, 4.78],
+      from: [0.95, 0.72, 3.25],
+      to: [0.75, 0.62, 3.45],
+      look: [0.12, 0.08, 4.75],
+      lookTo: [0.1, 0.07, 4.78],
       near: 0.02,
     },
     {
@@ -87,11 +85,12 @@ export function lastBusShots() {
       start: 18,
       end: 26,
       focal: 35,
-      ease: 'out',
-      from: [1.45, 2.15, 6.15],
-      to: [1.7, 0.34, 5.6],
-      look: [0.12, 1.9, 4.85],
-      lookTo: [0.12, 0.18, 4.95],
+      ease: 'smooth',
+      // At the midpoint (about 0:22) the tilted umbrella and the kitten share the frame.
+      from: [-3.2, 2.4, 5.15],
+      to: [-2.6, 1.95, 5.0],
+      look: [-0.05, 1.35, 4.95],
+      lookTo: [-0.35, 0.82, 4.9],
       near: 0.04,
     },
     {
@@ -106,9 +105,9 @@ export function lastBusShots() {
         cam.aspect = ASPECT;
         cam.near = 0.02;
         cam.far = 24;
-        cam.position.set(h.x - 0.14, h.y - 0.03, h.z - 0.8);
+        cam.position.set(h.x + 0.02, h.y + 0.02, h.z - 0.95);
         cam.up.set(0, 1, 0);
-        cam.lookAt(h.x + 0.03, h.y - 0.02, h.z + 0.04);
+        cam.lookAt(h.x, h.y - 0.01, h.z + 0.02);
         cam.updateProjectionMatrix();
       },
     },
@@ -118,10 +117,10 @@ export function lastBusShots() {
       end: 36,
       focal: 28,
       ease: 'smooth',
-      from: [2.4, 4.6, 9.6],
-      to: [5.8, 16.5, 18.5],
-      look: [0.2, 1.2, 5.1],
-      lookTo: [0.2, 0.35, 5.0],
+      from: [-2.4, 4.4, 2.6],
+      to: [-3.4, 6.6, 1.2],
+      look: [-0.15, 0.85, 5.05],
+      lookTo: [-0.2, 0.6, 5.1],
       near: 0.2,
       far: 300,
     },

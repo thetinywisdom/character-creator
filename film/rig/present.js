@@ -10,14 +10,15 @@ import * as THREE from 'three';
  */
 
 const GRADE = {
-  cold: new THREE.Vector3(0.86, 0.93, 1.12),
-  warm: new THREE.Vector3(1.10, 0.97, 0.80),
-  contrast: 1.05,
-  lift: 0.02,
-  vignette: 0.32,
-  grain: 0.026,
-  bloom: 0.5,
-  threshold: 0.55,
+  cold: new THREE.Vector3(0.90, 0.95, 1.08),
+  warm: new THREE.Vector3(1.08, 0.98, 0.84),
+  exposure: 1.16,
+  contrast: 1.02,
+  lift: 0.05,
+  vignette: 0.2,
+  grain: 0.02,
+  bloom: 0.32,
+  threshold: 0.72,
 };
 
 function quadMaterial(fragment, uniforms, extra = {}) {
@@ -98,14 +99,14 @@ export function createFilmPresenter(renderer, ps1, { width, height }) {
   const gradeMat = quadMaterial(
     `precision highp float;
      uniform sampler2D tDiffuse; uniform sampler2D tBloom;
-     uniform float frame, contrast, lift, vignette, grainAmt, bloomAmt;
+     uniform float frame, exposure, contrast, lift, vignette, grainAmt, bloomAmt;
      uniform vec3 cold; uniform vec3 warm;
      varying vec2 vUv;
      float hash(vec2 p) {
        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
      }
      void main() {
-       vec3 c = texture2D(tDiffuse, vUv).rgb;
+       vec3 c = texture2D(tDiffuse, vUv).rgb * exposure;
        c = c * (1.0 - lift) + lift;
        float luma = dot(c, vec3(0.299, 0.587, 0.114));
        c *= mix(cold, warm, smoothstep(0.18, 0.78, luma));
@@ -124,6 +125,7 @@ export function createFilmPresenter(renderer, ps1, { width, height }) {
       tDiffuse: { value: null },
       tBloom: { value: null },
       frame: { value: 0 },
+      exposure: { value: GRADE.exposure },
       contrast: { value: GRADE.contrast },
       lift: { value: GRADE.lift },
       vignette: { value: GRADE.vignette },

@@ -43,7 +43,7 @@ ffmpeg -i film/last-bus/out/last-bus.mp4 -af loudnorm=print_format=json -f null 
 
 Time is `frame / 30`. Nothing uses the wall clock. Rain is seeded (`mulberry32`). The bus position is a pure function of time (`film/last-bus/timing.js`), the same function the soundtrack uses, so the splash lines up with the cut. Shot 3 averages 6 subframes across a 2/30 s shutter for motion blur. Subframe times are clamped inside the shot, so a cut frame never shows the next camera.
 
-The picture is the existing PS1 step (pixel size 2, 15-bit dither, outlines) drawn into a target, then a grade: cold shadows, warm highlights, bloom on the lamp and the lights, vignette, grain. No depth of field, no letterbox. The film page has no HUD.
+The picture is the existing PS1 step (pixel size 2, 15-bit dither, outlines) drawn into a target, then a grade: cold shadows, warm highlights, bloom on the lamp and the lights, vignette, grain. The grade is lifted so a night frame still reads on a phone (shadows keep detail). Rain is a thin seeded veil, not a curtain. No depth of field, no letterbox. The film page has no HUD.
 
 Frames 1072–1079 are black. That is the only cut to black.
 

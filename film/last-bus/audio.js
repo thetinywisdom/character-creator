@@ -74,17 +74,19 @@ for (let i = 0; i < N; i++) {
   const t = i / SR;
   const x = busCenterX(t);
   const dist = Math.hypot(x - 0.4, 7.5);
-  const near = clamp(1.15 - dist / 28, 0, 1);
-  if (near <= 0) continue;
+  const pass = Math.exp(-((t - 9.65) ** 2) / (2 * 0.42 ** 2));
+  const bed = t < 7 ? 0.12 : 0.22;
+  if (pass < 0.02 && bed <= 0) continue;
   const doppler = 1 - 0.22 * Math.tanh((t - 9.4) * 1.4);
   const f = 78 * doppler;
   eng += 0.12 * ((rainRng() * 2 - 1) - eng);
   const tone = Math.sin(2 * Math.PI * f * t) * 0.55
     + Math.sin(2 * Math.PI * f * 2 * t) * 0.18
     + eng * 0.9;
-  const whoosh = Math.exp(-Math.pow((t - 9.55) / 0.55, 2)) * (rainRng() * 2 - 1);
-  const s = (tone * 0.22 + whoosh * 0.35) * near * near;
-  const pan = Math.tanh(x / 10); // approach from frame left, leave to the right
+  const whoosh = Math.exp(-((t - 9.85) ** 2) / (2 * 0.18 ** 2)) * (rainRng() * 2 - 1);
+  const near = Math.min(0.35, 4.5 / dist);
+  const s = tone * 0.08 * bed * near + whoosh * 0.22 * pass;
+  const pan = Math.tanh(x / 10);
   add(i, s * (0.65 - 0.45 * pan), s * (0.65 + 0.45 * pan));
 }
 
@@ -93,6 +95,9 @@ for (let i = 0; i < N; i++) {
 // frame 299 (t = 9.967). The burst is centred there so the hit and the cut
 // land together.
 const SPLASH_PEAK = 9.97;
+// Low-passed spray, not full-band noise. A single-sample spike was the true
+// peak of the whole film and left no headroom once the hit was loud enough.
+let splashLp = 0;
 for (let i = 0; i < N; i++) {
   const t = i / SR;
   const dt = t - SPLASH_PEAK;
@@ -101,8 +106,9 @@ for (let i = 0; i < N; i++) {
     ? Math.exp(dt / 0.03)
     : Math.exp(-dt / 0.16);
   const n = rainRng() * 2 - 1;
+  splashLp += 0.45 * (n - splashLp);
   const thump = Math.sin(2 * Math.PI * 70 * dt) * Math.exp(-Math.max(0, dt) / 0.05);
-  const s = (n * 0.55 + thump * 0.4) * env * 0.9;
+  const s = (splashLp * 2.4 + thump * 0.55) * env * 2.6;
   add(i, s * 0.85, s);
 }
 
@@ -112,21 +118,21 @@ for (let i = 0; i < N; i++) {
 const A4 = 440;
 const notes = [
   // phrase 1 — enters during shot 1, finished before the splash
-  [2.35, A4 / 2, 0.22, 2.4],       // A3
-  [3.55, A4 * Math.pow(2, 3 / 12) / 2, 0.16, 2.2], // C4
-  [4.85, A4 * Math.pow(2, 7 / 12) / 2, 0.18, 2.4], // E4
-  [6.15, A4 / 2, 0.14, 2.0],
-  [7.45, A4 * Math.pow(2, 7 / 12) / 2, 0.11, 1.8],
-  [8.35, A4 * Math.pow(2, 3 / 12) / 2, 0.09, 1.4],
+  [2.35, A4 / 2, 0.09, 2.4],       // A3
+  [3.55, A4 * Math.pow(2, 3 / 12) / 2, 0.07, 2.2], // C4
+  [4.85, A4 * Math.pow(2, 7 / 12) / 2, 0.075, 2.4], // E4
+  [6.15, A4 / 2, 0.06, 2.0],
+  [7.45, A4 * Math.pow(2, 7 / 12) / 2, 0.05, 1.8],
+  [8.35, A4 * Math.pow(2, 3 / 12) / 2, 0.04, 1.4],
   // phrase 2 — the reveal, then the hold
-  [21.85, A4 / 2, 0.18, 2.6],
-  [23.25, A4 * Math.pow(2, 3 / 12) / 2, 0.15, 2.4],
-  [24.85, A4 * Math.pow(2, 7 / 12) / 2, 0.16, 2.6],
-  [26.55, A4, 0.10, 2.2],
-  [28.35, A4 * Math.pow(2, 7 / 12) / 2, 0.12, 2.4],
-  [30.45, A4 * Math.pow(2, 3 / 12) / 2, 0.11, 2.4],
-  [32.55, A4 / 2, 0.13, 2.8],
-  [34.15, A4 / 4 * Math.pow(2, 7 / 12), 0.10, 1.6], // E3, fades with the picture
+  [21.85, A4 / 2, 0.08, 2.6],
+  [23.25, A4 * Math.pow(2, 3 / 12) / 2, 0.065, 2.4],
+  [24.85, A4 * Math.pow(2, 7 / 12) / 2, 0.07, 2.6],
+  [26.55, A4, 0.045, 2.2],
+  [28.35, A4 * Math.pow(2, 7 / 12) / 2, 0.05, 2.4],
+  [30.45, A4 * Math.pow(2, 3 / 12) / 2, 0.045, 2.4],
+  [32.55, A4 / 2, 0.055, 2.8],
+  [34.15, A4 / 4 * Math.pow(2, 7 / 12), 0.04, 1.6], // E3, fades with the picture
 ];
 
 for (const [t0, freq, amp, dur] of notes) {
@@ -158,10 +164,24 @@ for (let i = 0; i < N; i++) {
   R[i] *= g;
 }
 
-// Peak safety. loudnorm does the real level; this just keeps the wav sane.
+// Shave the splash tips, then sit the peak at -3 dBFS so the AAC true peak
+// stays under -1 dBTP once the hit is brought up to about -14 LUFS.
+function shave(x) {
+  const a = 0.42;
+  const ax = Math.abs(x);
+  if (ax <= a) return x;
+  const y = a + 0.28 * Math.tanh((ax - a) / 0.2);
+  return Math.sign(x) * y;
+}
+for (let i = 0; i < N; i++) {
+  L[i] = shave(L[i]);
+  R[i] = shave(R[i]);
+}
 let peak = 1e-6;
 for (let i = 0; i < N; i++) peak = Math.max(peak, Math.abs(L[i]), Math.abs(R[i]));
-const gain = 0.85 / peak;
+// 0.45 leaves the splash the loudest hit and lands near -14 LUFS with
+// true peak under -1 dBTP after the AAC encode.
+const gain = 0.48 / peak;
 for (let i = 0; i < N; i++) { L[i] *= gain; R[i] *= gain; }
 
 // Where the splash is loudest, for the sync check.
@@ -206,4 +226,11 @@ function writeWav(file, left, right, sr) {
 const out = process.argv[2] || '/tmp/last-bus.wav';
 writeWav(out, L, R, SR);
 console.log(`wrote ${out}  ${DURATION}s  ${SR}Hz stereo`);
-console.log(`splash energy peaks at t=${splashAt.toFixed(3)}s (picture cut is 10.000s, splash frame 299 is 9.967s)`);
+let loudAt = 0;
+let loudMax = 0;
+for (let i = win; i < N - win; i += Math.floor(0.01 * SR)) {
+  let e = 0;
+  for (let k = -win; k <= win; k++) e += L[i + k] * L[i + k] + R[i + k] * R[i + k];
+  if (e > loudMax) { loudMax = e; loudAt = i / SR; }
+}
+console.log(`loudest 20ms window at t=${loudAt.toFixed(3)}s`);
