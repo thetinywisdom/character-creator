@@ -1,24 +1,41 @@
 import * as THREE from 'three';
 
 /**
- * PS1 picture, then a cinematic finish: cold-blue grade, warm bloom on the
- * lamps and headlights, vignette, film grain. Motion blur is an average of
- * the dithered frames across the shutter (used on the fast bus shot).
+ * PS1 picture, then a grade. Motion blur is an average of the dithered frames
+ * across the shutter (the fast pan / the bus).
  *
  * The grade samples the already-dithered image and writes it without a second
  * colour-space convert, so the 15-bit dither and outlines stay intact.
+ *
+ * `night` is the Last Bus grade (cold shadows, warm lamps). `day` is the
+ * comedy grade: warm, saturated, a lifted black, light grain, almost no vignette.
  */
 
-const GRADE = {
-  cold: new THREE.Vector3(0.90, 0.95, 1.08),
-  warm: new THREE.Vector3(1.08, 0.98, 0.84),
-  exposure: 1.16,
-  contrast: 1.02,
-  lift: 0.05,
-  vignette: 0.2,
-  grain: 0.02,
-  bloom: 0.32,
-  threshold: 0.72,
+export const GRADES = {
+  night: {
+    cold: new THREE.Vector3(0.90, 0.95, 1.08),
+    warm: new THREE.Vector3(1.08, 0.98, 0.84),
+    exposure: 1.16,
+    contrast: 1.02,
+    lift: 0.05,
+    vignette: 0.2,
+    grain: 0.02,
+    bloom: 0.32,
+    threshold: 0.72,
+    saturate: 1,
+  },
+  day: {
+    cold: new THREE.Vector3(1.05, 1.01, 0.94),
+    warm: new THREE.Vector3(1.16, 1.05, 0.86),
+    exposure: 1.14,
+    contrast: 1.06,
+    lift: 0.085,
+    vignette: 0.045,
+    grain: 0.011,
+    bloom: 0.12,
+    threshold: 0.84,
+    saturate: 1.32,
+  },
 };
 
 function quadMaterial(fragment, uniforms, extra = {}) {
@@ -45,7 +62,8 @@ function target(w, h, type = THREE.UnsignedByteType) {
   return rt;
 }
 
-export function createFilmPresenter(renderer, ps1, { width, height }) {
+export function createFilmPresenter(renderer, ps1, { width, height, look = 'night' }) {
+  const GRADE = GRADES[look] ?? GRADES.night;
   const frameRT = target(width, height);
   const accumRT = target(width, height, THREE.HalfFloatType);
   const bw = Math.max(2, Math.round(width / 4));
@@ -99,7 +117,7 @@ export function createFilmPresenter(renderer, ps1, { width, height }) {
   const gradeMat = quadMaterial(
     `precision highp float;
      uniform sampler2D tDiffuse; uniform sampler2D tBloom;
-     uniform float frame, exposure, contrast, lift, vignette, grainAmt, bloomAmt;
+     uniform float frame, exposure, contrast, lift, vignette, grainAmt, bloomAmt, saturate;
      uniform vec3 cold; uniform vec3 warm;
      varying vec2 vUv;
      float hash(vec2 p) {
@@ -111,6 +129,8 @@ export function createFilmPresenter(renderer, ps1, { width, height }) {
        float luma = dot(c, vec3(0.299, 0.587, 0.114));
        c *= mix(cold, warm, smoothstep(0.18, 0.78, luma));
        c = (c - 0.5) * contrast + 0.5;
+       float y = dot(c, vec3(0.299, 0.587, 0.114));
+       c = mix(vec3(y), c, saturate);
        vec3 b = texture2D(tBloom, vUv).rgb;
        c += b * vec3(1.08, 0.94, 0.72) * bloomAmt;
        vec2 p = vUv * 2.0 - 1.0;
@@ -131,6 +151,7 @@ export function createFilmPresenter(renderer, ps1, { width, height }) {
       vignette: { value: GRADE.vignette },
       grainAmt: { value: GRADE.grain },
       bloomAmt: { value: GRADE.bloom },
+      saturate: { value: GRADE.saturate },
       cold: { value: GRADE.cold },
       warm: { value: GRADE.warm },
     },

@@ -116,7 +116,28 @@ scripts/film-render.js
 scripts/film-assemble.sh
 ```
 
-To add another short, add a folder beside `last-bus/` with its own `timing.js`, `stage.js`, `shots.js` and `audio.js`, and a branch in `film/main.js` for its `?film=` id. The rig (`film/rig/`, the render script, the assemble script) stays shared.
+To add another short, add a folder beside `last-bus/` with its own `timing.js`, `stage.js`, `shots.js` and `audio.js`, and a branch in `film/main.js` for its `?film=` id. The rig (`film/rig/`, the render script, the assemble script) stays shared. `npm run film` reads `BEATS`, `FPS` and `DURATION` from `film/<id>/timing.js`, picked from `--film` or from the `film` query on `--url`.
+
+## Render Banana Karma
+
+1080×1920, 30 fps, 17 seconds (510 frames). Same capture path as Last Bus. The page asks for the Vibrant palette with `?palette=Vibrant` for that load only; it does not write the viewer's saved palette. The grade is the day look in `film/rig/present.js` (warm, saturated, lifted blacks, light grain, a small vignette).
+
+```bash
+npm install
+npm run dev          # leave this running
+
+npm run film:audio:banana-karma -- /tmp/banana-karma.wav
+npm run film -- --film banana-karma --out /tmp/banana-karma-frames
+npm run film:assemble -- /tmp/banana-karma-frames /tmp/banana-karma.wav film/banana-karma/out/banana-karma.mp4
+```
+
+Beat stills (one frame per shot, plus the 0.5s hook, the fall apex and the clink):
+
+```bash
+npm run film -- --stills --film banana-karma --out /tmp/banana-karma-stills
+```
+
+Frames 508–509 are black. That is the only cut to black. The soundtrack is synthesized in `film/banana-karma/audio.js` and leveled to about −14 LUFS with true peak under −1 dBTP after the AAC encode. Sources are in `film/banana-karma/CREDITS.md`.
 
 ## Sound
 

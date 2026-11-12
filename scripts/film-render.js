@@ -10,7 +10,6 @@ import { chromium } from 'playwright-core';
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { BEATS, FPS, DURATION } from '../film/last-bus/timing.js';
 
 const CHROME = process.env.CHROME_PATH || '/usr/local/bin/google-chrome';
 
@@ -20,9 +19,26 @@ function arg(name, fallback = null) {
 }
 
 const stills = process.argv.includes('--stills');
-const outDir = arg('--out', stills ? '/tmp/last-bus-stills' : '/tmp/last-bus-frames');
 const urlArg = arg('--url', null);
+const filmArg = arg('--film', null);
 const frameList = arg('--frames', null);
+
+function filmFromUrl(url) {
+  if (!url) return null;
+  try {
+    return new URL(url).searchParams.get('film');
+  } catch {
+    const m = String(url).match(/[?&]film=([^&]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+}
+
+const filmId = filmArg || filmFromUrl(urlArg) || 'last-bus';
+if (!/^[a-z0-9-]+$/.test(filmId)) throw new Error(`bad film id "${filmId}"`);
+
+const outDir = arg('--out', stills ? `/tmp/${filmId}-stills` : `/tmp/${filmId}-frames`);
+
+const { BEATS, FPS, DURATION } = await import(`../film/${filmId}/timing.js`);
 
 function framesToRender() {
   if (frameList) return frameList.split(',').map((n) => Number(n.trim()));
@@ -64,9 +80,9 @@ async function main() {
   let url = urlArg;
   if (!url) {
     vite = await startVite();
-    url = 'http://127.0.0.1:5173/film/index.html?film=last-bus';
+    url = `http://127.0.0.1:5173/film/index.html?film=${filmId}`;
   } else if (!url.includes('film')) {
-    url = url.replace(/\/?$/, '/') + 'film/index.html?film=last-bus';
+    url = url.replace(/\/?$/, '/') + `film/index.html?film=${filmId}`;
   }
 
   const browser = await chromium.launch({

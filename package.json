@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "film": "node scripts/film-render.js",
     "film:audio": "node film/last-bus/audio.js",
+    "film:audio:banana-karma": "node film/banana-karma/audio.js",
     "film:assemble": "bash scripts/film-assemble.sh"
   },
   "dependencies": {

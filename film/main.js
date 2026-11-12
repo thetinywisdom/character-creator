@@ -4,20 +4,46 @@ import { createPs1Renderer } from '../src/render/ps1.js';
 import { createFilmPresenter } from './rig/present.js';
 import { activeShot, shotU } from './rig/timeline.js';
 import { buildLastBus } from './last-bus/stage.js';
-import { frameCamera, lastBusShots } from './last-bus/shots.js';
-import { FPS, DURATION, WIDTH, HEIGHT, BLACK_FRAME } from './last-bus/timing.js';
+import { frameCamera as frameLastBus, lastBusShots } from './last-bus/shots.js';
+import * as lastBusTiming from './last-bus/timing.js';
+import { buildBananaKarma } from './banana-karma/stage.js';
+import { frameCamera as frameBanana, bananaShots } from './banana-karma/shots.js';
+import * as bananaTiming from './banana-karma/timing.js';
 
 // Opt-in film page. The viewer (index.html) never loads this.
-// Open /film/index.html?film=last-bus — the query selects the short.
+// Open /film/index.html?film=last-bus or ?film=banana-karma.
 // Frames are drawn only when window.__film.renderFrame(i) is called, so a
 // capture is frame-accurate rather than a screen recording.
 
+const FILMS = {
+  'last-bus': {
+    title: 'Last Bus',
+    build: buildLastBus,
+    shots: lastBusShots,
+    frameCamera: frameLastBus,
+    timing: lastBusTiming,
+    look: 'night',
+  },
+  'banana-karma': {
+    title: 'Banana Karma',
+    build: buildBananaKarma,
+    shots: bananaShots,
+    frameCamera: frameBanana,
+    timing: bananaTiming,
+    look: 'day',
+  },
+};
+
 const params = new URLSearchParams(location.search);
 const filmId = params.get('film') || 'last-bus';
-if (filmId !== 'last-bus') {
+const film = FILMS[filmId];
+if (!film) {
   document.body.textContent = '';
   throw new Error(`Unknown film "${filmId}"`);
 }
+document.title = film.title;
+
+const { FPS, DURATION, WIDTH, HEIGHT, BLACK_FRAME } = film.timing;
 
 // Same pixel scale as the viewer on a large screen (pixel size 2), whatever
 // the window size is, so headless and desktop captures match.
@@ -35,16 +61,16 @@ renderer.setClearColor(0x000000, 1);
 renderer.autoClear = true;
 
 const ps1 = createPs1Renderer(renderer);
-const presenter = createFilmPresenter(renderer, ps1, { width: WIDTH, height: HEIGHT });
-const stage = buildLastBus();
-const shots = lastBusShots();
+const presenter = createFilmPresenter(renderer, ps1, { width: WIDTH, height: HEIGHT, look: film.look });
+const stage = film.build();
+const shots = film.shots();
 const camera = new THREE.PerspectiveCamera(40, WIDTH / HEIGHT, 0.05, 220);
 const ps1Stage = { scene: stage.scene, style };
 
 function seek(t) {
   const shot = activeShot(shots, t);
   const u = shotU(shot, t);
-  frameCamera(camera, shot, u, t, stage);
+  film.frameCamera(camera, shot, u, t, stage);
   stage.update(t, camera);
   return shot;
 }
@@ -88,13 +114,14 @@ const api = {
         presenter.drawPs1(ps1Stage, camera);
       }), i);
     }
-    return {
+    const info = {
       t, frame: i, shot: shot.id, black: false,
       fov: camera.fov,
       cam: camera.position.toArray(),
-      busX: stage.busX(t),
-      pts: stage.project(camera),
     };
+    if (stage.busX) info.busX = stage.busX(t);
+    if (stage.project) info.pts = stage.project(camera);
+    return info;
   },
   bounds() {
     return stage.bounds();
@@ -113,7 +140,7 @@ const api = {
 api.renderFrame(0);
 window.__film = api;
 
-// Optional realtime play for eyeballing: /film/index.html?film=last-bus&play=1
+// Optional realtime play for eyeballing: /film/index.html?film=...&play=1
 if (params.has('play')) {
   let frame = 0;
   const loop = () => {
