@@ -6,12 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "film": "node scripts/film-render.js",
+    "film:audio": "node film/last-bus/audio.js",
+    "film:assemble": "bash scripts/film-assemble.sh"
   },
   "dependencies": {
     "three": "^0.187.0"
   },
   "devDependencies": {
+    "playwright-core": "^1.65.0",
     "vite": "^8.3.6"
   }
 }

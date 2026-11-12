@@ -102,7 +102,11 @@ Publish to the Artifact, `main` and GitHub Pages after every task.
 
 ```
 src/main.js            the viewer: three modes, render loop, debug hooks (not reused by games)
+film/                  opt-in short-film rig (not loaded by the viewer). See film/README.md.
+                       /film/index.html?film=last-bus renders "Last Bus" with window.__film.renderFrame(i)
 src/render/ps1.js      createPs1Renderer: low-res render + dither + outlines (reuse this).
+                       render(..., target) can draw the dithered picture into a render target;
+                       omit target and it draws to the canvas, same as the viewer.
                        Outlines read the alpha the materials write: characters 1 (strong dark
                        edge x0.28), everything else 0.5 (styles/ps1.js sets opacity 0.5 on
                        non-character roles, still opaque): a soft x0.8 shade fading out
@@ -544,6 +548,9 @@ No unit tests; verify by building and looking.
 - Drive the viewer with Playwright (Chromium is preinstalled; use
   `--use-gl=angle --use-angle=swiftshader`): `npx vite preview`, open the
   page, use `window.__cc` and take screenshots.
+- The film rig (`film/`, `scripts/film-render.js`) uses the same Chromium flags
+  and one deterministic frame per screenshot. It does not change the viewer.
+  How to render: `film/README.md`.
 - Hooks on `window.__cc`: `params`, `state`, `setView('catalog'|'item'|'creator'|'city')`,
   `openItem(id, params)`, `CATALOG`, `human` (presets, outfits), `apply('human', values)`, `orbit(az)`,
   `gait.lock = fraction` (freeze the walk), `getCity()` (`player`, `npcs`,

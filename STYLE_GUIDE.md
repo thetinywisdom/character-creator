@@ -26,6 +26,8 @@ spot the characters.**
 | Blob shadows | **Off** (owner's call): the real cast shadows are enough; `blobShadows: true` in the style turns the disc back on | |
 | Geometry detail | **0.3×** the smooth segment counts | Low-poly everywhere |
 
+The viewer always uses this table. The opt-in film page (`film/`) keeps the same pixel size, dither and outlines, then adds a night grade on top (cold shadows, warm lamp light, a little bloom, vignette and grain). That grade is not part of the viewer and is not a new style preset.
+
 ## 2. Colour: the palette (a rule)
 
 **Everything uses one palette** (`PALETTE` in `src/styles/palette.js`, also in
