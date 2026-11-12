@@ -95,6 +95,10 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   you): parked cars and bikes, traffic, the bus; take one from someone
   and they jump out shouting and run away.
 
+## Short films
+
+`film/` is an opt-in render rig. The viewer does not load it. "Last Bus" is a 36-second vertical short at `/film/index.html?film=last-bus`. "Banana Karma" is a 17-second vertical short at `/film/index.html?film=banana-karma`. How to render them, and the shot format, are in `film/README.md`.
+
 ## Docs
 
 - `SKILLS.md`: how to build a game on this foundation and how to extend it.

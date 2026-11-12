@@ -70,11 +70,17 @@ export function createPs1Renderer(renderer) {
   const blitScene = new THREE.Scene();
   blitScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), blitMat));
 
-  /** Draw `stage` ({ scene, style }) with `camera` into the screen rectangle (x, y from bottom-left). */
-  function render(stage, camera, x, y, w, h) {
+  /**
+   * Draw `stage` ({ scene, style }) with `camera` into the screen rectangle
+   * (x, y from bottom-left). Pass `target` to receive the dithered picture
+   * in a render target instead of the canvas (the film rig grades that).
+   * Omit it and the draw matches the viewer.
+   */
+  function render(stage, camera, x, y, w, h, target = null) {
     const scale = stage.style.pixelScale;
     renderer.setScissorTest(true);
     if (!scale) {
+      renderer.setRenderTarget(target);
       renderer.setViewport(x, y, w, h);
       renderer.setScissor(x, y, w, h);
       renderer.render(stage.scene, camera);
@@ -91,7 +97,7 @@ export function createPs1Renderer(renderer) {
     stage.style.prepareRender?.(lw, lh);
     renderer.setRenderTarget(stage.rt);
     renderer.render(stage.scene, camera);
-    renderer.setRenderTarget(null);
+    renderer.setRenderTarget(target);
     renderer.setViewport(x, y, w, h);
     renderer.setScissor(x, y, w, h);
     const u = blitMat.uniforms;

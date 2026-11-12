@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>Film</title>
+    <script>
+      // Banana Karma asks for the Vibrant palette on this load only.
+      // palette.js reads the query when the module starts; nothing is saved,
+      // so the viewer keeps whatever palette it already had.
+      (function () {
+        var q = new URLSearchParams(location.search);
+        if (q.get('film') === 'banana-karma' && !q.get('palette')) {
+          q.set('palette', 'Vibrant');
+          history.replaceState(null, '', location.pathname + '?' + q.toString());
+        }
+      })();
+    </script>
+    <style>
+      html, body { margin: 0; background: #000; overflow: hidden; }
+      canvas { display: block; width: 1080px; height: 1920px; }
+    </style>
+  </head>
+  <body>
+    <canvas id="c" width="1080" height="1920"></canvas>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

@@ -191,6 +191,15 @@ export const PALETTES = {
 };
 let ACTIVE = 'Golden hour'; // the default (owner's pick)
 try { const v = localStorage.getItem('tinycity.palette'); if (PALETTES[v]) ACTIVE = v; } catch { /* no storage: the default */ }
+// One page load only. A `?palette=` query wins over the saved choice and is
+// not written back, so the film page can ask for Vibrant without changing
+// the viewer's palette. The viewer never sets this query.
+try {
+  if (typeof location !== 'undefined' && location.search) {
+    const q = new URLSearchParams(location.search).get('palette');
+    if (q && PALETTES[q]) ACTIVE = q;
+  }
+} catch { /* node, or no location */ }
 const MAP = () => PALETTES[ACTIVE].map;
 const OUT = new Set(Object.values(MAP() ?? {})); // colours of the active variant (already snapped)
 const NAME_OF = new Map(Object.entries(PALETTE).map(([n, h]) => [h, n]));
