@@ -407,14 +407,30 @@ pads of needles), **weeping willow** (round crown, thin curtains to near the
 ground) and **bamboo** (a clump of thin green canes with leaf tufts). Parks
 mix all of them; shrine groves use old giants, zelkova and pines.
 
+Catalogue only (a game can place them; the sample town does not): **Japanese
+cedar** (sugi: a tall narrow spire of drooping tiers, not the pine's cones),
+**windmill palm** (shuro: a ringed trunk, a skirt of brown fronds, fan
+leaves), **camphor** (kusunoki: a thick trunk and one heavy round crown),
+**pagoda tree** (enju: limbs under one wide flat crown), **winter tree**
+(bare branching, no leaves) and **autumn maple** (flat layers in Apricot and
+Brick, wider and more orange than the small red Japanese maple). Bushes
+besides the plain mound: a trimmed **boxwood** ball, **azalea** (low, with
+Dusty rose and Blush blossoms), **hydrangea** (round heads in Powder blue,
+Lilac and Denim) and a low **fern clump** with grass. **Doorstep pots** (not
+the street planter): a fern, a small leafy plant, a tall snake plant with a
+Butter edge, and a ribbed cactus with two arms.
+
 Canopies are clumps of faceted lobes, not one smooth ball. The leaf colour
 stays the palette colour: vertex colour only lightens the top and darkens the
-underside. Trunks taper and bend a little. Bamboo is thin culms with a ring
+underside. Flat leaves (palm fans, cedar tiers, ferns, snake-plant blades)
+are the same idea: a chunky diamond, lighter at the tip. Trunks taper and bend a little. Bamboo is thin culms with a ring
 at each node and a few leaf sprays near the top, leaning differently per
 cane. The old giant's trunk kinks and splits into a few heavy limbs, with
 separate clumps and gaps between them. A bush is a small mound of the same
 lumps. A house hedge keeps its length, height and thickness, but the sides
-lean in and the top is clipped in a regular rhythm.
+lean in and the top is clipped in a regular rhythm. No new palette swatches
+were added for the autumn maple or the flowers: they use Brick, Apricot,
+Dusty rose, Blush, Powder blue, Lilac and Denim.
 
 **Park playground** (`city/playground.js`), in bright signage colours:
 - **Swings:** a red A-frame and top bar (2.4 m), two wooden seats on thin

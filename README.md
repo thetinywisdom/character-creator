@@ -15,7 +15,9 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   item a game can place, in tabs (Buildings,
   Street, Traffic, Extras, Nature, Animals, Vehicles, Areas). Trees and bushes
   are clumped low-poly foliage; house hedges are trimmed rather than plain
-  boxes. The catalogue includes the
+  boxes. The Nature tab also has a cedar, a windmill palm, a camphor, a pagoda
+  tree, a bare winter tree, an autumn maple, boxwood, azalea, hydrangea, a
+  fern clump and doorstep pots (the sample town does not plant these). The catalogue includes the
   bus, the bus stop shelter and the banana peel. Tap one to turn
   it around, try its types, colours and looks, and copy the `createAsset(...)`
   line that builds it. 🎲 New look gives a really different building (shape,

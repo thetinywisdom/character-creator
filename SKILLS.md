@@ -195,7 +195,7 @@ src/city/input.js      keyboard, drag, pinch and on-screen joystick
 src/props/             street props (furniture, traffic, vehicles, extras, japan)
 src/creator/Creator.js the character creator panel (viewer only)
 src/viewer/            Cell (a preview stage), params (saved settings)
-src/lib/               shapes, foliage (lobes, shaded leaf/bark, trimmed hedges), merge
+src/lib/               shapes, foliage (lobes, fronds, shaded leaf/bark, trimmed hedges), merge
                        (one mesh per material), skin (one skinned mesh per person), rng,
                        textures, saveFile
 ```
@@ -236,9 +236,9 @@ buildings, street, traffic, extras, nature, animals, vehicles, areas.
 'loaf' | 'sleep'`; joints legF*/legB* plus lowF*/lowB* elbows and hocks). Cats take `pattern`, `tailType`, `earType` and `coat`
 (`cat.randomize()` for a random one); coats are painted per face as vertex
 colours, which `lib/skin.js` keeps when it makes the city's skinned mesh.
-`options: { param: [values] }` on a catalogue asset adds chips in the viewer. Trees (`nature.tree`) are clumped low-poly lobes (bamboo: segmented culms; the old giant: a kinked trunk that splits) and come in 11 presets
+`options: { param: [values] }` on a catalogue asset adds chips in the viewer. Trees (`nature.tree`) are clumped low-poly lobes (bamboo: segmented culms; the old giant: a kinked trunk that splits) and come in 11 presets the city plants
 (oak, lollipop, pine, old giant, cherry blossom, Japanese maple, ginkgo,
-zelkova, black pine, weeping willow, bamboo); motorbikes
+zelkova, black pine, weeping willow, bamboo). Catalogue-only kinds live in `tree.more` (the park and the shrine grove never see them): Japanese cedar, windmill palm, camphor, pagoda tree, winter tree, autumn maple. Bushes (`nature.bush`) are the Small and Large mounds, plus boxwood, azalea, hydrangea and a fern clump. Doorstep pots (`nature.pot`: fern, leafy, snake plant, cactus) are separate from the street planter. Motorbikes
 (`vehicle.scooter`) in 50cc and Delivery (three-wheelers), Step-through,
 Motorcycle and Mini scooter (each with its own default colour when no
 `color` is given); cars
