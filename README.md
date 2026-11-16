@@ -17,7 +17,10 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   are clumped low-poly foliage; house hedges are trimmed rather than plain
   boxes. The Nature tab also has a cedar, a windmill palm, a camphor, a pagoda
   tree, a bare winter tree, an autumn maple, boxwood, azalea, hydrangea, a
-  fern clump and doorstep pots (the sample town does not plant these). The catalogue includes the
+  fern clump and doorstep pots (the sample town does not plant these). The Extras
+  tab also has manhole covers, back-of-house clutter (propane tanks, a gas
+  meter, a drainpipe, or a cluster of the three) and nobori flags; Animals has
+  pigeons and sparrows. The sample town does not place those. The catalogue includes the
   bus, the bus stop shelter and the banana peel. Tap one to turn
   it around, try its types, colours and looks, and copy the `createAsset(...)`
   line that builds it. 🎲 New look gives a really different building (shape,

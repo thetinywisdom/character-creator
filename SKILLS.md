@@ -125,7 +125,8 @@ src/anim/              gait.js (people: walk / run, wing flap, poseHold: stoop +
                        stride by distance, foot targets + 2-bone leg IK, heel / toe roll,
                        hip height from the planted leg, stop dip, landing squash, turn lean
                        in the body via gait.turn, look-around when idle),
-                       catGait.js (cat walk / run), skirt.js (skirt stretch)
+                       catGait.js (cat walk / run), skirt.js (skirt stretch),
+                       props.js (tickProps: nobori vertex sway, pigeon peck, sparrow head)
 src/city/format.js     town JSON format, grid geometry, validation
 src/city/layout.js     generator: generateCityData(seed), blockObjects, streetObjects, roadNetwork
 src/city/build.js      buildCity(data, style): town JSON -> scene, colliders, routes, ground
@@ -192,7 +193,8 @@ src/city/interact.js   character interactions: traits, slap / push / talk (pie m
 src/city/atmosphere.js night glow (setNightGlow), snow cover (setSnowCover), rain / snow
                        screen layer (Precipitation), lamp light pools, weatherLight
 src/city/input.js      keyboard, drag, pinch and on-screen joystick
-src/props/             street props (furniture, traffic, vehicles, extras, japan)
+src/props/             street props (furniture, traffic, vehicles, extras, japan).
+                       Catalogue-only, not in PROP_GROUPS: manhole.js, clutter.js, nobori.js, birds.js
 src/creator/Creator.js the character creator panel (viewer only)
 src/viewer/            Cell (a preview stage), params (saved settings)
 src/lib/               shapes, foliage (lobes, fronds, shaded leaf/bark, trimmed hedges), merge
@@ -236,7 +238,7 @@ buildings, street, traffic, extras, nature, animals, vehicles, areas.
 'loaf' | 'sleep'`; joints legF*/legB* plus lowF*/lowB* elbows and hocks). Cats take `pattern`, `tailType`, `earType` and `coat`
 (`cat.randomize()` for a random one); coats are painted per face as vertex
 colours, which `lib/skin.js` keeps when it makes the city's skinned mesh.
-`options: { param: [values] }` on a catalogue asset adds chips in the viewer. Trees (`nature.tree`) are clumped low-poly lobes (bamboo: segmented culms; the old giant: a kinked trunk that splits) and come in 11 presets the city plants
+`options: { param: [values] }` on a catalogue asset adds chips in the viewer. Catalogue-only street details (the sample town does not place them; `params.seed` and 🎲 New look, same as a tree): `prop.manhole` (Flower, Wave, Grid; 40 triangles at PS1 detail), `prop.backClutter` (Propane tanks 156, Gas meter 64, Drainpipe 78, Cluster 310), `prop.nobori` (Stripes, Blocks; 92; call `tickProps` from `anim/props.js` each frame so the cloth sways), `animal.bird` (Pigeon 154, Sparrow 156; the same `tickProps` runs the peck and the perched look). No new palette swatches. No separate outdoor AC prop: units already dress backs, balconies and roofs. Trees (`nature.tree`) are clumped low-poly lobes (bamboo: segmented culms; the old giant: a kinked trunk that splits) and come in 11 presets the city plants
 (oak, lollipop, pine, old giant, cherry blossom, Japanese maple, ginkgo,
 zelkova, black pine, weeping willow, bamboo). Catalogue-only kinds live in `tree.more` (the park and the shrine grove never see them): Japanese cedar, windmill palm, camphor, pagoda tree, winter tree, autumn maple. Bushes (`nature.bush`) are the Small and Large mounds, plus boxwood, azalea, hydrangea and a fern clump. Doorstep pots (`nature.pot`: fern, leafy, snake plant, cactus) are separate from the street planter. Motorbikes
 (`vehicle.scooter`) in 50cc and Delivery (three-wheelers), Step-through,
