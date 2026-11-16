@@ -113,6 +113,10 @@ src/catalog/index.js   ASSET CATALOGUE: every placeable item behind one interfac
 src/catalog/thumbs.js  catalogue pictures (drawn on demand, cached in the browser)
 src/subjects/          human.js (+ human/*: frame, sculpt, hair, head, tops, arms, legwear,
                        footwear, outerwear, accessories, handheld, rules), cat.js, tree.js
+src/subjects/human/approaches.js
+                       Human lab only: refined / toy / lofted builds. They reuse the
+                       clothes, hair, accessories and the gait joint names. human.build
+                       is not changed; the creator, catalogue and City still call it.
 scripts/publish-pages.sh  build + publish to GitHub Pages (gh-pages branch, a normal commit):
                        https://thetinywisdom.github.io/character-creator/
 src/styles/palette.js  colours: BASE roles, CLOTH / HAIR / SKIN lists, PALETTE (28 named swatches),
@@ -160,6 +164,12 @@ src/city/knock.js      Knockables: props tagged userData.knock (catalogue KNOCKA
                        squares in three shades that pop in steps (pixel puffs)
 (vehicles: scooter variants carry userData.seat { y, z, splay } — where a
  rider sits; the mini scooter's wide body spreads the knees; sitOnBike reads it)
+src/ui/humanLab.js     the Human lab (🧍 mode): Current (human.build) beside A Refined,
+                       B Toy and C Lofted (subjects/human/approaches.js). One outfit on
+                       all four (a body-type button applies that type's default design),
+                       Still / Walk / Run, drag to turn. __cc.humanLab() after the lab
+                       has been opened: setYaw, setAnim, setBody, setFreeze(cyc, rw),
+                       setFocus(0..3), counts() (triangle counts).
 src/ui/catLab.js       the Cat lab view (🐱 mode): every cat version so far (subjects/catVersions/,
                        copies of cat.js from the project history; cat_v6.js = the lofted cat
                        with the cute options) and CUTE_CATS proposals (v6 with face / shape /
@@ -544,8 +554,9 @@ No unit tests; verify by building and looking.
 - Drive the viewer with Playwright (Chromium is preinstalled; use
   `--use-gl=angle --use-angle=swiftshader`): `npx vite preview`, open the
   page, use `window.__cc` and take screenshots.
-- Hooks on `window.__cc`: `params`, `state`, `setView('catalog'|'item'|'creator'|'city')`,
+- Hooks on `window.__cc`: `params`, `state`, `setView('catalog'|'item'|'creator'|'city'|'catlab'|'humanlab')`,
   `openItem(id, params)`, `CATALOG`, `human` (presets, outfits), `apply('human', values)`, `orbit(az)`,
+  `humanLab()` (the Human lab, once that view has been opened),
   `gait.lock = fraction` (freeze the walk), `getCity()` (`player`, `npcs`,
   `cars`, `cats`, `cam`, `iso`, `setViewMode('iso'|'third')`, `setWeather(kind)`, `ix` interactions),
   `newTown(seed)`, `cityInput`, `tuneOf(look)` (a walk / run tune), `setUiStyle({ world, hud })`, `COMEDY` and `comedy(kind, n, t)` (show comic hit
