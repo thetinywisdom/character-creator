@@ -1,22 +1,28 @@
 import * as THREE from 'three';
-import { capsuleBetween, ellipsoid, seg } from '../lib/shapes.js';
+import { capsuleBetween } from '../lib/shapes.js';
+import { lobe, shadeMaterial } from '../lib/foliage.js';
 import { box, cyl } from './util.js';
 
 // Batch D – extras: planters, drink vending machines, a public phone booth
 // (instead of newspaper boxes, which are rare in Japan) and the concrete
 // utility pole that is everywhere in Japanese streets.
 
-/** A low-poly bush: a few overlapping leaf balls. */
+/** A low-poly bush: two overlapping faceted lumps, lighter on top. */
 export function bush(style, radius, rng = Math.random) {
   const g = new THREE.Group();
-  const leaf = style.material('leaf');
-  g.add(ellipsoid(radius, [1, 0.8, 1], leaf, { segments: 10 }));
-  for (let i = 0; i < 4; i++) {
-    const a = (i / 4) * Math.PI * 2 + rng();
-    g.add(ellipsoid(radius * 0.6, [1, 0.8, 1], leaf, {
-      position: [Math.cos(a) * radius * 0.55, radius * 0.15, Math.sin(a) * radius * 0.55], segments: 8,
-    }));
+  const leaf = shadeMaterial(style.material('leaf'));
+  g.add(lobe(leaf, radius * 0.78, rng, [0, radius * 0.36, 0], { scale: [1, 0.78, 1] }));
+  for (let i = 0; i < 3; i++) {
+    const a = (i / 3) * Math.PI * 2 + rng() * 0.6;
+    g.add(lobe(leaf, radius * (0.4 + rng() * 0.08), rng, [
+      Math.cos(a) * radius * 0.5,
+      radius * (0.12 + rng() * 0.22),
+      Math.sin(a) * radius * 0.5,
+    ], { scale: [1.08, 0.7, 0.92], kind: 'oct' }));
   }
+  g.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(g);
+  if (box.min.y < 0) for (const c of g.children) c.position.y -= box.min.y;
   return g;
 }
 

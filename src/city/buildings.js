@@ -14,6 +14,7 @@ export const FLOOR = 3;
 
 import { car } from '../props/vehicles.js';
 import { between, chance, flatsAbove, frontExtras, roofTop, side } from './variety.js';
+import { shadeMaterial, trimmedHedge } from '../lib/foliage.js';
 
 const pick = (rng, arr) => arr[Math.floor(rng() * arr.length)];
 
@@ -205,11 +206,22 @@ export function house(style, rng, w, d) {
   const leftEnd = carport ? hx - bw / 2 - 0.3 : -w / 2 + 0.3;
   const runs = [[leftEnd, gate - gap / 2], [gate + gap / 2, w / 2 - 0.3]].filter(([a, b2]) => b2 - a > 0.4);
   if (front !== 'open') {
-    const m = front === 'hedge' ? style.material('leaf', 0x4f8a3a) : style.material('concrete', pick(rng, [0xb4b0a8, 0xc9c4b8, 0x9a968c]));
-    const h = front === 'hedge' ? 0.9 : 1.1, t = front === 'hedge' ? 0.5 : 0.15;
-    for (const [a, b2] of runs) {
-      g.add(box(b2 - a, h, t, m, [(a + b2) / 2, h / 2, fz]));
-      colliders.push({ x: (a + b2) / 2, z: fz, hw: (b2 - a) / 2, hd: t / 2 + 0.05 });
+    if (front === 'hedge') {
+      const h = 0.9, t = 0.5;
+      const m = shadeMaterial(style.material('leaf', 0x4f8a3a));
+      for (const [a, b2] of runs) {
+        const hedge = trimmedHedge(b2 - a, h, t, m);
+        hedge.position.set((a + b2) / 2, h / 2, fz);
+        g.add(hedge);
+        colliders.push({ x: (a + b2) / 2, z: fz, hw: (b2 - a) / 2, hd: t / 2 + 0.05 });
+      }
+    } else {
+      const m = style.material('concrete', pick(rng, [0xb4b0a8, 0xc9c4b8, 0x9a968c]));
+      const h = 1.1, t = 0.15;
+      for (const [a, b2] of runs) {
+        g.add(box(b2 - a, h, t, m, [(a + b2) / 2, h / 2, fz]));
+        colliders.push({ x: (a + b2) / 2, z: fz, hw: (b2 - a) / 2, hd: t / 2 + 0.05 });
+      }
     }
   } else {
     colliders.push(...frontExtras(g, style, rng, w * 0.8, d / 2 - 1.2, { keepClear: [[gate - 1, gate + 1]], max: 2, kinds: ['planter', 'planter', 'bike'] }));
