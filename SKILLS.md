@@ -195,8 +195,9 @@ src/city/input.js      keyboard, drag, pinch and on-screen joystick
 src/props/             street props (furniture, traffic, vehicles, extras, japan)
 src/creator/Creator.js the character creator panel (viewer only)
 src/viewer/            Cell (a preview stage), params (saved settings)
-src/lib/               shapes, merge (one mesh per material), skin (one skinned mesh per
-                       person), rng, textures, saveFile
+src/lib/               shapes, foliage (lobes, shaded leaf/bark, trimmed hedges), merge
+                       (one mesh per material), skin (one skinned mesh per person), rng,
+                       textures, saveFile
 ```
 
 ## The rules (keep them in any game)
@@ -235,7 +236,7 @@ buildings, street, traffic, extras, nature, animals, vehicles, areas.
 'loaf' | 'sleep'`; joints legF*/legB* plus lowF*/lowB* elbows and hocks). Cats take `pattern`, `tailType`, `earType` and `coat`
 (`cat.randomize()` for a random one); coats are painted per face as vertex
 colours, which `lib/skin.js` keeps when it makes the city's skinned mesh.
-`options: { param: [values] }` on a catalogue asset adds chips in the viewer. Trees (`nature.tree`) come in 11 presets
+`options: { param: [values] }` on a catalogue asset adds chips in the viewer. Trees (`nature.tree`) are clumped low-poly lobes (bamboo: segmented culms; the old giant: a kinked trunk that splits) and come in 11 presets
 (oak, lollipop, pine, old giant, cherry blossom, Japanese maple, ginkgo,
 zelkova, black pine, weeping willow, bamboo); motorbikes
 (`vehicle.scooter`) in 50cc and Delivery (three-wheelers), Step-through,

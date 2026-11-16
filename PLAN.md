@@ -38,6 +38,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 ## Done
 
+76. **Foliage, kept low-poly** (owner: trees, bushes and hedges, especially bamboo and the old tree; an earlier rebuild was too much): canopies are clumped lobes with a lighter top and darker underside, same palette hues. Bamboo is thin segmented culms with node rings and sparse tufts at the top. The old giant kinks and splits into a few heavy limbs with a sparser crown. Bushes are a small mound of the same lumps. House hedges keep their size, with a clipped top instead of a plain box. Triangle counts stay under the old ones for every tree; bushes are about 1.5×; a hedge run is still under 100 triangles.
+
 1. **Style exploration** (phase 1): human, cat, tree; Ink & Cel vs PS1; PS1 · Bright + clear chosen; style guide.
 2. **Characters** (phase 2): modular human (hair 25+, facial hair, tops, legwear, footwear, outerwear, headwear, glasses, mask, accessories, hand items), natural walk / run, skirt stretch, wing flap, rules, body types with default designs, builds, street props.
 3. **Walkable city** (phase 3): generated town, pedestrians, cars, cats, lighting presets.

@@ -13,7 +13,9 @@ agents to build games on. **Agents: read `SKILLS.md`.**
 
 - **📦 Catalogue** (home): the 🎨 colour palette everything uses, and every
   item a game can place, in tabs (Buildings,
-  Street, Traffic, Extras, Nature, Animals, Vehicles, Areas), including the
+  Street, Traffic, Extras, Nature, Animals, Vehicles, Areas). Trees and bushes
+  are clumped low-poly foliage; house hedges are trimmed rather than plain
+  boxes. The catalogue includes the
   bus, the bus stop shelter and the banana peel. Tap one to turn
   it around, try its types, colours and looks, and copy the `createAsset(...)`
   line that builds it. 🎲 New look gives a really different building (shape,

@@ -407,6 +407,15 @@ pads of needles), **weeping willow** (round crown, thin curtains to near the
 ground) and **bamboo** (a clump of thin green canes with leaf tufts). Parks
 mix all of them; shrine groves use old giants, zelkova and pines.
 
+Canopies are clumps of faceted lobes, not one smooth ball. The leaf colour
+stays the palette colour: vertex colour only lightens the top and darkens the
+underside. Trunks taper and bend a little. Bamboo is thin culms with a ring
+at each node and a few leaf sprays near the top, leaning differently per
+cane. The old giant's trunk kinks and splits into a few heavy limbs, with
+separate clumps and gaps between them. A bush is a small mound of the same
+lumps. A house hedge keeps its length, height and thickness, but the sides
+lean in and the top is clipped in a regular rhythm.
+
 **Park playground** (`city/playground.js`), in bright signage colours:
 - **Swings:** a red A-frame and top bar (2.4 m), two wooden seats on thin
   metal chains (1.86 m) that really swing (a pendulum, ~2.7 s a swing). A kid
