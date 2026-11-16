@@ -1,20 +1,24 @@
 import * as THREE from 'three';
 import { seg } from '../lib/shapes.js';
-import { lobe, paintBands, shadeMaterial, tapered, uprightTrunk } from '../lib/foliage.js';
+import { frond, lobe, paintBands, shadeMaterial, tapered, uprightTrunk } from '../lib/foliage.js';
 import { mulberry32 } from '../lib/rng.js';
+import { PALETTE } from '../styles/palette.js';
 
 // Trees. Canopy families: cloud (broadleaf clumps), round (lollipop), pine
 // (stacked cones), column (ginkgo), willow (a crown with hanging strips),
 // pads (black pine) and bamboo (a clump of segmented culms). A thick cloud
 // trunk (the old giant) is built gnarled instead: the trunk twists and splits
-// into a few heavy limbs with a sparser crown. `seed` changes the lumps, the
-// lean and the limb layout; colours stay the palette's leaf and bark.
+// into a few heavy limbs with a sparser crown. Catalogue-only shapes (not
+// planted by the city): cedar (a narrow drooping spire), palm (fan fronds),
+// dome (a dense round crown), umbrella (a flat broadleaf crown), bare (twigs,
+// no leaves) and maple (flat orange layers). `seed` changes the lumps, the
+// lean and the limb layout; colours stay palette swatches.
 
 export const tree = {
   id: 'tree',
   label: 'Tree',
   schema: {
-    canopyShape:    { value: 'cloud', options: ['cloud', 'round', 'pine', 'column', 'willow', 'pads', 'bamboo'], label: 'Canopy shape' },
+    canopyShape:    { value: 'cloud', options: ['cloud', 'round', 'pine', 'column', 'willow', 'pads', 'bamboo', 'cedar', 'palm', 'dome', 'umbrella', 'bare', 'maple'], label: 'Canopy shape' },
     trunkHeight:    { value: 1.6,  min: 0.6,  max: 3.5, step: 0.05, label: 'Trunk height (m)' },
     trunkThickness: { value: 0.16, min: 0.06, max: 0.4, step: 0.01, label: 'Trunk thickness' },
     canopySize:     { value: 1.1,  min: 0.5,  max: 2.2, step: 0.05, label: 'Canopy size' },
@@ -40,6 +44,22 @@ export const tree = {
     'Weeping willow': { canopyShape: 'willow', trunkHeight: 2.2, trunkThickness: 0.2, canopySize: 1.5, branches: 0, clusters: 9, seed: 6, leaves: 'Light green' },
     Bamboo:     { canopyShape: 'bamboo', trunkHeight: 3.5, trunkThickness: 0.06, canopySize: 0.6, branches: 0, clusters: 9, seed: 8, leaves: 'Light green' },
   },
+  // Catalogue only. city/park.js and the shrine grove plant `presets` and
+  // nothing else, so these stay out of generated towns.
+  more: {
+    // sugi: a tall narrow spire of drooping tiers, not the pine's fat cones
+    'Japanese cedar': { canopyShape: 'cedar', trunkHeight: 4.8, trunkThickness: 0.13, canopySize: 0.9, branches: 0, clusters: 9, seed: 2 },
+    // shuro: a hemp / windmill palm, the fan palm of Japanese streets
+    'Windmill palm': { canopyShape: 'palm', trunkHeight: 2.55, trunkThickness: 0.16, canopySize: 1.15, branches: 8, clusters: 4, seed: 3 },
+    // kusunoki: a low, thick, very dense round evergreen
+    Camphor: { canopyShape: 'dome', trunkHeight: 1.25, trunkThickness: 0.3, canopySize: 1.65, branches: 0, clusters: 8, seed: 4 },
+    // enju: limbs holding one wide flat crown
+    'Pagoda tree': { canopyShape: 'umbrella', trunkHeight: 2.05, trunkThickness: 0.18, canopySize: 1.55, branches: 5, clusters: 1, seed: 9 },
+    // winter: the branching with the leaves gone
+    'Winter tree': { canopyShape: 'bare', trunkHeight: 2.15, trunkThickness: 0.15, canopySize: 1.25, branches: 5, clusters: 3, seed: 6 },
+    // a wider maple in orange and rust. The small red one stays "Japanese maple".
+    'Autumn maple': { canopyShape: 'maple', trunkHeight: 1.15, trunkThickness: 0.11, canopySize: 1.4, branches: 0, clusters: 3, seed: 12 },
+  },
 
   build(p, style) {
     const LEAVES = { 'Cherry blossom': 0xf3b3c8, Autumn: 0xd9772e, Red: 0xc8402e, Yellow: 0xe8c040, 'Dark green': 0x3b6a3a, 'Light green': 0x8ab84e };
@@ -55,6 +75,12 @@ export const tree = {
 
     if (p.canopyShape === 'bamboo') return bambooClump(root, p, M, rng, style);
     if (p.canopyShape === 'pads') return blackPine(root, p, bark, leaf, rng);
+    if (p.canopyShape === 'cedar') return japaneseCedar(root, p, bark, leaf, rng);
+    if (p.canopyShape === 'palm') return windmillPalm(root, p, bark, rng, style);
+    if (p.canopyShape === 'dome') return camphorDome(root, p, bark, leaf, rng);
+    if (p.canopyShape === 'umbrella') return pagodaTree(root, p, bark, rng, style);
+    if (p.canopyShape === 'bare') return winterTree(root, p, bark, rng);
+    if (p.canopyShape === 'maple') return autumnMaple(root, p, bark, rng, style);
     // the old giant: thick enough that a straight pole would look like a post
     if (p.canopyShape === 'cloud' && r >= 0.3) return gnarled(root, p, bark, leaf, rng);
 
@@ -381,4 +407,225 @@ function flatPad(root, leaf, rng, center, radius) {
     center[1] + radius * 0.03,
     center[2] + (rng() - 0.5) * radius * 0.4,
   ], { scale: [1.2, 0.28, 1.05] }));
+}
+
+const swatchLeaf = (style, name) => shadeMaterial(style.material('leaf', PALETTE[name]));
+
+/**
+ * Japanese cedar (sugi). A tall narrow spire: many short tiers that droop,
+ * so it is not the pine's few fat cones or the black pine's flat pads.
+ */
+function japaneseCedar(root, p, bark, leaf, rng) {
+  const H = p.trunkHeight;
+  const r = p.trunkThickness;
+  const cs = p.canopySize;
+  // only the base shows; above that the tiers overlap into one narrow spire
+  root.add(uprightTrunk(H * 0.12, r * 1.5, r * 0.95, bark, rng));
+  const tiers = 12;
+  for (let k = 0; k < tiers; k++) {
+    const f = k / (tiers - 1);
+    const y = H * (0.1 + f * 0.86);
+    // the top stays wide enough that its droop still reaches the tier below
+    const reach = cs * (1.15 - f * 0.48) * (0.96 + rng() * 0.06);
+    const droop = reach * 0.82;
+    const spin = k * 0.38;
+    for (let i = 0; i < 8; i++) {
+      const a = spin + (i / 8) * Math.PI * 2;
+      root.add(frond(
+        leaf,
+        [0, y, 0],
+        [Math.cos(a) * reach, y - droop, Math.sin(a) * reach],
+        reach * 0.5,
+      ));
+    }
+  }
+  return root;
+}
+
+/**
+ * Windmill palm (shuro): a ringed trunk, a skirt of dead fronds, and fans
+ * of stiff leaflets. Not a feather palm.
+ */
+function windmillPalm(root, p, bark, rng, style) {
+  const H = p.trunkHeight;
+  const r = p.trunkThickness;
+  const cs = p.canopySize;
+  const leaf = swatchLeaf(style, 'Sage');
+  const dead = shadeMaterial(style.material('bark', PALETTE.Walnut));
+  const segs = 5;
+  const lean = (rng() - 0.5) * 0.16;
+  let prev = [0, 0, 0];
+  for (let s = 1; s <= segs; s++) {
+    const t = s / segs;
+    const pos = [lean * t, H * t, lean * 0.35 * t];
+    const rb = r * (1.2 - (t - 1 / segs) * 0.28);
+    const rt = r * (1.2 - t * 0.28);
+    root.add(tapered(prev, pos, rb, rt, bark, 12));
+    // a shallow ring, not a bamboo node
+    root.add(tapered(
+      [pos[0], pos[1] - 0.04, pos[2]],
+      pos,
+      rt * 1.12,
+      rt * 1.12,
+      bark,
+      12,
+      { flat: 0.9 },
+    ));
+    prev = pos;
+  }
+  const crown = [prev[0], H + 0.02, prev[2]];
+  const fans = Math.max(6, Math.min(8, p.branches));
+  for (let i = 0; i < fans; i++) {
+    const a = (i / fans) * Math.PI * 2 + rng() * 0.08;
+    const lift = 0.35 + (i % 3) * 0.32 + rng() * 0.06;
+    const dir = new THREE.Vector3(Math.cos(a), lift, Math.sin(a)).normalize();
+    // a short petiole, then a fan that is most of the leaf
+    const stem = cs * 0.38;
+    const petiole = dir.clone().multiplyScalar(stem).add(new THREE.Vector3(...crown));
+    root.add(tapered(crown, [petiole.x, petiole.y, petiole.z], 0.03, 0.016, bark, 8));
+    const side = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
+    const up = new THREE.Vector3().crossVectors(dir, side).normalize();
+    const leaflets = 5;
+    for (let k = 0; k < leaflets; k++) {
+      const u = k / (leaflets - 1) - 0.5;
+      const base = new THREE.Vector3(...crown).lerp(petiole, 0.45);
+      const leafTip = petiole.clone()
+        .addScaledVector(dir, cs * 0.62)
+        .addScaledVector(side, u * cs * 0.7)
+        .addScaledVector(up, (0.15 - Math.abs(u)) * cs * 0.25);
+      root.add(frond(leaf, [base.x, base.y, base.z], [leafTip.x, leafTip.y, leafTip.z], cs * (0.2 - Math.abs(u) * 0.06)));
+    }
+  }
+  // the brown skirt under the crown, which is how a shuro reads at a glance
+  for (let i = 0; i < 7; i++) {
+    const a = (i / 7) * Math.PI * 2 + 0.2;
+    const out = cs * 0.55;
+    root.add(frond(
+      dead,
+      [crown[0], crown[1] - 0.05, crown[2]],
+      [crown[0] + Math.cos(a) * out, crown[1] - cs * 0.72, crown[2] + Math.sin(a) * out],
+      cs * 0.16,
+    ));
+  }
+  sitOnGround(root);
+  return root;
+}
+
+/** Camphor (kusunoki): a thick short trunk under one heavy round crown. */
+function camphorDome(root, p, bark, leaf, rng) {
+  const th = p.trunkHeight;
+  const r = p.trunkThickness;
+  const cs = p.canopySize;
+  root.add(uprightTrunk(th, r * 1.15, r * 0.78, bark, rng));
+  clump(root, leaf, rng, [0, th + cs * 0.58, 0], cs * 0.7, 3);
+  const n = Math.max(6, p.clusters);
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + rng() * 0.12;
+    const band = i % 3;
+    const y = th + cs * (0.22 + band * 0.26);
+    const dist = cs * (band === 1 ? 0.58 : 0.4);
+    const rad = cs * (band === 2 ? 0.4 : 0.5);
+    clump(root, leaf, rng, [Math.cos(a) * dist, y, Math.sin(a) * dist], rad, 2);
+  }
+  sitOnGround(root);
+  return root;
+}
+
+/** Pagoda tree (enju): a few limbs and one wide, flat crown. */
+function pagodaTree(root, p, bark, rng, style) {
+  const th = p.trunkHeight;
+  const r = p.trunkThickness;
+  const cs = p.canopySize;
+  const leaf = swatchLeaf(style, 'Sage');
+  const top = [(rng() - 0.5) * r, th, (rng() - 0.5) * r];
+  root.add(tapered([0, 0, 0], top, r * 1.3, r * 0.42, bark, 12));
+  const n = Math.max(4, p.branches);
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + rng() * 0.25;
+    const len = cs * (0.72 + rng() * 0.22);
+    const tip = [Math.cos(a) * len, th + cs * 0.12, Math.sin(a) * len];
+    const mid = [top[0] * 0.4 + tip[0] * 0.42, th * 0.78, top[2] * 0.4 + tip[2] * 0.42];
+    root.add(tapered(top, mid, r * 0.3, r * 0.14, bark, 8));
+    root.add(tapered(mid, tip, r * 0.14, r * 0.06, bark, 8));
+    root.add(lobe(leaf, cs * 0.52, rng, [tip[0] * 0.78, th + cs * 0.28, tip[2] * 0.78], { scale: [1.3, 0.32, 1.12] }));
+  }
+  root.add(lobe(leaf, cs * 0.66, rng, [0, th + cs * 0.34, 0], { scale: [1.35, 0.28, 1.35] }));
+  sitOnGround(root);
+  return root;
+}
+
+/** A leafless winter tree: the trunk splits, and the limbs fork into twigs. */
+function winterTree(root, p, bark, rng) {
+  const th = p.trunkHeight;
+  const r = p.trunkThickness;
+  const cs = p.canopySize;
+  const j1 = [(rng() - 0.5) * r * 0.8, th * 0.42, (rng() - 0.5) * r * 0.5];
+  const j2 = [j1[0] * 0.4 + (rng() - 0.5) * r, th * 0.78, j1[2] * 0.4 + (rng() - 0.5) * r];
+  root.add(tapered([0, 0, 0], j1, r * 1.45, r * 0.95, bark, 12));
+  root.add(tapered(j1, j2, r * 0.95, r * 0.42, bark, 10));
+  const limbs = Math.max(4, p.branches);
+  const twigs = Math.max(2, p.clusters);
+  for (let i = 0; i < limbs; i++) {
+    const from = i < 2 ? j1 : j2;
+    const ang = (i / limbs) * Math.PI * 2 + rng() * 0.45;
+    const elev = 0.25 + rng() * 0.85;
+    const len = cs * (0.7 + rng() * 0.45);
+    const tip = [
+      from[0] + Math.cos(ang) * Math.cos(elev) * len,
+      from[1] + Math.sin(elev) * len * 0.75,
+      from[2] + Math.sin(ang) * Math.cos(elev) * len,
+    ];
+    const mid = [
+      (from[0] + tip[0]) * 0.5 + (rng() - 0.5) * 0.1,
+      (from[1] + tip[1]) * 0.55,
+      (from[2] + tip[2]) * 0.5 + (rng() - 0.5) * 0.1,
+    ];
+    const thick = r * (i < 2 ? 0.42 : 0.3);
+    root.add(tapered(from, mid, thick, thick * 0.55, bark, 8));
+    root.add(tapered(mid, tip, thick * 0.55, thick * 0.28, bark, 8));
+    for (let t = 0; t < twigs; t++) {
+      const u = 0.4 + (t / twigs) * 0.55;
+      const base = mid.map((v, k) => v + (tip[k] - mid[k]) * u);
+      const spread = (t - (twigs - 1) / 2) * 0.7;
+      const ta = ang + spread;
+      const te = 0.15 + rng() * 0.7;
+      const tl = cs * (0.28 + rng() * 0.22);
+      const tw = [
+        base[0] + Math.cos(ta) * tl,
+        base[1] + Math.sin(te) * tl * 0.65,
+        base[2] + Math.sin(ta) * tl,
+      ];
+      root.add(tapered(base, tw, thick * 0.22, Math.max(0.035, thick * 0.1), bark, 6));
+    }
+  }
+  sitOnGround(root);
+  return root;
+}
+
+/**
+ * Autumn maple: flat layered lobes in Apricot and Brick, so it reads orange
+ * and rust. The existing Japanese maple stays the small all-red one.
+ */
+function autumnMaple(root, p, bark, rng, style) {
+  const apricot = swatchLeaf(style, 'Apricot');
+  const brick = swatchLeaf(style, 'Brick');
+  const th = p.trunkHeight;
+  const r = p.trunkThickness;
+  const cs = p.canopySize;
+  root.add(uprightTrunk(th, r * 1.35, r * 0.48, bark, rng));
+  const layers = Math.max(2, Math.min(4, p.clusters));
+  for (let L = 0; L < layers; L++) {
+    const y = th + cs * (0.12 + L * 0.3);
+    const n = 5;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + L * 0.5 + rng() * 0.08;
+      const dist = cs * (0.22 + L * 0.24);
+      const pos = [Math.cos(a) * dist, y, Math.sin(a) * dist];
+      if (L > 0) root.add(tapered([0, th * 0.82, 0], pos, r * 0.32, r * 0.08, bark, 8));
+      const mat = (i + L) % 3 === 0 ? brick : apricot;
+      root.add(lobe(mat, cs * (0.48 - L * 0.05), rng, pos, { scale: [1.45, 0.36, 1.15] }));
+    }
+  }
+  sitOnGround(root);
+  return root;
 }

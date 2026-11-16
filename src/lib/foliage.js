@@ -55,6 +55,40 @@ export function paintBands(geo, { hi = 1, mid = 0.84, lo = 0.64, height = 0.4 } 
   return g;
 }
 
+/**
+ * A flat leaf, leaflet or frond: a diamond, drawn on both sides, wider at the
+ * middle and lighter at the tip. `width` is the half-width. Kept chunky so a
+ * frond still reads when the whole tree is small.
+ */
+export function frond(material, from, to, width) {
+  const O = new THREE.Vector3(...from);
+  const T = new THREE.Vector3(...to);
+  const dir = T.clone().sub(O);
+  if (dir.lengthSq() < 1e-8) dir.set(0, 1, 0);
+  dir.normalize();
+  const side = new THREE.Vector3(-dir.z, 0, dir.x);
+  if (side.lengthSq() < 1e-8) side.set(1, 0, 0);
+  side.normalize();
+  const mid = O.clone().lerp(T, 0.45);
+  const left = mid.clone().addScaledVector(side, width);
+  const right = mid.clone().addScaledVector(side, -width);
+  const geo = new THREE.BufferGeometry();
+  const pos = [];
+  const col = [];
+  const shade = (p) => (p === T ? 1 : p === O ? 0.7 : 0.86);
+  for (const tri of [[O, left, T], [O, T, right], [O, T, left], [O, right, T]]) {
+    for (const p of tri) {
+      pos.push(p.x, p.y, p.z);
+      const s = shade(p);
+      col.push(s, s, s);
+    }
+  }
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  geo.computeVertexNormals();
+  return new THREE.Mesh(geo, material);
+}
+
 /** Bake a mesh's transform into its geometry and return a new identity mesh. */
 function baked(mesh, material, paint) {
   mesh.updateMatrix();

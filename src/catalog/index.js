@@ -7,7 +7,7 @@ const EXTRA_BUILDINGS = { ...SHOP_BUILDINGS, ...CIVIC_BUILDINGS };
 import { tree } from '../subjects/tree.js';
 import { CAT_COATS, CAT_EARS, CAT_FUR, CAT_PATTERNS, CAT_TAILS, cat } from '../subjects/cat.js';
 import { dressBacks } from '../city/backs.js';
-import { bush } from '../props/extras.js';
+import { bush, bushKind, doorstepPot } from '../props/extras.js';
 import { park } from '../city/park.js';
 import { PROP_GROUPS } from '../props/index.js';
 import { wire } from '../props/extras.js';
@@ -144,12 +144,12 @@ const natureAssets = [{
   label: 'Tree',
   category: 'nature',
   group: 'nature',
-  variants: Object.keys(tree.presets),
+  variants: [...Object.keys(tree.presets), ...Object.keys(tree.more)],
   params: { variant: 'Oak', seed: 0 },
   size: [4, 4],
   build(p, style) {
     const defaults = Object.fromEntries(Object.entries(tree.schema).map(([k, d]) => [k, d.value]));
-    const preset = tree.presets[p.variant] ?? tree.presets.Oak;
+    const preset = tree.presets[p.variant] ?? tree.more[p.variant] ?? tree.presets.Oak;
     const t = tree.build({ ...defaults, ...preset, ...(p.seed ? { seed: p.seed } : {}) }, style);
     return withColliders(t, [{ hw: 0.3, hd: 0.3 }]);
   },
@@ -182,12 +182,31 @@ const natureAssets = [{
   label: 'Bush',
   category: 'nature',
   group: 'nature',
-  variants: ['Small', 'Large'],
+  variants: ['Small', 'Large', 'Boxwood', 'Azalea', 'Hydrangea', 'Fern clump'],
   params: { variant: 'Small', seed: 1 },
   size: [1.2, 1.2],
   build(p, style) {
-    const b = bush(style, p.variant === 'Large' ? 0.9 : 0.55, mulberry32((p.seed ?? 1) * 17 + 3));
-    return withColliders(b, [{ hw: 0.5, hd: 0.5 }]);
+    const rng = mulberry32((p.seed ?? 1) * 17 + 3);
+    // Small and Large stay the plain mound. New kinds have their own hit size.
+    if (p.variant === 'Large' || p.variant === 'Small' || p.variant == null) {
+      const b = bush(style, p.variant === 'Large' ? 0.9 : 0.55, rng);
+      return withColliders(b, [{ hw: 0.5, hd: 0.5 }]);
+    }
+    const b = bushKind(style, p.variant, rng) ?? bush(style, 0.55, rng);
+    const hit = { Boxwood: 0.42, Azalea: 0.58, Hydrangea: 0.48, 'Fern clump': 0.46 }[p.variant] ?? 0.5;
+    return withColliders(b, [{ hw: hit, hd: hit }]);
+  },
+}, {
+  id: 'nature.pot',
+  label: 'Doorstep pot',
+  category: 'nature',
+  group: 'nature',
+  variants: ['Fern', 'Leafy', 'Snake plant', 'Cactus'],
+  params: { variant: 'Fern', seed: 1 },
+  size: [0.5, 0.5],
+  build(p, style) {
+    const g = doorstepPot(style, p.variant, mulberry32((p.seed ?? 1) * 23 + 5));
+    return withColliders(g, [{ hw: 0.2, hd: 0.2 }]);
   },
 }];
 
