@@ -5,7 +5,8 @@ import { SHOP_BUILDINGS } from '../city/shops.js';
 import { CIVIC_BUILDINGS } from '../city/civic.js';
 const EXTRA_BUILDINGS = { ...SHOP_BUILDINGS, ...CIVIC_BUILDINGS };
 import { tree } from '../subjects/tree.js';
-import { CAT_COATS, CAT_EARS, CAT_FUR, CAT_PATTERNS, CAT_TAILS, cat } from '../subjects/cat.js';
+import { CAT_COATS, CAT_EARS, CAT_FACES, CAT_FUR, CAT_PATTERNS, CAT_TAILS, cat } from '../subjects/cat.js';
+import { toyCat } from '../subjects/catVersions/cat_toy.js';
 import { dressBacks } from '../city/backs.js';
 import { bush, bushKind, doorstepPot } from '../props/extras.js';
 import { park } from '../city/park.js';
@@ -233,6 +234,32 @@ const animalAssets = [{
     g.scale.setScalar(cat.exaggeration ?? 1);
     g.add(c);
     return withColliders(g, [{ hw: 0.2, hd: 0.35 }]);
+  },
+}, {
+  // Chunky toy cat. The town still uses animal.cat. Seed changes colour
+  // within the fur family, pattern placement and small proportions.
+  id: 'animal.toyCat',
+  label: 'Toy cat',
+  category: 'animal',
+  group: 'animals',
+  animated: 'cat',
+  variants: Object.keys(toyCat.presets),
+  colors: Object.keys(CAT_FUR),
+  swatches: CAT_FUR,
+  options: { pattern: CAT_PATTERNS, tailType: CAT_TAILS, earType: CAT_EARS, coat: CAT_COATS, face: CAT_FACES },
+  params: { variant: 'Housecat', color: 'Ginger', pattern: 'Solid', tailType: 'Long', earType: 'Pointed', coat: 'Short', face: 'None', seed: 1 },
+  size: [0.45, 0.7],
+  build(p, style) {
+    const defaults = Object.fromEntries(Object.entries(toyCat.schema).map(([k, d]) => [k, d.value]));
+    const c = toyCat.build({
+      ...defaults, ...(toyCat.presets[p.variant] ?? {}),
+      furColor: p.color ?? 'Ginger', pattern: p.pattern ?? 'Solid', tailType: p.tailType ?? 'Long',
+      earType: p.earType ?? 'Pointed', coat: p.coat ?? 'Short', face: p.face ?? 'None', seed: p.seed ?? 1,
+    }, style);
+    const g = new THREE.Group();
+    g.scale.setScalar(toyCat.exaggeration ?? 1);
+    g.add(c);
+    return withColliders(g, [{ hw: 0.24, hd: 0.32 }]);
   },
 }];
 

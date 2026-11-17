@@ -1,9 +1,10 @@
 // The Cat lab: every cat version made so far (from the project history, in
 // subjects/catVersions/) next to new cute proposals built on today's cat
 // (subjects/cat.js with its cute options: face, body shape, paw size, cheek
-// fluff). All on the same rig (legFL..legBR, lowFL..lowBR, head, tail), so the
-// buttons make them all walk, run, sit, loaf or sleep together. Only the very
-// first, grey-box cat has no leg joints: it just stands.
+// fluff). Version 8 is the chunky toy (cat_toy.js), for comparison; it is not
+// the town cat. All on the same rig (legFL..legBR, lowFL..lowBR, head, tail),
+// so the buttons make them all walk, run, sit, loaf or sleep together. Only
+// the very first, grey-box cat has no leg joints: it just stands.
 import * as THREE from 'three';
 import { Cell } from '../viewer/Cell.js';
 import { cat } from '../subjects/cat.js';
@@ -13,6 +14,7 @@ import { cat as v3 } from '../subjects/catVersions/cat_edf7b5c.js';
 import { cat as v4 } from '../subjects/catVersions/cat_10f037a.js';
 import { cat as v5 } from '../subjects/catVersions/cat_b6fbf6d.js';
 import { cat as v6 } from '../subjects/catVersions/cat_v6.js';
+import { cat as toy } from '../subjects/catVersions/cat_toy.js';
 import { CAT_RUN_SPEED, CAT_WALK_SPEED, createCatGait, poseCat, stepCatGait } from '../anim/catGait.js';
 
 const defaults = (c) => Object.fromEntries(Object.entries(c.schema).map(([k, d]) => [k, d.value]));
@@ -26,6 +28,7 @@ export const CAT_VERSIONS = [
   ['5 · Big round head', v5, coat],
   ['6 · Lofted (calico)', v6, { furColor: 'White', pattern: 'Calico' }],
   ['7 · NEW: 6 body + 2 head', cat, { furColor: 'White', pattern: 'Calico' }],
+  ['8 · Chunky toy', toy, { furColor: 'Ginger', pattern: 'Tabby', face: 'None', seed: 1 }],
 ];
 
 /** Cute proposals: version 6 with its cute options turned up (face, shape, paws, cheeks). */
@@ -76,7 +79,10 @@ export class CatLab {
 
   /** Animate and draw both rows (top: versions, bottom: proposals) as tiles under the bar. */
   render(ps1, dt, W, H) {
-    const top = 104, gapY = 6, rowH = (H - top - gapY * 3) / 2;
+    // the bar wraps on a phone; start the tiles under it, not under a fixed line
+    const bar = this.el.querySelector('.cl-bar');
+    const top = Math.max(100, (bar?.getBoundingClientRect().bottom ?? 100) + 4);
+    const gapY = 6, rowH = Math.max(48, (H - top - gapY * 3) / 2);
     const speed = { Walk: CAT_WALK_SPEED, Run: CAT_RUN_SPEED }[this.anim] ?? 0;
     const pose = { Sit: 'sit', Loaf: 'loaf', Sleep: 'sleep' }[this.anim] ?? null;
     this.rows.forEach((r, k) => {
@@ -92,7 +98,7 @@ export class CatLab {
         tile.cell.frame(rect.w / rect.h, tile.cam, { margin: 1.0 });
         tile.cam.updateProjectionMatrix();
         ps1.render(tile.cell, tile.cam, rect.x, H - rect.y - rect.h, rect.w, rect.h);
-        t.names[i].style.cssText = `left:${rect.x + rect.w / 2}px;top:${rect.y + rect.h - 20}px`;
+        t.names[i].style.cssText = `left:${rect.x + rect.w / 2}px;top:${rect.y + rect.h - 18}px;width:${Math.max(24, rect.w - 6)}px`;
       });
     });
   }

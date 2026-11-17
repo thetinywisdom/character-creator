@@ -397,6 +397,13 @@ About one in six random characters is a child.
 - **Cat:** walks with the cat's lateral sequence (feet a quarter cycle apart),
   head nodding, tail held up and swaying; runs with a bounding gallop (front
   pair, then back pair), the body rocking and the tail lowered behind.
+- **Chunky toy cat** (Cat lab version 8, catalogue `animal.toyCat` only — the
+  town and the default Cat card stay on the lofted cat): a soft bevelled block
+  body, stubby legs with round paws, a rounded-cube head about 40% of the mesh
+  volume with small triangular ears set wide, and a thick short tail with a
+  round tip. Faceless unless Face is set. Same palette coats, flat faces, one
+  material. About 560 triangles on the default short coat. A seed shifts the
+  colour inside the fur family, where the pattern falls, and a few proportions.
 
 ## 3e-2. Trees
 

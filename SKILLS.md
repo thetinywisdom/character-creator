@@ -163,8 +163,9 @@ src/city/knock.js      Knockables: props tagged userData.knock (catalogue KNOCKA
 src/ui/catLab.js       the Cat lab view (🐱 mode): every cat version so far (subjects/catVersions/,
                        copies of cat.js from the project history; cat_v6.js = the lofted cat
                        with the cute options) and CUTE_CATS proposals (v6 with face / shape /
-                       pawSize / cheeks); 7 = today's cat (v6 body + v2 head), one tile each,
-                       all on the cat rig: Still / Walk / Run / Sit / Loaf / Sleep
+                       pawSize / cheeks); 7 = today's cat (v6 body + v2 head); 8 = the chunky
+                       toy (cat_toy.js, not the town cat), one tile each, all on the cat rig:
+                       Still / Walk / Run / Sit / Loaf / Sleep
 src/ui/walkLab.js      dev tool (hidden; #dev in the address or __cc.devTools(true)): the Walk lab (City, 🚶 button): engine New / Classic (everyone), walk / run styles (WALK_STYLES,
                        RUN_STYLES in anim/gait.js), sliders, walk-to-run blend, frame
                        rate, auto-walk side view; sets city.playerTune (the main
@@ -236,6 +237,12 @@ buildings, street, traffic, extras, nature, animals, vehicles, areas.
 'loaf' | 'sleep'`; joints legF*/legB* plus lowF*/lowB* elbows and hocks). Cats take `pattern`, `tailType`, `earType` and `coat`
 (`cat.randomize()` for a random one); coats are painted per face as vertex
 colours, which `lib/skin.js` keeps when it makes the city's skinned mesh.
+`animal.toyCat` is the chunky toy (subjects/catVersions/cat_toy.js): same
+joints, patterns, tails, ears and coats, faceless unless Face is set, plus
+`seed` (🎲 New look). The town still builds `animal.cat` / subjects/cat.js.
+A short-coat toy is about 560 triangles; the head is about 40% of the mesh
+volume. `userData.cat.swing` / `lift` widen the stride for its short legs,
+and `poseTune.sit` softens the shared sit so the big head stays up.
 `options: { param: [values] }` on a catalogue asset adds chips in the viewer. Trees (`nature.tree`) are clumped low-poly lobes (bamboo: segmented culms; the old giant: a kinked trunk that splits) and come in 11 presets the city plants
 (oak, lollipop, pine, old giant, cherry blossom, Japanese maple, ginkgo,
 zelkova, black pine, weeping willow, bamboo). Catalogue-only kinds live in `tree.more` (the park and the shrine grove never see them): Japanese cedar, windmill palm, camphor, pagoda tree, winter tree, autumn maple. Bushes (`nature.bush`) are the Small and Large mounds, plus boxwood, azalea, hydrangea and a fern clump. Doorstep pots (`nature.pot`: fern, leafy, snake plant, cactus) are separate from the street planter. Motorbikes
