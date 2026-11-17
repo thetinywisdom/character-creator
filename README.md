@@ -24,7 +24,11 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   bus, the bus stop shelter and the banana peel. Tap one to turn
   it around, try its types, colours and looks, and copy the `createAsset(...)`
   line that builds it. 🎲 New look gives a really different building (shape,
-  height, roof, layout), not just a new colour. The cat has patterns, tail, ear and coat types, and Still / Walk / Run /
+  height, roof, layout), not just a new colour. The Buildings tab also lists
+  six European houses (Tudor cottage, Mediterranean villa, Dutch canal house,
+  French country house, Scandinavian house, stone chapel). They stay in the
+  catalogue: the sample town does not place them. The same seed always
+  rebuilds the same house. The cat has patterns, tail, ear and coat types, and Still / Walk / Run /
   Sit / Loaf / Sleep.
 - **👤 Characters**: the character creator (Body, Hair & face, Clothes,
   Accessories; Still / Walk / Run preview). Body types Man, Woman, Boy, Girl,

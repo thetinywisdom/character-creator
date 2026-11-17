@@ -3,7 +3,8 @@ import { mulberry32 } from '../lib/rng.js';
 import { apartment, house, mixedUse, office, school, shop, shrine } from '../city/buildings.js';
 import { SHOP_BUILDINGS } from '../city/shops.js';
 import { CIVIC_BUILDINGS } from '../city/civic.js';
-const EXTRA_BUILDINGS = { ...SHOP_BUILDINGS, ...CIVIC_BUILDINGS };
+import { EUROPE_BUILDINGS } from '../city/europe.js';
+const EXTRA_BUILDINGS = { ...SHOP_BUILDINGS, ...CIVIC_BUILDINGS, ...EUROPE_BUILDINGS };
 import { tree } from '../subjects/tree.js';
 import { CAT_COATS, CAT_EARS, CAT_FUR, CAT_PATTERNS, CAT_TAILS, cat } from '../subjects/cat.js';
 import { dressBacks } from '../city/backs.js';
@@ -86,7 +87,9 @@ const BUILDING_LABELS = { house: 'House', apartment: 'Apartment block', mixedUse
 const BUILDING_SIZES = { shrine: [18, 26], school: [34, 34], ...Object.fromEntries(Object.entries(EXTRA_BUILDINGS).map(([k, [, , w, d]]) => [k, [w, d]])) };
 Object.entries(EXTRA_BUILDINGS).forEach(([k, [, label]]) => { BUILDING_LABELS[k] = label; });
 // buildings whose back and sides get dressed (not open structures or grounds)
-const BARE_OK = new Set(Object.keys(BUILDERS).filter((k) => !['shrine', 'school', 'parkingGarage', 'gasStation'].includes(k)));
+// European houses dress their own backs (no Japanese AC units or fire escapes).
+const SKIP_BACKS = new Set(['shrine', 'school', 'parkingGarage', 'gasStation', ...Object.keys(EUROPE_BUILDINGS)]);
+const BARE_OK = new Set(Object.keys(BUILDERS).filter((k) => !SKIP_BACKS.has(k)));
 const buildingAssets = Object.entries(BUILDERS).map(([key, fn]) => ({
   id: `building.${key}`,
   label: BUILDING_LABELS[key],

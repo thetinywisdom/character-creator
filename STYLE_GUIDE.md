@@ -57,6 +57,12 @@ night glow are not snapped (they are not seen as colours).
   pink, blue or green buildings. Signs, awnings, noren and shop goods keep
   the pastels. Enforced: the `building`, `buildingAlt`, `roof`, `concrete`
   and `wood` roles snap to `BUILDING_PALETTE`.
+- **European houses** (catalogue only, `src/city/europe.js`) keep that rule
+  for plaster, stone, timber and roofs. A wall or a shutter that has to stay
+  a pastel the building palette would flatten uses the `paint` role and an
+  existing swatch: Scandinavian walls are Dusty rose, Butter, Apricot or
+  Brick; some Dutch facades are Dusty rose, Denim, Navy, Butter, Sage or
+  Lilac; shutters use those pastels too. No new swatches.
 - **Sky:** the palette's Sky `#bcd2e0`.
 - **Signs:** the text is always readable: if the snapped text and board are
   too close in lightness, the text becomes Ink or Off white. Sign faces glow
@@ -598,7 +604,21 @@ Dusty rose, Blush, Powder blue, Lilac and Denim.
 - **No dead walls.** Backs and sides have windows with curtains in floor rows
   (some small, a few blank), AC units, a back door with a canopy and a bin,
   a drain pipe, and on taller buildings a grey steel fire escape with a
-  landing and door per floor. At night these windows light up too.
+  landing and door per floor. At night these windows light up too. That pass
+  is for the Japanese town buildings. The European houses model their own
+  sides and are left out of it, so they do not grow AC units or a fire escape.
+- **European houses** (catalogue only): a different silhouette from the
+  Japanese houses. Tudor cottage: pale plaster, dark timber, a steep roof, a
+  tall chimney. Mediterranean villa: stucco, a low hip of tile, arched
+  windows, sometimes a thin iron balcony. Dutch canal house: tall and narrow,
+  a stepped or bell gable, often a hoist beam. French country house: a
+  mansard, dormers, shutters, window boxes. Scandinavian house: one simple
+  gable, Dusty rose, Butter or Apricot walls, white corner boards. Stone
+  chapel: a pointed window and either a bellcote or a corner tower. The seed
+  changes storeys (where the type allows), how many windows and which bay the
+  door is in, and whether a chimney, dormer, balcony, shutter or window box
+  is there. Doors are about 2.1 m, the same scale as the other houses and the
+  1.6 m people.
 - **Iso view: see-through people.** People behind buildings show as flat
   silhouettes, blue (the player yellow), so nobody is lost behind a
   building; the same for cats, cars and buses. Each silhouette is one even
