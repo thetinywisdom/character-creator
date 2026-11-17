@@ -1,0 +1,550 @@
+{
+ "units": "metres",
+ "note": "three.js coords; room centred; item origin bottom centre; rotY radians",
+ "placements": [
+  {
+   "item": "desk",
+   "x": 0.44,
+   "y": 0,
+   "z": -6.1,
+   "rotY": -1.5708,
+   "tag": "Downey"
+  },
+  {
+   "item": "office_chair",
+   "x": -0.21,
+   "y": 0,
+   "z": -6.1,
+   "rotY": 1.5708,
+   "tag": "Downey"
+  },
+  {
+   "item": "monitor",
+   "x": 0.73,
+   "y": 0.73,
+   "z": -6.1,
+   "rotY": -1.5708,
+   "tag": "Downey"
+  },
+  {
+   "item": "keyboard",
+   "x": 0.3,
+   "y": 0.73,
+   "z": -6.1,
+   "rotY": -1.5708,
+   "tag": "Downey"
+  },
+  {
+   "item": "desk",
+   "x": 0.44,
+   "y": 0,
+   "z": -4.5,
+   "rotY": -1.5708,
+   "tag": "Penny"
+  },
+  {
+   "item": "office_chair",
+   "x": -0.21,
+   "y": 0,
+   "z": -4.5,
+   "rotY": 1.5708,
+   "tag": "Penny"
+  },
+  {
+   "item": "monitor",
+   "x": 0.73,
+   "y": 0.73,
+   "z": -4.5,
+   "rotY": -1.5708,
+   "tag": "Penny"
+  },
+  {
+   "item": "keyboard",
+   "x": 0.3,
+   "y": 0.73,
+   "z": -4.5,
+   "rotY": -1.5708,
+   "tag": "Penny"
+  },
+  {
+   "item": "desk",
+   "x": 1.26,
+   "y": 0,
+   "z": -6.1,
+   "rotY": 1.5708,
+   "tag": "Grey"
+  },
+  {
+   "item": "office_chair",
+   "x": 1.91,
+   "y": 0,
+   "z": -6.1,
+   "rotY": -1.5708,
+   "tag": "Grey"
+  },
+  {
+   "item": "monitor",
+   "x": 0.97,
+   "y": 0.73,
+   "z": -6.1,
+   "rotY": 1.5708,
+   "tag": "Grey"
+  },
+  {
+   "item": "keyboard",
+   "x": 1.4,
+   "y": 0.73,
+   "z": -6.1,
+   "rotY": 1.5708,
+   "tag": "Grey"
+  },
+  {
+   "item": "desk",
+   "x": 1.26,
+   "y": 0,
+   "z": -4.5,
+   "rotY": 1.5708,
+   "tag": "Joy"
+  },
+  {
+   "item": "office_chair",
+   "x": 1.91,
+   "y": 0,
+   "z": -4.5,
+   "rotY": -1.5708,
+   "tag": "Joy"
+  },
+  {
+   "item": "monitor",
+   "x": 0.97,
+   "y": 0.73,
+   "z": -4.5,
+   "rotY": 1.5708,
+   "tag": "Joy"
+  },
+  {
+   "item": "keyboard",
+   "x": 1.4,
+   "y": 0.73,
+   "z": -4.5,
+   "rotY": 1.5708,
+   "tag": "Joy"
+  },
+  {
+   "item": "laptop",
+   "x": 1.37,
+   "y": 0.73,
+   "z": -4.95,
+   "rotY": 1.5708,
+   "tag": ""
+  },
+  {
+   "item": "desk_lamp",
+   "x": 0.6,
+   "y": 0.73,
+   "z": -6.7,
+   "rotY": -1.5708,
+   "tag": ""
+  },
+  {
+   "item": "mug",
+   "x": 0.25,
+   "y": 0.73,
+   "z": -5.75,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "mug",
+   "x": 1.45,
+   "y": 0.73,
+   "z": -4.15,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "plant_small",
+   "x": 1.15,
+   "y": 0.73,
+   "z": -6.75,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "bookcase",
+   "x": -1.86,
+   "y": 0.0,
+   "z": -6.1,
+   "rotY": 1.5708,
+   "tag": ""
+  },
+  {
+   "item": "bookcase",
+   "x": -1.86,
+   "y": 0.0,
+   "z": -5.25,
+   "rotY": 1.5708,
+   "tag": ""
+  },
+  {
+   "item": "copier",
+   "x": -1.7,
+   "y": 0.0,
+   "z": -4.45,
+   "rotY": 1.5708,
+   "tag": ""
+  },
+  {
+   "item": "plant_fig",
+   "x": -1.65,
+   "y": 0.0,
+   "z": -6.7,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "plant_monstera",
+   "x": 2.8,
+   "y": 0.0,
+   "z": -6.68,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "plant_snake",
+   "x": 2.78,
+   "y": 0.0,
+   "z": 1.18,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "planter_divider",
+   "x": 0.85,
+   "y": 0.0,
+   "z": -2.45,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "rug",
+   "x": 0.9,
+   "y": 0.0,
+   "z": -0.18,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "sofa",
+   "x": 0.91,
+   "y": 0.0,
+   "z": -1.57,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "sofa",
+   "x": 2.6,
+   "y": 0.0,
+   "z": -0.15,
+   "rotY": -1.5708,
+   "tag": ""
+  },
+  {
+   "item": "coffee_table",
+   "x": 1.01,
+   "y": 0.0,
+   "z": -0.38,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "plant_small",
+   "x": 1.35,
+   "y": 0.38,
+   "z": -0.37,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "mug",
+   "x": 0.75,
+   "y": 0.38,
+   "z": -0.3,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "side_table",
+   "x": 2.5,
+   "y": 0.0,
+   "z": -1.75,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "whiteboard_mobile",
+   "x": -0.78,
+   "y": 0.0,
+   "z": -1.75,
+   "rotY": 1.5708,
+   "tag": ""
+  },
+  {
+   "item": "flat_file",
+   "x": -1.79,
+   "y": 0.0,
+   "z": 0.42,
+   "rotY": 1.5708,
+   "tag": ""
+  },
+  {
+   "item": "wall_shelf",
+   "x": -2.0,
+   "y": 1.06,
+   "z": -0.55,
+   "rotY": 1.5708,
+   "tag": ""
+  },
+  {
+   "item": "wall_shelf",
+   "x": -2.0,
+   "y": 1.44,
+   "z": -0.55,
+   "rotY": 1.5708,
+   "tag": ""
+  },
+  {
+   "item": "wall_shelf",
+   "x": -2.0,
+   "y": 1.82,
+   "z": -0.55,
+   "rotY": 1.5708,
+   "tag": ""
+  },
+  {
+   "item": "plant_small",
+   "x": -1.89,
+   "y": 1.1,
+   "z": -0.73,
+   "rotY": 1.5708,
+   "tag": ""
+  },
+  {
+   "item": "plant_small",
+   "x": -1.89,
+   "y": 1.48,
+   "z": -0.22,
+   "rotY": 1.5708,
+   "tag": ""
+  },
+  {
+   "item": "plant_small",
+   "x": -1.89,
+   "y": 1.86,
+   "z": -0.75,
+   "rotY": 1.5708,
+   "tag": ""
+  },
+  {
+   "item": "rug_large",
+   "x": 0.58,
+   "y": 0.0,
+   "z": 5.9,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "meeting_table",
+   "x": 0.5,
+   "y": 0.0,
+   "z": 5.9,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "meeting_chair",
+   "x": -0.19,
+   "y": 0.0,
+   "z": 5.5,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "meeting_chair",
+   "x": -0.19,
+   "y": 0.0,
+   "z": 6.3,
+   "rotY": 3.1416,
+   "tag": ""
+  },
+  {
+   "item": "meeting_chair",
+   "x": 0.5,
+   "y": 0.0,
+   "z": 5.5,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "meeting_chair",
+   "x": 0.5,
+   "y": 0.0,
+   "z": 6.3,
+   "rotY": 3.1416,
+   "tag": ""
+  },
+  {
+   "item": "meeting_chair",
+   "x": 1.19,
+   "y": 0.0,
+   "z": 5.5,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "meeting_chair",
+   "x": 1.19,
+   "y": 0.0,
+   "z": 6.3,
+   "rotY": 3.1416,
+   "tag": ""
+  },
+  {
+   "item": "whiteboard_wall",
+   "x": 0.52,
+   "y": 0.88,
+   "z": 7.1,
+   "rotY": 3.1416,
+   "tag": ""
+  },
+  {
+   "item": "whiteboard_wall",
+   "x": -2.0,
+   "y": 0.88,
+   "z": 5.85,
+   "rotY": 1.5708,
+   "tag": ""
+  },
+  {
+   "item": "kitchen_run",
+   "x": 0.67,
+   "y": 0.0,
+   "z": 4.13,
+   "rotY": 3.1416,
+   "tag": ""
+  },
+  {
+   "item": "fridge",
+   "x": 2.695,
+   "y": 0.0,
+   "z": 4.035,
+   "rotY": 3.1416,
+   "tag": ""
+  },
+  {
+   "item": "microwave",
+   "x": 2.01,
+   "y": 0.91,
+   "z": 4.22,
+   "rotY": 3.1416,
+   "tag": ""
+  },
+  {
+   "item": "coffee_machine",
+   "x": 0.56,
+   "y": 0.91,
+   "z": 4.19,
+   "rotY": 3.1416,
+   "tag": ""
+  },
+  {
+   "item": "mug",
+   "x": 0.15,
+   "y": 0.91,
+   "z": 4.13,
+   "rotY": 3.1416,
+   "tag": ""
+  },
+  {
+   "item": "bar_table",
+   "x": 0.25,
+   "y": 0.0,
+   "z": 2.545,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "trash_can",
+   "x": 1.65,
+   "y": 0.0,
+   "z": 2.54,
+   "rotY": 3.1416,
+   "tag": ""
+  },
+  {
+   "item": "bar_stool",
+   "x": -0.575,
+   "y": 0.0,
+   "z": 1.96,
+   "rotY": 3.1416,
+   "tag": ""
+  },
+  {
+   "item": "bar_stool",
+   "x": -0.025,
+   "y": 0.0,
+   "z": 1.96,
+   "rotY": 3.1416,
+   "tag": ""
+  },
+  {
+   "item": "bar_stool",
+   "x": 0.525,
+   "y": 0.0,
+   "z": 1.96,
+   "rotY": 3.1416,
+   "tag": ""
+  },
+  {
+   "item": "bar_stool",
+   "x": 1.075,
+   "y": 0.0,
+   "z": 1.96,
+   "rotY": 3.1416,
+   "tag": ""
+  },
+  {
+   "item": "pendant_lamp",
+   "x": -0.3,
+   "y": 1.77,
+   "z": 2.55,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "pendant_lamp",
+   "x": 0.25,
+   "y": 1.77,
+   "z": 2.55,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "pendant_lamp",
+   "x": 0.8,
+   "y": 1.77,
+   "z": 2.55,
+   "rotY": 0.0,
+   "tag": ""
+  },
+  {
+   "item": "mug",
+   "x": -0.05,
+   "y": 1.035,
+   "z": 2.63,
+   "rotY": 0.0,
+   "tag": ""
+  }
+ ]
+}

@@ -21,7 +21,10 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   tab also has manhole covers, back-of-house clutter (propane tanks, a gas
   meter, a drainpipe, or a cluster of the three) and nobori flags; Animals has
   pigeons and sparrows. The sample town does not place those. The catalogue includes the
-  bus, the bus stop shelter and the banana peel. Tap one to turn
+  bus, the bus stop shelter and the banana peel. The **Office** tab is a
+  furniture kit (desks, chairs, a lounge, a meeting room, a kitchen, plants)
+  and the whole furnished office. It stays in the catalogue: the sample town
+  does not place it. Tap one to turn
   it around, try its types, colours and looks, and copy the `createAsset(...)`
   line that builds it. 🎲 New look gives a really different building (shape,
   height, roof, layout), not just a new colour. The Buildings tab also lists

@@ -17,6 +17,7 @@ import { park } from '../city/park.js';
 import { PROP_GROUPS } from '../props/index.js';
 import { wire } from '../props/extras.js';
 import { tiledBox } from '../props/util.js';
+import { OFFICE_ITEMS, buildOfficeItem, buildOfficeRoom } from '../office/items.js';
 
 // The asset catalogue: everything that can be placed in a city, behind one
 // interface, so a city file, the generator, the editor and future games can
@@ -27,7 +28,8 @@ import { tiledBox } from '../props/util.js';
 //   label     name for menus
 //   category  'building' | 'area' | 'nature' | 'animal' | 'prop' | 'vehicle' | 'ground' | 'line'
 //   group     catalogue tab: 'buildings' | 'street' | 'traffic' | 'extras' |
-//             'vehicles' | 'nature' | 'animals' | 'areas' (none = not listed)
+//             'vehicles' | 'nature' | 'animals' | 'areas' | 'office'
+//             (none = not listed)
 //   params    default settings (a city object's params override these)
 //   variants  optional list of variant names (params.variant)
 //   colors    optional list of colour names (params.color)
@@ -322,7 +324,36 @@ const detailAssets = [{
   },
 }];
 
-export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...detailAssets, ...groundAssets];
+// Catalogue only. The sample town does not place these (not in layout.js).
+// One Office tab: the furnished room, then every kit item. Parts are built in
+// src/office/items.js so createAsset stays synchronous.
+const officeAssets = [{
+  id: 'office.room',
+  label: 'Office',
+  category: 'area',
+  group: 'office',
+  variants: ['Cutaway', 'Full'],
+  params: { variant: 'Cutaway' },
+  size: [6.5, 14.5],
+  // Higher than the usual 3/4 view: the room has no roof, and this looks in.
+  viewDir: [0.85, 1.35, 0.7],
+  build(p, style) {
+    const r = buildOfficeRoom(style, { cutaway: p.variant !== 'Full' });
+    return withColliders(r.group, r.colliders);
+  },
+}, ...OFFICE_ITEMS.map((item) => ({
+  id: item.id,
+  label: item.label,
+  category: 'prop',
+  group: 'office',
+  params: {},
+  size: item.size,
+  build(_p, style) {
+    return withColliders(buildOfficeItem(item.name, style), item.hit);
+  },
+}))];
+
+export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...detailAssets, ...officeAssets, ...groundAssets];
 export const CATALOG = Object.fromEntries(ASSETS.map((a) => [a.id, a]));
 
 /** Assets of one category (or all). */

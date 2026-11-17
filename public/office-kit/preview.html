@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Tiny City office kit preview</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#bcd2e0;font:13px system-ui}#ui{position:fixed;left:8px;top:8px;background:#fff8;padding:6px 8px;border-radius:6px}</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+</head><body>
+<div id="ui"><a href="?view=room">Room</a> · <a href="?view=lineup">Item lineup</a> · <a href="?view=room&mode=items">Room from items</a> ·
+ palette <select id="pal"></select> · <label><input id="ps1" type="checkbox" checked> PS1 look</label> · drag to orbit</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { loadOfficeKit, placeOfficeItem, placeOfficeRoom, officeItemNames, PALETTES } from './loadOfficeKit.js';
+const q = new URLSearchParams(location.search);
+const view = q.get('view') || 'room', palette = q.get('palette') || 'Golden hour';
+const pal = document.getElementById('pal');
+for (const n of Object.keys(PALETTES)) pal.add(new Option(n, n, false, n === palette));
+pal.onchange = () => { q.set('palette', pal.value); location.search = q; };
+
+const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
+renderer.setSize(innerWidth, innerHeight); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.BasicShadowMap;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(PALETTES[palette].Sky);
+// PS1 · Bright + clear lights (src/styles/ps1.js ps1Clear): hemisphere + one sun, 512 px blocky shadows
+scene.add(new THREE.HemisphereLight(0xeaf6ff, 0x6b6456, 1.7));
+const sun = new THREE.DirectionalLight(0xfff6e6, 2.4); sun.position.set(6, 12, 8); sun.castShadow = true;
+sun.shadow.mapSize.set(512, 512); Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, far: 40 }); sun.shadow.bias = -0.002;
+scene.add(sun, sun.target);
+const camera = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.1, 100);
+const controls = new OrbitControls(camera, renderer.domElement);
+
+const kit = await loadOfficeKit({ baseUrl: './', palette });
+if (view === 'lineup') {
+  // pack items in rows by their real footprint (manifest.json), 0.45 m apart, rows up to 11 m wide
+  const names = officeItemNames().filter((n) => !n.startsWith('rug'));
+  const floor = new THREE.Mesh(new THREE.BoxGeometry(40, 0.02, 30), new THREE.MeshLambertMaterial({ color: PALETTES[palette]['Light gray'] }));
+  floor.position.y = -0.01; floor.receiveShadow = true; scene.add(floor);
+  const rows = [[]]; let wsum = 0;
+  for (const n of names) { const w = kit.manifest.items[n].size[0] + 0.45; if (wsum + w > 11 && rows.at(-1).length) { rows.push([]); wsum = 0; } rows.at(-1).push(n); wsum += w; }
+  let zc = -(rows.length - 1) * 1.15;
+  for (const row of rows) {
+    const total = row.reduce((a, n) => a + kit.manifest.items[n].size[0] + 0.45, -0.45); let x = -total / 2;
+    for (const n of row) { const w = kit.manifest.items[n].size[0]; await placeOfficeItem(scene, n, { x: x + w / 2, z: zc, y: n === 'wall_shelf' ? 0.12 : 0 }); x += w + 0.45; }
+    zc += 2.3;
+  }
+  camera.position.set(0, 9.5, 13.5); controls.target.set(0, 0.3, 0.6);
+} else {
+  await placeOfficeRoom(scene, { mode: q.get('mode') || 'glb', cutaway: true });
+  const cams = { iso: [[10.5, 11, 9], [0.2, 0, 0.3]], desks: [[3.6, 3.2, -1.2], [0.6, 0.6, -5.2]], lounge: [[3.2, 2.6, 4.2], [0.6, 0.5, -0.6]], kitchen: [[2.6, 2.3, 0.6], [0.0, 0.8, 4.2]], meeting: [[2.8, 2.3, 6.95], [0.2, 0.45, 5.7]] };
+  const [cp, ct] = cams[q.get('cam') || 'iso']; camera.position.set(...cp); controls.target.set(...ct);
+}
+camera.fov = view === 'lineup' ? 38 : (q.get('cam') && q.get('cam') !== 'iso' ? 60 : 42); camera.updateProjectionMatrix(); controls.update();
+
+// ---- PS1 render step (same idea as src/render/ps1.js): half-res target, hard pixels, 15-bit 4x4 dither, depth outlines; vertex snap
+const snapRes = { value: new THREE.Vector2(320, 240) };
+scene.traverse((o) => { if (!o.isMesh) return; for (const m of [].concat(o.material)) { if (m.userData.ps1) continue; m.userData.ps1 = true;
+  m.onBeforeCompile = (s) => { s.uniforms.snapRes = snapRes; s.vertexShader = 'uniform vec2 snapRes;\n' + s.vertexShader.replace('#include <project_vertex>',
+  `#include <project_vertex>
+   vec4 sn = gl_Position; sn.xy = floor(sn.xy / sn.w * snapRes * 0.5 + 0.5) / (snapRes * 0.5) * sn.w; gl_Position = sn;`); };
+  m.customProgramCacheKey = () => 'ps1-snap'; m.needsUpdate = true; } });
+const PIX = 2, WOBBLE = 0.4;
+const rt = new THREE.WebGLRenderTarget(1, 1, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter,
+  depthTexture: Object.assign(new THREE.DepthTexture(1, 1, THREE.UnsignedInt248Type), { format: THREE.DepthStencilFormat }) });
+const blit = new THREE.ShaderMaterial({ uniforms: { tD: { value: rt.texture }, tZ: { value: rt.depthTexture }, size: { value: new THREE.Vector2() }, near: { value: 0.1 }, far: { value: 100 } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+  fragmentShader: `#include <packing>
+  uniform sampler2D tD; uniform sampler2D tZ; uniform vec2 size; uniform float near; uniform float far; varying vec2 vUv;
+  float vd(vec2 uv){ return -perspectiveDepthToViewZ(texture2D(tZ, uv).x, near, far); }
+  float bayer4(vec2 p){ int x=int(mod(p.x,4.0)), y=int(mod(p.y,4.0)); int m[16]=int[16](0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5); return float(m[x+y*4])/16.0; }
+  void main(){ vec4 c = linearToOutputTexel(texture2D(tD, vUv)); vec2 t = 1.0/size; float d = vd(vUv);
+    float l=vd(vUv-vec2(t.x,0.)), r=vd(vUv+vec2(t.x,0.)), dn=vd(vUv-vec2(0.,t.y)), up=vd(vUv+vec2(0.,t.y)); float ic=1.0/d;
+    float lap = abs(1.0/l+1.0/r-2.0*ic)+abs(1.0/dn+1.0/up-2.0*ic); float fz = max(max(l,r),max(dn,up));
+    if (lap > ic*0.12 && fz > d*1.02) c.rgb *= mix(0.8, 1.0, smoothstep(18.0, 55.0, d));
+    vec2 px = floor(vUv*size); c.rgb += (bayer4(px)-0.5)/31.0; c.rgb = floor(clamp(c.rgb,0.0,1.0)*31.0+0.5)/31.0; gl_FragColor = vec4(c.rgb,1.0); }`,
+  depthTest: false, depthWrite: false });
+const bScene = new THREE.Scene(); bScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), blit)); const bCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+const ps1 = document.getElementById('ps1');
+function frame() {
+  const w = innerWidth, h = innerHeight;
+  if (ps1.checked) {
+    const lw = Math.round(w / PIX), lh = Math.round(h / PIX); if (rt.width !== lw || rt.height !== lh) rt.setSize(lw, lh);
+    const k = 4 - 3.5 * WOBBLE; snapRes.value.set(lw * k, lh * k);
+    renderer.setRenderTarget(rt); renderer.render(scene, camera); renderer.setRenderTarget(null);
+    blit.uniforms.size.value.set(lw, lh); blit.uniforms.near.value = camera.near; blit.uniforms.far.value = camera.far; renderer.render(bScene, bCam);
+  } else { snapRes.value.set(w * 8, h * 8); renderer.render(scene, camera); }
+}
+renderer.setAnimationLoop(() => { controls.update(); frame(); });
+addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+setTimeout(() => { document.title = 'READY'; window.__ready = true; }, 500);
+</script></body></html>
