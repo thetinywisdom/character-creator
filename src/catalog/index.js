@@ -9,6 +9,10 @@ import { tree } from '../subjects/tree.js';
 import { CAT_COATS, CAT_EARS, CAT_FUR, CAT_PATTERNS, CAT_TAILS, cat } from '../subjects/cat.js';
 import { dressBacks } from '../city/backs.js';
 import { bush, bushKind, doorstepPot } from '../props/extras.js';
+import { manholeCover } from '../props/manhole.js';
+import { backClutter } from '../props/clutter.js';
+import { nobori } from '../props/nobori.js';
+import { bird } from '../props/birds.js';
 import { park } from '../city/park.js';
 import { PROP_GROUPS } from '../props/index.js';
 import { wire } from '../props/extras.js';
@@ -237,6 +241,20 @@ const animalAssets = [{
     g.add(c);
     return withColliders(g, [{ hw: 0.2, hd: 0.35 }]);
   },
+}, {
+  // Catalogue only. The city does not place birds.
+  id: 'animal.bird',
+  label: 'Bird',
+  category: 'animal',
+  group: 'animals',
+  variants: ['Pigeon', 'Sparrow'],
+  params: { variant: 'Pigeon', seed: 1 },
+  size: [0.4, 0.35],
+  build(p, style) {
+    const g = bird(style, p.variant, p.seed ?? 1);
+    const hit = p.variant === 'Sparrow' ? [] : [{ hw: 0.1, hd: 0.12 }];
+    return withColliders(g, hit);
+  },
 }];
 
 // --- ground and lines --------------------------------------------------------
@@ -265,7 +283,46 @@ const groundAssets = [{
   },
 }];
 
-export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...groundAssets];
+// Catalogue only: not used by the city generator. Seed is in params, so the
+// viewer's 🎲 New look button shows, the same as for trees and bushes.
+const detailAssets = [{
+  id: 'prop.manhole',
+  label: 'Manhole cover',
+  category: 'prop',
+  group: 'extras',
+  variants: ['Flower', 'Wave', 'Grid'],
+  params: { variant: 'Flower', seed: 1 },
+  size: [0.76, 0.76],
+  build(p, style) {
+    return withColliders(manholeCover(style, p.variant, p.seed ?? 1), []);
+  },
+}, {
+  id: 'prop.backClutter',
+  label: 'Back-of-house clutter',
+  category: 'prop',
+  group: 'extras',
+  variants: ['Propane tanks', 'Gas meter', 'Drainpipe', 'Cluster'],
+  params: { variant: 'Propane tanks', seed: 1 },
+  size: [1.7, 0.7],
+  build(p, style) {
+    const g = backClutter(style, p.variant, p.seed ?? 1);
+    return withColliders(g, g.userData.hit ?? []);
+  },
+}, {
+  id: 'prop.nobori',
+  label: 'Nobori flag',
+  category: 'prop',
+  group: 'extras',
+  variants: ['Stripes', 'Blocks'],
+  params: { variant: 'Stripes', seed: 1 },
+  size: [0.5, 0.4],
+  build(p, style) {
+    const g = nobori(style, p.variant, p.seed ?? 1);
+    return withColliders(g, g.userData.hit ?? [{ hw: 0.18, hd: 0.14 }]);
+  },
+}];
+
+export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...detailAssets, ...groundAssets];
 export const CATALOG = Object.fromEntries(ASSETS.map((a) => [a.id, a]));
 
 /** Assets of one category (or all). */

@@ -338,6 +338,32 @@ About one in six random characters is a child.
   (vending machines, bins, benches) against the buildings, parked cars in the
   lane next to the curb.
 
+## 3e-5. Catalogue-only street details
+
+Not placed in the sample town. A game places them with `createAsset`. Each
+takes `seed`; 🎲 New look in the catalogue rebuilds the same way it does for
+a tree. No new palette swatches.
+
+- **Manhole cover** (`prop.manhole`): a flat octagon (eight sides, the same
+  read of "round" as the wheels) with a small nearest-filtered texture.
+  Flower, wave (overlapping arcs) or a plain grid. The seed picks the
+  colours, the petal count or the spacing, and the size.
+- **Back-of-house clutter** (`prop.backClutter`): a propane pair with a short
+  chain between the collars, a gas meter (dial and pipes), a drainpipe with
+  an elbow and a shoe, or a cluster of those three on a pad. Outdoor AC units
+  are not a new prop: the town already puts them on bare backs, balconies and
+  roofs.
+- **Nobori** (`prop.nobori`, のぼり): a tall narrow banner on a pole with a
+  weighted base. Stripes, or a stack of abstract blocks. No readable writing.
+  The cloth is one plane; `swayNobori` (`anim/props.js`) bends its vertices
+  the way the skirt does, the free top moving most, the pole edge staying
+  put. Call `tickProps(root, time)` each frame.
+- **Bird** (`animal.bird`): a pigeon or a sparrow, faceted like the cat (a
+  short loft, a faceted head, a beak, no eyes). Pigeons are a few greys and
+  loop between standing and a peck. Sparrows are smaller, browner, and perch
+  on a short wire, feet still, head turning. The seed picks the markings and
+  the pose offset, so the same seed is the same bird.
+
 ## 3e-1. People content
 
 - **Held items** put the arm in a pose and stay upright whatever the arm does:
@@ -667,6 +693,10 @@ Dusty rose, Blush, Powder blue, Lilac and Denim.
   an option ("Preview animation" and "City movement").
 - Walk blends into run with speed, and both fade to a standing pose with a
   slight breathing motion.
+- **Nobori and birds** (`anim/props.js`, `tickProps(root, time)`): the banner
+  bends a few of its own vertices (the pole edge stays put). A pigeon bobs
+  and pecks on a loop; a sparrow stays perched and turns its head. The seed
+  sets the phase, so two copies do not move together.
 
 ## 4. Readability checklist (for any new character)
 

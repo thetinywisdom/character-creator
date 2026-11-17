@@ -21,6 +21,7 @@ import { SHOP_TYPES } from './city/buildings.js';
 import { Creator } from './creator/Creator.js';
 import { RUN_SPEED, WALK_SPEED, createGait, poseGait, setGaitEngine, stepGait, tuneOf } from './anim/gait.js';
 import { CAT_RUN_SPEED, CAT_WALK_SPEED, createCatGait, poseCat, stepCatGait } from './anim/catGait.js';
+import { tickProps } from './anim/props.js';
 import { saveFile, openTextFile } from './lib/saveFile.js';
 import { CLOTH_COLORS, PALETTE, PALETTES, activePalette, choosePalette, swatchOf } from './styles/palette.js';
 import './style.css';
@@ -422,6 +423,7 @@ function drawOverlay(c, W, H) { drawPixelOverlay(c, W, H); }
 const timer = new THREE.Timer();
 const gait = createGait(); // walk / run preview for the character creator
 const catGait = createCatGait();
+let propTime = 0; // nobori sway and bird idles (anim/props.js)
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight, pr = renderer.getPixelRatio();
   if (canvas.width !== Math.floor(w * pr) || canvas.height !== Math.floor(h * pr)) renderer.setSize(w, h, false);
@@ -452,6 +454,8 @@ function loop(time) {
   renderer.setClearColor(PAGE_BG);
   renderer.clear();
   if (state.view === 'item' && itemCell) {
+    propTime += dt;
+    tickProps(itemCell.scene, propTime);
     if (CATALOG[selected.id].animated === 'cat') {
       // walk / run in place: the cat's gait (anim/catGait.js)
       catGait.pose = { Sit: 'sit', Loaf: 'loaf', Sleep: 'sleep' }[state.itemAnim] ?? null;
