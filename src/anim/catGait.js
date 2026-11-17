@@ -1,4 +1,4 @@
-// Procedural walk / run for the cat (subjects/cat.js).
+// Procedural walk / run for the cat (subjects/cat.js and catVersions/cat_toy.js).
 //
 // Joints: legFL, legFR, legBL, legBR (hang from the top of the leg), head, tail.
 // Uses the same gait state as people (createGait / stepGait style: phase,
@@ -81,12 +81,16 @@ export function poseCat(body, g) {
     const rest = leg.userData.restY ??= leg.position.y;
     const walkU = u + WALK_OFF[name], runU = u + RUN_OFF[name];
     // swing: + = foot forward (rotation.x negative swings a hanging leg toward +z)
-    const walkSwing = 0.38 * Math.sin(TAU * walkU);
-    const runSwing = 0.85 * Math.sin(TAU * runU);
+    // A chunky toy (userData.cat.swing / lift) takes a bigger step so short legs still read.
+    // Left unset, both are 1 and this is the lofted cat's stride.
+    const swingK = body.userData.cat?.swing ?? 1;
+    const liftK = body.userData.cat?.lift ?? 1;
+    const walkSwing = 0.38 * swingK * Math.sin(TAU * walkU);
+    const runSwing = 0.85 * Math.min(swingK, 1.25) * Math.sin(TAU * runU);
     const swing = lerp(walkSwing, runSwing, run);
     leg.rotation.x = -swing * a;
     // lift the foot while it travels forward (cos > 0 = swinging forward)
-    const lift = lerp(0.018 * Math.max(0, Math.cos(TAU * walkU)), 0.03 * Math.max(0, Math.cos(TAU * runU)), run);
+    const lift = lerp(0.018 * liftK * Math.max(0, Math.cos(TAU * walkU)), 0.03 * Math.min(liftK, 1.4) * Math.max(0, Math.cos(TAU * runU)), run);
     leg.position.y = rest + lift * a;
   }
   // body: small bob walking; rocking and lift-off when bounding
@@ -104,7 +108,11 @@ export function poseCat(body, g) {
     j.tail.rotation.x = -0.55 * run * a; // lowers to stream out behind when running
   }
   // blend toward a resting pose
-  const P = CAT_POSES[g.pose], w = g.poseW ?? 0;
+  // A build can override a pose (userData.cat.poseTune.sit = { rx, head, ... })
+  // when its proportions need a different tuck. Unset, the shared poses are used.
+  const P0 = CAT_POSES[g.pose];
+  const P = P0 && body.userData.cat?.poseTune?.[g.pose] ? { ...P0, ...body.userData.cat.poseTune[g.pose] } : P0;
+  const w = g.poseW ?? 0;
   body.rotation.z = 0;
   body.position.x = 0;
   for (const n of ['lowFL', 'lowFR', 'lowBL', 'lowBR']) if (j[n]) j[n].rotation.x = 0;

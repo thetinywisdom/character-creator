@@ -115,7 +115,7 @@ function openItem(id, p) {
   setView('item');
 }
 
-const OPTION_LABELS = { pattern: 'Pattern', tailType: 'Tail', earType: 'Ears', coat: 'Coat' };
+const OPTION_LABELS = { pattern: 'Pattern', tailType: 'Tail', earType: 'Ears', coat: 'Coat', face: 'Face' };
 function renderItemPanel() {
   const a = CATALOG[selected.id];
   const p = selected.params;

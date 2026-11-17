@@ -22,7 +22,9 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   it around, try its types, colours and looks, and copy the `createAsset(...)`
   line that builds it. 🎲 New look gives a really different building (shape,
   height, roof, layout), not just a new colour. The cat has patterns, tail, ear and coat types, and Still / Walk / Run /
-  Sit / Loaf / Sleep.
+  Sit / Loaf / Sleep. **Toy cat** (Animals) is a chunky vinyl figure to compare
+  with that cat: same patterns and colours, no face unless you pick one, and
+  🎲 New look changes its seed. The town still uses the lofted cat.
 - **👤 Characters**: the character creator (Body, Hair & face, Clothes,
   Accessories; Still / Walk / Run preview). Body types Man, Woman, Boy, Girl,
   Grandpa, Grandma; ready-made Looks in the Clothes tab (office worker,
@@ -40,7 +42,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
 - **🐱 Cat lab:** every cat version made so far side by side, and cute
   proposals (Mochi, Loaf, Chibi, Pudding, Tiny tux, Bao, Calico mochi) with
   faces, round bean or loaf bodies, big paws and cheek fluff; make them all
-  walk, run, sit, loaf or sleep. Cats got new options for this: Face, Body
+  walk, run, sit, loaf or sleep. Version 8 is the chunky toy cat (also in the
+  catalogue as Toy cat). Cats got new options for this: Face, Body
   shape, Paw size, Cheek fluff.
 - **Walk and run styles:** in the character creator pick a walk (Natural,
   Brisk, Swagger, Sneak) and, separately, a run (Natural, Ninja, Panic);

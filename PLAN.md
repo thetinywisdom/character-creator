@@ -38,6 +38,8 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 ## Done
 
+78. **Chunky toy cat, for comparison** (not the town cat): a soft bevelled block with stubby legs, round paws, a big rounded-cube head (about 40% of the mesh on the short coat) and small wide triangular ears, plus a thick short tail. Faceless unless Face is set. Same patterns, fur colours, tails, ears and coats, one material, flat vertex colours, the same joints. Catalogue `animal.toyCat` (Animals → Toy cat) has 🎲 New look (`seed`); Cat lab tile “8 · Chunky toy”. The default cat (`animal.cat`, subjects/cat.js) is unchanged, including its walk. The toy takes a wider step (`userData.cat.swing` / `lift`) and a milder sit (`poseTune.sit`) so the short legs and big head still read. Default short coat: 560 triangles. Long coat adds a ruff, so the head’s share of the volume drops to about 37%.
+
 77. **More foliage, catalogue only** (owner: bushes and more tree variants, the plant emojis): Japanese cedar (tall drooping spire), windmill palm (fan leaves and a dead skirt), camphor (dense round crown), pagoda tree (one flat crown), a leafless winter tree, and an autumn maple in Apricot and Brick. New bushes: trimmed boxwood, azalea, hydrangea, a low fern clump. Doorstep pots: fern, leafy, snake plant, cactus. They use the shared foliage pieces. The city still plants only the original 11 trees; parks, shrine groves and street planters are unchanged. No new palette swatches: the autumn maple is Brick and Apricot, azalea is Dusty rose and Blush, hydrangea is Powder blue, Lilac and Denim.
 
 76. **Foliage, kept low-poly** (owner: trees, bushes and hedges, especially bamboo and the old tree; an earlier rebuild was too much): canopies are clumped lobes with a lighter top and darker underside, same palette hues. Bamboo is thin segmented culms with node rings and sparse tufts at the top. The old giant kinks and splits into a few heavy limbs with a sparser crown. Bushes are a small mound of the same lumps. House hedges keep their size, with a clipped top instead of a plain box. Triangle counts stay under the old ones for every tree; bushes are about 1.5×; a hedge run is still under 100 triangles.
@@ -153,6 +155,7 @@ Ideas, not commitments. The owner decides what to add.
 
 ## Known issues and small ideas
 
+- The chunky toy's sit is a low crouch, not as upright as the lofted cat: the same pitch plants the big head. Tufted ears are only a few pixels at street size. Tabby stripes use the same darkened swatch as the lofted cat, so the bands are soft. A pure side view stacks the two ears.
 - The third-person camera cannot look up at tall buildings (the iso view covers this).
 - Phones have no action buttons for now (owner switched them off): on a phone
   you can talk (tap someone) and push (double tap), but not slap, fart, jump,
