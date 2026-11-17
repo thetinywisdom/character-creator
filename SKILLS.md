@@ -134,6 +134,8 @@ src/city/buildings.js  house, apartment, mixedUse, shop, office, shrine, school
 src/city/shops.js      laundromat, kissaten, pharmacy, sushi, florist, fishmonger
 src/city/civic.js      udon/soba, family restaurant, takoyaki, koban, post office, bank,
                        clinic, fire station, karaoke, wooden apartment, parking, gas station
+src/city/europe.js     Tudor, Mediterranean, Dutch, French and Scandinavian houses,
+                       and a stone chapel. Catalogue only: not placed by layout.js
 src/city/interiors.js  painted shop interiors and curtains
 src/city/facades.js    painted office facades, roof clutter, roof signs
 src/city/City.js       walkable town: player, people, cars, cats, collisions (walkRoundCars: people
@@ -522,7 +524,10 @@ faces +z, returns `{ group, footprint, colliders }`) in `shops.js` /
 `civic.js` (reuse `body`, `signboard`, `awning`, `noren`, `upperFloors`,
 `shopWindow`), add it to `SHOP_BUILDINGS` / `CIVIC_BUILDINGS` with label and
 lot size, give it a painted interior (`PAINT` in `interiors.js`). Optionally
-add it to block fills in `layout.js`. It then appears in the Catalogue. Bump
+add it to block fills in `layout.js`. It then appears in the Catalogue.
+European houses are the same idea in `europe.js` (`EUROPE_BUILDINGS`), and
+they are not added to `layout.js`. `BARE_OK` in `catalog/index.js` skips them
+so `dressBacks` does not hang Japanese fittings on them. Bump
 `VERSION` in `catalog/thumbs.js` if an existing item's look changes (now 9: octagon wheels).
 
 **Add a prop.** Add `{ id, label, variants, colors?, build(params, style) }` to
