@@ -364,6 +364,14 @@ a tree. No new palette swatches.
   on a short wire, feet still, head turning. The seed picks the markings and
   the pose offset, so the same seed is the same bird.
 
+## 3e-6. Office kit (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('office.desk', {}, style)` (ids `office.*`) or the whole room with `createAsset('office.room', { variant: 'Cutaway' }, style)`.
+
+- The same low-poly boxes and cylinders as the rest of the town. Screens are flat navy, whiteboards are blank, plants are faceted lobes (lighter on top, same as the trees).
+- Colour is a palette swatch on a role (`wood:Tan`, `cloth:Cocoa`, `leaf:Moss`, `light:Butter`). No new swatches. Walls stay on the building greys. A cane seat, a woven basket and the terrazzo chips use `cloth` or `paint` so Sand, Peach and Dusty rose are not flattened by the building-colour rule.
+- The room is 6.5 × 14.5 m, open at the top, with a checker floor, a glass north wall and a stair. Cutaway hides the east wall. The floor sits 2 cm above y = 0 so it does not flicker against a ground on the same plane.
+
 ## 3e-1. People content
 
 - **Held items** put the arm in a pose and stay upright whatever the arm does:

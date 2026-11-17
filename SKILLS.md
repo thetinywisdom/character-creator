@@ -197,6 +197,10 @@ src/city/atmosphere.js night glow (setNightGlow), snow cover (setSnowCover), rai
 src/city/input.js      keyboard, drag, pinch and on-screen joystick
 src/props/             street props (furniture, traffic, vehicles, extras, japan).
                        Catalogue-only, not in PROP_GROUPS: manhole.js, clutter.js, nobori.js, birds.js
+src/office/items.js    office kit (catalogue Office tab): procedural desks, chairs,
+                       lounge, kitchen, plants, and the furnished room. Not placed
+                       by the sample town. GLB loader: src/office/loadOfficeKit.js
+public/office-kit/     the kit's GLBs, manifest.json, layout.json, standalone preview
 src/creator/Creator.js the character creator panel (viewer only)
 src/viewer/            Cell (a preview stage), params (saved settings)
 src/lib/               shapes, foliage (lobes, fronds, shaded leaf/bark, trimmed hedges), merge
@@ -234,13 +238,29 @@ roles are softened. `light` glows: never use it for big textured surfaces.
 defaults. `params.variant` picks from `variants`, `params.color` from
 `colors`, `params.seed` changes the look of seeded items, buildings take
 `w` / `d` (lot size) and shops `shopType`. Groups (catalogue tabs):
-buildings, street, traffic, extras, nature, animals, vehicles, areas.
+buildings, street, traffic, extras, nature, animals, vehicles, office, areas.
 `animated: 'cat'` marks items with joints (`animal.cat`: pose it with
 `poseCat`, `anim/catGait.js`; resting poses via `gait.pose = 'sit' |
 'loaf' | 'sleep'`; joints legF*/legB* plus lowF*/lowB* elbows and hocks). Cats take `pattern`, `tailType`, `earType` and `coat`
 (`cat.randomize()` for a random one); coats are painted per face as vertex
 colours, which `lib/skin.js` keeps when it makes the city's skinned mesh.
-`options: { param: [values] }` on a catalogue asset adds chips in the viewer. Catalogue-only street details (the sample town does not place them; `params.seed` and 🎲 New look, same as a tree): `prop.manhole` (Flower, Wave, Grid; 40 triangles at PS1 detail), `prop.backClutter` (Propane tanks 156, Gas meter 64, Drainpipe 78, Cluster 310), `prop.nobori` (Stripes, Blocks; 92; call `tickProps` from `anim/props.js` each frame so the cloth sways), `animal.bird` (Pigeon 154, Sparrow 156; the same `tickProps` runs the peck and the perched look). No new palette swatches. No separate outdoor AC prop: units already dress backs, balconies and roofs. Trees (`nature.tree`) are clumped low-poly lobes (bamboo: segmented culms; the old giant: a kinked trunk that splits) and come in 11 presets the city plants
+`options: { param: [values] }` on a catalogue asset adds chips in the viewer.
+
+**Office kit** (catalogue only, not placed by `layout.js`). Tab **Office**.
+`createAsset('office.desk', {}, style)` and the other `office.*` ids build the
+furniture from boxes and cylinders in `src/office/items.js` (synchronous, so
+thumbs and the single-file page do not fetch binaries). `office.room` is the
+furnished office, 6.5 × 14.5 m: `variant: 'Cutaway'` (default, east wall
+hidden) or `'Full'`. Parts use `style.material(role, swatch)`, so palette
+changes apply. The GLBs, manifest and layout stay in `public/office-kit/`
+(Vite serves them; GitHub Pages publishes them with `dist/`). A game that
+wants the files instead of the code calls `loadOfficeKit({ style })` from
+`src/office/loadOfficeKit.js`, then `placeOfficeItem` / `placeOfficeRoom`.
+Rebuild the GLBs with `blender -b -P src/office/build_office_kit.py` (blend:
+`src/office/office_kit.blend`). Rugs have no collider. The room floor is 2 cm
+above y = 0 so it does not flicker on a ground at y = 0.
+
+Catalogue-only street details (the sample town does not place them; `params.seed` and 🎲 New look, same as a tree): `prop.manhole` (Flower, Wave, Grid; 40 triangles at PS1 detail), `prop.backClutter` (Propane tanks 156, Gas meter 64, Drainpipe 78, Cluster 310), `prop.nobori` (Stripes, Blocks; 92; call `tickProps` from `anim/props.js` each frame so the cloth sways), `animal.bird` (Pigeon 154, Sparrow 156; the same `tickProps` runs the peck and the perched look). No new palette swatches. No separate outdoor AC prop: units already dress backs, balconies and roofs. Trees (`nature.tree`) are clumped low-poly lobes (bamboo: segmented culms; the old giant: a kinked trunk that splits) and come in 11 presets the city plants
 (oak, lollipop, pine, old giant, cherry blossom, Japanese maple, ginkgo,
 zelkova, black pine, weeping willow, bamboo). Catalogue-only kinds live in `tree.more` (the park and the shrine grove never see them): Japanese cedar, windmill palm, camphor, pagoda tree, winter tree, autumn maple. Bushes (`nature.bush`) are the Small and Large mounds, plus boxwood, azalea, hydrangea and a fern clump. Doorstep pots (`nature.pot`: fern, leafy, snake plant, cactus) are separate from the street planter. Motorbikes
 (`vehicle.scooter`) in 50cc and Delivery (three-wheelers), Step-through,
