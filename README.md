@@ -23,8 +23,10 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   pigeons and sparrows. The sample town does not place those. The catalogue includes the
   bus, the bus stop shelter and the banana peel. The **Office** tab is a
   furniture kit (desks, chairs, a lounge, a meeting room, a kitchen, plants)
-  and the whole furnished office. It stays in the catalogue: the sample town
-  does not place it. Tap one to turn
+  and the whole furnished office. The **Diner** tab is a 1950s American diner
+  in the same low-poly look: the furnished room (Cutaway or Full) and its
+  counter, stools, booths, jukebox, grill and the rest of the kit. Both stay
+  in the catalogue: the sample town does not place them. Tap one to turn
   it around, try its types, colours and looks, and copy the `createAsset(...)`
   line that builds it. 🎲 New look gives a really different building (shape,
   height, roof, layout), not just a new colour. The Buildings tab also lists

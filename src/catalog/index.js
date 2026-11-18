@@ -18,6 +18,7 @@ import { PROP_GROUPS } from '../props/index.js';
 import { wire } from '../props/extras.js';
 import { tiledBox } from '../props/util.js';
 import { OFFICE_ITEMS, buildOfficeItem, buildOfficeRoom } from '../office/items.js';
+import { DINER_ITEMS, buildDinerItem, buildDinerRoom } from '../diner/items.js';
 
 // The asset catalogue: everything that can be placed in a city, behind one
 // interface, so a city file, the generator, the editor and future games can
@@ -28,7 +29,7 @@ import { OFFICE_ITEMS, buildOfficeItem, buildOfficeRoom } from '../office/items.
 //   label     name for menus
 //   category  'building' | 'area' | 'nature' | 'animal' | 'prop' | 'vehicle' | 'ground' | 'line'
 //   group     catalogue tab: 'buildings' | 'street' | 'traffic' | 'extras' |
-//             'vehicles' | 'nature' | 'animals' | 'areas' | 'office'
+//             'vehicles' | 'nature' | 'animals' | 'areas' | 'office' | 'diner'
 //             (none = not listed)
 //   params    default settings (a city object's params override these)
 //   variants  optional list of variant names (params.variant)
@@ -353,7 +354,37 @@ const officeAssets = [{
   },
 }))];
 
-export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...detailAssets, ...officeAssets, ...groundAssets];
+// Catalogue only. The sample town does not place these (not in layout.js).
+// One Diner tab: the furnished room, then every kit item. Parts are built in
+// src/diner/items.js so createAsset stays synchronous.
+const dinerAssets = [{
+  id: 'diner.room',
+  label: 'Diner',
+  category: 'area',
+  group: 'diner',
+  variants: ['Cutaway', 'Full'],
+  params: { variant: 'Cutaway' },
+  size: [12, 8],
+  // Isometric corner (equal x and z) and a little steeper than 35°, so the
+  // open room reads. Cutaway hides the two walls this camera faces.
+  viewDir: [1, 1.15, 1],
+  build(p, style) {
+    const r = buildDinerRoom(style, { cutaway: p.variant !== 'Full' });
+    return withColliders(r.group, r.colliders);
+  },
+}, ...DINER_ITEMS.map((item) => ({
+  id: item.id,
+  label: item.label,
+  category: 'prop',
+  group: 'diner',
+  params: {},
+  size: item.size,
+  build(_p, style) {
+    return withColliders(buildDinerItem(item.name, style), item.hit);
+  },
+}))];
+
+export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...detailAssets, ...officeAssets, ...dinerAssets, ...groundAssets];
 export const CATALOG = Object.fromEntries(ASSETS.map((a) => [a.id, a]));
 
 /** Assets of one category (or all). */
