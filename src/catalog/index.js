@@ -367,13 +367,13 @@ const clinicAssets = [{
   category: 'area',
   group: 'clinic',
   variants: ['Cutaway', 'Full'],
-  params: { variant: 'Cutaway' },
+  params: { variant: 'Cutaway', seed: 0 },
   size: [10, 8],
   // Isometric corner (equal x and z) and a little steeper than 35°, so the
   // open room reads. Cutaway hides the two walls this camera faces.
   viewDir: [1, 1.15, 1],
   build(p, style) {
-    const r = buildClinicRoom(style, { cutaway: p.variant !== 'Full' });
+    const r = buildClinicRoom(style, { cutaway: p.variant !== 'Full', seed: p.seed | 0 });
     return withColliders(r.group, r.colliders);
   },
 }, ...CLINIC_ITEMS.map((item) => ({
@@ -394,11 +394,11 @@ const policeAssets = [{
   category: 'area',
   group: 'police',
   variants: ['Cutaway', 'Full'],
-  params: { variant: 'Cutaway' },
+  params: { variant: 'Cutaway', seed: 0 },
   size: [12, 8],
   viewDir: [1, 1.15, 1],
   build(p, style) {
-    const r = buildPoliceRoom(style, { cutaway: p.variant !== 'Full' });
+    const r = buildPoliceRoom(style, { cutaway: p.variant !== 'Full', seed: p.seed | 0 });
     return withColliders(r.group, r.colliders);
   },
 }, ...POLICE_ITEMS.map((item) => ({
@@ -419,11 +419,11 @@ const minimarketAssets = [{
   category: 'area',
   group: 'minimarket',
   variants: ['Cutaway', 'Full'],
-  params: { variant: 'Cutaway' },
+  params: { variant: 'Cutaway', seed: 0 },
   size: [10, 8],
   viewDir: [1, 1.15, 1],
   build(p, style) {
-    const r = buildMinimarketRoom(style, { cutaway: p.variant !== 'Full' });
+    const r = buildMinimarketRoom(style, { cutaway: p.variant !== 'Full', seed: p.seed | 0 });
     return withColliders(r.group, r.colliders);
   },
 }, ...MINIMARKET_ITEMS.map((item) => ({

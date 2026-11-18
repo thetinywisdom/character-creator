@@ -278,7 +278,13 @@ and the other ids build the pieces from boxes and cylinders in `src/clinic/items
 `src/police/items.js` and `src/minimarket/items.js`. `clinic.room` (10 × 8 m),
 `police.room` (12 × 8 m) and `minimarket.room` (10 × 8 m) are the furnished rooms,
 front facing +z: `variant: 'Cutaway'` (default; the +z and +x walls are hidden) or
-`'Full'`. Parts use `style.material(role, swatch)`. There are no GLBs. Names,
+`'Full'`. `seed` (default 0) is the hand-placed layout; any other integer is
+deterministic (`mulberry32` in `src/lib/rng.js`, rules in `src/<kit>/layout.js`).
+The catalogue panel has a seed field and Randomize, and the copied `createAsset`
+line includes the seed. Doors, windows and the fixed anchors stay; furniture
+counts, which wall a group uses, a left-right mirror of the checkout, loose-prop
+jitter and a few swatches change. A 0.9 m path from the door stays clear.
+`node scripts/check-room-seeds.mjs` rejects overlaps for seeds 0–50. Parts use `style.material(role, swatch)`. There are no GLBs. Names,
 footprints and the furniture layout are in `public/clinic-kit/`, `public/police-kit/`
 and `public/minimarket-kit/`. Floor mats, ceiling lights, the koban lamp and the
 noren have no collider. The room floor is 2 cm above y = 0, same as the office.
@@ -592,6 +598,7 @@ default designs if relevant.
 No unit tests; verify by building and looking.
 
 - `npm run build` must pass.
+- Room seeds: `node scripts/check-room-seeds.mjs` (clinic, police, minimarket, seeds 0–50).
 - Drive the viewer with Playwright (Chromium is preinstalled; use
   `--use-gl=angle --use-angle=swiftshader`): `npx vite preview`, open the
   page, use `window.__cc` and take screenshots.

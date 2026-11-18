@@ -135,7 +135,9 @@ function renderItemPanel() {
       ${chips('Shop', 'shopType', shopTypes)}
       ${Object.entries(a.options ?? {}).map(([k, vals]) => chips(OPTION_LABELS[k] ?? k, k, vals)).join('')}
       ${a.animated ? `<h3>Animation</h3><div class="chips">${['Still', 'Walk', 'Run', 'Sit', 'Loaf', 'Sleep'].map((m) => `<button data-anim="${m}" class="${state.itemAnim === m ? 'on' : ''}">${m}</button>`).join('')}</div>` : ''}
-      ${'seed' in a.params ? '<h3>Look</h3><div class="chips"><button data-act="seed">🎲 New look</button></div>' : ''}
+      ${a.id.endsWith('.room') && 'seed' in (a.params ?? {})
+        ? `<h3>Layout seed</h3><div class="chips seed-row"><input data-seed type="number" step="1" value="${Number.isFinite(p.seed) ? p.seed : 0}"><button data-act="seed">Randomize</button></div><p class="it-note">0 is the hand-made layout. The same number rebuilds the same room.</p>`
+        : ('seed' in (a.params ?? {}) ? '<h3>Look</h3><div class="chips"><button data-act="seed">🎲 New look</button></div>' : '')}
       <h3>Use it in a game</h3>
       <pre>${code}</pre>
       <button data-act="copy">Copy</button>
@@ -146,10 +148,20 @@ function renderItemPanel() {
     if (b.dataset.act === 'back') return setView('catalog');
     if (b.dataset.anim) { state.itemAnim = b.dataset.anim; return renderItemPanel(); }
     if (b.dataset.act === 'copy') return navigator.clipboard?.writeText(code).then(() => toast('Copied'), () => toast(code));
-    if (b.dataset.act === 'seed') selected.params.seed = Math.floor(Math.random() * 1e9);
+    if (b.dataset.act === 'seed') {
+      selected.params.seed = selected.id.endsWith('.room')
+        ? 1 + Math.floor(Math.random() * 999998)
+        : Math.floor(Math.random() * 1e9);
+    }
     if (b.dataset.k) selected.params[b.dataset.k] = b.dataset.v === '' ? null : b.dataset.v;
     openItem(selected.id, selected.params);
   };
+  const seedInput = itemEl.querySelector('[data-seed]');
+  seedInput?.addEventListener('change', () => {
+    const n = Number(seedInput.value);
+    selected.params.seed = Number.isFinite(n) ? Math.trunc(n) : 0;
+    openItem(selected.id, selected.params);
+  });
 }
 
 // ---------------------------------------------------------------------------

@@ -4,7 +4,7 @@ import { mulberry32 } from '../lib/rng.js';
 import { lobe, shadeMaterial } from '../lib/foliage.js';
 import { mergeByMaterial } from '../lib/merge.js';
 import manifest from '../../public/clinic-kit/manifest.json';
-import layout from '../../public/clinic-kit/layout.json';
+import { clinicLayout } from './layout.js';
 
 // A small Japanese clinic, in the same boxes and cylinders as the diner kit
 // (src/diner/items.js) and the office kit. Built here, not loaded, so
@@ -34,6 +34,10 @@ const LIP = 0.05;
 const RECEPTION_TOP = 1.06;
 
 const glassOf = new WeakMap();
+
+// Set for the duration of a seeded room build. Catalogue pieces leave it null
+// so their own thumbnails stay the hand-made colours.
+let roomTint = null;
 
 function mat(style, key) {
   const i = key.indexOf(':');
@@ -95,7 +99,7 @@ const BUILDERS = {
     addBox(g, 0.08, 0.06, 0.08, mat(style, 'paint:Seafoam'), [0.95, RECEPTION_TOP + 0.03, -0.08]);
   },
   waiting_chair(g, style) {
-    const cloth = mat(style, 'cloth:Powder blue');
+    const cloth = mat(style, roomTint?.chair ?? 'cloth:Powder blue');
     const metal = mat(style, 'metal:Light gray');
     const dark = mat(style, 'darkMetal:Charcoal');
     for (const x of [-0.18, 0.18]) {
@@ -110,7 +114,7 @@ const BUILDERS = {
     const frame = mat(style, 'metal:Light gray');
     const dark = mat(style, 'darkMetal:Charcoal');
     const pad = mat(style, 'cloth:Off white');
-    const sheet = mat(style, 'cloth:Sky');
+    const sheet = mat(style, roomTint?.sheet ?? 'cloth:Sky');
     addBox(g, 0.7, 0.08, 1.88, frame, [0, 0.28, 0]);
     for (const [x, z] of [[-0.28, -0.78], [0.28, -0.78], [-0.28, 0.78], [0.28, 0.78]]) {
       addBox(g, 0.06, 0.24, 0.08, dark, [x, 0.12, z]);
@@ -126,7 +130,7 @@ const BUILDERS = {
   },
   privacy_curtain(g, style) {
     const rail = mat(style, 'metal:Light gray');
-    const cloth = mat(style, 'cloth:Sky');
+    const cloth = mat(style, roomTint?.curtain ?? 'cloth:Sky');
     const band = mat(style, 'cloth:Seafoam');
     addBox(g, 1.52, 0.03, 0.04, rail, [0, 2.08, 0]);
     for (const x of [-0.72, 0.72]) addBox(g, 0.03, 0.08, 0.03, rail, [x, 2.02, 0]);
@@ -272,9 +276,10 @@ const BUILDERS = {
   plant(g, style) {
     addCyl(g, 0.09, 0.07, 0.12, mat(style, 'paint:Off white'), [0, 0.06, 0], { seg: 6 });
     addCyl(g, 0.1, 0.1, 0.02, mat(style, 'paint:Seafoam'), [0, 0.11, 0], { seg: 6 });
-    addLobe(g, style, 0.1, 'leaf:Moss', [0, 0.24, 0], [1, 0.9, 1], 3);
-    addLobe(g, style, 0.07, 'leaf:Sage', [0.06, 0.2, 0.03], [1, 0.8, 1], 4);
-    addLobe(g, style, 0.06, 'leaf:Moss', [-0.05, 0.18, -0.02], [1, 0.85, 1], 5);
+    const n = roomTint?.plantSeed ?? 3;
+    addLobe(g, style, 0.1, 'leaf:Moss', [0, 0.24, 0], [1, 0.9, 1], n);
+    addLobe(g, style, 0.07, 'leaf:Sage', [0.06, 0.2, 0.03], [1, 0.8, 1], n + 1);
+    addLobe(g, style, 0.06, 'leaf:Moss', [-0.05, 0.18, -0.02], [1, 0.85, 1], n + 2);
   },
   clock(g, style) {
     const rim = mat(style, 'metal:Light gray');
@@ -456,7 +461,9 @@ function splitWall(g, style, { axis, a0, a1, fix, y1, holes, hits, inward, low, 
  * walls so the inside reads from the isometric catalogue camera.
  * Meshes are merged per material.
  */
-export function buildClinicRoom(style, { cutaway = false } = {}) {
+export function buildClinicRoom(style, { cutaway = false, seed = 0 } = {}) {
+  const plan = clinicLayout(seed);
+  roomTint = plan.accent;
   const body = new THREE.Group();
   const front = new THREE.Group();
   const side = new THREE.Group();
@@ -472,13 +479,24 @@ export function buildClinicRoom(style, { cutaway = false } = {}) {
     }
   }
   addBox(body, W, 0.22, D, mat(style, 'concrete:Gray'), [0, SLAB_TOP - 0.11, 0]);
-  // Pale floors mark the two exam bays without a wall in front of the beds.
-  addBox(body, 2.5, 0.01, 2.15, mat(style, 'paint:Sky'), [-2.35, TILE_TOP + 0.006, -2.55]);
-  addBox(body, 2.5, 0.01, 2.15, mat(style, 'paint:Sky'), [1.7, TILE_TOP + 0.006, -2.55]);
-  // Low divider between the bays. The beds stay in sight from the isometric corner.
-  addBox(body, 0.08, 1.15, 1.7, mat(style, 'paint:Off white'), [0, 0.575, -2.7]);
-  addBox(body, 0.1, 0.04, 1.74, mat(style, 'paint:Seafoam'), [0, 1.15, -2.7]);
-  hits.push({ x: 0, z: -2.7, hw: 0.05, hd: 0.85 });
+  // Pale floors mark the two exam bays. Seed 0 keeps the hand-placed bays.
+  const wainscot = roomTint?.wainscot ?? 'paint:Seafoam';
+  const bay = roomTint?.bay ?? 'paint:Sky';
+  if (plan.divider) {
+    const { x, z } = plan.divider;
+    for (const bed of plan.placements.filter((p) => p.item === 'exam_bed')) {
+      addBox(body, 2.3, 0.01, 2.05, mat(style, bay), [bed.x, TILE_TOP + 0.006, bed.z]);
+    }
+    addBox(body, 0.08, 1.15, 1.7, mat(style, 'paint:Off white'), [x, 0.575, z]);
+    addBox(body, 0.1, 0.04, 1.74, mat(style, wainscot), [x, 1.15, z]);
+    hits.push({ x, z, hw: 0.05, hd: 0.85 });
+  } else {
+    addBox(body, 2.5, 0.01, 2.15, mat(style, 'paint:Sky'), [-2.35, TILE_TOP + 0.006, -2.55]);
+    addBox(body, 2.5, 0.01, 2.15, mat(style, 'paint:Sky'), [1.7, TILE_TOP + 0.006, -2.55]);
+    addBox(body, 0.08, 1.15, 1.7, mat(style, 'paint:Off white'), [0, 0.575, -2.7]);
+    addBox(body, 0.1, 0.04, 1.74, mat(style, 'paint:Seafoam'), [0, 1.15, -2.7]);
+    hits.push({ x: 0, z: -2.7, hw: 0.05, hd: 0.85 });
+  }
 
   const winHoles = (spans, y0) => spans.map(([a0, a1]) => ({
     a0: a0 + LIP, a1: a1 - LIP, y0: y0 + LIP, y1: y0 + WIN.h - LIP,
@@ -491,7 +509,7 @@ export function buildClinicRoom(style, { cutaway = false } = {}) {
   ];
   const sideWins = [[-0.95, 0.95]];
   const sideHoles = winHoles(sideWins, 0.95);
-  const paint = { low: 'paint:Seafoam', high: 'paint:Off white', trimKey: 'metal:Light gray' };
+  const paint = { low: wainscot, high: 'paint:Off white', trimKey: 'metal:Light gray' };
 
   splitWall(body, style, { axis: 'x', a0: -5, a1: 5, fix: -3.93, y1: RH, holes: [], hits, inward: 1, ...paint });
   splitWall(body, style, { axis: 'z', a0: -4, a1: 4, fix: -4.93, y1: RH, holes: [], hits, inward: 1, ...paint });
@@ -510,7 +528,7 @@ export function buildClinicRoom(style, { cutaway = false } = {}) {
   sideWins.forEach(([a0, a1]) => placeItem(side, 'window_bay', 4.93, 0.95, (a0 + a1) / 2, P / 2));
   if (!cutaway) hits.push({ x: doorX, z: 3.93, hw: DOOR.w / 2, hd: DOOR.d / 2 });
 
-  for (const p of layout.placements) {
+  for (const p of plan.placements) {
     const item = buildClinicItem(p.item, style);
     item.position.set(p.x, p.y + TILE_TOP, p.z);
     item.rotation.y = p.rotY || 0;
@@ -522,6 +540,7 @@ export function buildClinicRoom(style, { cutaway = false } = {}) {
       if (!BACK.has(p.item)) hits.push({ x: p.x, z: p.z, hw: (w / 2) * c + (d / 2) * s, hd: (w / 2) * s + (d / 2) * c });
     }
   }
+  roomTint = null;
 
   const room = new THREE.Group();
   room.name = 'tiny_clinic';

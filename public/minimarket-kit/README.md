@@ -7,7 +7,7 @@ The catalogue builds every piece in `src/minimarket/items.js` with `style.materi
 import { style } from './src/styles/index.js';
 import { createAsset } from './src/catalog/index.js';
 scene.add(createAsset('minimarket.shelf_aisle', {}, style));
-scene.add(createAsset('minimarket.room', { variant: 'Cutaway' }, style)); // or 'Full'
+scene.add(createAsset('minimarket.room', { variant: 'Cutaway', seed: 0 }, style)); // or 'Full'; seed 0 is this layout
 ```
 
 ## Conventions

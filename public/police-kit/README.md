@@ -7,7 +7,7 @@ The catalogue builds every piece in `src/police/items.js` with `style.material`,
 import { style } from './src/styles/index.js';
 import { createAsset } from './src/catalog/index.js';
 scene.add(createAsset('police.holding_cell', {}, style));
-scene.add(createAsset('police.room', { variant: 'Cutaway' }, style)); // or 'Full'
+scene.add(createAsset('police.room', { variant: 'Cutaway', seed: 0 }, style)); // or 'Full'; seed 0 is this layout
 ```
 
 ## Conventions

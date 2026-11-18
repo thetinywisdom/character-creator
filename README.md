@@ -26,7 +26,8 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   and the whole furnished office. The **Clinic**, **Police** and **Minimarket**
   tabs are interior kits in the same low-poly look: a clinic with exam bays,
   a koban-style police station with a holding cell, and a convenience store
-  with shelves and a fridge wall. Each room is Cutaway or Full. They stay
+  with shelves and a fridge wall. Each room is Cutaway or Full, and a layout seed (0 is the hand-made room;
+  the same number always rebuilds the same room). They stay
   in the catalogue: the sample town does not place them. Tap one to turn
   it around, try its types, colours and looks, and copy the `createAsset(...)`
   line that builds it. 🎲 New look gives a really different building (shape,

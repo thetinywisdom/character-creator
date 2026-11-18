@@ -92,7 +92,7 @@
         "paint:Sand",
         "paint:Seafoam"
       ],
-      "tris": 240
+      "tris": 264
     },
     "hot_food": {
       "label": "Hot food warmer",
@@ -451,6 +451,6 @@
       8
     ],
     "note": "Cutaway hides room_wall_front and room_wall_side. Triangle count includes the hidden walls.",
-    "tris": 5884
+    "tris": 6004
   }
 }

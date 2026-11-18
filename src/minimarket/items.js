@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { PALETTE } from '../styles/palette.js';
 import { mergeByMaterial } from '../lib/merge.js';
 import manifest from '../../public/minimarket-kit/manifest.json';
-import layout from '../../public/minimarket-kit/layout.json';
+import { minimarketLayout } from './layout.js';
 
 // A Japanese convenience store (konbini), in the same boxes and cylinders as
 // the diner kit (src/diner/items.js). Built here, not loaded, so createAsset
@@ -29,6 +29,7 @@ const LIP = 0.05;
 const REGISTER_TOP = 0.96;
 
 const glassOf = new WeakMap();
+let roomTint = null;
 
 function mat(style, key) {
   const i = key.indexOf(':');
@@ -70,7 +71,7 @@ const BUILDERS = {
     const body = mat(style, 'paint:Navy');
     const top = mat(style, 'paint:Off white');
     const edge = mat(style, 'metal:Light gray');
-    const stripe = mat(style, 'paint:Butter');
+    const stripe = mat(style, roomTint?.stripe ?? 'paint:Butter');
     const dark = mat(style, 'darkMetal:Charcoal');
     addBox(g, 2.16, 0.1, 0.74, dark, [0, 0.05, 0]);
     addBox(g, 2.12, 0.78, 0.7, body, [0, 0.49, 0]);
@@ -88,7 +89,7 @@ const BUILDERS = {
   shelf_aisle(g, style) {
     const metal = mat(style, 'metal:Light gray');
     const dark = mat(style, 'darkMetal:Charcoal');
-    const band = mat(style, 'paint:Navy');
+    const band = mat(style, roomTint?.band ?? 'paint:Navy');
     addBox(g, 2.6, 0.08, 0.6, dark, [0, 0.04, 0]);
     addBox(g, 0.04, 1.45, 0.58, metal, [-1.26, 0.78, 0]);
     addBox(g, 0.04, 1.45, 0.58, metal, [1.26, 0.78, 0]);
@@ -99,7 +100,7 @@ const BUILDERS = {
     for (let level = 0; level < 3; level++) {
       for (let side = -1; side <= 1; side += 2) {
         for (let col = 0; col < 2; col++) {
-          const key = GOODS[(level * 4 + (side < 0 ? 0 : 2) + col) % GOODS.length];
+          const key = GOODS[(level * 4 + (side < 0 ? 0 : 2) + col + (roomTint?.goods ?? 0)) % GOODS.length];
           addBox(g, 1.05, 0.28, 0.2, mat(style, key), [-0.58 + col * 1.16, 0.48 + level * 0.4, side * 0.16]);
         }
       }
@@ -116,15 +117,19 @@ const BUILDERS = {
     addBox(g, W, 0.08, D, dark, [0, 0.04, 0]);
     addBox(g, W, t, D, shell, [0, H - t / 2, 0]);
     addBox(g, t, H - 0.1, D, shell, [-W / 2 + t / 2, H / 2, 0]);
-    addBox(g, t, H - 0.1, D, shell, [W / 2 - t / 2, H / 2, 0]);
+    // +x side is glass. The isometric camera sits on that corner, and a solid
+    // panel hid the drinks on the fridge nearest the camera.
+    addBox(g, 0.03, 0.08, D, shell, [W / 2 - 0.02, 0.18, 0]);
+    addBox(g, 0.03, 0.08, D, shell, [W / 2 - 0.02, H - 0.12, 0]);
+    addBox(g, 0.012, 1.42, D - 0.1, mat(style, 'glass:Sky'), [W / 2 - 0.008, 1.0, 0]);
     addBox(g, W, H - 0.12, t, shell, [0, H / 2, -D / 2 + t / 2]);
     addBox(g, W - 0.1, 1.5, 0.012, mat(style, 'glass:Sky'), [0, 1.0, D / 2]);
     addBox(g, 0.025, 1.5, 0.02, edge, [0, 1.0, D / 2 - 0.006]);
     addBox(g, 0.9, 0.08, 0.02, mat(style, 'paint:Navy'), [0, 1.72, D / 2 + 0.004]);
     for (let row = 0; row < 3; row++) {
       for (let col = 0; col < 4; col++) {
-        const key = GOODS[row * 4 + col];
-        addBox(g, 0.16, 0.32, 0.16, mat(style, key), [-0.3 + col * 0.2, 0.42 + row * 0.42, 0.02]);
+        const key = GOODS[(row * 4 + col + (roomTint?.goods ?? 0)) % GOODS.length];
+        addBox(g, 0.16, 0.32, 0.26, mat(style, key), [-0.33 + col * 0.22, 0.42 + row * 0.42, 0.02]);
       }
     }
   },
@@ -187,8 +192,8 @@ const BUILDERS = {
     addBox(g, 0.5, 0.02, 0.012, dark, [0, 0.4, 0.252]);
   },
   basket(g, style) {
-    const red = mat(style, 'paint:Dusty rose');
-    const blue = mat(style, 'paint:Powder blue');
+    const red = mat(style, roomTint?.basketA ?? 'paint:Dusty rose');
+    const blue = mat(style, roomTint?.basketB ?? 'paint:Powder blue');
     const handle = mat(style, 'metal:Light gray');
     // A stack of two. Open tops: four walls and a floor, no lid.
     [[0, red], [0.11, blue]].forEach(([y, color], i) => {
@@ -249,8 +254,8 @@ const BUILDERS = {
   noren(g, style) {
     const rod = mat(style, 'wood:Walnut');
     addBox(g, 1.35, 0.04, 0.04, rod, [0, 2.15, 0]);
-    addBox(g, 0.58, 0.7, 0.015, mat(style, 'cloth:Seafoam'), [-0.34, 1.76, 0]);
-    addBox(g, 0.58, 0.7, 0.015, mat(style, 'cloth:Off white'), [0.34, 1.76, 0]);
+    addBox(g, 0.58, 0.7, 0.015, mat(style, roomTint?.norenA ?? 'cloth:Seafoam'), [-0.34, 1.76, 0]);
+    addBox(g, 0.58, 0.7, 0.015, mat(style, roomTint?.norenB ?? 'cloth:Off white'), [0.34, 1.76, 0]);
     addCyl(g, 0.1, 0.1, 0.012, mat(style, 'paint:Navy'), [-0.34, 1.9, 0.014], { seg: 6, rot: [P / 2, 0, 0] });
     addCyl(g, 0.1, 0.1, 0.012, mat(style, 'paint:Navy'), [0.34, 1.9, 0.014], { seg: 6, rot: [P / 2, 0, 0] });
   },
@@ -437,7 +442,9 @@ function splitWall(g, style, { axis, a0, a1, fix, y1, holes, hits, inward, low, 
  * The whole minimarket (10 × 8 m). `cutaway` hides the front (+z) and side
  * (+x) walls so the inside reads from the isometric catalogue camera.
  */
-export function buildMinimarketRoom(style, { cutaway = false } = {}) {
+export function buildMinimarketRoom(style, { cutaway = false, seed = 0 } = {}) {
+  const plan = minimarketLayout(seed);
+  roomTint = plan.accent;
   const body = new THREE.Group();
   const front = new THREE.Group();
   const side = new THREE.Group();
@@ -453,9 +460,15 @@ export function buildMinimarketRoom(style, { cutaway = false } = {}) {
     }
   }
   addBox(body, W, 0.22, D, mat(style, 'concrete:Gray'), [0, SLAB_TOP - 0.11, 0]);
-  // Aisle guides on the floor, paint so the navy stays navy.
-  addBox(body, 0.08, 0.008, 2.4, mat(style, 'paint:Navy'), [-2.55, TILE_TOP + 0.005, -1.1]);
-  addBox(body, 0.08, 0.008, 2.4, mat(style, 'paint:Butter'), [0.55, TILE_TOP + 0.005, -1.1]);
+  // Aisle guides. Seed 0 keeps the hand-placed stripes; a seeded room follows its shelves.
+  if (plan.stripes) {
+    for (const s of plan.stripes) {
+      addBox(body, 0.08, 0.008, s.len, mat(style, s.key), [s.x, TILE_TOP + 0.005, s.z]);
+    }
+  } else {
+    addBox(body, 0.08, 0.008, 2.4, mat(style, 'paint:Navy'), [-2.55, TILE_TOP + 0.005, -1.1]);
+    addBox(body, 0.08, 0.008, 2.4, mat(style, 'paint:Butter'), [0.55, TILE_TOP + 0.005, -1.1]);
+  }
 
   const winHoles = (spans, y0) => spans.map(([a0, a1]) => ({
     a0: a0 + LIP, a1: a1 - LIP, y0: y0 + LIP, y1: y0 + WIN.h - LIP,
@@ -487,7 +500,7 @@ export function buildMinimarketRoom(style, { cutaway = false } = {}) {
   sideWins.forEach(([a0, a1]) => placeItem(side, 'window_bay', 4.93, 0.4, (a0 + a1) / 2, P / 2));
   if (!cutaway) hits.push({ x: doorX, z: 3.93, hw: DOOR.w / 2, hd: DOOR.d / 2 });
 
-  for (const p of layout.placements) {
+  for (const p of plan.placements) {
     const item = buildMinimarketItem(p.item, style);
     item.position.set(p.x, p.y + TILE_TOP, p.z);
     item.rotation.y = p.rotY || 0;
@@ -499,6 +512,7 @@ export function buildMinimarketRoom(style, { cutaway = false } = {}) {
       if (!BACK.has(p.item)) hits.push({ x: p.x, z: p.z, hw: (w / 2) * c + (d / 2) * s, hd: (w / 2) * s + (d / 2) * c });
     }
   }
+  roomTint = null;
 
   const room = new THREE.Group();
   room.name = 'tiny_minimarket';

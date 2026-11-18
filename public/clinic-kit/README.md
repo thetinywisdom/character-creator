@@ -7,7 +7,7 @@ The catalogue builds every piece in `src/clinic/items.js` with `style.material`,
 import { style } from './src/styles/index.js';
 import { createAsset } from './src/catalog/index.js';
 scene.add(createAsset('clinic.exam_bed', {}, style));
-scene.add(createAsset('clinic.room', { variant: 'Cutaway' }, style)); // or 'Full'
+scene.add(createAsset('clinic.room', { variant: 'Cutaway', seed: 0 }, style)); // or 'Full'; seed 0 is this layout
 ```
 
 ## Conventions

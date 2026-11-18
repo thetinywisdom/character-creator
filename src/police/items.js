@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { PALETTE } from '../styles/palette.js';
 import { mergeByMaterial } from '../lib/merge.js';
 import manifest from '../../public/police-kit/manifest.json';
-import layout from '../../public/police-kit/layout.json';
+import { policeLayout } from './layout.js';
 
 // A Japanese police post, koban colours scaled up to a small station.
 // Same boxes and cylinders as the diner kit (src/diner/items.js). Built here,
@@ -29,6 +29,7 @@ const LIP = 0.05;
 const DESK_TOP = 0.74;
 
 const glassOf = new WeakMap();
+let roomTint = null;
 
 function mat(style, key) {
   const i = key.indexOf(':');
@@ -68,7 +69,7 @@ const BUILDERS = {
     const navy = mat(style, 'paint:Navy');
     const top = mat(style, 'paint:Off white');
     const edge = mat(style, 'metal:Light gray');
-    const rose = mat(style, 'paint:Dusty rose');
+    const rose = mat(style, roomTint?.stripe ?? 'paint:Dusty rose');
     const dark = mat(style, 'darkMetal:Charcoal');
     addBox(g, 4.52, 0.1, 0.68, dark, [0, 0.05, -0.02]);
     addBox(g, 4.48, 0.92, 0.64, navy, [0, 0.56, -0.02]);
@@ -101,7 +102,7 @@ const BUILDERS = {
     addBox(g, 0.14, 0.006, 0.1, mat(style, 'paint:Powder blue'), [-0.28, DESK_TOP + 0.014, -0.08]);
   },
   officer_chair(g, style) {
-    const cloth = mat(style, 'cloth:Navy');
+    const cloth = mat(style, roomTint?.chair ?? 'cloth:Navy');
     const metal = mat(style, 'metal:Light gray');
     const dark = mat(style, 'darkMetal:Charcoal');
     for (const [x, z] of [[-0.18, -0.18], [0.18, -0.18], [-0.18, 0.16], [0.18, 0.16]]) {
@@ -437,7 +438,9 @@ function splitWall(g, style, { axis, a0, a1, fix, y1, holes, hits, inward, low, 
  * The whole station (12 × 8 m). `cutaway` hides the front (+z) and side (+x)
  * walls so the inside reads from the isometric catalogue camera.
  */
-export function buildPoliceRoom(style, { cutaway = false } = {}) {
+export function buildPoliceRoom(style, { cutaway = false, seed = 0 } = {}) {
+  const plan = policeLayout(seed);
+  roomTint = plan.accent;
   const body = new THREE.Group();
   const front = new THREE.Group();
   const side = new THREE.Group();
@@ -484,7 +487,7 @@ export function buildPoliceRoom(style, { cutaway = false } = {}) {
   sideWins.forEach(([a0, a1]) => placeItem(side, 'window_bay', 5.93, 0.9, (a0 + a1) / 2, P / 2));
   if (!cutaway) hits.push({ x: doorX, z: 3.93, hw: DOOR.w / 2, hd: DOOR.d / 2 });
 
-  for (const p of layout.placements) {
+  for (const p of plan.placements) {
     const item = buildPoliceItem(p.item, style);
     item.position.set(p.x, p.y + TILE_TOP, p.z);
     item.rotation.y = p.rotY || 0;
@@ -496,6 +499,7 @@ export function buildPoliceRoom(style, { cutaway = false } = {}) {
       if (!BACK.has(p.item)) hits.push({ x: p.x, z: p.z, hw: (w / 2) * c + (d / 2) * s, hd: (w / 2) * s + (d / 2) * c });
     }
   }
+  roomTint = null;
 
   const room = new THREE.Group();
   room.name = 'tiny_police';
