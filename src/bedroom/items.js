@@ -5,6 +5,7 @@ import { lobe, shadeMaterial } from '../lib/foliage.js';
 import { mergeByMaterial } from '../lib/merge.js';
 import manifest from '../../public/bedroom-kit/manifest.json';
 import layout from '../../public/bedroom-kit/layout.json';
+import { bedroomPlan } from './layout.js';
 
 // Small bedroom, in the same boxes and cylinders as the office kit
 // (src/office/items.js). Built here, not loaded, so createAsset stays
@@ -67,10 +68,10 @@ function addLobe(g, style, r, key, pos, scale, seed) {
 }
 
 const BUILDERS = {
-  bed(g, style) {
+  bed(g, style, look) {
     const wood = mat(style, 'wood:Walnut');
     const sheet = mat(style, 'paint:Off white');
-    const duvet = mat(style, 'cloth:Powder blue');
+    const duvet = mat(style, look?.duvet ?? 'cloth:Powder blue');
     const pillow = mat(style, 'paint:Paper');
     for (const sx of [-1, 1]) {
       for (const sz of [-1, 1]) addBox(g, 0.06, 0.14, 0.06, wood, [sx * 0.4, 0.07, sz * 0.9]);
@@ -156,9 +157,9 @@ const BUILDERS = {
     addBox(g, 0.16, h * 0.92, 0.025, cloth, [-w / 2 + 0.1, h * 0.46, 0.05]);
     addBox(g, 0.16, h * 0.92, 0.025, cloth, [w / 2 - 0.1, h * 0.46, 0.05]);
   },
-  rug(g, style) {
-    addBox(g, 1.55, 0.015, 1.85, mat(style, 'cloth:Dusty rose'), [0, 0.008, 0]);
-    addBox(g, 1.25, 0.006, 1.5, mat(style, 'cloth:Sand'), [0, 0.016, 0]);
+  rug(g, style, look) {
+    addBox(g, 1.55, 0.015, 1.85, mat(style, look?.rug ?? 'cloth:Dusty rose'), [0, 0.008, 0]);
+    addBox(g, 1.25, 0.006, 1.5, mat(style, look?.rugBand ?? 'cloth:Sand'), [0, 0.016, 0]);
   },
   books(g, style) {
     const spines = ['paint:Navy', 'paint:Dusty rose', 'paint:Sage'];
@@ -232,12 +233,12 @@ export const BEDROOM_ITEMS = Object.entries(manifest.items).map(([name, item]) =
 }));
 
 /** A kit item standing on y = 0, facing +z. Geometry is its own (safe to dispose). */
-export function buildBedroomItem(name, style) {
+export function buildBedroomItem(name, style, look) {
   const build = BUILDERS[name];
   if (!build) throw new Error(`Unknown bedroom item "${name}"`);
   const g = new THREE.Group();
   g.name = name;
-  build(g, style);
+  build(g, style, look);
   g.userData.bedroomItem = name;
   return g;
 }
@@ -290,7 +291,7 @@ function splitWall(g, style, { axis, a0, a1, fix, y1, holes, hits, inward }) {
  * The whole bedroom (3.5 × 3 m). `cutaway` hides the front (+z) and side
  * (+x) walls so the inside reads from the isometric catalogue camera.
  */
-export function buildBedroomRoom(style, { cutaway = false } = {}) {
+export function buildBedroomRoom(style, { cutaway = false, seed = 0 } = {}) {
   const body = new THREE.Group();
   const front = new THREE.Group();
   const side = new THREE.Group();
@@ -324,8 +325,10 @@ export function buildBedroomRoom(style, { cutaway = false } = {}) {
   window.position.set(winX, sill, north);
   body.add(window);
 
-  for (const p of layout.placements) {
-    const item = buildBedroomItem(p.item, style);
+  const plan = bedroomPlan(seed);
+  const placements = plan?.placements ?? layout.placements;
+  for (const p of placements) {
+    const item = buildBedroomItem(p.item, style, plan?.look);
     item.position.set(p.x, p.y + TILE_TOP, p.z);
     item.rotation.y = p.rotY || 0;
     body.add(item);

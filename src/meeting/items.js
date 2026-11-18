@@ -5,6 +5,7 @@ import { lobe, shadeMaterial } from '../lib/foliage.js';
 import { mergeByMaterial } from '../lib/merge.js';
 import manifest from '../../public/meeting-kit/manifest.json';
 import layout from '../../public/meeting-kit/layout.json';
+import { meetingPlan } from './layout.js';
 
 // Meeting room, in the same boxes and cylinders as the office kit
 // (src/office/items.js) and the diner kit. Built here, not loaded, so
@@ -301,7 +302,7 @@ function plainWall(g, style, { axis, a0, a1, fix, y1, hits, inward }) {
  * (+x) walls so the inside reads from the isometric catalogue camera.
  * Meshes are merged per material.
  */
-export function buildMeetingRoom(style, { cutaway = false } = {}) {
+export function buildMeetingRoom(style, { cutaway = false, seed = 0 } = {}) {
   const body = new THREE.Group();
   const front = new THREE.Group();
   const side = new THREE.Group();
@@ -345,7 +346,9 @@ export function buildMeetingRoom(style, { cutaway = false } = {}) {
   hits.push({ x: (pier0 + RW / 2) / 2, z: north, hw: (RW / 2 - pier0) / 2, hd: TH / 2 });
   addBox(body, RW, RH - 2.14, TH, mat(style, 'paint:Off white'), [0, (2.14 + RH) / 2, north]);
 
-  for (const p of layout.placements) {
+  // Seed 0 keeps the hand-made layout. Any other integer is deterministic.
+  const placements = meetingPlan(seed)?.placements ?? layout.placements;
+  for (const p of placements) {
     const item = buildMeetingItem(p.item, style);
     item.position.set(p.x, p.y + TILE_TOP, p.z);
     item.rotation.y = p.rotY || 0;

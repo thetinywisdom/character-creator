@@ -273,6 +273,9 @@ and the other ids build the pieces from boxes and cylinders. `meeting.room`
 (6 × 4 m), `bedroom.room` (3.5 × 3 m, one single bed) and `studio.room`
 (6 × 4 m, a Japanese 1R) are the furnished rooms, front facing +z:
 `variant: 'Cutaway'` (default; the +z and +x walls are hidden) or `'Full'`.
+`seed: 0` (or omitting it) is the hand-made layout; any other integer rebuilds
+the same room, via `mulberry32` in `src/lib/roomSeed.js`. The catalogue panel
+has a seed number and Randomize, and the copied `createAsset` line includes it.
 Parts use `style.material(role, swatch)`. There are no GLBs. Names, footprints
 and the furniture layout are in `public/meeting-kit/`, `public/bedroom-kit/`
 and `public/studio-kit/`. Rugs, the floor cushion and the hanging lamps have

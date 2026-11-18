@@ -378,7 +378,7 @@ Not placed in the sample town. A game places a piece with `createAsset('meeting.
 
 - The same low-poly boxes and cylinders as the office kit. No readable lettering: the whiteboard is a blank board with a couple of coloured marks, television screens are flat blocks of colour, book spines are plain.
 - Colour is a palette swatch on a role. Walls use `paint` so Off white is not pulled onto the building greys. Bedding, upholstery and rugs use `cloth`. `light` is the glow on lamps, the same as every other lamp. No new swatches.
-- Meeting is 6 × 4 m: a long table, eight chairs, a wall TV, a whiteboard, and a glass partition with a door on the far wall. Bedroom is 3.5 × 3 m with one single bed. Studio is a 6 × 4 m Japanese 1R: bed, mini kitchen, low table, sofa, TV, and a unit bath (open at the top) behind a door. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0.
+- Meeting is 6 × 4 m: a long table, eight chairs, a wall TV, a whiteboard, and a glass partition with a door on the far wall. Bedroom is 3.5 × 3 m with one single bed. Studio is a 6 × 4 m Japanese 1R: bed, mini kitchen, low table, sofa, TV, and a unit bath (open at the top) behind a door. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0. `seed: 0` is the arranged room; another integer moves chairs, beds, sofas and loose props by rule, and recolours bedding and rugs from the same palette.
 
 ## 3e-1. People content
 

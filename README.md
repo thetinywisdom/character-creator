@@ -26,7 +26,7 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   and the whole furnished office. **Meeting**, **Bedroom** and **Studio** are
   interior kits in the same look: each tab is a furnished room (Cutaway or
   Full) plus its pieces. They stay in the catalogue: the sample town does not
-  place them. Tap one to turn
+  place them. Each room takes a `seed`: `0` is the hand-made layout, and any other integer rebuilds that same arrangement. Tap one to turn
   it around, try its types, colours and looks, and copy the `createAsset(...)`
   line that builds it. 🎲 New look gives a really different building (shape,
   height, roof, layout), not just a new colour. The Buildings tab also lists

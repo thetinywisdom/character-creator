@@ -7,7 +7,7 @@ The catalogue builds every piece in `src/studio/items.js` with `style.material`,
 import { style } from './src/styles/index.js';
 import { createAsset } from './src/catalog/index.js';
 scene.add(createAsset('studio.unit_bath', {}, style));
-scene.add(createAsset('studio.room', { variant: 'Cutaway' }, style)); // or 'Full'
+scene.add(createAsset('studio.room', { variant: 'Cutaway', seed: 0 }, style)); // seed 0 is this layout
 ```
 
 ## Conventions
@@ -22,6 +22,6 @@ scene.add(createAsset('studio.room', { variant: 'Cutaway' }, style)); // or 'Ful
 
 6 m wide (x) by 4 m deep (z), 2.55 m tall, open at the top, centred on the origin. Kitchen along the far wall, unit bath in the far corner, living space toward the camera. `variant: 'Cutaway'` hides `room_wall_front` and `room_wall_side` (the +z and +x walls). `'Full'` shows them, including the entrance door. The wood floor sits 2 cm above y = 0.
 
-Furniture positions are in `layout.json` (y is the height above that floor). Walls, windows, the entrance and the bath are placed in code.
+Furniture positions for `seed: 0` are in `layout.json` (y is the height above that floor). Any other integer moves the bed and the sofa (the sofa keeps facing its TV), jitters the loose props, and recolours the bedding and cushion. The kitchen, windows, entrance and unit bath stay put. Walls, windows, the entrance and the bath are placed in code.
 
 Triangle counts are in `manifest.json`. The source of truth is `src/studio/items.js`.

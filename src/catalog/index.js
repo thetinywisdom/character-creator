@@ -367,13 +367,15 @@ function roomKit(group, room) {
     category: 'area',
     group,
     variants: ['Cutaway', 'Full'],
-    params: { variant: 'Cutaway' },
+    params: { variant: 'Cutaway', seed: 0 },
+    // Number field plus Randomize. Other seeded assets keep their own control.
+    seedInput: true,
     size: room.size,
     // Isometric corner (equal x and z) and a little steeper than 35°, so the
     // open room reads. Cutaway hides the two walls this camera faces.
     viewDir: [1, 1.15, 1],
     build(p, style) {
-      const r = room.build(style, { cutaway: p.variant !== 'Full' });
+      const r = room.build(style, { cutaway: p.variant !== 'Full', seed: p.seed | 0 });
       return withColliders(r.group, r.colliders);
     },
   }, ...room.items.map((item) => ({

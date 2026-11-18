@@ -7,7 +7,7 @@ The catalogue builds every piece in `src/bedroom/items.js` with `style.material`
 import { style } from './src/styles/index.js';
 import { createAsset } from './src/catalog/index.js';
 scene.add(createAsset('bedroom.bed', {}, style));
-scene.add(createAsset('bedroom.room', { variant: 'Cutaway' }, style)); // or 'Full'
+scene.add(createAsset('bedroom.room', { variant: 'Cutaway', seed: 0 }, style)); // seed 0 is this layout
 ```
 
 ## Conventions
@@ -22,6 +22,6 @@ scene.add(createAsset('bedroom.room', { variant: 'Cutaway' }, style)); // or 'Fu
 
 3.5 m wide (x) by 3 m deep (z), 2.5 m tall, open at the top, centred on the origin. One single bed. The window is on the far wall (−z). `variant: 'Cutaway'` hides `room_wall_front` and `room_wall_side` (the +z and +x walls). `'Full'` shows them. The wood floor sits 2 cm above y = 0.
 
-Furniture positions are in `layout.json` (y is the height above that floor). The window opening is placed in code so the frame covers it.
+Furniture positions for `seed: 0` are in `layout.json` (y is the height above that floor). Any other integer picks one of three arrangements (bed on the north, west or south wall), nudges the chair and loose props, sometimes leaves the basket, books, plant, clock or picture out, and recolours the duvet and rug. The window stays put, and the bed does not cover it. The window opening is placed in code so the frame covers it.
 
 Triangle counts are in `manifest.json`. The source of truth is `src/bedroom/items.js`.

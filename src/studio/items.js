@@ -3,6 +3,7 @@ import { PALETTE } from '../styles/palette.js';
 import { mergeByMaterial } from '../lib/merge.js';
 import manifest from '../../public/studio-kit/manifest.json';
 import layout from '../../public/studio-kit/layout.json';
+import { studioPlan } from './layout.js';
 
 // Japanese 1R studio apartment, in the same boxes and cylinders as the
 // office kit (src/office/items.js). Built here, not loaded, so createAsset
@@ -73,10 +74,10 @@ function cabinet(g, style, w, d, h = 0.84) {
 }
 
 const BUILDERS = {
-  bed(g, style) {
+  bed(g, style, look) {
     const wood = mat(style, 'wood:Walnut');
     const sheet = mat(style, 'paint:Off white');
-    const duvet = mat(style, 'cloth:Navy');
+    const duvet = mat(style, look?.duvet ?? 'cloth:Navy');
     const pillow = mat(style, 'paint:Paper');
     addBox(g, 1.02, 0.1, 1.95, wood, [0, 0.08, 0]);
     addBox(g, 1.02, 0.22, 0.05, wood, [0, 0.24, -0.95]);
@@ -129,8 +130,8 @@ const BUILDERS = {
       for (const sz of [-1, 1]) addBox(g, 0.04, 0.3, 0.04, dark, [sx * 0.28, 0.15, sz * 0.28]);
     }
   },
-  cushion(g, style) {
-    addBox(g, 0.42, 0.08, 0.42, mat(style, 'cloth:Apricot'), [0, 0.04, 0]);
+  cushion(g, style, look) {
+    addBox(g, 0.42, 0.08, 0.42, mat(style, look?.cushion ?? 'cloth:Apricot'), [0, 0.04, 0]);
     addBox(g, 0.22, 0.02, 0.22, mat(style, 'cloth:Dusty rose'), [0, 0.09, 0]);
   },
   sofa(g, style) {
@@ -308,12 +309,12 @@ export const STUDIO_ITEMS = Object.entries(manifest.items).map(([name, item]) =>
 }));
 
 /** A kit item standing on y = 0, facing +z. Geometry is its own (safe to dispose). */
-export function buildStudioItem(name, style) {
+export function buildStudioItem(name, style, look) {
   const build = BUILDERS[name];
   if (!build) throw new Error(`Unknown studio item "${name}"`);
   const g = new THREE.Group();
   g.name = name;
-  build(g, style);
+  build(g, style, look);
   g.userData.studioItem = name;
   return g;
 }
@@ -374,7 +375,7 @@ function place(group, style, name, x, y, z, rotY) {
  * The whole studio (6 × 4 m). `cutaway` hides the front (+z) and side (+x)
  * walls so the inside reads from the isometric catalogue camera.
  */
-export function buildStudioRoom(style, { cutaway = false } = {}) {
+export function buildStudioRoom(style, { cutaway = false, seed = 0 } = {}) {
   const body = new THREE.Group();
   const front = new THREE.Group();
   const side = new THREE.Group();
@@ -428,8 +429,10 @@ export function buildStudioRoom(style, { cutaway = false } = {}) {
   const bd = 1.42;
   hits.push({ x: bath.position.x, z: bath.position.z, hw: bd / 2, hd: bw / 2 });
 
-  for (const p of layout.placements) {
-    const item = buildStudioItem(p.item, style);
+  const plan = studioPlan(seed);
+  const placements = plan?.placements ?? layout.placements;
+  for (const p of placements) {
+    const item = buildStudioItem(p.item, style, plan?.look);
     item.position.set(p.x, p.y + TILE_TOP, p.z);
     item.rotation.y = p.rotY || 0;
     body.add(item);
