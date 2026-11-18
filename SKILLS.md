@@ -201,6 +201,16 @@ src/office/items.js    office kit (catalogue Office tab): procedural desks, chai
                        lounge, kitchen, plants, and the furnished room. Not placed
                        by the sample town. GLB loader: src/office/loadOfficeKit.js
 public/office-kit/     the kit's GLBs, manifest.json, layout.json, standalone preview
+src/clinic/items.js    clinic kit (catalogue Clinic tab): procedural reception, exam
+                       beds, curtains and the furnished room. Not placed by the sample town
+public/clinic-kit/     manifest.json and layout.json (no GLBs)
+src/police/items.js    police kit (catalogue Police tab): procedural koban counter, cell,
+                       lockers and the furnished room. Not placed by the sample town
+public/police-kit/     manifest.json and layout.json (no GLBs)
+src/minimarket/items.js minimarket kit (catalogue Minimarket tab): procedural konbini
+                       counter, shelves, fridges and the furnished room. Not placed
+                       by the sample town
+public/minimarket-kit/ manifest.json and layout.json (no GLBs)
 src/creator/Creator.js the character creator panel (viewer only)
 src/viewer/            Cell (a preview stage), params (saved settings)
 src/lib/               shapes, foliage (lobes, fronds, shaded leaf/bark, trimmed hedges), merge
@@ -238,7 +248,8 @@ roles are softened. `light` glows: never use it for big textured surfaces.
 defaults. `params.variant` picks from `variants`, `params.color` from
 `colors`, `params.seed` changes the look of seeded items, buildings take
 `w` / `d` (lot size) and shops `shopType`. Groups (catalogue tabs):
-buildings, street, traffic, extras, nature, animals, vehicles, office, areas.
+buildings, street, traffic, extras, nature, animals, vehicles, office, clinic,
+police, minimarket, areas.
 `animated: 'cat'` marks items with joints (`animal.cat`: pose it with
 `poseCat`, `anim/catGait.js`; resting poses via `gait.pose = 'sit' |
 'loaf' | 'sleep'`; joints legF*/legB* plus lowF*/lowB* elbows and hocks). Cats take `pattern`, `tailType`, `earType` and `coat`
@@ -259,6 +270,18 @@ wants the files instead of the code calls `loadOfficeKit({ style })` from
 Rebuild the GLBs with `blender -b -P src/office/build_office_kit.py` (blend:
 `src/office/office_kit.blend`). Rugs have no collider. The room floor is 2 cm
 above y = 0 so it does not flicker on a ground at y = 0.
+
+**Clinic, police and minimarket kits** (catalogue only, not placed by `layout.js`).
+Tabs **Clinic**, **Police** and **Minimarket**. `createAsset('clinic.exam_bed', {}, style)`,
+`createAsset('police.holding_cell', {}, style)`, `createAsset('minimarket.shelf_aisle', {}, style)`
+and the other ids build the pieces from boxes and cylinders in `src/clinic/items.js`,
+`src/police/items.js` and `src/minimarket/items.js`. `clinic.room` (10 × 8 m),
+`police.room` (12 × 8 m) and `minimarket.room` (10 × 8 m) are the furnished rooms,
+front facing +z: `variant: 'Cutaway'` (default; the +z and +x walls are hidden) or
+`'Full'`. Parts use `style.material(role, swatch)`. There are no GLBs. Names,
+footprints and the furniture layout are in `public/clinic-kit/`, `public/police-kit/`
+and `public/minimarket-kit/`. Floor mats, ceiling lights, the koban lamp and the
+noren have no collider. The room floor is 2 cm above y = 0, same as the office.
 
 Catalogue-only street details (the sample town does not place them; `params.seed` and 🎲 New look, same as a tree): `prop.manhole` (Flower, Wave, Grid; 40 triangles at PS1 detail), `prop.backClutter` (Propane tanks 156, Gas meter 64, Drainpipe 78, Cluster 310), `prop.nobori` (Stripes, Blocks; 92; call `tickProps` from `anim/props.js` each frame so the cloth sways), `animal.bird` (Pigeon 154, Sparrow 156; the same `tickProps` runs the peck and the perched look). No new palette swatches. No separate outdoor AC prop: units already dress backs, balconies and roofs. Trees (`nature.tree`) are clumped low-poly lobes (bamboo: segmented culms; the old giant: a kinked trunk that splits) and come in 11 presets the city plants
 (oak, lollipop, pine, old giant, cherry blossom, Japanese maple, ginkgo,
