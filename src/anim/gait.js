@@ -179,7 +179,14 @@ export function stepGait(g, dt, speed, tune = null) {
 function jointsOf(body) {
   if (!body.userData.joints) {
     const j = {};
-    body.traverse((o) => { if (JOINT_NAMES.includes(o.name)) j[o.name] = o; });
+    // isoWrap is a second picture of the same person (city/isoPeople.js). Its
+    // joints share these names and must not replace the ones the walk poses.
+    const walk = (o) => {
+      if (o.name === 'isoWrap') return;
+      if (o !== body && JOINT_NAMES.includes(o.name)) j[o.name] = o;
+      for (const c of o.children) walk(c);
+    };
+    walk(body);
     body.userData.joints = j;
   }
   return body.userData.joints;
@@ -330,6 +337,7 @@ function poseSkate(body, g) {
 
 /** Pose `body` (the character root) for gait state `g`. style: 'natural' | 'skate'. */
 export function poseGait(body, g, style = 'natural', tune = null) {
+  body.userData.hipLock = false; // a walking pose stands on its feet (isoPeople.js)
   if (style === 'skate') poseSkate(body, g);
   else if (ENGINE === 'New' && jointsOf(body).footL?.userData.sole) poseIK(body, g, tune, jointsOf(body));
   else poseNatural(body, g, tune);

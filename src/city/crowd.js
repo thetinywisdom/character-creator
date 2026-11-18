@@ -116,7 +116,12 @@ const CULL = 48; // m: people further than this from the player are hidden
 function joints(body) {
   if (!body.userData.crowdJoints) {
     const j = {};
-    body.traverse((o) => { if (JOINT_NAMES.includes(o.name)) j[o.name] = o; });
+    const walk = (o) => {
+      if (o.name === 'isoWrap') return;
+      if (o !== body && JOINT_NAMES.includes(o.name)) j[o.name] = o;
+      for (const c of o.children) walk(c);
+    };
+    walk(body);
     body.userData.crowdJoints = j;
   }
   return body.userData.crowdJoints;
@@ -152,6 +157,7 @@ export function leanInto(obj, heading, speed, dt, k = 0.05, max = 0.3) {
 export function sitPose(body, seatY) {
   const j = joints(body);
   const hipY = j.legL?.position.y ?? 0.85;
+  body.userData.hipLock = true; // iso mesh keeps its hips on this seat (isoPeople.js)
   body.position.set(0, seatY - hipY + 0.06, 0);
   body.rotation.set(0, 0, 0);
   for (const s of ['L', 'R']) {
