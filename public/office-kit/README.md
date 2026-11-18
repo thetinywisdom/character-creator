@@ -35,7 +35,7 @@ This folder is the kit as Vite serves it (`public/office-kit/`). The catalogue d
 import { style } from './src/styles/index.js';
 import { createAsset } from './src/catalog/index.js';
 scene.add(createAsset('office.desk', {}, style));
-scene.add(createAsset('office.room', { variant: 'Cutaway' }, style)); // or 'Full'
+scene.add(createAsset('office.room', { variant: 'Cutaway', seed: 0 }, style)); // or 'Full'; seed 0 is this layout
 ```
 
 To load the GLBs instead (shared geometry, palette via `style`):

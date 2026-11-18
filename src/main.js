@@ -135,11 +135,24 @@ function renderItemPanel() {
       ${chips('Shop', 'shopType', shopTypes)}
       ${Object.entries(a.options ?? {}).map(([k, vals]) => chips(OPTION_LABELS[k] ?? k, k, vals)).join('')}
       ${a.animated ? `<h3>Animation</h3><div class="chips">${['Still', 'Walk', 'Run', 'Sit', 'Loaf', 'Sleep'].map((m) => `<button data-anim="${m}" class="${state.itemAnim === m ? 'on' : ''}">${m}</button>`).join('')}</div>` : ''}
-      ${'seed' in a.params ? '<h3>Look</h3><div class="chips"><button data-act="seed">🎲 New look</button></div>' : ''}
+      ${a.seedInput
+        ? `<h3>Seed</h3><div class="chips seed-row"><input data-act="seed-num" type="number" step="1" value="${Number.isFinite(Number(p.seed)) ? p.seed : 0}" aria-label="Seed"><button type="button" data-act="seed">Randomize</button></div>`
+        : ('seed' in (a.params ?? {}) ? '<h3>Look</h3><div class="chips"><button data-act="seed">🎲 New look</button></div>' : '')}
       <h3>Use it in a game</h3>
       <pre>${code}</pre>
       <button data-act="copy">Copy</button>
     </div>`;
+  itemEl.onmousedown = (e) => {
+    // Keep a seed number from blurring (and rebuilding) before Randomize runs.
+    if (e.target.closest('[data-act="seed"]')) e.preventDefault();
+  };
+  itemEl.onchange = (e) => {
+    const input = e.target.closest('[data-act="seed-num"]');
+    if (!input || !selected) return;
+    const n = Math.round(Number(input.value));
+    selected.params.seed = Number.isFinite(n) ? n : 0;
+    openItem(selected.id, selected.params);
+  };
   itemEl.onclick = (e) => {
     const b = e.target.closest('button');
     if (!b) return;

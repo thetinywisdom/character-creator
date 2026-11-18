@@ -4,7 +4,7 @@ import { mulberry32 } from '../lib/rng.js';
 import { lobe, shadeMaterial } from '../lib/foliage.js';
 import { mergeByMaterial } from '../lib/merge.js';
 import manifest from '../../public/office-kit/manifest.json';
-import layout from '../../public/office-kit/layout.json';
+import { officeLayout } from './seedLayout.js';
 
 // Office furniture, ported from src/office/build_office_kit.py (the same boxes
 // and cylinders the GLBs were exported from). Built here, not loaded, so
@@ -76,11 +76,11 @@ const BUILDERS = {
     }
     addBox(g, 1.32, 0.05, 0.06, metal, [0, 0.67, 0]);
   },
-  office_chair(g, style) {
+  office_chair(g, style, look) {
     const dark = mat(style, 'darkMetal:Ink');
     const metal = mat(style, 'metal:Stone');
-    const cloth = mat(style, 'cloth:Ink');
-    const back = mat(style, 'cloth:Charcoal');
+    const cloth = mat(style, `cloth:${look?.chair?.[0] ?? 'Ink'}`);
+    const back = mat(style, `cloth:${look?.chair?.[1] ?? 'Charcoal'}`);
     for (let i = 0; i < 5; i++) {
       const a = i * 2 * P / 5;
       addBox(g, 0.05, 0.035, 0.3, dark, [Math.sin(a) * 0.15, 0.06, Math.cos(a) * 0.15], [0, a, 0]);
@@ -127,12 +127,12 @@ const BUILDERS = {
     addCyl(g, 0.035, 0.075, 0.11, dark, [0, 0.43, 0.13], { rot: [0.5, 0, 0] });
     addCyl(g, 0.06, 0.06, 0.01, light, [0, 0.39, 0.155], { rot: [0.5, 0, 0] });
   },
-  mug(g, style) {
-    const paint = mat(style, 'paint:Off white');
+  mug(g, style, look) {
+    const paint = mat(style, `paint:${look?.mug ?? 'Off white'}`);
     addCyl(g, 0.042, 0.04, 0.095, paint, [0, 0.0475, 0]);
     addBox(g, 0.015, 0.05, 0.04, paint, [0.05, 0.05, 0]);
   },
-  bookcase(g, style) {
+  bookcase(g, style, look) {
     const W = mat(style, 'paint:Off white');
     const D = 0.28;
     const H = 2.02;
@@ -164,7 +164,10 @@ const BUILDERS = {
       [0.094, 0.2, -0.16, 1.68, 'paint:Navy'],
       [0.154, 0.2, -0.03, 1.68, 'paint:Lilac'],
     ];
-    for (const [w, h, x, y, key] of books) addBox(g, w, h, 0.2, mat(style, key), [x, y, -0.01]);
+    books.forEach(([w, h, x, y, key], i) => {
+      const colour = look?.books ? `paint:${look.books[i % look.books.length]}` : key;
+      addBox(g, w, h, 0.2, mat(style, colour), [x, y, -0.01]);
+    });
   },
   copier(g, style) {
     const gray = mat(style, 'paint:Light gray');
@@ -196,10 +199,10 @@ const BUILDERS = {
     addBox(g, 1.0, 0.04, 0.2, wood, [0, 0.02, 0.1]);
     for (const sx of [-1, 1]) addBox(g, 0.02, 0.12, 0.02, metal, [sx * 0.38, -0.04, 0.01]);
   },
-  sofa(g, style) {
+  sofa(g, style, look) {
     const metal = mat(style, 'metal:Light gray');
-    const walnut = mat(style, 'cloth:Walnut');
-    const cocoa = mat(style, 'cloth:Cocoa');
+    const walnut = mat(style, `cloth:${look?.sofa?.[0] ?? 'Walnut'}`);
+    const cocoa = mat(style, `cloth:${look?.sofa?.[1] ?? 'Cocoa'}`);
     for (const sx of [-1, 1]) {
       addBox(g, 0.04, 0.04, 0.86, metal, [sx * 1.0, 0.02, 0]);
       addBox(g, 0.04, 0.3, 0.04, metal, [sx * 1.0, 0.17, 0.38]);
@@ -226,13 +229,13 @@ const BUILDERS = {
       addBox(g, 0.02, 0.52, 0.02, dark, [Math.sin(a) * 0.13, 0.25, Math.cos(a) * 0.13], [Math.cos(a) * 0.18, 0, -Math.sin(a) * 0.18]);
     }
   },
-  rug(g, style) {
-    addBox(g, 3.0, 0.01, 2.0, mat(style, 'cloth:Sand'), [0, 0.005, 0]);
-    addBox(g, 2.8, 0.002, 1.8, mat(style, 'cloth:Tan'), [0, 0.011, 0]);
+  rug(g, style, look) {
+    addBox(g, 3.0, 0.01, 2.0, mat(style, `cloth:${look?.rug?.[0] ?? 'Sand'}`), [0, 0.005, 0]);
+    addBox(g, 2.8, 0.002, 1.8, mat(style, `cloth:${look?.rug?.[1] ?? 'Tan'}`), [0, 0.011, 0]);
   },
-  rug_large(g, style) {
-    addBox(g, 3.5, 0.01, 2.4, mat(style, 'cloth:Sand'), [0, 0.005, 0]);
-    addBox(g, 3.3, 0.002, 2.2, mat(style, 'cloth:Tan'), [0, 0.011, 0]);
+  rug_large(g, style, look) {
+    addBox(g, 3.5, 0.01, 2.4, mat(style, `cloth:${look?.rug?.[0] ?? 'Sand'}`), [0, 0.005, 0]);
+    addBox(g, 3.3, 0.002, 2.2, mat(style, `cloth:${look?.rug?.[1] ?? 'Tan'}`), [0, 0.011, 0]);
   },
   whiteboard_mobile(g, style) {
     const metal = mat(style, 'metal:Stone');
@@ -259,9 +262,9 @@ const BUILDERS = {
     for (const sx of [-1, 1]) addBox(g, 0.06, 0.71, 0.55, wood, [sx * 0.55, 0.355, 0]);
     addBox(g, 1.1, 0.06, 0.06, wood, [0, 0.12, 0]);
   },
-  meeting_chair(g, style) {
+  meeting_chair(g, style, look) {
     const metal = mat(style, 'metal:Light gray');
-    const cloth = mat(style, 'cloth:Ink');
+    const cloth = mat(style, `cloth:${look?.meeting ?? 'Ink'}`);
     for (const sx of [-1, 1]) {
       const x = sx * 0.25;
       addBox(g, 0.025, 0.03, 0.5, metal, [x, 0.015, -0.02]);
@@ -366,16 +369,16 @@ const BUILDERS = {
     addCyl(g, 0.006, 0.006, 1.0, cord, [0, 0.72, 0], { seg: 4 });
     addCyl(g, 0.05, 0.05, 0.02, coral, [0, 1.22, 0], { seg: 6 });
   },
-  plant_fig(g, style) {
-    addCyl(g, 0.17, 0.13, 0.34, mat(style, 'concrete:Off white'), [0, 0.17, 0]);
+  plant_fig(g, style, look) {
+    addCyl(g, 0.17, 0.13, 0.34, mat(style, `concrete:${look?.pot ?? 'Off white'}`), [0, 0.17, 0]);
     addCyl(g, 0.15, 0.15, 0.01, mat(style, 'wood:Walnut'), [0, 0.335, 0]);
     addCyl(g, 0.02, 0.03, 1.0, mat(style, 'wood:Walnut'), [0, 0.8, 0], { seg: 5 });
     const crowns = [[0, 1.55, 0, 0.22], [0.15, 1.3, 0.08, 0.2], [-0.14, 1.2, -0.05, 0.2], [0.05, 1.05, -0.15, 0.18], [-0.06, 1.45, 0.14, 0.17]];
     crowns.forEach(([x, y, z, r], i) => addLobe(g, style, r, i % 2 ? 'leaf:Moss' : 'leaf:Sage', [x, y, z], [1, 0.8, 1], i + 1));
   },
-  plant_monstera(g, style) {
+  plant_monstera(g, style, look) {
     // Woven basket stays Sand (cloth). wood:Sand would snap to a building brown.
-    addCyl(g, 0.21, 0.17, 0.32, mat(style, 'cloth:Sand'), [0, 0.16, 0], { seg: 8 });
+    addCyl(g, 0.21, 0.17, 0.32, mat(style, `cloth:${look?.basket ?? 'Sand'}`), [0, 0.16, 0], { seg: 8 });
     for (let i = 0; i < 6; i++) {
       const a = i * 2 * P / 6;
       addLobe(g, style, 0.2, i % 2 ? 'leaf:Moss' : 'leaf:Sage', [Math.sin(a) * 0.2, 0.62 + 0.12 * (i % 3), Math.cos(a) * 0.2], [1.2, 0.45, 1.2], 10 + i);
@@ -399,8 +402,8 @@ const BUILDERS = {
       addBox(g, 0.06, h, 0.012, mat(style, i % 3 ? 'leaf:Moss' : 'leaf:Sage'), [x, y, z], [rx, a, rz]);
     });
   },
-  plant_small(g, style) {
-    addCyl(g, 0.07, 0.055, 0.11, mat(style, 'concrete:Off white'), [0, 0.055, 0]);
+  plant_small(g, style, look) {
+    addCyl(g, 0.07, 0.055, 0.11, mat(style, `concrete:${look?.pot ?? 'Off white'}`), [0, 0.055, 0]);
     [[0, 0.2, 0], [0.06, 0.16, 0.03], [-0.05, 0.15, -0.03]].forEach((pos, i) => {
       addLobe(g, style, 0.08, 'leaf:Moss', pos, [1, 0.8, 1], 30 + i);
     });
@@ -488,12 +491,12 @@ export const OFFICE_ITEMS = Object.entries(manifest.items).map(([name, item]) =>
 }));
 
 /** A kit item standing on y = 0, facing +z. Geometry is its own (safe to dispose). */
-export function buildOfficeItem(name, style) {
+export function buildOfficeItem(name, style, look = null) {
   const build = BUILDERS[name];
   if (!build) throw new Error(`Unknown office item "${name}"`);
   const g = new THREE.Group();
   g.name = name;
-  build(g, style);
+  build(g, style, look);
   g.userData.officeItem = name;
   return g;
 }
@@ -517,7 +520,8 @@ function wall(g, style, x0, x1, y0, y1, z0, z1, key, hits) {
  * The whole office (6.5 × 14.5 m). `cutaway` hides the east wall so the
  * inside reads from the catalogue camera. Meshes are merged per material.
  */
-export function buildOfficeRoom(style, { cutaway = false } = {}) {
+export function buildOfficeRoom(style, { cutaway = false, seed = 0 } = {}) {
+  const plan = officeLayout(seed);
   const body = new THREE.Group();
   const east = new THREE.Group();
   const hits = [];
@@ -561,8 +565,8 @@ export function buildOfficeRoom(style, { cutaway = false } = {}) {
 
   wall(east, style, 6.35, 6.5, 0.15, 14.35, 0, 3, W, cutaway ? null : hits);
 
-  for (const p of layout.placements) {
-    const item = buildOfficeItem(p.item, style);
+  for (const p of plan.placements) {
+    const item = buildOfficeItem(p.item, style, plan.look);
     item.position.set(p.x, p.y + TILE_TOP, p.z);
     item.rotation.y = p.rotY;
     body.add(item);
