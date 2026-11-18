@@ -201,11 +201,21 @@ src/office/items.js    office kit (catalogue Office tab): procedural desks, chai
                        lounge, kitchen, plants, and the furnished room. Not placed
                        by the sample town. GLB loader: src/office/loadOfficeKit.js
 public/office-kit/     the kit's GLBs, manifest.json, layout.json, standalone preview
+src/cafe/items.js      cafe kit (catalogue Cafe tab): espresso bar, round tables,
+                       window counter and the furnished room. Not placed by the
+                       sample town. No GLBs; public/cafe-kit/
+src/classroom/items.js classroom kit (catalogue Classroom tab): student desks,
+                       blackboard, cubbies and the furnished room. Not placed by
+                       the sample town. No GLBs; public/classroom-kit/
+src/openoffice/items.js open-office kit (catalogue Open office tab): shared bench
+                       desks, lounge, pantry and the furnished room. Namespace
+                       openoffice, separate from the office kit. Not placed by
+                       the sample town. No GLBs; public/openoffice-kit/
 src/creator/Creator.js the character creator panel (viewer only)
 src/viewer/            Cell (a preview stage), params (saved settings)
 src/lib/               shapes, foliage (lobes, fronds, shaded leaf/bark, trimmed hedges), merge
                        (one mesh per material), skin (one skinned mesh per person), rng,
-                       textures, saveFile
+                       roomPlan (seeded-room overlap checks), textures, saveFile
 ```
 
 ## The rules (keep them in any game)
@@ -238,7 +248,7 @@ roles are softened. `light` glows: never use it for big textured surfaces.
 defaults. `params.variant` picks from `variants`, `params.color` from
 `colors`, `params.seed` changes the look of seeded items, buildings take
 `w` / `d` (lot size) and shops `shopType`. Groups (catalogue tabs):
-buildings, street, traffic, extras, nature, animals, vehicles, office, areas.
+buildings, street, traffic, extras, nature, animals, vehicles, office, cafe, classroom, openoffice, areas.
 `animated: 'cat'` marks items with joints (`animal.cat`: pose it with
 `poseCat`, `anim/catGait.js`; resting poses via `gait.pose = 'sit' |
 'loaf' | 'sleep'`; joints legF*/legB* plus lowF*/lowB* elbows and hocks). Cats take `pattern`, `tailType`, `earType` and `coat`
@@ -259,6 +269,28 @@ wants the files instead of the code calls `loadOfficeKit({ style })` from
 Rebuild the GLBs with `blender -b -P src/office/build_office_kit.py` (blend:
 `src/office/office_kit.blend`). Rugs have no collider. The room floor is 2 cm
 above y = 0 so it does not flicker on a ground at y = 0.
+
+**Cafe, classroom and open office** (catalogue only, not placed by `layout.js`).
+Tabs **Cafe**, **Classroom** and **Open office**. `createAsset('cafe.table', {}, style)`,
+`createAsset('classroom.student_desk', {}, style)` and `createAsset('openoffice.bench', {}, style)`
+build the pieces from boxes and cylinders in `src/cafe/items.js`, `src/classroom/items.js`
+and `src/openoffice/items.js`. Each `*.room` is the furnished room:
+`variant: 'Cutaway'` (default; the +z and +x walls are hidden) or `'Full'`.
+Sizes: cafe 8 × 6 m, classroom 9 × 7 m, open office 12 × 10 m, front facing +z.
+`openoffice` is not the `office` kit. Parts use `style.material(role, swatch)`.
+There are no GLBs. Names, footprints and the hand-made layout are in
+`public/cafe-kit/`, `public/classroom-kit/` and `public/openoffice-kit/`.
+`createAsset('cafe.room', { variant: 'Cutaway', seed: 7 }, style)` (the same
+for `classroom.room` and `openoffice.room`) rebuilds that seed every time.
+Omit `seed`, or pass `0`, for the hand-made `layout.json`. The catalogue seed
+box and Randomize button put the seed in the copied line. Walls, doors,
+windows, the espresso bar, the blackboard and the pantry stay put. The seed
+changes how many tables, desk rows or benches, a small pull on chairs, which
+optional props are out, and one accent from the existing palette. Classroom
+desks stay in neat rows facing the board. `node scripts/check-room-seeds.mjs`
+checks seeds 0–50 for overlaps and a clear walk from the door.
+Rugs, mats, the noren and hanging lamps have no floor collider. The room
+floor is 2 cm above y = 0, same as the office.
 
 Catalogue-only street details (the sample town does not place them; `params.seed` and 🎲 New look, same as a tree): `prop.manhole` (Flower, Wave, Grid; 40 triangles at PS1 detail), `prop.backClutter` (Propane tanks 156, Gas meter 64, Drainpipe 78, Cluster 310), `prop.nobori` (Stripes, Blocks; 92; call `tickProps` from `anim/props.js` each frame so the cloth sways), `animal.bird` (Pigeon 154, Sparrow 156; the same `tickProps` runs the peck and the perched look). No new palette swatches. No separate outdoor AC prop: units already dress backs, balconies and roofs. Trees (`nature.tree`) are clumped low-poly lobes (bamboo: segmented culms; the old giant: a kinked trunk that splits) and come in 11 presets the city plants
 (oak, lollipop, pine, old giant, cherry blossom, Japanese maple, ginkgo,

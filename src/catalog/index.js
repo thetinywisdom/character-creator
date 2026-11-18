@@ -18,6 +18,9 @@ import { PROP_GROUPS } from '../props/index.js';
 import { wire } from '../props/extras.js';
 import { tiledBox } from '../props/util.js';
 import { OFFICE_ITEMS, buildOfficeItem, buildOfficeRoom } from '../office/items.js';
+import { CAFE_ITEMS, buildCafeItem, buildCafeRoom } from '../cafe/items.js';
+import { CLASSROOM_ITEMS, buildClassroomItem, buildClassroomRoom } from '../classroom/items.js';
+import { OPEN_OFFICE_ITEMS, buildOpenOfficeItem, buildOpenOfficeRoom } from '../openoffice/items.js';
 
 // The asset catalogue: everything that can be placed in a city, behind one
 // interface, so a city file, the generator, the editor and future games can
@@ -28,7 +31,8 @@ import { OFFICE_ITEMS, buildOfficeItem, buildOfficeRoom } from '../office/items.
 //   label     name for menus
 //   category  'building' | 'area' | 'nature' | 'animal' | 'prop' | 'vehicle' | 'ground' | 'line'
 //   group     catalogue tab: 'buildings' | 'street' | 'traffic' | 'extras' |
-//             'vehicles' | 'nature' | 'animals' | 'areas' | 'office'
+//             'vehicles' | 'nature' | 'animals' | 'areas' | 'office' |
+//             'cafe' | 'classroom' | 'openoffice'
 //             (none = not listed)
 //   params    default settings (a city object's params override these)
 //   variants  optional list of variant names (params.variant)
@@ -353,7 +357,55 @@ const officeAssets = [{
   },
 }))];
 
-export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...detailAssets, ...officeAssets, ...groundAssets];
+// Catalogue only. The sample town does not place these (not in layout.js).
+// One tab each: the furnished room, then every kit item. Parts are built in
+// src/cafe, src/classroom and src/openoffice so createAsset stays synchronous.
+function roomAsset(id, label, group, size, build) {
+  return {
+    id,
+    label,
+    category: 'area',
+    group,
+    variants: ['Cutaway', 'Full'],
+    params: { variant: 'Cutaway', seed: 0 },
+    seedControl: true,
+    size,
+    // Isometric corner (equal x and z) and a little steeper than 35°, so the
+    // open room reads. Cutaway hides the two walls this camera faces.
+    viewDir: [1, 1.15, 1],
+    build(p, style) {
+      const r = build(style, { cutaway: p.variant !== 'Full', seed: Number(p.seed) || 0 });
+      return withColliders(r.group, r.colliders);
+    },
+  };
+}
+function kitAssets(group, items, buildItem) {
+  return items.map((item) => ({
+    id: item.id,
+    label: item.label,
+    category: 'prop',
+    group,
+    params: {},
+    size: item.size,
+    build(_p, style) {
+      return withColliders(buildItem(item.name, style), item.hit);
+    },
+  }));
+}
+const cafeAssets = [
+  roomAsset('cafe.room', 'Cafe', 'cafe', [8, 6], buildCafeRoom),
+  ...kitAssets('cafe', CAFE_ITEMS, buildCafeItem),
+];
+const classroomAssets = [
+  roomAsset('classroom.room', 'Classroom', 'classroom', [9, 7], buildClassroomRoom),
+  ...kitAssets('classroom', CLASSROOM_ITEMS, buildClassroomItem),
+];
+const openOfficeAssets = [
+  roomAsset('openoffice.room', 'Open office', 'openoffice', [12, 10], buildOpenOfficeRoom),
+  ...kitAssets('openoffice', OPEN_OFFICE_ITEMS, buildOpenOfficeItem),
+];
+
+export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...detailAssets, ...officeAssets, ...cafeAssets, ...classroomAssets, ...openOfficeAssets, ...groundAssets];
 export const CATALOG = Object.fromEntries(ASSETS.map((a) => [a.id, a]));
 
 /** Assets of one category (or all). */

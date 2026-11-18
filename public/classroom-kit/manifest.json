@@ -1,0 +1,171 @@
+{
+  "units": "metres",
+  "up": "+y",
+  "front": "+z",
+  "origin": "bottom centre",
+  "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+  "note": "Procedural kit. The catalogue builds these in src/classroom/items.js. No GLBs.",
+  "items": {
+    "student_desk": {
+      "label": "Student desk",
+      "group": "student",
+      "footprint": [
+        0.64,
+        0.44
+      ],
+      "materials": [],
+      "tris": 108
+    },
+    "student_chair": {
+      "label": "Student chair",
+      "group": "student",
+      "footprint": [
+        0.38,
+        0.36
+      ],
+      "materials": [],
+      "tris": 84
+    },
+    "podium": {
+      "label": "Teacher podium",
+      "group": "teacher",
+      "footprint": [
+        0.64,
+        0.48
+      ],
+      "materials": [],
+      "tris": 36
+    },
+    "teacher_desk": {
+      "label": "Teacher desk",
+      "group": "teacher",
+      "footprint": [
+        1.4,
+        0.72
+      ],
+      "materials": [],
+      "tris": 60
+    },
+    "teacher_chair": {
+      "label": "Teacher chair",
+      "group": "teacher",
+      "footprint": [
+        0.5,
+        0.46
+      ],
+      "materials": [],
+      "tris": 96
+    },
+    "blackboard": {
+      "label": "Blackboard",
+      "group": "wall",
+      "footprint": [
+        3.2,
+        0.12
+      ],
+      "materials": [],
+      "tris": 108
+    },
+    "cubbies": {
+      "label": "Cubby lockers",
+      "group": "storage",
+      "footprint": [
+        1.7,
+        0.4
+      ],
+      "materials": [],
+      "tris": 168
+    },
+    "clock": {
+      "label": "Wall clock",
+      "group": "wall",
+      "footprint": [
+        0.42,
+        0.08
+      ],
+      "materials": [],
+      "tris": 108
+    },
+    "sliding_door": {
+      "label": "Sliding door",
+      "group": "entrance",
+      "footprint": [
+        1.16,
+        0.12
+      ],
+      "materials": [],
+      "tris": 108
+    },
+    "window": {
+      "label": "Classroom window",
+      "group": "entrance",
+      "footprint": [
+        2.21,
+        0.14
+      ],
+      "materials": [],
+      "tris": 96
+    },
+    "globe": {
+      "label": "Globe",
+      "group": "teacher",
+      "footprint": [
+        0.26,
+        0.26
+      ],
+      "materials": [],
+      "tris": 80
+    },
+    "books": {
+      "label": "Book stack",
+      "group": "teacher",
+      "footprint": [
+        0.24,
+        0.18
+      ],
+      "materials": [],
+      "tris": 48
+    },
+    "pencil_cup": {
+      "label": "Pencil cup",
+      "group": "teacher",
+      "footprint": [
+        0.1,
+        0.1
+      ],
+      "materials": [],
+      "tris": 60
+    },
+    "bin": {
+      "label": "Waste bin",
+      "group": "storage",
+      "footprint": [
+        0.34,
+        0.28
+      ],
+      "materials": [],
+      "tris": 24
+    },
+    "broom": {
+      "label": "Broom",
+      "group": "storage",
+      "footprint": [
+        0.3,
+        0.12
+      ],
+      "materials": [],
+      "tris": 44
+    },
+    "plant": {
+      "label": "Corner plant",
+      "group": "plant",
+      "footprint": [
+        0.32,
+        0.32
+      ],
+      "materials": [],
+      "tris": 108
+    }
+  },
+  "room_tris": 4420
+}
