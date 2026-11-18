@@ -1,0 +1,24 @@
+{
+  "units": "metres",
+  "note": "three.js coords; room centred on the origin; item origin bottom centre; rotY radians; y is height above the floor tiles. Walls, windows, the entrance door and the unit bath are built in src/studio/items.js.",
+  "placements": [
+    { "item": "bed", "x": -2.31, "y": 0, "z": 0.74, "rotY": 0 },
+
+    { "item": "sink", "x": -0.55, "y": 0, "z": -1.58, "rotY": 0 },
+    { "item": "hob", "x": 0.28, "y": 0, "z": -1.58, "rotY": 0 },
+    { "item": "counter", "x": 1.0, "y": 0, "z": -1.58, "rotY": 0 },
+    { "item": "fridge", "x": 1.68, "y": 0, "z": -1.55, "rotY": 0 },
+    { "item": "kettle", "x": 1.14, "y": 0.86, "z": -1.52, "rotY": 0.4 },
+    { "item": "rice_cooker", "x": 0.86, "y": 0.86, "z": -1.62, "rotY": -0.2 },
+
+    { "item": "table", "x": 0.15, "y": 0, "z": -0.48, "rotY": 0 },
+    { "item": "teacup", "x": 0.05, "y": 0.335, "z": -0.4, "rotY": 0.5 },
+    { "item": "cushion", "x": -0.55, "y": 0, "z": -0.42, "rotY": 0.2 },
+
+    { "item": "sofa", "x": 2.15, "y": 0, "z": 0.85, "rotY": -1.5708 },
+    { "item": "tv", "x": 0.85, "y": 0, "z": 0.7, "rotY": 1.5708 },
+
+    { "item": "ceiling_light", "x": 0.4, "y": 1.75, "z": 0.15, "rotY": 0 },
+    { "item": "shoe_tray", "x": 1.15, "y": 0, "z": 1.55, "rotY": 0.1 }
+  ]
+}

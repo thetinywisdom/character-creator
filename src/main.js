@@ -63,7 +63,7 @@ let reframe = true;
 // ---------------------------------------------------------------------------
 // 📦 Catalogue
 // ---------------------------------------------------------------------------
-const TABS = [['palette', '🎨 Palette'], ['all', 'All'], ['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['nature', 'Nature'], ['animals', 'Animals'], ['vehicles', 'Vehicles'], ['office', 'Office'], ['areas', 'Areas']];
+const TABS = [['palette', '🎨 Palette'], ['all', 'All'], ['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['nature', 'Nature'], ['animals', 'Animals'], ['vehicles', 'Vehicles'], ['office', 'Office'], ['meeting', 'Meeting'], ['bedroom', 'Bedroom'], ['studio', 'Studio'], ['areas', 'Areas']];
 const catalogEl = document.querySelector('#catalog');
 const itemEl = document.querySelector('#item');
 const items = ASSETS.filter((a) => a.group);

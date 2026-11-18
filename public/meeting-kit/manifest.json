@@ -1,0 +1,296 @@
+{
+ "units": "metres",
+ "up": "+y",
+ "front": "+z",
+ "origin": "bottom centre",
+ "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+ "note": "Procedural kit. The catalogue builds these in src/meeting/items.js. No GLBs: createAsset stays synchronous.",
+ "items": {
+  "table": {
+   "label": "Meeting table (320 cm, walnut top)",
+   "group": "table",
+   "size": [
+    3.2,
+    0.756,
+    1.05
+   ],
+   "footprint": [
+    3.2,
+    1.05
+   ],
+   "materials": [
+    "wood:Walnut",
+    "wood:Cocoa",
+    "darkMetal:Charcoal",
+    "darkMetal:Ink"
+   ],
+   "tris": 176
+  },
+  "chair": {
+   "label": "Meeting chair (navy seat)",
+   "group": "seating",
+   "size": [
+    0.46,
+    0.993,
+    0.482
+   ],
+   "footprint": [
+    0.5,
+    0.5
+   ],
+   "materials": [
+    "metal:Light gray",
+    "cloth:Navy",
+    "cloth:Charcoal"
+   ],
+   "tris": 132
+  },
+  "wall_tv": {
+   "label": "Wall-mounted television",
+   "group": "wall",
+   "size": [
+    1.16,
+    0.738,
+    0.077
+   ],
+   "footprint": [
+    1.16,
+    0.08
+   ],
+   "materials": [
+    "darkMetal:Ink",
+    "glass:Navy",
+    "metal:Light gray",
+    "paint:Powder blue",
+    "paint:Dusty rose",
+    "paint:Butter"
+   ],
+   "tris": 84
+  },
+  "whiteboard": {
+   "label": "Wall whiteboard",
+   "group": "wall",
+   "size": [
+    1.72,
+    1.08,
+    0.07
+   ],
+   "footprint": [
+    1.72,
+    0.08
+   ],
+   "materials": [
+    "metal:Light gray",
+    "paint:Off white",
+    "paint:Sage",
+    "paint:Powder blue",
+    "paint:Lilac",
+    "darkMetal:Charcoal",
+    "paint:Dusty rose",
+    "paint:Navy",
+    "darkMetal:Ink"
+   ],
+   "tris": 152
+  },
+  "partition": {
+   "label": "Glass partition panel",
+   "group": "wall",
+   "size": [
+    0.92,
+    2.2,
+    0.045
+   ],
+   "footprint": [
+    0.92,
+    0.05
+   ],
+   "materials": [
+    "metal:Light gray",
+    "paint:Off white",
+    "glass:Sky"
+   ],
+   "tris": 72
+  },
+  "partition_door": {
+   "label": "Glass partition door",
+   "group": "wall",
+   "size": [
+    0.86,
+    2.12,
+    0.085
+   ],
+   "footprint": [
+    0.86,
+    0.06
+   ],
+   "materials": [
+    "metal:Light gray",
+    "paint:Off white",
+    "glass:Sky",
+    "darkMetal:Charcoal"
+   ],
+   "tris": 84
+  },
+  "credenza": {
+   "label": "Credenza",
+   "group": "storage",
+   "size": [
+    1.2,
+    0.714,
+    0.44
+   ],
+   "footprint": [
+    1.2,
+    0.44
+   ],
+   "materials": [
+    "paint:Off white",
+    "wood:Walnut",
+    "paint:Light gray",
+    "metal:Stone",
+    "darkMetal:Charcoal"
+   ],
+   "tris": 72
+  },
+  "carafe": {
+   "label": "Water carafe and glass",
+   "group": "table",
+   "size": [
+    0.186,
+    0.21,
+    0.114
+   ],
+   "footprint": [
+    0.2,
+    0.14
+   ],
+   "materials": [
+    "glass:Sky",
+    "paint:Powder blue",
+    "metal:Light gray"
+   ],
+   "tris": 144
+  },
+  "notepad": {
+   "label": "Notepad",
+   "group": "table",
+   "size": [
+    0.2,
+    0.022,
+    0.15
+   ],
+   "footprint": [
+    0.2,
+    0.16
+   ],
+   "materials": [
+    "paint:Paper",
+    "paint:Off white",
+    "paint:Navy",
+    "paint:Powder blue",
+    "paint:Sage"
+   ],
+   "tris": 60
+  },
+  "pen_cup": {
+   "label": "Pen cup",
+   "group": "table",
+   "size": [
+    0.066,
+    0.16,
+    0.076
+   ],
+   "footprint": [
+    0.1,
+    0.1
+   ],
+   "materials": [
+    "paint:Off white",
+    "paint:Navy",
+    "paint:Dusty rose",
+    "paint:Sage",
+    "darkMetal:Ink"
+   ],
+   "tris": 72
+  },
+  "conference_phone": {
+   "label": "Conference phone",
+   "group": "table",
+   "size": [
+    0.28,
+    0.046,
+    0.16
+   ],
+   "footprint": [
+    0.28,
+    0.16
+   ],
+   "materials": [
+    "darkMetal:Charcoal",
+    "glass:Navy",
+    "paint:Off white",
+    "paint:Dusty rose"
+   ],
+   "tris": 72
+  },
+  "pendant": {
+   "label": "Pendant lamp",
+   "group": "light",
+   "size": [
+    0.277,
+    0.836,
+    0.32
+   ],
+   "footprint": [
+    0.32,
+    0.32
+   ],
+   "materials": [
+    "paint:Off white",
+    "metal:Light gray",
+    "light:Butter",
+    "darkMetal:Ink"
+   ],
+   "tris": 112
+  },
+  "trash_can": {
+   "label": "Trash can",
+   "group": "floor",
+   "size": [
+    0.292,
+    0.33,
+    0.285
+   ],
+   "footprint": [
+    0.3,
+    0.3
+   ],
+   "materials": [
+    "darkMetal:Charcoal",
+    "metal:Light gray",
+    "paint:Paper"
+   ],
+   "tris": 80
+  },
+  "plant": {
+   "label": "Pot plant",
+   "group": "plant",
+   "size": [
+    0.228,
+    0.272,
+    0.174
+   ],
+   "footprint": [
+    0.18,
+    0.18
+   ],
+   "materials": [
+    "concrete:Off white",
+    "concrete:Stone",
+    "leaf:Sage",
+    "leaf:Moss"
+   ],
+   "tris": 108
+  }
+ }
+}

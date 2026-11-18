@@ -1,0 +1,354 @@
+{
+ "units": "metres",
+ "up": "+y",
+ "front": "+z",
+ "origin": "bottom centre",
+ "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+ "note": "Procedural kit. The catalogue builds these in src/studio/items.js. No GLBs: createAsset stays synchronous.",
+ "items": {
+  "bed": {
+   "label": "Low platform bed",
+   "group": "sleep",
+   "size": [
+    1.02,
+    0.32,
+    1.95
+   ],
+   "footprint": [
+    1.02,
+    1.95
+   ],
+   "materials": [
+    "wood:Walnut",
+    "paint:Off white",
+    "cloth:Navy",
+    "paint:Paper"
+   ],
+   "tris": 60
+  },
+  "sink": {
+   "label": "Kitchen sink cabinet",
+   "group": "kitchen",
+   "size": [
+    0.78,
+    1.042,
+    0.568
+   ],
+   "footprint": [
+    0.78,
+    0.56
+   ],
+   "materials": [
+    "paint:Off white",
+    "paint:Light gray",
+    "darkMetal:Charcoal",
+    "paint:Stone",
+    "metal:Stone",
+    "metal:Light gray",
+    "paint:Sky"
+   ],
+   "tris": 128
+  },
+  "hob": {
+   "label": "Two-burner hob",
+   "group": "kitchen",
+   "size": [
+    0.7,
+    0.925,
+    0.574
+   ],
+   "footprint": [
+    0.7,
+    0.56
+   ],
+   "materials": [
+    "paint:Off white",
+    "paint:Light gray",
+    "darkMetal:Charcoal",
+    "paint:Stone",
+    "metal:Stone",
+    "darkMetal:Ink",
+    "metal:Light gray"
+   ],
+   "tris": 288
+  },
+  "fridge": {
+   "label": "Small fridge",
+   "group": "kitchen",
+   "size": [
+    0.52,
+    1.45,
+    0.583
+   ],
+   "footprint": [
+    0.52,
+    0.56
+   ],
+   "materials": [
+    "paint:Off white",
+    "paint:Light gray",
+    "metal:Light gray",
+    "darkMetal:Charcoal"
+   ],
+   "tris": 48
+  },
+  "counter": {
+   "label": "Prep counter",
+   "group": "kitchen",
+   "size": [
+    0.58,
+    0.86,
+    0.568
+   ],
+   "footprint": [
+    0.58,
+    0.56
+   ],
+   "materials": [
+    "paint:Off white",
+    "paint:Light gray",
+    "darkMetal:Charcoal",
+    "paint:Stone",
+    "metal:Stone"
+   ],
+   "tris": 60
+  },
+  "table": {
+   "label": "Low table",
+   "group": "living",
+   "size": [
+    0.72,
+    0.335,
+    0.72
+   ],
+   "footprint": [
+    0.72,
+    0.72
+   ],
+   "materials": [
+    "wood:Tan",
+    "wood:Walnut"
+   ],
+   "tris": 72
+  },
+  "cushion": {
+   "label": "Floor cushion",
+   "group": "living",
+   "size": [
+    0.42,
+    0.1,
+    0.42
+   ],
+   "footprint": [
+    0.42,
+    0.42
+   ],
+   "materials": [
+    "cloth:Apricot",
+    "cloth:Dusty rose"
+   ],
+   "tris": 24
+  },
+  "sofa": {
+   "label": "Two-seat sofa",
+   "group": "living",
+   "size": [
+    1.48,
+    0.8,
+    0.71
+   ],
+   "footprint": [
+    1.48,
+    0.74
+   ],
+   "materials": [
+    "cloth:Sage",
+    "cloth:Moss",
+    "wood:Walnut"
+   ],
+   "tris": 120
+  },
+  "tv": {
+   "label": "Television on a low stand",
+   "group": "living",
+   "size": [
+    1.05,
+    0.91,
+    0.36
+   ],
+   "footprint": [
+    1.05,
+    0.4
+   ],
+   "materials": [
+    "wood:Walnut",
+    "wood:Tan",
+    "darkMetal:Ink",
+    "glass:Navy",
+    "paint:Seafoam",
+    "paint:Butter",
+    "paint:Dusty rose"
+   ],
+   "tris": 108
+  },
+  "unit_bath": {
+   "label": "Unit bath (open top, door on +z)",
+   "group": "bath",
+   "size": [
+    1.54,
+    2.1,
+    1.43
+   ],
+   "footprint": [
+    1.5,
+    1.42
+   ],
+   "materials": [
+    "paint:Off white",
+    "concrete:Light gray",
+    "darkMetal:Charcoal",
+    "paint:Paper",
+    "paint:Sky",
+    "metal:Light gray",
+    "glass:Sky",
+    "glass:Navy",
+    "cloth:Sky",
+    "wood:Tan"
+   ],
+   "tris": 300
+  },
+  "window": {
+   "label": "Window with curtains",
+   "group": "wall",
+   "size": [
+    0.96,
+    1.012,
+    0.11
+   ],
+   "footprint": [
+    0.92,
+    0.12
+   ],
+   "materials": [
+    "metal:Light gray",
+    "glass:Sky",
+    "cloth:Sky",
+    "darkMetal:Charcoal"
+   ],
+   "tris": 116
+  },
+  "kettle": {
+   "label": "Kettle",
+   "group": "kitchen",
+   "size": [
+    0.149,
+    0.128,
+    0.173
+   ],
+   "footprint": [
+    0.18,
+    0.16
+   ],
+   "materials": [
+    "metal:Light gray",
+    "darkMetal:Charcoal"
+   ],
+   "tris": 100
+  },
+  "rice_cooker": {
+   "label": "Rice cooker",
+   "group": "kitchen",
+   "size": [
+    0.21,
+    0.197,
+    0.21
+   ],
+   "footprint": [
+    0.22,
+    0.22
+   ],
+   "materials": [
+    "paint:Off white",
+    "darkMetal:Charcoal",
+    "light:Butter"
+   ],
+   "tris": 100
+  },
+  "ceiling_light": {
+   "label": "Ceiling light",
+   "group": "light",
+   "size": [
+    0.351,
+    0.64,
+    0.342
+   ],
+   "footprint": [
+    0.36,
+    0.36
+   ],
+   "materials": [
+    "paint:Paper",
+    "light:Butter",
+    "darkMetal:Ink",
+    "metal:Light gray"
+   ],
+   "tris": 92
+  },
+  "shoe_tray": {
+   "label": "Shoe tray",
+   "group": "entry",
+   "size": [
+    0.52,
+    0.076,
+    0.28
+   ],
+   "footprint": [
+    0.52,
+    0.28
+   ],
+   "materials": [
+    "paint:Sand",
+    "cloth:Cocoa"
+   ],
+   "tris": 60
+  },
+  "door": {
+   "label": "Entrance door",
+   "group": "entry",
+   "size": [
+    0.94,
+    2.08,
+    0.095
+   ],
+   "footprint": [
+    0.94,
+    0.08
+   ],
+   "materials": [
+    "wood:Walnut",
+    "paint:Off white",
+    "paint:Paper",
+    "metal:Light gray"
+   ],
+   "tris": 104
+  },
+  "teacup": {
+   "label": "Teacup",
+   "group": "living",
+   "size": [
+    0.087,
+    0.05,
+    0.08
+   ],
+   "footprint": [
+    0.1,
+    0.08
+   ],
+   "materials": [
+    "paint:Off white",
+    "paint:Sage"
+   ],
+   "tris": 60
+  }
+ }
+}

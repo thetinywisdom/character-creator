@@ -18,6 +18,9 @@ import { PROP_GROUPS } from '../props/index.js';
 import { wire } from '../props/extras.js';
 import { tiledBox } from '../props/util.js';
 import { OFFICE_ITEMS, buildOfficeItem, buildOfficeRoom } from '../office/items.js';
+import { MEETING_ITEMS, buildMeetingItem, buildMeetingRoom } from '../meeting/items.js';
+import { BEDROOM_ITEMS, buildBedroomItem, buildBedroomRoom } from '../bedroom/items.js';
+import { STUDIO_ITEMS, buildStudioItem, buildStudioRoom } from '../studio/items.js';
 
 // The asset catalogue: everything that can be placed in a city, behind one
 // interface, so a city file, the generator, the editor and future games can
@@ -28,7 +31,8 @@ import { OFFICE_ITEMS, buildOfficeItem, buildOfficeRoom } from '../office/items.
 //   label     name for menus
 //   category  'building' | 'area' | 'nature' | 'animal' | 'prop' | 'vehicle' | 'ground' | 'line'
 //   group     catalogue tab: 'buildings' | 'street' | 'traffic' | 'extras' |
-//             'vehicles' | 'nature' | 'animals' | 'areas' | 'office'
+//             'vehicles' | 'nature' | 'animals' | 'areas' | 'office' |
+//             'meeting' | 'bedroom' | 'studio'
 //             (none = not listed)
 //   params    default settings (a city object's params override these)
 //   variants  optional list of variant names (params.variant)
@@ -353,7 +357,52 @@ const officeAssets = [{
   },
 }))];
 
-export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...detailAssets, ...officeAssets, ...groundAssets];
+// Catalogue only. The sample town does not place these (not in layout.js).
+// One tab per room: the furnished room, then every kit item. Parts are built
+// in src/<room>/items.js so createAsset stays synchronous.
+function roomKit(group, room) {
+  return [{
+    id: room.id,
+    label: room.label,
+    category: 'area',
+    group,
+    variants: ['Cutaway', 'Full'],
+    params: { variant: 'Cutaway' },
+    size: room.size,
+    // Isometric corner (equal x and z) and a little steeper than 35°, so the
+    // open room reads. Cutaway hides the two walls this camera faces.
+    viewDir: [1, 1.15, 1],
+    build(p, style) {
+      const r = room.build(style, { cutaway: p.variant !== 'Full' });
+      return withColliders(r.group, r.colliders);
+    },
+  }, ...room.items.map((item) => ({
+    id: item.id,
+    label: item.label,
+    category: 'prop',
+    group,
+    params: {},
+    size: item.size,
+    build(_p, style) {
+      return withColliders(room.item(item.name, style), item.hit);
+    },
+  }))];
+}
+
+const meetingAssets = roomKit('meeting', {
+  id: 'meeting.room', label: 'Meeting room', size: [6, 4],
+  items: MEETING_ITEMS, build: buildMeetingRoom, item: buildMeetingItem,
+});
+const bedroomAssets = roomKit('bedroom', {
+  id: 'bedroom.room', label: 'Small bedroom', size: [3.5, 3],
+  items: BEDROOM_ITEMS, build: buildBedroomRoom, item: buildBedroomItem,
+});
+const studioAssets = roomKit('studio', {
+  id: 'studio.room', label: 'Studio apartment', size: [6, 4],
+  items: STUDIO_ITEMS, build: buildStudioRoom, item: buildStudioItem,
+});
+
+export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...detailAssets, ...officeAssets, ...meetingAssets, ...bedroomAssets, ...studioAssets, ...groundAssets];
 export const CATALOG = Object.fromEntries(ASSETS.map((a) => [a.id, a]));
 
 /** Assets of one category (or all). */
