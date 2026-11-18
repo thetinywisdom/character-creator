@@ -379,6 +379,7 @@ Not placed in the sample town. A game places a piece with `createAsset('diner.st
 - The same low-poly boxes and cylinders as the office kit. No readable lettering: the menu is coloured bands, the neon is a cup, a star and an arrow, the register screen is flat navy.
 - Colour is a palette swatch on a role. Diner red is Dusty rose (`cloth` on the seats, `paint` on the counter and the door), teal is Seafoam (the wainscot and the cup bands), cream is Off white, chrome is Light gray metal. `light` is the glow on the neon, the pendant bulbs and the coffee hotplate, the same as every other lamp. No new swatches. Walls and the wainscot use `paint`, not `building`, so Seafoam and Off white are not pulled onto the building greys.
 - The room is 12 × 8 m, open at the top, front facing +z: checker floor, a counter and stools, booths, a kitchen line and a window wall. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0.
+- `seed: 0` (or no seed) is the hand-placed layout. Any other integer is a deterministic variation: booths along the counter, in the front half, or down the left wall; stool count; a mirror of a row; small turns on loose props; a palette theme for the red and teal surfaces. The door, windows, counter and kitchen do not move, and a clear path stays open from the entrance.
 
 ## 3e-1. People content
 

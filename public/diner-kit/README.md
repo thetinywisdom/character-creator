@@ -7,7 +7,7 @@ The catalogue builds every piece in `src/diner/items.js` with `style.material`, 
 import { style } from './src/styles/index.js';
 import { createAsset } from './src/catalog/index.js';
 scene.add(createAsset('diner.stool', {}, style));
-scene.add(createAsset('diner.room', { variant: 'Cutaway' }, style)); // or 'Full'
+scene.add(createAsset('diner.room', { variant: 'Cutaway', seed: 0 }, style)); // or 'Full'
 ```
 
 ## Conventions
@@ -22,6 +22,6 @@ scene.add(createAsset('diner.room', { variant: 'Cutaway' }, style)); // or 'Full
 
 12 m wide (x) by 8 m deep (z), 3 m tall, open at the top, centred on the origin. The street front is +z (windows and the entrance). `variant: 'Cutaway'` hides `room_wall_front` and `room_wall_side` (the +z and +x walls), which are the two the isometric catalogue camera faces. `'Full'` shows them. The checker floor sits 2 cm above y = 0.
 
-Furniture positions are in `layout.json` (y is the height above that floor). Walls, windows and the door are placed in code so the openings match the frames.
+`seed: 0` uses the furniture in `layout.json` (y is the height above that floor). Any other integer is a deterministic layout from `src/diner/plan.js`: the counter, kitchen, door and windows stay, and the booths, stools and loose props are rearranged. Walls, windows and the door are placed in code so the openings match the frames.
 
 Triangle counts are filled into `manifest.json` when the kit is measured (`scripts` are not required to rebuild it: the source of truth is `src/diner/items.js`).

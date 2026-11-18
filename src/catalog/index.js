@@ -363,13 +363,15 @@ const dinerAssets = [{
   category: 'area',
   group: 'diner',
   variants: ['Cutaway', 'Full'],
-  params: { variant: 'Cutaway' },
+  params: { variant: 'Cutaway', seed: 0 },
+  // Number field + Randomize in the catalogue panel. 0 is the hand-placed room.
+  seedInput: true,
   size: [12, 8],
   // Isometric corner (equal x and z) and a little steeper than 35°, so the
   // open room reads. Cutaway hides the two walls this camera faces.
   viewDir: [1, 1.15, 1],
   build(p, style) {
-    const r = buildDinerRoom(style, { cutaway: p.variant !== 'Full' });
+    const r = buildDinerRoom(style, { cutaway: p.variant !== 'Full', seed: p.seed });
     return withColliders(r.group, r.colliders);
   },
 }, ...DINER_ITEMS.map((item) => ({

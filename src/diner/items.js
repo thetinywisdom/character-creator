@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { PALETTE } from '../styles/palette.js';
 import { mergeByMaterial } from '../lib/merge.js';
 import manifest from '../../public/diner-kit/manifest.json';
-import layout from '../../public/diner-kit/layout.json';
+import { dinerLayout } from './plan.js';
 
 // American diner, in the same boxes and cylinders as the office kit
 // (src/office/items.js). Built here, not loaded, so createAsset stays
@@ -28,6 +28,14 @@ const DOOR = { w: 1.22, h: 2.26, d: 0.12 };
 const LIP = 0.05;
 
 const glassOf = new WeakMap();
+
+// Set for the duration of one room build. Individual catalogue items leave it null,
+// so a stool on its own stays Dusty rose. Ketchup is not in the map.
+let swatchSwap = null;
+
+function tone(key) {
+  return (swatchSwap && swatchSwap[key]) || key;
+}
 
 function mat(style, key) {
   const i = key.indexOf(':');
@@ -80,7 +88,7 @@ function bottle(g, style, bodyKey, capKey) {
 
 const BUILDERS = {
   counter(g, style) {
-    const red = mat(style, 'paint:Dusty rose');
+    const red = mat(style, tone('paint:Dusty rose'));
     const top = mat(style, 'paint:Off white');
     const chrome = mat(style, 'metal:Light gray');
     const kick = mat(style, 'darkMetal:Charcoal');
@@ -95,7 +103,7 @@ const BUILDERS = {
   },
   stool(g, style) {
     const chrome = mat(style, 'metal:Light gray');
-    const seat = mat(style, 'cloth:Dusty rose');
+    const seat = mat(style, tone('cloth:Dusty rose'));
     addCyl(g, 0.16, 0.17, 0.03, chrome, [0, 0.015, 0], { seg: 6 });
     addCyl(g, 0.028, 0.032, 0.62, chrome, [0, 0.34, 0], { seg: 6 });
     addCyl(g, 0.13, 0.13, 0.02, chrome, [0, 0.28, 0], { seg: 6 });
@@ -103,7 +111,7 @@ const BUILDERS = {
     addCyl(g, 0.168, 0.168, 0.07, seat, [0, 0.71, 0], { seg: 6 });
   },
   booth(g, style) {
-    const vinyl = mat(style, 'cloth:Dusty rose');
+    const vinyl = mat(style, tone('cloth:Dusty rose'));
     const chrome = mat(style, 'metal:Light gray');
     const top = mat(style, 'paint:Off white');
     for (const sx of [-1, 1]) {
@@ -145,7 +153,7 @@ const BUILDERS = {
   },
   cup_stack(g, style) {
     const cup = mat(style, 'paint:Off white');
-    const band = mat(style, 'paint:Seafoam');
+    const band = mat(style, tone('paint:Seafoam'));
     for (let i = 0; i < 3; i++) addCyl(g, 0.048, 0.04, 0.055, cup, [0, 0.04 + i * 0.045, 0], { seg: 6 });
     addCyl(g, 0.05, 0.05, 0.012, band, [0, 0.12, 0], { seg: 6 });
     addCyl(g, 0.06, 0.06, 0.012, cup, [0, 0.006, 0], { seg: 6 });
@@ -181,7 +189,7 @@ const BUILDERS = {
     for (const x of [-0.08, 0.08]) {
       addCyl(g, 0.012, 0.012, 0.1, steel, [x, 0.29, 0.04], { seg: 5 });
       addCyl(g, 0.038, 0.032, 0.1, chrome, [x, 0.1, 0.05], { seg: 6 });
-      addCyl(g, 0.04, 0.04, 0.012, mat(style, x < 0 ? 'paint:Off white' : 'paint:Dusty rose'), [x, 0.155, 0.05], { seg: 6 });
+      addCyl(g, 0.04, 0.04, 0.012, mat(style, x < 0 ? 'paint:Off white' : tone('paint:Dusty rose')), [x, 0.155, 0.05], { seg: 6 });
     }
   },
   coffee_maker(g, style) {
@@ -275,7 +283,7 @@ const BUILDERS = {
     const H = 1.04;
     addBox(g, W, H, 0.04, mat(style, 'darkMetal:Ink'), [0, H / 2, 0.02]);
     addBox(g, W - 0.08, H - 0.08, 0.012, mat(style, 'paint:Off white'), [0, H / 2, 0.044]);
-    addBox(g, W - 0.16, 0.1, 0.012, mat(style, 'light:Dusty rose'), [0, H - 0.16, 0.052]);
+    addBox(g, W - 0.16, 0.1, 0.012, mat(style, tone('light:Dusty rose')), [0, H - 0.16, 0.052]);
     const rows = ['paint:Dusty rose', 'paint:Butter', 'paint:Seafoam', 'paint:Sand', 'paint:Powder blue'];
     rows.forEach((key, i) => addBox(g, W - 0.28, 0.07, 0.008, mat(style, key), [-0.08, H - 0.36 - i * 0.12, 0.052]));
     rows.forEach((_, i) => addBox(g, 0.28, 0.045, 0.006, mat(style, 'paint:Charcoal'), [0.5, H - 0.36 - i * 0.12, 0.056]));
@@ -284,16 +292,16 @@ const BUILDERS = {
     const W = 1.18;
     const H = 0.6;
     addBox(g, W, H, 0.04, mat(style, 'darkMetal:Ink'), [0, H / 2, 0.02]);
-    addBox(g, W + 0.04, 0.035, 0.02, mat(style, 'light:Dusty rose'), [0, H - 0.04, 0.05]);
-    addBox(g, W + 0.04, 0.035, 0.02, mat(style, 'light:Dusty rose'), [0, 0.04, 0.05]);
-    addBox(g, 0.035, H, 0.02, mat(style, 'light:Seafoam'), [-W / 2, H / 2, 0.05]);
-    addBox(g, 0.035, H, 0.02, mat(style, 'light:Seafoam'), [W / 2, H / 2, 0.05]);
+    addBox(g, W + 0.04, 0.035, 0.02, mat(style, tone('light:Dusty rose')), [0, H - 0.04, 0.05]);
+    addBox(g, W + 0.04, 0.035, 0.02, mat(style, tone('light:Dusty rose')), [0, 0.04, 0.05]);
+    addBox(g, 0.035, H, 0.02, mat(style, tone('light:Seafoam')), [-W / 2, H / 2, 0.05]);
+    addBox(g, 0.035, H, 0.02, mat(style, tone('light:Seafoam')), [W / 2, H / 2, 0.05]);
     addBox(g, 0.22, 0.035, 0.016, mat(style, 'light:Butter'), [0, H / 2, 0.06], [0, 0, 0.8]);
     addBox(g, 0.22, 0.035, 0.016, mat(style, 'light:Butter'), [0, H / 2, 0.065], [0, 0, -0.8]);
     addCyl(g, 0.07, 0.05, 0.1, mat(style, 'light:Seafoam'), [-0.28, H / 2 - 0.02, 0.07], { seg: 6 });
     addBox(g, 0.04, 0.08, 0.02, mat(style, 'light:Butter'), [-0.2, H / 2 - 0.02, 0.07]);
-    addBox(g, 0.28, 0.045, 0.02, mat(style, 'light:Dusty rose'), [0.22, H / 2 + 0.06, 0.06], [0, 0, -0.5]);
-    addBox(g, 0.28, 0.045, 0.02, mat(style, 'light:Dusty rose'), [0.22, H / 2 - 0.08, 0.06], [0, 0, 0.5]);
+    addBox(g, 0.28, 0.045, 0.02, mat(style, tone('light:Dusty rose')), [0.22, H / 2 + 0.06, 0.06], [0, 0, -0.5]);
+    addBox(g, 0.28, 0.045, 0.02, mat(style, tone('light:Dusty rose')), [0.22, H / 2 - 0.08, 0.06], [0, 0, 0.5]);
   },
   pendant(g, style) {
     const shade = mat(style, 'paint:Off white');
@@ -342,7 +350,7 @@ const BUILDERS = {
   },
   door(g, style) {
     const metal = mat(style, 'metal:Light gray');
-    const red = mat(style, 'paint:Dusty rose');
+    const red = mat(style, tone('paint:Dusty rose'));
     const glass = mat(style, 'glass:Sky');
     const kick = mat(style, 'darkMetal:Charcoal');
     const { w, h, d } = DOOR;
@@ -374,7 +382,7 @@ const BUILDERS = {
     addCyl(g, 0.16, 0.16, 0.012, mat(style, 'cloth:Cocoa'), [0.02, 1.64, 0], { seg: 8 });
   },
   welcome_mat(g, style) {
-    addBox(g, 0.9, 0.012, 0.56, mat(style, 'cloth:Dusty rose'), [0, 0.006, 0]);
+    addBox(g, 0.9, 0.012, 0.56, mat(style, tone('cloth:Dusty rose')), [0, 0.006, 0]);
     addBox(g, 0.7, 0.004, 0.08, mat(style, 'paint:Off white'), [0, 0.014, 0]);
   },
 };
@@ -485,7 +493,7 @@ function splitWall(g, style, { axis, a0, a1, fix, y1, holes, hits, inward }) {
     const emit = (y0, yEnd) => {
       if (yEnd <= y0 + 1e-4) return;
       const low = Math.min(yEnd, BAND);
-      if (low > y0) put(a, b, y0, low, TH, fix, 'paint:Seafoam', true);
+      if (low > y0) put(a, b, y0, low, TH, fix, tone('paint:Seafoam'), true);
       if (yEnd > BAND) put(a, b, Math.max(y0, BAND), yEnd, TH, fix, 'paint:Off white', true);
     };
     let y = 0;
@@ -510,7 +518,10 @@ function splitWall(g, style, { axis, a0, a1, fix, y1, holes, hits, inward }) {
  * walls so the inside reads from the isometric catalogue camera.
  * Meshes are merged per material.
  */
-export function buildDinerRoom(style, { cutaway = false } = {}) {
+export function buildDinerRoom(style, { cutaway = false, seed = 0 } = {}) {
+  const plan = dinerLayout(seed);
+  swatchSwap = plan.theme;
+  try {
   const body = new THREE.Group();
   const front = new THREE.Group();
   const side = new THREE.Group();
@@ -558,7 +569,7 @@ export function buildDinerRoom(style, { cutaway = false } = {}) {
   sideWins.forEach(([a0, a1]) => placeItem(side, 'window_bay', 5.93, 0.9, (a0 + a1) / 2, P / 2));
   if (!cutaway) hits.push({ x: doorX, z: 3.93, hw: DOOR.w / 2, hd: DOOR.d / 2 });
 
-  for (const p of layout.placements) {
+  for (const p of plan.placements) {
     const item = buildDinerItem(p.item, style);
     item.position.set(p.x, p.y + TILE_TOP, p.z);
     item.rotation.y = p.rotY || 0;
@@ -587,5 +598,9 @@ export function buildDinerRoom(style, { cutaway = false } = {}) {
   sideWall.name = 'room_wall_side';
   sideWall.visible = !cutaway;
   room.add(sideWall);
+  room.userData.seed = plan.seed;
   return { group: room, colliders: hits };
+  } finally {
+    swatchSwap = null;
+  }
 }
