@@ -203,6 +203,10 @@ src/office/items.js    office kit (catalogue Office tab): procedural desks, chai
                        lounge, kitchen, plants, and the furnished room. Not placed
                        by the sample town. GLB loader: src/office/loadOfficeKit.js
 public/office-kit/     the kit's GLBs, manifest.json, layout.json, standalone preview
+src/diner/items.js     diner kit (catalogue Diner tab): procedural counter, stools,
+                       booths, jukebox, grill and the furnished room. Not placed
+                       by the sample town. No GLBs; manifest and layout are in
+                       public/diner-kit/
 src/creator/Creator.js the character creator panel (viewer only)
 src/viewer/            Cell (a preview stage), params (saved settings)
 src/lib/               shapes, foliage (lobes, fronds, shaded leaf/bark, trimmed hedges), merge
@@ -240,7 +244,7 @@ roles are softened. `light` glows: never use it for big textured surfaces.
 defaults. `params.variant` picks from `variants`, `params.color` from
 `colors`, `params.seed` changes the look of seeded items, buildings take
 `w` / `d` (lot size) and shops `shopType`. Groups (catalogue tabs):
-buildings, street, traffic, extras, nature, animals, vehicles, office, areas.
+buildings, street, traffic, extras, nature, animals, vehicles, office, diner, areas.
 `animated: 'cat'` marks items with joints (`animal.cat`: pose it with
 `poseCat`, `anim/catGait.js`; resting poses via `gait.pose = 'sit' |
 'loaf' | 'sleep'`; joints legF*/legB* plus lowF*/lowB* elbows and hocks). Cats take `pattern`, `tailType`, `earType` and `coat`
@@ -261,6 +265,20 @@ wants the files instead of the code calls `loadOfficeKit({ style })` from
 Rebuild the GLBs with `blender -b -P src/office/build_office_kit.py` (blend:
 `src/office/office_kit.blend`). Rugs have no collider. The room floor is 2 cm
 above y = 0 so it does not flicker on a ground at y = 0.
+
+**Diner kit** (catalogue only, not placed by `layout.js`). Tab **Diner**.
+`createAsset('diner.stool', {}, style)` and the other `diner.*` ids build the
+pieces from boxes and cylinders in `src/diner/items.js`. `diner.room` is the
+furnished diner, 12 × 8 m, front facing +z: `variant: 'Cutaway'` (default;
+the +z and +x walls are hidden) or `'Full'`. `seed` (an integer; `0` or
+omitted is the hand-placed layout) rearranges the dining floor with the
+repo's `mulberry32`. The same seed is the same room. The counter, kitchen,
+door and windows stay put. Parts use `style.material(role, swatch)`.
+There are no GLBs. Names and footprints are in `public/diner-kit/`; the
+hand-placed furniture is `layout.json` and the seeded rules are
+`src/diner/plan.js`. The floor mat and the pendant lamp have no collider.
+The room floor is 2 cm above y = 0, same as the office. Check layouts with
+`node scripts/check-diner-layout.mjs`.
 
 Catalogue-only street details (the sample town does not place them; `params.seed` and 🎲 New look, same as a tree): `prop.manhole` (Flower, Wave, Grid; 40 triangles at PS1 detail), `prop.backClutter` (Propane tanks 156, Gas meter 64, Drainpipe 78, Cluster 310), `prop.nobori` (Stripes, Blocks; 92; call `tickProps` from `anim/props.js` each frame so the cloth sways), `animal.bird` (Pigeon 154, Sparrow 156; the same `tickProps` runs the peck and the perched look). No new palette swatches. No separate outdoor AC prop: units already dress backs, balconies and roofs. Trees (`nature.tree`) are clumped low-poly lobes (bamboo: segmented culms; the old giant: a kinked trunk that splits) and come in 11 presets the city plants
 (oak, lollipop, pine, old giant, cherry blossom, Japanese maple, ginkgo,

@@ -372,6 +372,15 @@ Not placed in the sample town. A game places a piece with `createAsset('office.d
 - Colour is a palette swatch on a role (`wood:Tan`, `cloth:Cocoa`, `leaf:Moss`, `light:Butter`). No new swatches. Walls stay on the building greys. A cane seat, a woven basket and the terrazzo chips use `cloth` or `paint` so Sand, Peach and Dusty rose are not flattened by the building-colour rule.
 - The room is 6.5 × 14.5 m, open at the top, with a checker floor, a glass north wall and a stair. Cutaway hides the east wall. The floor sits 2 cm above y = 0 so it does not flicker against a ground on the same plane.
 
+## 3e-7. Diner kit (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('diner.stool', {}, style)` (ids `diner.*`) or the whole room with `createAsset('diner.room', { variant: 'Cutaway' }, style)`.
+
+- The same low-poly boxes and cylinders as the office kit. No readable lettering: the menu is coloured bands, the neon is a cup, a star and an arrow, the register screen is flat navy.
+- Colour is a palette swatch on a role. Diner red is Dusty rose (`cloth` on the seats, `paint` on the counter and the door), teal is Seafoam (the wainscot and the cup bands), cream is Off white, chrome is Light gray metal. `light` is the glow on the neon, the pendant bulbs and the coffee hotplate, the same as every other lamp. No new swatches. Walls and the wainscot use `paint`, not `building`, so Seafoam and Off white are not pulled onto the building greys.
+- The room is 12 × 8 m, open at the top, front facing +z: checker floor, a counter and stools, booths, a kitchen line and a window wall. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0.
+- `seed: 0` (or no seed) is the hand-placed layout. Any other integer is a deterministic variation: booths along the counter, in the front half, or down the left wall; stool count; a mirror of a row; small turns on loose props; a palette theme for the red and teal surfaces. The door, windows, counter and kitchen do not move, and a clear path stays open from the entrance.
+
 ## 3e-1. People content
 
 - **Held items** put the arm in a pose and stay upright whatever the arm does:
