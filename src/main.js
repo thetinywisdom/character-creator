@@ -148,6 +148,10 @@ function renderItemPanel() {
       <pre>${code}</pre>
       <button data-act="copy">Copy</button>
     </div>`;
+  itemEl.onmousedown = (e) => {
+    // Keep a seed number from blurring (and rebuilding) before Randomize runs.
+    if (e.target.closest('[data-act="seed-random"]')) e.preventDefault();
+  };
   itemEl.onchange = (e) => {
     if (e.target.dataset.act !== 'seed-num') return;
     const n = Math.trunc(Number(e.target.value));

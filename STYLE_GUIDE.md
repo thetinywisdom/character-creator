@@ -366,7 +366,7 @@ a tree. No new palette swatches.
 
 ## 3e-6. Office kit (catalogue only)
 
-Not placed in the sample town. A game places a piece with `createAsset('office.desk', {}, style)` (ids `office.*`) or the whole room with `createAsset('office.room', { variant: 'Cutaway' }, style)`.
+Not placed in the sample town. A game places a piece with `createAsset('office.desk', {}, style)` (ids `office.*`) or the whole room with `createAsset('office.room', { variant: 'Cutaway', seed: 0 }, style)`. `seed: 0` (or omitting it) is the authored furniture plan. Another integer rearranges desks, lounge and meeting around the fixed kitchen, bar, walls and door; the same seed is the same room.
 
 - The same low-poly boxes and cylinders as the rest of the town. Screens are flat navy, whiteboards are blank, plants are faceted lobes (lighter on top, same as the trees).
 - Colour is a palette swatch on a role (`wood:Tan`, `cloth:Cocoa`, `leaf:Moss`, `light:Butter`). No new swatches. Walls stay on the building greys. A cane seat, a woven basket and the terrazzo chips use `cloth` or `paint` so Sand, Peach and Dusty rose are not flattened by the building-colour rule.

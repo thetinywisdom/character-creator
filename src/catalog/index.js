@@ -345,12 +345,14 @@ const officeAssets = [{
   category: 'area',
   group: 'office',
   variants: ['Cutaway', 'Full'],
-  params: { variant: 'Cutaway' },
+  params: { variant: 'Cutaway', seed: 0 },
+  // Number box + Randomize in the catalogue. Other seeded props keep "New look".
+  seedInput: true,
   size: [6.5, 14.5],
   // Higher than the usual 3/4 view: the room has no roof, and this looks in.
   viewDir: [0.85, 1.35, 0.7],
   build(p, style) {
-    const r = buildOfficeRoom(style, { cutaway: p.variant !== 'Full' });
+    const r = buildOfficeRoom(style, { cutaway: p.variant !== 'Full', seed: p.seed ?? 0 });
     return withColliders(r.group, r.colliders);
   },
 }, ...OFFICE_ITEMS.map((item) => ({

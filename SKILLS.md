@@ -285,7 +285,13 @@ colours, which `lib/skin.js` keeps when it makes the city's skinned mesh.
 furniture from boxes and cylinders in `src/office/items.js` (synchronous, so
 thumbs and the single-file page do not fetch binaries). `office.room` is the
 furnished office, 6.5 × 14.5 m: `variant: 'Cutaway'` (default, east wall
-hidden) or `'Full'`. Parts use `style.material(role, swatch)`, so palette
+hidden) or `'Full'`, and `seed` (an integer). Omit `seed`, or pass `0`, and
+the room is the authored layout. Any other seed is the same room rearranged
+deterministically: desks, lounge and meeting move, chairs and desktop objects
+shift a little, optional plants and storage come and go, and cloth, rug, mug
+and book colours pick other palette swatches. Walls, the door, the glass and
+the kitchen / bar stay. The catalogue has a seed number and Randomize; the
+copied `createAsset` line includes the seed. Parts use `style.material(role, swatch)`, so palette
 changes apply. The GLBs, manifest and layout stay in `public/office-kit/`
 (Vite serves them; GitHub Pages publishes them with `dist/`). A game that
 wants the files instead of the code calls `loadOfficeKit({ style })` from
@@ -688,6 +694,7 @@ No unit tests; verify by building and looking.
 
 - `npm run build` must pass.
 - Diner layouts: `node scripts/check-diner-layout.mjs` (seeds 0–50).
+- Office seeds: `node src/office/seedLayout.test.js` (seed 0 and seeds 1–50).
 - Room seeds: `node scripts/check-room-seeds.mjs` (clinic, police, minimarket, meeting, bedroom, studio, cafe, classroom, open office; seeds 0–50).
 - Drive the viewer with Playwright (Chromium is preinstalled; use
   `--use-gl=angle --use-angle=swiftshader`): `npx vite preview`, open the

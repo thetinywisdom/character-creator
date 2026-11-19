@@ -23,7 +23,9 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   pigeons and sparrows. The sample town does not place those. The catalogue includes the
   bus, the bus stop shelter and the banana peel. The **Office** tab is a
   furniture kit (desks, chairs, a lounge, a meeting room, a kitchen, plants)
-  and the whole furnished office. The **Diner** tab is a 1950s American diner
+  and the whole furnished office. The office room takes a seed (0 keeps the
+  authored layout; Randomize builds another arrangement of the same room).
+  The **Diner** tab is a 1950s American diner
   in the same low-poly look: the furnished room (Cutaway or Full) and its
   counter, stools, booths, jukebox, grill and the rest of the kit. The **Clinic**,
   **Police** and **Minimarket** tabs are interior kits in the same look: a clinic
