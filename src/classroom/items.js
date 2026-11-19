@@ -355,13 +355,9 @@ export function buildClassroomRoom(style, { cutaway = false, seed = 0 } = {}) {
   const side = new THREE.Group();
   const hits = [];
 
-  const tile = TILE_TOP - SLAB_TOP;
-  const planks = 18;
-  for (let i = 0; i < planks; i++) {
-    const pw = 9 / planks;
-    addBox(body, pw, tile, 7, mat(style, i % 2 ? 'wood:Walnut' : 'wood:Tan'),
-      [-4.5 + (i + 0.5) * pw, (SLAB_TOP + TILE_TOP) / 2, 0]);
-  }
+  // One solid wood floor. No planks.
+  const floorH = TILE_TOP - SLAB_TOP;
+  addBox(body, 9, floorH, 7, mat(style, 'wood:Tan'), [0, (SLAB_TOP + TILE_TOP) / 2, 0]);
   addBox(body, 9, 0.22, 7, mat(style, 'concrete:Gray'), [0, SLAB_TOP - 0.11, 0]);
   // Low teaching platform along the blackboard wall.
   addBox(body, 5.6, 0.08, 1.45, mat(style, 'wood:Tan'), [0.35, TILE_TOP + 0.04, -2.55]);

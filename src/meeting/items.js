@@ -308,13 +308,9 @@ export function buildMeetingRoom(style, { cutaway = false, seed = 0 } = {}) {
   const side = new THREE.Group();
   const hits = [];
 
-  const tile = TILE_TOP - SLAB_TOP;
-  for (let i = 0; i < 6; i++) {
-    for (let j = 0; j < 4; j++) {
-      addBox(body, 1, tile, 1, mat(style, (i + j) % 2 ? 'cloth:Slate' : 'cloth:Navy'),
-        [-RW / 2 + (i + 0.5), (SLAB_TOP + TILE_TOP) / 2, -RD / 2 + (j + 0.5)]);
-    }
-  }
+  // One solid carpet. No checker.
+  const floorH = TILE_TOP - SLAB_TOP;
+  addBox(body, RW, floorH, RD, mat(style, 'cloth:Navy'), [0, (SLAB_TOP + TILE_TOP) / 2, 0]);
   addBox(body, RW, 0.2, RD, mat(style, 'concrete:Gray'), [0, SLAB_TOP - 0.1, 0]);
 
   const west = -RW / 2 + TH / 2;

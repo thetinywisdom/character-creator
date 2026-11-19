@@ -7,9 +7,12 @@ import { between, facing, inside, overlaps, pick, reaches, roomRng, yawBox } fro
 // What changes: which wall the bed and the sofa use, where the low table
 // sits, whether the cushion, teacup, kettle, rice cooker and shoe tray are
 // out, a few centimetres of jitter on those loose props, and the bedding
-// and cushion swatches. The sofa faces its TV. The bath door keeps its
-// swing clear, and a walk of about 0.7 m still reaches the bed, the kitchen
-// and the bath from the entrance.
+// and cushion swatches. The sofa faces its TV. The screen is the local +z
+// face, and it has to sit in the catalogue iso camera's half-space (viewDir
+// [1, 1.15, 1] in src/catalog/index.js): a TV faces south or east, never
+// north or west, so the camera sees the screen and not the wooden back.
+// The bath door keeps its swing clear, and a walk of about 0.7 m still
+// reaches the bed, the kitchen and the bath from the entrance.
 
 const P = Math.PI;
 const FOOT = {
@@ -109,25 +112,51 @@ function southbed(j, scale, opt) {
   return out;
 }
 
-// Sofa facing a TV across the middle of the room. Bed stays southwest.
+// Sofa facing north across a low table toward the TV, so the screen points
+// south into the iso camera. The pair sits east of a walk to the bed; the
+// south strip in front of the door stays clear. Bed stays southwest.
 function lounge(j, scale, opt) {
   const s = scale;
   const out = [...KITCHEN];
   kitchenProps(out, j, scale, opt);
   place(out, 'bed', -1.82, 0, 1.16 + j.bed * s, P / 2);
-  const sofaX = 0.85 + j.sofa * s;
-  place(out, 'sofa', sofaX, 0, 0.22, 0);
-  place(out, 'tv', sofaX, 0, 1.12, P);
-  const table = { x: 1.5, z: -0.55 + j.tableZ * s };
+  const sofaX = 0.78 + j.sofa * s;
+  place(out, 'tv', sofaX, 0, -0.87, 0);
+  place(out, 'sofa', sofaX, 0, 0.58, P);
+  const table = { x: sofaX, z: -0.23 + j.tableZ * s };
   place(out, 'table', table.x, 0, table.z, 0);
-  if (opt.cushion) place(out, 'cushion', -0.45, 0, 0.2, j.cushion * s);
-  if (opt.cup) place(out, 'teacup', table.x - 0.08, 0.335, table.z + 0.05, j.cup * s);
-  if (opt.shoes) place(out, 'shoe_tray', 1.95, 0, 0.72, j.shoes * s);
-  place(out, 'ceiling_light', 0.45, 1.75, 0.7, 0);
+  if (opt.cushion) place(out, 'cushion', 1.9, 0, 0.5, j.cushion * s);
+  if (opt.cup) place(out, 'teacup', table.x + 0.06, 0.335, table.z - 0.04, j.cup * s);
+  if (opt.shoes) place(out, 'shoe_tray', 2.5, 0, 0.5, j.shoes * s);
+  place(out, 'ceiling_light', 0.78, 1.75, -0.12, 0);
   return out;
 }
 
 const TEMPLATES = { southwest, southbed, lounge };
+
+// Horizontal part of the catalogue iso viewDir [1, 1.15, 1]. The camera
+// sits in the +x/+z half-space; the screen faces that half-space when its
+// normal points the same way.
+const ISO_CAM = { x: 1, z: 1 };
+
+/** Sofa looks at the TV, and the TV screen looks back and toward the iso camera. */
+export function studioScreenProblems(placements) {
+  const problems = [];
+  const sofa = placements.find((p) => p.item === 'sofa');
+  const tv = placements.find((p) => p.item === 'tv');
+  const look = facing(sofa.rotY || 0);
+  const screen = facing(tv.rotY || 0);
+  const dx = tv.x - sofa.x;
+  const dz = tv.z - sofa.z;
+  const len = Math.hypot(dx, dz) || 1;
+  if (look.x * dx / len + look.z * dz / len < 0.75) problems.push('sofa faces away from the tv');
+  if (screen.x * -dx / len + screen.z * -dz / len < 0.75) problems.push('tv faces away from the sofa');
+  const cam = Math.hypot(ISO_CAM.x, ISO_CAM.z);
+  if (screen.x * ISO_CAM.x / cam + screen.z * ISO_CAM.z / cam <= 0) {
+    problems.push('tv front faces away from the iso camera half-space');
+  }
+  return problems;
+}
 
 function coversWindow(bed) {
   return bed.x0 < -2.15 && bed.z0 <= WINDOW_Z.z0 + 0.04 && bed.z1 >= WINDOW_Z.z1 - 0.04;
@@ -155,15 +184,7 @@ export function auditStudio(placements) {
   }
   const bed = box(placements.find((p) => p.item === 'bed'));
   if (coversWindow(bed)) problems.push('bed covers the window');
-  const sofa = placements.find((p) => p.item === 'sofa');
-  const tv = placements.find((p) => p.item === 'tv');
-  const look = facing(sofa.rotY || 0);
-  const screen = facing(tv.rotY || 0);
-  const dx = tv.x - sofa.x;
-  const dz = tv.z - sofa.z;
-  const len = Math.hypot(dx, dz) || 1;
-  if (look.x * dx / len + look.z * dz / len < 0.75) problems.push('sofa faces away from the tv');
-  if (screen.x * -dx / len + screen.z * -dz / len < 0.75) problems.push('tv faces away from the sofa');
+  problems.push(...studioScreenProblems(placements));
   const counter = box(placements.find((p) => p.item === 'counter'));
   for (const name of ['kettle', 'rice_cooker']) {
     const p = placements.find((q) => q.item === name);

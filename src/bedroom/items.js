@@ -297,11 +297,9 @@ export function buildBedroomRoom(style, { cutaway = false, seed = 0 } = {}) {
   const side = new THREE.Group();
   const hits = [];
 
-  const plank = TILE_TOP - SLAB_TOP;
-  for (let i = 0; i < 7; i++) {
-    addBox(body, 0.5, plank, RD, mat(style, i % 2 ? 'wood:Walnut' : 'wood:Tan'),
-      [-RW / 2 + (i + 0.5) * 0.5, (SLAB_TOP + TILE_TOP) / 2, 0]);
-  }
+  // One solid wood floor. No planks.
+  const floorH = TILE_TOP - SLAB_TOP;
+  addBox(body, RW, floorH, RD, mat(style, 'wood:Tan'), [0, (SLAB_TOP + TILE_TOP) / 2, 0]);
   addBox(body, RW, 0.18, RD, mat(style, 'concrete:Gray'), [0, SLAB_TOP - 0.09, 0]);
 
   const west = -RW / 2 + TH / 2;

@@ -3,15 +3,20 @@
 // or block a 0.9 m walkway. Seed 0 is the hand-made layout (overlaps only).
 // Meeting, bedroom and studio: seed 0 stays the hand-made layout (the plan
 // returns null), and seeds 1–50 rebuild the same arrangement twice.
+// Studio seeds 0–50 also keep the TV facing the sofa, with the screen in
+// the iso camera's half-space (the catalogue never sees the TV's back).
 // Cafe, classroom and open office: seeds 1–50 stay inside, miss each other,
 // and leave a connected walk. Seed 0 is overlaps and bounds only.
 //
 //   node scripts/check-room-seeds.mjs
 
+import { readFileSync } from 'node:fs';
 import { createServer } from 'vite';
 import { meetingPlan } from '../src/meeting/layout.js';
 import { bedroomPlan } from '../src/bedroom/layout.js';
-import { studioPlan } from '../src/studio/layout.js';
+import { studioPlan, studioScreenProblems } from '../src/studio/layout.js';
+
+const studioHandmade = JSON.parse(readFileSync(new URL('../public/studio-kit/layout.json', import.meta.url), 'utf8'));
 
 const server = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const clinic = await server.ssrLoadModule('/src/clinic/layout.js');
@@ -64,11 +69,19 @@ const interiors = [
   ['bedroom', bedroomPlan],
   ['studio', studioPlan],
 ];
+function reportScreen(name, seed, placements) {
+  const face = studioScreenProblems(placements);
+  if (!face.length) return;
+  failed++;
+  console.log(`${name} seed ${seed}: ${face.join('; ')}`);
+}
+
 for (const [name, plan] of interiors) {
   if (plan(0) !== null) {
     failed++;
     console.log(`${name} seed 0 should keep the hand-made layout`);
   }
+  if (name === 'studio') reportScreen(name, 0, studioHandmade.placements);
   for (let seed = 1; seed <= 50; seed++) {
     let a;
     let b;
@@ -84,6 +97,7 @@ for (const [name, plan] of interiors) {
       failed++;
       console.log(`${name} seed ${seed}: not deterministic`);
     }
+    if (name === 'studio') reportScreen(name, seed, a.placements);
   }
 }
 
@@ -120,4 +134,5 @@ if (failed) {
 }
 console.log('room seeds 0-50 ok');
 console.log('ok: seeds 0 and 1-50 for meeting, bedroom, studio');
+console.log('ok: studio seeds 0-50 — tv faces the sofa and the iso camera');
 console.log('ok: cafe, classroom, open office — seeds 0–50 inside, clear, and deterministic');
