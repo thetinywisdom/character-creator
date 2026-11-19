@@ -1,0 +1,221 @@
+{
+  "units": "metres",
+  "up": "+y",
+  "front": "+z",
+  "origin": "bottom centre",
+  "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+  "note": "Procedural kit. The catalogue builds these in src/cafe/items.js. No GLBs.",
+  "items": {
+    "bar": {
+      "label": "Espresso bar",
+      "group": "bar",
+      "footprint": [
+        2.52,
+        0.72
+      ],
+      "materials": [],
+      "tris": 84
+    },
+    "espresso_machine": {
+      "label": "Espresso machine",
+      "group": "bar",
+      "footprint": [
+        0.42,
+        0.42
+      ],
+      "materials": [],
+      "tris": 152
+    },
+    "grinder": {
+      "label": "Coffee grinder",
+      "group": "bar",
+      "footprint": [
+        0.18,
+        0.2
+      ],
+      "materials": [],
+      "tris": 72
+    },
+    "pastry_case": {
+      "label": "Pastry case",
+      "group": "bar",
+      "footprint": [
+        0.8,
+        0.44
+      ],
+      "materials": [],
+      "tris": 216
+    },
+    "register": {
+      "label": "Cash register",
+      "group": "bar",
+      "footprint": [
+        0.3,
+        0.32
+      ],
+      "materials": [],
+      "tris": 48
+    },
+    "menu_board": {
+      "label": "Chalk menu board",
+      "group": "wall",
+      "footprint": [
+        1.15,
+        0.08
+      ],
+      "materials": [],
+      "tris": 96
+    },
+    "shelf": {
+      "label": "Wall shelf",
+      "group": "wall",
+      "footprint": [
+        0.9,
+        0.24
+      ],
+      "materials": [],
+      "tris": 108
+    },
+    "table": {
+      "label": "Round cafe table",
+      "group": "seating",
+      "footprint": [
+        0.72,
+        0.72
+      ],
+      "materials": [],
+      "tris": 88
+    },
+    "chair": {
+      "label": "Cafe chair",
+      "group": "seating",
+      "footprint": [
+        0.4,
+        0.42
+      ],
+      "materials": [],
+      "tris": 84
+    },
+    "window_counter": {
+      "label": "Window counter",
+      "group": "seating",
+      "footprint": [
+        2.5,
+        0.46
+      ],
+      "materials": [],
+      "tris": 72
+    },
+    "stool": {
+      "label": "Counter stool",
+      "group": "seating",
+      "footprint": [
+        0.38,
+        0.4
+      ],
+      "materials": [],
+      "tris": 84
+    },
+    "cup": {
+      "label": "Coffee cup",
+      "group": "table",
+      "footprint": [
+        0.16,
+        0.14
+      ],
+      "materials": [],
+      "tris": 72
+    },
+    "cake": {
+      "label": "Cake plate",
+      "group": "table",
+      "footprint": [
+        0.2,
+        0.2
+      ],
+      "materials": [],
+      "tris": 68
+    },
+    "caddy": {
+      "label": "Sugar caddy",
+      "group": "table",
+      "footprint": [
+        0.22,
+        0.12
+      ],
+      "materials": [],
+      "tris": 64
+    },
+    "plant": {
+      "label": "Floor plant",
+      "group": "plant",
+      "footprint": [
+        0.36,
+        0.36
+      ],
+      "materials": [],
+      "tris": 128
+    },
+    "plant_small": {
+      "label": "Small plant",
+      "group": "plant",
+      "footprint": [
+        0.16,
+        0.16
+      ],
+      "materials": [],
+      "tris": 80
+    },
+    "pendant": {
+      "label": "Pendant lamp",
+      "group": "light",
+      "footprint": [
+        0.34,
+        0.34
+      ],
+      "materials": [],
+      "tris": 84
+    },
+    "noren": {
+      "label": "Noren curtain",
+      "group": "entrance",
+      "footprint": [
+        0.9,
+        0.06
+      ],
+      "materials": [],
+      "tris": 68
+    },
+    "mat": {
+      "label": "Floor mat",
+      "group": "entrance",
+      "footprint": [
+        0.7,
+        0.42
+      ],
+      "materials": [],
+      "tris": 24
+    },
+    "window": {
+      "label": "Cafe window",
+      "group": "entrance",
+      "footprint": [
+        1.94,
+        0.16
+      ],
+      "materials": [],
+      "tris": 96
+    },
+    "door": {
+      "label": "Cafe door",
+      "group": "entrance",
+      "footprint": [
+        1.02,
+        0.12
+      ],
+      "materials": [],
+      "tris": 84
+    }
+  },
+  "room_tris": 4268
+}

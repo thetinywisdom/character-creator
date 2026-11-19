@@ -1,0 +1,211 @@
+{
+  "units": "metres",
+  "up": "+y",
+  "front": "+z",
+  "origin": "bottom centre",
+  "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+  "note": "Procedural kit. The catalogue builds these in src/openoffice/items.js. Namespace openoffice, not office. No GLBs.",
+  "items": {
+    "bench": {
+      "label": "Shared bench desk",
+      "group": "work",
+      "footprint": [
+        3.4,
+        0.8
+      ],
+      "materials": [],
+      "tris": 132
+    },
+    "monitor": {
+      "label": "Monitor",
+      "group": "work",
+      "footprint": [
+        0.54,
+        0.18
+      ],
+      "materials": [],
+      "tris": 48
+    },
+    "task_chair": {
+      "label": "Sled chair",
+      "group": "work",
+      "footprint": [
+        0.5,
+        0.5
+      ],
+      "materials": [],
+      "tris": 96
+    },
+    "sofa": {
+      "label": "Lounge sofa",
+      "group": "lounge",
+      "footprint": [
+        1.8,
+        0.82
+      ],
+      "materials": [],
+      "tris": 96
+    },
+    "coffee_table": {
+      "label": "Coffee table",
+      "group": "lounge",
+      "footprint": [
+        0.86,
+        0.86
+      ],
+      "materials": [],
+      "tris": 80
+    },
+    "rug": {
+      "label": "Lounge rug",
+      "group": "lounge",
+      "footprint": [
+        2.6,
+        1.7
+      ],
+      "materials": [],
+      "tris": 24
+    },
+    "floor_lamp": {
+      "label": "Floor lamp",
+      "group": "lounge",
+      "footprint": [
+        0.55,
+        0.28
+      ],
+      "materials": [],
+      "tris": 96
+    },
+    "printer": {
+      "label": "Printer station",
+      "group": "work",
+      "footprint": [
+        0.74,
+        0.54
+      ],
+      "materials": [],
+      "tris": 120
+    },
+    "pantry": {
+      "label": "Pantry counter",
+      "group": "pantry",
+      "footprint": [
+        1.8,
+        0.64
+      ],
+      "materials": [],
+      "tris": 72
+    },
+    "fridge": {
+      "label": "Mini fridge",
+      "group": "pantry",
+      "footprint": [
+        0.6,
+        0.62
+      ],
+      "materials": [],
+      "tris": 36
+    },
+    "kettle": {
+      "label": "Kettle",
+      "group": "pantry",
+      "footprint": [
+        0.18,
+        0.16
+      ],
+      "materials": [],
+      "tris": 72
+    },
+    "mug": {
+      "label": "Mug",
+      "group": "pantry",
+      "footprint": [
+        0.12,
+        0.1
+      ],
+      "materials": [],
+      "tris": 60
+    },
+    "plant": {
+      "label": "Floor plant",
+      "group": "plant",
+      "footprint": [
+        0.4,
+        0.4
+      ],
+      "materials": [],
+      "tris": 128
+    },
+    "plant_small": {
+      "label": "Desk plant",
+      "group": "plant",
+      "footprint": [
+        0.14,
+        0.14
+      ],
+      "materials": [],
+      "tris": 80
+    },
+    "pinboard": {
+      "label": "Pinboard",
+      "group": "wall",
+      "footprint": [
+        1.4,
+        0.08
+      ],
+      "materials": [],
+      "tris": 96
+    },
+    "pendant_bar": {
+      "label": "Linear light",
+      "group": "light",
+      "footprint": [
+        2.2,
+        0.1
+      ],
+      "materials": [],
+      "tris": 56
+    },
+    "notebook": {
+      "label": "Notebooks",
+      "group": "work",
+      "footprint": [
+        0.26,
+        0.2
+      ],
+      "materials": [],
+      "tris": 36
+    },
+    "bin": {
+      "label": "Waste bin",
+      "group": "work",
+      "footprint": [
+        0.3,
+        0.3
+      ],
+      "materials": [],
+      "tris": 24
+    },
+    "window": {
+      "label": "Studio window",
+      "group": "entrance",
+      "footprint": [
+        2.48,
+        0.14
+      ],
+      "materials": [],
+      "tris": 84
+    },
+    "door": {
+      "label": "Glass door",
+      "group": "entrance",
+      "footprint": [
+        1.4,
+        0.12
+      ],
+      "materials": [],
+      "tris": 84
+    }
+  },
+  "room_tris": 4452
+}

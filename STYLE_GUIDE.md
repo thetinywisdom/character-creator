@@ -413,6 +413,16 @@ Not placed in the sample town. A game places a piece with `createAsset('minimark
 - Navy, Butter and Seafoam mark the counter, the cornice and the warmer. Drink and shelf colours are the existing pastels on `paint`. `light` is the warmer strip, the coffee hotplate and the ceiling lamp. No new swatches. Walls use `paint`, so the navy cornice stays navy.
 - The room is 10 × 8 m, open at the top, front facing +z: a fridge wall, two shelf aisles, a register and the entrance machines. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0. `seed` 0 is that layout. Another integer puts the register on the left or the right, uses four or five fridges (the open end is an ice chest), two or three aisles with a 0.9 m gap, and rotates the goods colours. The +x side of a fridge is glass so the end case still shows drinks from the isometric corner. The door and the fridge wall stay.
 
+## 3e-12. Cafe, classroom and open office (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('cafe.table', {}, style)`, `createAsset('classroom.student_desk', {}, style)` or `createAsset('openoffice.bench', {}, style)`, or the whole room with `createAsset('cafe.room', { variant: 'Cutaway' }, style)` (the same for `classroom.room` and `openoffice.room`).
+
+- The same low-poly boxes and cylinders as the office kit. No readable lettering: the cafe menu is chalk strokes, the blackboard is a green field with a few strokes, the pinboard is blank notes.
+- Colour is a palette swatch on a role. Walls that should stay a colour use `paint` (cafe cream, classroom off-white, the open office's sage accent wall), so the building-colour rule does not turn them grey. Wood floors and desk tops use `wood`. Plants are faceted lobes. No new swatches.
+- The open office is not the office kit. It is one open room: long shared benches, sled chairs, a seafoam sofa, a printer island and a short pantry. No cubicle dividers, no meeting room, no individual pedestal desks.
+- Rooms are open at the top, front facing +z: cafe 8 × 6 m, classroom 9 × 7 m, open office 12 × 10 m. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0.
+- `seed: 0` (or leaving it out) is the hand-made layout. Any other integer rebuilds the same arrangement every time. The bar, the blackboard, the pantry, the doors and the windows do not move. Tables, desk rows and benches change count inside a range. Chairs keep facing their table or desk, with a small pull. Classroom desks stay in neat rows facing the board. Optional props and one accent (a pot, a shade, the noren, the sofa, a chair cloth) come from swatches already in the palette.
+
 ## 3e-1. People content
 
 - **Held items** put the arm in a pose and stay upright whatever the arm does:

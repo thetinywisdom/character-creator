@@ -3,6 +3,8 @@
 // or block a 0.9 m walkway. Seed 0 is the hand-made layout (overlaps only).
 // Meeting, bedroom and studio: seed 0 stays the hand-made layout (the plan
 // returns null), and seeds 1–50 rebuild the same arrangement twice.
+// Cafe, classroom and open office: seeds 1–50 stay inside, miss each other,
+// and leave a connected walk. Seed 0 is overlaps and bounds only.
 //
 //   node scripts/check-room-seeds.mjs
 
@@ -15,6 +17,10 @@ const server = await createServer({ server: { middlewareMode: true }, appType: '
 const clinic = await server.ssrLoadModule('/src/clinic/layout.js');
 const police = await server.ssrLoadModule('/src/police/layout.js');
 const market = await server.ssrLoadModule('/src/minimarket/layout.js');
+const { cafePlan, cafeFloorBoxes } = await server.ssrLoadModule('/src/cafe/arrange.js');
+const { classroomPlan, classroomFloorBoxes } = await server.ssrLoadModule('/src/classroom/arrange.js');
+const { openOfficePlan, openOfficeFloorBoxes } = await server.ssrLoadModule('/src/openoffice/arrange.js');
+const { planProblems } = await server.ssrLoadModule('/src/lib/roomPlan.js');
 
 const rooms = [
   ['clinic', clinic.clinicLayout, clinic.clinicIssues],
@@ -81,6 +87,32 @@ for (const [name, plan] of interiors) {
   }
 }
 
+const kits = [
+  ['cafe', cafePlan, cafeFloorBoxes],
+  ['classroom', classroomPlan, classroomFloorBoxes],
+  ['open office', openOfficePlan, openOfficeFloorBoxes],
+];
+for (const [name, planFn, boxesFn] of kits) {
+  for (let seed = 0; seed <= 50; seed++) {
+    const plan = planFn(seed);
+    const again = planFn(seed);
+    if (JSON.stringify(again) !== JSON.stringify(plan)) {
+      failed += 1;
+      console.log(`${name} seed ${seed}: not deterministic`);
+    }
+    const boxes = boxesFn(plan);
+    const errs = seed === 0
+      ? planProblems({ ...plan, keepOut: null, goals: null, door: null }, boxes)
+      : planProblems(plan, boxes);
+    if (errs.length) {
+      failed += 1;
+      console.log(`${name} seed ${seed}:`);
+      for (const e of errs.slice(0, 12)) console.log(`  ${e}`);
+      if (errs.length > 12) console.log(`  … ${errs.length - 12} more`);
+    }
+  }
+}
+
 await server.close();
 if (failed) {
   console.error(`${failed} seed check(s) failed`);
@@ -88,3 +120,4 @@ if (failed) {
 }
 console.log('room seeds 0-50 ok');
 console.log('ok: seeds 0 and 1-50 for meeting, bedroom, studio');
+console.log('ok: cafe, classroom, open office — seeds 0–50 inside, clear, and deterministic');

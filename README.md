@@ -30,7 +30,9 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   with exam bays, a koban-style police station with a holding cell, and a
   convenience store with shelves and a fridge wall. **Meeting**, **Bedroom** and
   **Studio** are more furnished rooms (a meeting room, a small bedroom, and a
-  Japanese 1R). Each room is Cutaway or Full. A layout seed of 0 is the hand-made
+  Japanese 1R). The **Cafe**, **Classroom** and **Open office** tabs are a small
+  kissaten, a Japanese classroom, and an open-plan studio, separate from the
+  Office kit. Each room is Cutaway or Full. A layout seed of 0 is the hand-made
   room; the same number always rebuilds that room. They stay
   in the catalogue: the sample town does not place them. Tap one to turn
   it around, try its types, colours and looks, and copy the `createAsset(...)`
