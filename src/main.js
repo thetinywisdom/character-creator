@@ -63,7 +63,7 @@ let reframe = true;
 // ---------------------------------------------------------------------------
 // 📦 Catalogue
 // ---------------------------------------------------------------------------
-const TABS = [['palette', '🎨 Palette'], ['all', 'All'], ['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['nature', 'Nature'], ['animals', 'Animals'], ['vehicles', 'Vehicles'], ['office', 'Office'], ['diner', 'Diner'], ['areas', 'Areas']];
+const TABS = [['palette', '🎨 Palette'], ['all', 'All'], ['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['nature', 'Nature'], ['animals', 'Animals'], ['vehicles', 'Vehicles'], ['office', 'Office'], ['diner', 'Diner'], ['clinic', 'Clinic'], ['police', 'Police'], ['minimarket', 'Minimarket'], ['areas', 'Areas']];
 const catalogEl = document.querySelector('#catalog');
 const itemEl = document.querySelector('#item');
 const items = ASSETS.filter((a) => a.group);
@@ -117,6 +117,12 @@ function openItem(id, p) {
 }
 
 const OPTION_LABELS = { pattern: 'Pattern', tailType: 'Tail', earType: 'Ears', coat: 'Coat' };
+// One seed box for every furnished room. A kit opts in with seedInput or
+// seedControl, or by being a *.room that already stores a seed. Other seeded
+// props keep the New look button. Randomize skips 0, the hand-made layout.
+function usesRoomSeed(a) {
+  return !!(a.seedInput || a.seedControl || (a.id.endsWith('.room') && 'seed' in (a.params ?? {})));
+}
 function renderItemPanel() {
   const a = CATALOG[selected.id];
   const p = selected.params;
@@ -135,7 +141,9 @@ function renderItemPanel() {
       ${chips('Shop', 'shopType', shopTypes)}
       ${Object.entries(a.options ?? {}).map(([k, vals]) => chips(OPTION_LABELS[k] ?? k, k, vals)).join('')}
       ${a.animated ? `<h3>Animation</h3><div class="chips">${['Still', 'Walk', 'Run', 'Sit', 'Loaf', 'Sleep'].map((m) => `<button data-anim="${m}" class="${state.itemAnim === m ? 'on' : ''}">${m}</button>`).join('')}</div>` : ''}
-      ${a.seedInput ? `<h3>Layout seed</h3><div class="seed-row"><input data-act="seed-num" type="number" step="1" value="${Number(p.seed) || 0}" aria-label="Layout seed"><button data-act="seed-random">Randomize</button></div>` : ('seed' in a.params ? '<h3>Look</h3><div class="chips"><button data-act="seed">🎲 New look</button></div>' : '')}
+      ${usesRoomSeed(a)
+        ? `<h3>Layout seed</h3><div class="seed-row"><input data-act="seed-num" type="number" step="1" value="${Number.isFinite(Number(p.seed)) ? Math.trunc(Number(p.seed)) : 0}" aria-label="Layout seed"><button data-act="seed-random">Randomize</button></div><p class="it-note">0 is the hand-made layout. The same number rebuilds the same room.</p>`
+        : ('seed' in (a.params ?? {}) ? '<h3>Look</h3><div class="chips"><button data-act="seed">🎲 New look</button></div>' : '')}
       <h3>Use it in a game</h3>
       <pre>${code}</pre>
       <button data-act="copy">Copy</button>

@@ -207,6 +207,16 @@ src/diner/items.js     diner kit (catalogue Diner tab): procedural counter, stoo
                        booths, jukebox, grill and the furnished room. Not placed
                        by the sample town. No GLBs; manifest and layout are in
                        public/diner-kit/
+src/clinic/items.js    clinic kit (catalogue Clinic tab): procedural reception, exam
+                       beds, curtains and the furnished room. Not placed by the sample town
+public/clinic-kit/     manifest.json and layout.json (no GLBs)
+src/police/items.js    police kit (catalogue Police tab): procedural koban counter, cell,
+                       lockers and the furnished room. Not placed by the sample town
+public/police-kit/     manifest.json and layout.json (no GLBs)
+src/minimarket/items.js minimarket kit (catalogue Minimarket tab): procedural konbini
+                       counter, shelves, fridges and the furnished room. Not placed
+                       by the sample town
+public/minimarket-kit/ manifest.json and layout.json (no GLBs)
 src/creator/Creator.js the character creator panel (viewer only)
 src/viewer/            Cell (a preview stage), params (saved settings)
 src/lib/               shapes, foliage (lobes, fronds, shaded leaf/bark, trimmed hedges), merge
@@ -244,7 +254,8 @@ roles are softened. `light` glows: never use it for big textured surfaces.
 defaults. `params.variant` picks from `variants`, `params.color` from
 `colors`, `params.seed` changes the look of seeded items, buildings take
 `w` / `d` (lot size) and shops `shopType`. Groups (catalogue tabs):
-buildings, street, traffic, extras, nature, animals, vehicles, office, diner, areas.
+buildings, street, traffic, extras, nature, animals, vehicles, office, diner,
+clinic, police, minimarket, areas.
 `animated: 'cat'` marks items with joints (`animal.cat`: pose it with
 `poseCat`, `anim/catGait.js`; resting poses via `gait.pose = 'sit' |
 'loaf' | 'sleep'`; joints legF*/legB* plus lowF*/lowB* elbows and hocks). Cats take `pattern`, `tailType`, `earType` and `coat`
@@ -279,6 +290,24 @@ hand-placed furniture is `layout.json` and the seeded rules are
 `src/diner/plan.js`. The floor mat and the pendant lamp have no collider.
 The room floor is 2 cm above y = 0, same as the office. Check layouts with
 `node scripts/check-diner-layout.mjs`.
+
+**Clinic, police and minimarket kits** (catalogue only, not placed by `layout.js`).
+Tabs **Clinic**, **Police** and **Minimarket**. `createAsset('clinic.exam_bed', {}, style)`,
+`createAsset('police.holding_cell', {}, style)`, `createAsset('minimarket.shelf_aisle', {}, style)`
+and the other ids build the pieces from boxes and cylinders in `src/clinic/items.js`,
+`src/police/items.js` and `src/minimarket/items.js`. `clinic.room` (10 × 8 m),
+`police.room` (12 × 8 m) and `minimarket.room` (10 × 8 m) are the furnished rooms,
+front facing +z: `variant: 'Cutaway'` (default; the +z and +x walls are hidden) or
+`'Full'`. `seed` (default 0) is the hand-placed layout; any other integer is
+deterministic (`mulberry32` in `src/lib/rng.js`, rules in `src/<kit>/layout.js`).
+The catalogue panel has a seed field and Randomize, and the copied `createAsset`
+line includes the seed. Doors, windows and the fixed anchors stay; furniture
+counts, which wall a group uses, a left-right mirror of the checkout, loose-prop
+jitter and a few swatches change. A 0.9 m path from the door stays clear.
+`node scripts/check-room-seeds.mjs` rejects overlaps for seeds 0–50. Parts use `style.material(role, swatch)`. There are no GLBs. Names,
+footprints and the furniture layout are in `public/clinic-kit/`, `public/police-kit/`
+and `public/minimarket-kit/`. Floor mats, ceiling lights, the koban lamp and the
+noren have no collider. The room floor is 2 cm above y = 0, same as the office.
 
 Catalogue-only street details (the sample town does not place them; `params.seed` and 🎲 New look, same as a tree): `prop.manhole` (Flower, Wave, Grid; 40 triangles at PS1 detail), `prop.backClutter` (Propane tanks 156, Gas meter 64, Drainpipe 78, Cluster 310), `prop.nobori` (Stripes, Blocks; 92; call `tickProps` from `anim/props.js` each frame so the cloth sways), `animal.bird` (Pigeon 154, Sparrow 156; the same `tickProps` runs the peck and the perched look). No new palette swatches. No separate outdoor AC prop: units already dress backs, balconies and roofs. Trees (`nature.tree`) are clumped low-poly lobes (bamboo: segmented culms; the old giant: a kinked trunk that splits) and come in 11 presets the city plants
 (oak, lollipop, pine, old giant, cherry blossom, Japanese maple, ginkgo,
@@ -604,6 +633,8 @@ default designs if relevant.
 No unit tests; verify by building and looking.
 
 - `npm run build` must pass.
+- Diner layouts: `node scripts/check-diner-layout.mjs` (seeds 0–50).
+- Room seeds: `node scripts/check-room-seeds.mjs` (clinic, police, minimarket, seeds 0–50).
 - Drive the viewer with Playwright (Chromium is preinstalled; use
   `--use-gl=angle --use-angle=swiftshader`): `npx vite preview`, open the
   page, use `window.__cc` and take screenshots.

@@ -381,6 +381,30 @@ Not placed in the sample town. A game places a piece with `createAsset('diner.st
 - The room is 12 × 8 m, open at the top, front facing +z: checker floor, a counter and stools, booths, a kitchen line and a window wall. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0.
 - `seed: 0` (or no seed) is the hand-placed layout. Any other integer is a deterministic variation: booths along the counter, in the front half, or down the left wall; stool count; a mirror of a row; small turns on loose props; a palette theme for the red and teal surfaces. The door, windows, counter and kitchen do not move, and a clear path stays open from the entrance.
 
+## 3e-8. Clinic kit (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('clinic.exam_bed', {}, style)` (ids `clinic.*`) or the whole room with `createAsset('clinic.room', { variant: 'Cutaway' }, style)`.
+
+- The same low-poly boxes and cylinders as the office kit. No readable lettering: the cross is two bars, charts are coloured folders, the monitor is flat navy.
+- Colour is a palette swatch on a role. Clinic green is Seafoam (`paint` on the desk and the wainscot, `cloth` on the stool), the curtain is Sky cloth, the cross is Dusty rose. `light` is only the ceiling bulb and the desk-lamp bulb. No new swatches. Walls use `paint`, not `building`, so Seafoam and Off white are not pulled onto the building greys. The floor checker stays on `concrete`.
+- The room is 10 × 8 m, open at the top, front facing +z: two exam bays along the back, a reception desk and a waiting row. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0. `seed` 0 is that layout. Another integer moves the waiting row (left wall, right wall or the front), the chair count, which bay gets an IV, and the wainscot, chair and curtain swatches. The sink, the medicine cabinet and the reception desk stay.
+
+## 3e-9. Police station kit (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('police.holding_cell', {}, style)` (ids `police.*`) or the whole room with `createAsset('police.room', { variant: 'Cutaway' }, style)`.
+
+- Koban colours at the size of a small station. No readable lettering: the notice board is coloured sheets and two head-and-shoulders blocks, the counter glass is a service window.
+- Navy is the counter, the wainscot and the chair cloth. The stripe and the hanging lamp are Dusty rose (`paint` and `light`). Bars are Charcoal. No new swatches. Walls use `paint`, so Navy is not flattened to a building grey.
+- The room is 12 × 8 m, open at the top, front facing +z: counter toward the street, a barred holding cell in the back corner, desks and lockers. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0. `seed` 0 is that layout. Another integer sets one to three desks, with each chair on the staff side facing its desk, two or three filing cabinets, and the chair cloth (Navy, Denim or Slate). The counter and the cell stay, and a 0.9 m path runs from the door to the cell.
+
+## 3e-10. Minimarket kit (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('minimarket.shelf_aisle', {}, style)` (ids `minimarket.*`) or the whole room with `createAsset('minimarket.room', { variant: 'Cutaway' }, style)`.
+
+- A konbini aisle: goods are colour blocks, drink rows sit behind fridge glass, the noren is a split curtain with a circle. No readable lettering.
+- Navy, Butter and Seafoam mark the counter, the cornice and the warmer. Drink and shelf colours are the existing pastels on `paint`. `light` is the warmer strip, the coffee hotplate and the ceiling lamp. No new swatches. Walls use `paint`, so the navy cornice stays navy.
+- The room is 10 × 8 m, open at the top, front facing +z: a fridge wall, two shelf aisles, a register and the entrance machines. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0. `seed` 0 is that layout. Another integer puts the register on the left or the right, uses four or five fridges (the open end is an ice chest), two or three aisles with a 0.9 m gap, and rotates the goods colours. The +x side of a fridge is glass so the end case still shows drinks from the isometric corner. The door and the fridge wall stay.
+
 ## 3e-1. People content
 
 - **Held items** put the arm in a pose and stay upright whatever the arm does:

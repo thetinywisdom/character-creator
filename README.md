@@ -25,9 +25,12 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   furniture kit (desks, chairs, a lounge, a meeting room, a kitchen, plants)
   and the whole furnished office. The **Diner** tab is a 1950s American diner
   in the same low-poly look: the furnished room (Cutaway or Full) and its
-  counter, stools, booths, jukebox, grill and the rest of the kit. The diner
-  room takes a `seed`: 0 is the hand-placed layout, any other integer rearranges
-  the dining floor the same way every time. Both stay
+  counter, stools, booths, jukebox, grill and the rest of the kit. The **Clinic**,
+  **Police** and **Minimarket** tabs are interior kits in the same look: a clinic
+  with exam bays, a koban-style police station with a holding cell, and a
+  convenience store with shelves and a fridge wall. Each room is Cutaway or Full.
+  A layout seed of 0 is the hand-made room; the same number always rebuilds that
+  room. They stay
   in the catalogue: the sample town does not place them. Tap one to turn
   it around, try its types, colours and looks, and copy the `createAsset(...)`
   line that builds it. 🎲 New look gives a really different building (shape,
