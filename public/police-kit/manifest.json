@@ -1,0 +1,436 @@
+{
+  "units": "metres",
+  "up": "+y",
+  "front": "+z",
+  "origin": "bottom centre",
+  "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+  "note": "Procedural kit. The catalogue builds these in src/police/items.js. No GLBs.",
+  "items": {
+    "front_counter": {
+      "label": "Front counter",
+      "group": "counter",
+      "size": [
+        4.56,
+        1.62,
+        0.735
+      ],
+      "footprint": [
+        4.6,
+        0.8
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "glass:Navy",
+        "glass:Sky",
+        "metal:Light gray",
+        "paint:Dusty rose",
+        "paint:Navy",
+        "paint:Off white"
+      ],
+      "tris": 204
+    },
+    "officer_desk": {
+      "label": "Officer desk",
+      "group": "office",
+      "size": [
+        1.36,
+        0.73,
+        0.66
+      ],
+      "footprint": [
+        1.4,
+        0.72
+      ],
+      "materials": [
+        "metal:Light gray",
+        "paint:Dusty rose",
+        "paint:Navy",
+        "paint:Paper",
+        "paint:Powder blue",
+        "wood:Tan"
+      ],
+      "tris": 84
+    },
+    "officer_chair": {
+      "label": "Officer chair",
+      "group": "office",
+      "size": [
+        0.46,
+        0.91,
+        0.445
+      ],
+      "footprint": [
+        0.52,
+        0.54
+      ],
+      "materials": [
+        "cloth:Navy",
+        "darkMetal:Charcoal",
+        "metal:Light gray"
+      ],
+      "tris": 84
+    },
+    "holding_cell": {
+      "label": "Holding cell",
+      "group": "cell",
+      "size": [
+        2.5,
+        2.15,
+        2.16
+      ],
+      "footprint": [
+        2.55,
+        2.2
+      ],
+      "materials": [
+        "cloth:Navy",
+        "concrete:Slate",
+        "darkMetal:Charcoal",
+        "metal:Light gray",
+        "paint:Light gray"
+      ],
+      "tris": 264
+    },
+    "locker_bank": {
+      "label": "Lockers",
+      "group": "office",
+      "size": [
+        1.66,
+        1.805,
+        0.476
+      ],
+      "footprint": [
+        1.7,
+        0.52
+      ],
+      "materials": [
+        "darkMetal:Ink",
+        "metal:Light gray",
+        "paint:Dusty rose",
+        "paint:Navy",
+        "paint:Slate"
+      ],
+      "tris": 180
+    },
+    "notice_board": {
+      "label": "Notice board",
+      "group": "walls",
+      "size": [
+        1.32,
+        0.86,
+        0.057
+      ],
+      "footprint": [
+        1.36,
+        0.08
+      ],
+      "materials": [
+        "paint:Apricot",
+        "paint:Blush",
+        "paint:Butter",
+        "paint:Dusty rose",
+        "paint:Navy",
+        "paint:Paper",
+        "paint:Powder blue",
+        "paint:Sage",
+        "wood:Walnut"
+      ],
+      "tris": 156
+    },
+    "filing_cabinet": {
+      "label": "Filing cabinet",
+      "group": "office",
+      "size": [
+        0.46,
+        1.15,
+        0.56
+      ],
+      "footprint": [
+        0.5,
+        0.58
+      ],
+      "materials": [
+        "metal:Light gray",
+        "paint:Paper",
+        "paint:Slate"
+      ],
+      "tris": 120
+    },
+    "water_cooler": {
+      "label": "Water cooler",
+      "group": "office",
+      "size": [
+        0.34,
+        1.17,
+        0.38
+      ],
+      "footprint": [
+        0.4,
+        0.4
+      ],
+      "materials": [
+        "metal:Light gray",
+        "paint:Navy",
+        "paint:Off white",
+        "paint:Paper",
+        "paint:Powder blue"
+      ],
+      "tris": 112
+    },
+    "waiting_bench": {
+      "label": "Waiting bench",
+      "group": "counter",
+      "size": [
+        1.45,
+        0.8,
+        0.405
+      ],
+      "footprint": [
+        1.5,
+        0.5
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "wood:Tan"
+      ],
+      "tris": 60
+    },
+    "desk_lamp": {
+      "label": "Desk lamp",
+      "group": "office",
+      "size": [
+        0.19,
+        0.328,
+        0.179
+      ],
+      "footprint": [
+        0.2,
+        0.18
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "light:Butter",
+        "metal:Light gray"
+      ],
+      "tris": 84
+    },
+    "radio": {
+      "label": "Radio",
+      "group": "office",
+      "size": [
+        0.26,
+        0.24,
+        0.155
+      ],
+      "footprint": [
+        0.28,
+        0.18
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "light:Dusty rose",
+        "metal:Light gray",
+        "paint:Navy"
+      ],
+      "tris": 64
+    },
+    "mug": {
+      "label": "Mug",
+      "group": "office",
+      "size": [
+        0.09,
+        0.08,
+        0.086
+      ],
+      "footprint": [
+        0.12,
+        0.12
+      ],
+      "materials": [
+        "paint:Navy",
+        "paint:Off white"
+      ],
+      "tris": 48
+    },
+    "key_board": {
+      "label": "Key board",
+      "group": "walls",
+      "size": [
+        0.52,
+        0.4,
+        0.047
+      ],
+      "footprint": [
+        0.56,
+        0.08
+      ],
+      "materials": [
+        "metal:Light gray",
+        "paint:Butter",
+        "paint:Dusty rose",
+        "wood:Walnut"
+      ],
+      "tris": 204
+    },
+    "beacon": {
+      "label": "Koban lamp",
+      "group": "counter",
+      "size": [
+        0.208,
+        0.625,
+        0.24
+      ],
+      "footprint": [
+        0.28,
+        0.28
+      ],
+      "materials": [
+        "darkMetal:Ink",
+        "light:Dusty rose",
+        "metal:Light gray"
+      ],
+      "tris": 88
+    },
+    "coat_rack": {
+      "label": "Coat rack",
+      "group": "office",
+      "size": [
+        0.312,
+        1.64,
+        0.36
+      ],
+      "footprint": [
+        0.42,
+        0.42
+      ],
+      "materials": [
+        "cloth:Navy",
+        "darkMetal:Charcoal",
+        "metal:Light gray"
+      ],
+      "tris": 116
+    },
+    "trash_bin": {
+      "label": "Trash bin",
+      "group": "office",
+      "size": [
+        0.3,
+        0.43,
+        0.3
+      ],
+      "footprint": [
+        0.32,
+        0.32
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "paint:Dusty rose",
+        "paint:Slate"
+      ],
+      "tris": 36
+    },
+    "clock": {
+      "label": "Wall clock",
+      "group": "walls",
+      "size": [
+        0.36,
+        0.36,
+        0.05
+      ],
+      "footprint": [
+        0.4,
+        0.08
+      ],
+      "materials": [
+        "darkMetal:Ink",
+        "metal:Light gray",
+        "paint:Dusty rose",
+        "paint:Off white"
+      ],
+      "tris": 100
+    },
+    "ceiling_light": {
+      "label": "Ceiling light",
+      "group": "walls",
+      "size": [
+        0.346,
+        0.725,
+        0.4
+      ],
+      "footprint": [
+        0.44,
+        0.44
+      ],
+      "materials": [
+        "darkMetal:Ink",
+        "light:Butter",
+        "paint:Off white"
+      ],
+      "tris": 64
+    },
+    "floor_mat": {
+      "label": "Floor mat",
+      "group": "counter",
+      "size": [
+        0.9,
+        0.016,
+        0.56
+      ],
+      "footprint": [
+        0.94,
+        0.6
+      ],
+      "materials": [
+        "cloth:Navy",
+        "paint:Dusty rose"
+      ],
+      "tris": 24
+    },
+    "window_bay": {
+      "label": "Window",
+      "group": "walls",
+      "size": [
+        2.05,
+        1.36,
+        0.12
+      ],
+      "footprint": [
+        2.05,
+        0.14
+      ],
+      "materials": [
+        "metal:Light gray",
+        "paint:Navy"
+      ],
+      "tris": 72
+    },
+    "door": {
+      "label": "Station door",
+      "group": "walls",
+      "size": [
+        1.28,
+        2.24,
+        0.135
+      ],
+      "footprint": [
+        1.32,
+        0.14
+      ],
+      "materials": [
+        "metal:Light gray",
+        "paint:Dusty rose",
+        "paint:Navy"
+      ],
+      "tris": 120
+    }
+  },
+  "room": {
+    "size": [
+      12,
+      3,
+      8
+    ],
+    "note": "Cutaway hides room_wall_front and room_wall_side. Triangle count includes the hidden walls.",
+    "tris": 4780
+  }
+}

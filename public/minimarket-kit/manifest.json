@@ -1,0 +1,456 @@
+{
+  "units": "metres",
+  "up": "+y",
+  "front": "+z",
+  "origin": "bottom centre",
+  "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+  "note": "Procedural kit. The catalogue builds these in src/minimarket/items.js. No GLBs.",
+  "items": {
+    "register_counter": {
+      "label": "Register counter",
+      "group": "checkout",
+      "size": [
+        2.2,
+        1.178,
+        0.78
+      ],
+      "footprint": [
+        2.24,
+        0.82
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "darkMetal:Ink",
+        "glass:Navy",
+        "metal:Light gray",
+        "paint:Butter",
+        "paint:Dusty rose",
+        "paint:Mint",
+        "paint:Navy",
+        "paint:Off white",
+        "paint:Paper"
+      ],
+      "tris": 132
+    },
+    "shelf_aisle": {
+      "label": "Shelf aisle",
+      "group": "aisles",
+      "size": [
+        2.6,
+        1.51,
+        0.6
+      ],
+      "footprint": [
+        2.66,
+        0.66
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "metal:Light gray",
+        "paint:Apricot",
+        "paint:Blush",
+        "paint:Butter",
+        "paint:Cocoa",
+        "paint:Dusty rose",
+        "paint:Lilac",
+        "paint:Mint",
+        "paint:Navy",
+        "paint:Powder blue",
+        "paint:Sage",
+        "paint:Sand",
+        "paint:Seafoam"
+      ],
+      "tris": 240
+    },
+    "drinks_fridge": {
+      "label": "Drinks fridge",
+      "group": "aisles",
+      "size": [
+        1.08,
+        1.9,
+        0.594
+      ],
+      "footprint": [
+        1.12,
+        0.64
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "glass:Sky",
+        "metal:Light gray",
+        "paint:Apricot",
+        "paint:Blush",
+        "paint:Butter",
+        "paint:Cocoa",
+        "paint:Dusty rose",
+        "paint:Lilac",
+        "paint:Mint",
+        "paint:Navy",
+        "paint:Off white",
+        "paint:Powder blue",
+        "paint:Sage",
+        "paint:Sand",
+        "paint:Seafoam"
+      ],
+      "tris": 264
+    },
+    "hot_food": {
+      "label": "Hot food warmer",
+      "group": "checkout",
+      "size": [
+        0.82,
+        0.826,
+        0.468
+      ],
+      "footprint": [
+        0.86,
+        0.52
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "light:Butter",
+        "metal:Light gray",
+        "paint:Apricot",
+        "paint:Butter",
+        "paint:Off white",
+        "paint:Sage",
+        "paint:Sand"
+      ],
+      "tris": 168
+    },
+    "magazine_rack": {
+      "label": "Magazine rack",
+      "group": "entrance",
+      "size": [
+        0.68,
+        1.18,
+        0.32
+      ],
+      "footprint": [
+        0.74,
+        0.42
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "metal:Light gray",
+        "paint:Apricot",
+        "paint:Blush",
+        "paint:Butter",
+        "paint:Dusty rose",
+        "paint:Lilac",
+        "paint:Navy",
+        "paint:Powder blue",
+        "paint:Seafoam"
+      ],
+      "tris": 180
+    },
+    "atm": {
+      "label": "ATM",
+      "group": "entrance",
+      "size": [
+        0.56,
+        1.45,
+        0.46
+      ],
+      "footprint": [
+        0.58,
+        0.5
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "glass:Navy",
+        "paint:Butter",
+        "paint:Light gray",
+        "paint:Navy",
+        "paint:Off white"
+      ],
+      "tris": 144
+    },
+    "copier": {
+      "label": "Copier",
+      "group": "entrance",
+      "size": [
+        0.66,
+        0.9,
+        0.61
+      ],
+      "footprint": [
+        0.72,
+        0.64
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "glass:Navy",
+        "paint:Light gray",
+        "paint:Off white",
+        "paint:Paper"
+      ],
+      "tris": 84
+    },
+    "basket": {
+      "label": "Baskets",
+      "group": "entrance",
+      "size": [
+        0.36,
+        0.252,
+        0.26
+      ],
+      "footprint": [
+        0.42,
+        0.32
+      ],
+      "materials": [
+        "metal:Light gray",
+        "paint:Dusty rose",
+        "paint:Powder blue"
+      ],
+      "tris": 144
+    },
+    "coffee_machine": {
+      "label": "Coffee machine",
+      "group": "checkout",
+      "size": [
+        0.3,
+        0.44,
+        0.328
+      ],
+      "footprint": [
+        0.34,
+        0.36
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "glass:Navy",
+        "light:Butter",
+        "metal:Light gray",
+        "paint:Navy",
+        "paint:Off white",
+        "paint:Paper"
+      ],
+      "tris": 108
+    },
+    "microwave": {
+      "label": "Microwave",
+      "group": "checkout",
+      "size": [
+        0.46,
+        0.28,
+        0.36
+      ],
+      "footprint": [
+        0.5,
+        0.38
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "glass:Navy",
+        "metal:Light gray",
+        "paint:Off white"
+      ],
+      "tris": 48
+    },
+    "ice_chest": {
+      "label": "Ice cream chest",
+      "group": "aisles",
+      "size": [
+        1.02,
+        0.527,
+        0.58
+      ],
+      "footprint": [
+        1.06,
+        0.64
+      ],
+      "materials": [
+        "paint:Butter",
+        "paint:Dusty rose",
+        "paint:Mint",
+        "paint:Navy",
+        "paint:Off white",
+        "paint:Powder blue"
+      ],
+      "tris": 168
+    },
+    "umbrella_stand": {
+      "label": "Umbrella stand",
+      "group": "entrance",
+      "size": [
+        0.242,
+        0.753,
+        0.28
+      ],
+      "footprint": [
+        0.36,
+        0.36
+      ],
+      "materials": [
+        "paint:Dusty rose",
+        "paint:Navy",
+        "paint:Off white",
+        "paint:Powder blue"
+      ],
+      "tris": 60
+    },
+    "noren": {
+      "label": "Noren",
+      "group": "entrance",
+      "size": [
+        1.35,
+        0.76,
+        0.04
+      ],
+      "footprint": [
+        1.4,
+        0.08
+      ],
+      "materials": [
+        "cloth:Off white",
+        "cloth:Seafoam",
+        "paint:Navy",
+        "wood:Walnut"
+      ],
+      "tris": 84
+    },
+    "poster": {
+      "label": "Poster",
+      "group": "walls",
+      "size": [
+        0.5,
+        0.7,
+        0.038
+      ],
+      "footprint": [
+        0.54,
+        0.06
+      ],
+      "materials": [
+        "paint:Butter",
+        "paint:Dusty rose",
+        "paint:Navy",
+        "paint:Off white"
+      ],
+      "tris": 60
+    },
+    "trash_bin": {
+      "label": "Trash bin",
+      "group": "entrance",
+      "size": [
+        0.34,
+        0.54,
+        0.34
+      ],
+      "footprint": [
+        0.36,
+        0.36
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "paint:Light gray",
+        "paint:Navy"
+      ],
+      "tris": 36
+    },
+    "clock": {
+      "label": "Wall clock",
+      "group": "walls",
+      "size": [
+        0.36,
+        0.36,
+        0.05
+      ],
+      "footprint": [
+        0.4,
+        0.08
+      ],
+      "materials": [
+        "darkMetal:Ink",
+        "paint:Navy",
+        "paint:Off white"
+      ],
+      "tris": 88
+    },
+    "ceiling_light": {
+      "label": "Ceiling light",
+      "group": "walls",
+      "size": [
+        0.7,
+        0.606,
+        0.28
+      ],
+      "footprint": [
+        0.74,
+        0.34
+      ],
+      "materials": [
+        "darkMetal:Ink",
+        "light:Butter",
+        "paint:Off white"
+      ],
+      "tris": 40
+    },
+    "floor_mat": {
+      "label": "Floor mat",
+      "group": "entrance",
+      "size": [
+        1.15,
+        0.016,
+        0.66
+      ],
+      "footprint": [
+        1.2,
+        0.7
+      ],
+      "materials": [
+        "cloth:Navy",
+        "paint:Butter"
+      ],
+      "tris": 24
+    },
+    "window_bay": {
+      "label": "Storefront window",
+      "group": "walls",
+      "size": [
+        2.15,
+        1.7,
+        0.12
+      ],
+      "footprint": [
+        2.15,
+        0.14
+      ],
+      "materials": [
+        "metal:Light gray",
+        "paint:Navy"
+      ],
+      "tris": 84
+    },
+    "door": {
+      "label": "Automatic door",
+      "group": "walls",
+      "size": [
+        1.7,
+        2.25,
+        0.135
+      ],
+      "footprint": [
+        1.74,
+        0.14
+      ],
+      "materials": [
+        "metal:Light gray",
+        "paint:Butter",
+        "paint:Navy"
+      ],
+      "tris": 132
+    }
+  },
+  "room": {
+    "size": [
+      10,
+      3,
+      8
+    ],
+    "note": "Cutaway hides room_wall_front and room_wall_side. Triangle count includes the hidden walls.",
+    "tris": 6004
+  }
+}

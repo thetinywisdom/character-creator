@@ -148,6 +148,8 @@ src/city/backs.js      dresses bare backs and sides of every building (windows, 
                        back door, drain pipe, emergency stairs), found with rays
 src/city/variety.js    shared building variety: flatsAbove, roofTop, frontExtras, side, pick, between
 src/city/silhouette.js see-through people in the iso view (stencil + GreaterDepth copy)
+src/city/isoPeople.js  iso view only: chunkier 6-head people at 1.2×, lighter clothes,
+                       a low-detail mesh, and silhouettes only when a building hides them
 src/city/playground.js park playground: swings (seats on pivot groups, userData.swing, taken out
                        of the merged town by takeSwings, swung by updateSwings), slide (chuteAt
                        curve), climbing frame; kid roles swing / slide / climb (updatePlayKid);
@@ -201,11 +203,41 @@ src/office/items.js    office kit (catalogue Office tab): procedural desks, chai
                        lounge, kitchen, plants, and the furnished room. Not placed
                        by the sample town. GLB loader: src/office/loadOfficeKit.js
 public/office-kit/     the kit's GLBs, manifest.json, layout.json, standalone preview
+src/diner/items.js     diner kit (catalogue Diner tab): procedural counter, stools,
+                       booths, jukebox, grill and the furnished room. Not placed
+                       by the sample town. No GLBs; manifest and layout are in
+                       public/diner-kit/
+src/clinic/items.js    clinic kit (catalogue Clinic tab): procedural reception, exam
+                       beds, curtains and the furnished room. Not placed by the sample town
+public/clinic-kit/     manifest.json and layout.json (no GLBs)
+src/police/items.js    police kit (catalogue Police tab): procedural koban counter, cell,
+                       lockers and the furnished room. Not placed by the sample town
+public/police-kit/     manifest.json and layout.json (no GLBs)
+src/minimarket/items.js minimarket kit (catalogue Minimarket tab): procedural konbini
+                       counter, shelves, fridges and the furnished room. Not placed
+                       by the sample town
+public/minimarket-kit/ manifest.json and layout.json (no GLBs)
+src/meeting/items.js   meeting-room kit (catalogue Meeting tab). Not placed by the sample town
+src/bedroom/items.js   small-bedroom kit (catalogue Bedroom tab). Not placed by the sample town
+src/studio/items.js    1R studio kit (catalogue Studio tab). Not placed by the sample town
+public/meeting-kit/    manifest.json, layout.json (no GLBs)
+public/bedroom-kit/    manifest.json, layout.json (no GLBs)
+public/studio-kit/     manifest.json, layout.json (no GLBs)
+src/cafe/items.js      cafe kit (catalogue Cafe tab): espresso bar, round tables,
+                       window counter and the furnished room. Not placed by the
+                       sample town. No GLBs; public/cafe-kit/
+src/classroom/items.js classroom kit (catalogue Classroom tab): student desks,
+                       blackboard, cubbies and the furnished room. Not placed by
+                       the sample town. No GLBs; public/classroom-kit/
+src/openoffice/items.js open-office kit (catalogue Open office tab): shared bench
+                       desks, lounge, pantry and the furnished room. Namespace
+                       openoffice, separate from the office kit. Not placed by
+                       the sample town. No GLBs; public/openoffice-kit/
 src/creator/Creator.js the character creator panel (viewer only)
 src/viewer/            Cell (a preview stage), params (saved settings)
 src/lib/               shapes, foliage (lobes, fronds, shaded leaf/bark, trimmed hedges), merge
                        (one mesh per material), skin (one skinned mesh per person), rng,
-                       textures, saveFile
+                       roomPlan (seeded-room overlap checks), textures, saveFile
 ```
 
 ## The rules (keep them in any game)
@@ -238,7 +270,9 @@ roles are softened. `light` glows: never use it for big textured surfaces.
 defaults. `params.variant` picks from `variants`, `params.color` from
 `colors`, `params.seed` changes the look of seeded items, buildings take
 `w` / `d` (lot size) and shops `shopType`. Groups (catalogue tabs):
-buildings, street, traffic, extras, nature, animals, vehicles, office, areas.
+buildings, street, traffic, extras, nature, animals, vehicles, office, diner,
+clinic, police, minimarket, meeting, bedroom, studio, cafe, classroom,
+openoffice, areas.
 `animated: 'cat'` marks items with joints (`animal.cat`: pose it with
 `poseCat`, `anim/catGait.js`; resting poses via `gait.pose = 'sit' |
 'loaf' | 'sleep'`; joints legF*/legB* plus lowF*/lowB* elbows and hocks). Cats take `pattern`, `tailType`, `earType` and `coat`
@@ -265,6 +299,75 @@ wants the files instead of the code calls `loadOfficeKit({ style })` from
 Rebuild the GLBs with `blender -b -P src/office/build_office_kit.py` (blend:
 `src/office/office_kit.blend`). Rugs have no collider. The room floor is 2 cm
 above y = 0 so it does not flicker on a ground at y = 0.
+
+**Diner kit** (catalogue only, not placed by `layout.js`). Tab **Diner**.
+`createAsset('diner.stool', {}, style)` and the other `diner.*` ids build the
+pieces from boxes and cylinders in `src/diner/items.js`. `diner.room` is the
+furnished diner, 12 × 8 m, front facing +z: `variant: 'Cutaway'` (default;
+the +z and +x walls are hidden) or `'Full'`. `seed` (an integer; `0` or
+omitted is the hand-placed layout) rearranges the dining floor with the
+repo's `mulberry32`. The same seed is the same room. The counter, kitchen,
+door and windows stay put. Parts use `style.material(role, swatch)`.
+There are no GLBs. Names and footprints are in `public/diner-kit/`; the
+hand-placed furniture is `layout.json` and the seeded rules are
+`src/diner/plan.js`. The floor mat and the pendant lamp have no collider.
+The room floor is 2 cm above y = 0, same as the office. Check layouts with
+`node scripts/check-diner-layout.mjs`.
+
+**Clinic, police and minimarket kits** (catalogue only, not placed by `layout.js`).
+Tabs **Clinic**, **Police** and **Minimarket**. `createAsset('clinic.exam_bed', {}, style)`,
+`createAsset('police.holding_cell', {}, style)`, `createAsset('minimarket.shelf_aisle', {}, style)`
+and the other ids build the pieces from boxes and cylinders in `src/clinic/items.js`,
+`src/police/items.js` and `src/minimarket/items.js`. `clinic.room` (10 × 8 m),
+`police.room` (12 × 8 m) and `minimarket.room` (10 × 8 m) are the furnished rooms,
+front facing +z: `variant: 'Cutaway'` (default; the +z and +x walls are hidden) or
+`'Full'`. `seed` (default 0) is the hand-placed layout; any other integer is
+deterministic (`mulberry32` in `src/lib/rng.js`, rules in `src/<kit>/layout.js`).
+The catalogue panel has a seed field and Randomize, and the copied `createAsset`
+line includes the seed. Doors, windows and the fixed anchors stay; furniture
+counts, which wall a group uses, a left-right mirror of the checkout, loose-prop
+jitter and a few swatches change. A 0.9 m path from the door stays clear.
+`node scripts/check-room-seeds.mjs` rejects overlaps for seeds 0–50. Parts use `style.material(role, swatch)`. There are no GLBs. Names,
+footprints and the furniture layout are in `public/clinic-kit/`, `public/police-kit/`
+and `public/minimarket-kit/`. Floor mats, ceiling lights, the koban lamp and the
+noren have no collider. The room floor is 2 cm above y = 0, same as the office.
+
+**Meeting, bedroom and studio kits** (catalogue only, not placed by `layout.js`).
+Tabs **Meeting**, **Bedroom**, **Studio**. `createAsset('meeting.chair', {}, style)`,
+`createAsset('bedroom.bed', {}, style)`, `createAsset('studio.sink', {}, style)`
+and the other ids build the pieces from boxes and cylinders. `meeting.room`
+(6 × 4 m), `bedroom.room` (3.5 × 3 m, one single bed) and `studio.room`
+(6 × 4 m, a Japanese 1R) are the furnished rooms, front facing +z:
+`variant: 'Cutaway'` (default; the +z and +x walls are hidden) or `'Full'`.
+`seed: 0` (or omitting it) is the hand-made layout; any other integer rebuilds
+the same room, via `mulberry32` in `src/lib/roomSeed.js`. The catalogue panel
+has a seed number and Randomize, and the copied `createAsset` line includes it.
+Parts use `style.material(role, swatch)`. There are no GLBs. Names, footprints
+and the furniture layout are in `public/meeting-kit/`, `public/bedroom-kit/`
+and `public/studio-kit/`. Rugs, the floor cushion and the hanging lamps have
+no collider. The room floor is 2 cm above y = 0, same as the office.
+
+**Cafe, classroom and open office** (catalogue only, not placed by `layout.js`).
+Tabs **Cafe**, **Classroom** and **Open office**. `createAsset('cafe.table', {}, style)`,
+`createAsset('classroom.student_desk', {}, style)` and `createAsset('openoffice.bench', {}, style)`
+build the pieces from boxes and cylinders in `src/cafe/items.js`, `src/classroom/items.js`
+and `src/openoffice/items.js`. Each `*.room` is the furnished room:
+`variant: 'Cutaway'` (default; the +z and +x walls are hidden) or `'Full'`.
+Sizes: cafe 8 × 6 m, classroom 9 × 7 m, open office 12 × 10 m, front facing +z.
+`openoffice` is not the `office` kit. Parts use `style.material(role, swatch)`.
+There are no GLBs. Names, footprints and the hand-made layout are in
+`public/cafe-kit/`, `public/classroom-kit/` and `public/openoffice-kit/`.
+`createAsset('cafe.room', { variant: 'Cutaway', seed: 7 }, style)` (the same
+for `classroom.room` and `openoffice.room`) rebuilds that seed every time.
+Omit `seed`, or pass `0`, for the hand-made `layout.json`. The catalogue seed
+box and Randomize button put the seed in the copied line. Walls, doors,
+windows, the espresso bar, the blackboard and the pantry stay put. The seed
+changes how many tables, desk rows or benches, a small pull on chairs, which
+optional props are out, and one accent from the existing palette. Classroom
+desks stay in neat rows facing the board. `node scripts/check-room-seeds.mjs`
+checks seeds 0–50 for overlaps and a clear walk from the door.
+Rugs, mats, the noren and hanging lamps have no floor collider. The room
+floor is 2 cm above y = 0, same as the office.
 
 Catalogue-only street details (the sample town does not place them; `params.seed` and 🎲 New look, same as a tree): `prop.manhole` (Flower, Wave, Grid; 40 triangles at PS1 detail), `prop.backClutter` (Propane tanks 156, Gas meter 64, Drainpipe 78, Cluster 310), `prop.nobori` (Stripes, Blocks; 92; call `tickProps` from `anim/props.js` each frame so the cloth sways), `animal.bird` (Pigeon 154, Sparrow 156; the same `tickProps` runs the peck and the perched look). No new palette swatches. No separate outdoor AC prop: units already dress backs, balconies and roofs. Trees (`nature.tree`) are clumped low-poly lobes (bamboo: segmented culms; the old giant: a kinked trunk that splits) and come in 11 presets the city plants
 (oak, lollipop, pine, old giant, cherry blossom, Japanese maple, ginkgo,
@@ -298,16 +401,31 @@ pedestrians sidestep; cars brake for things ahead. A new item needs a collider.
 many small meshes ("feel real, not be real").
 
 **See-through movers.** In the iso view, everything that moves (people,
-cats, cars, buses) shows as a flat silhouette when hidden by a building
-(blue; the player yellow), `src/city/silhouette.js`: `addSilhouette` for
-skinned people and cats, `addObjectSilhouette` for rigid things like cars.
-A new moving thing in the city needs one. Every
+cats, cars, buses) can show as a flat silhouette when a building is between
+it and the camera, `src/city/silhouette.js`: `addSilhouette` for skinned
+people and cats, `addObjectSilhouette` for rigid things like cars. A new
+moving thing in the city needs one. People are a stronger blue
+(`0x2a56b0`), the player a pale yellow (`0xfff3c4`, so it stays off warm
+roofs), cars a faint blue-grey. `City.syncPresentation` turns a silhouette
+on only when `occludedByBuilding` says a building box is within 10 m along
+the view ray (`src/city/isoPeople.js`); third person draws none. Every
 style material writes stencil 0, a person's materials stencil 1
-(`markPerson`), and a copy of each skinned person is drawn last with
-`depthFunc: GreaterDepth` where the stencil is not 1. `City.setViewMode`
-shows them in iso only. The PS1 render target has a depth + stencil buffer;
-keep it. A silhouette pixel is drawn once (it marks the stencil), so overlapping
-parts tint evenly.
+(`markPerson`), and the copy is drawn last with `depthFunc: GreaterDepth`
+where the stencil is not 1. The PS1 render target has a depth + stencil
+buffer; keep it. A silhouette pixel is drawn once (it marks the stencil),
+so overlapping parts tint evenly.
+
+**Iso people** (`src/city/isoPeople.js`). The creator and the third-person
+view keep the full character. The iso view parents a second, coarser mesh
+under `isoWrap` (scale 1.2): adults about 6 heads tall, head width 0.95,
+limbs 25% thicker, about 700–1,000 triangles (`setDetail` cap, no joint
+balls). Generated townspeople get lighter legwear than their top, and
+about 40% get light hair or a light hat; the stored look is unchanged.
+The iso mesh copies joint rotations each frame. `userData.hipLock` (set by
+sit, swing and bike poses) keeps its hips on the seat; otherwise it stands
+on the same feet. Joint caches must skip the group named `isoWrap`, or
+they will pose the picture instead of the real skeleton. A faint ring
+(`playerRing`) sits under the player in iso only.
 
 **The crowd** (`src/city/crowd.js`). Every pedestrian has a role
 (`n.role.kind`): `walk` (walks a block's pavement and, at corners, sometimes
@@ -575,6 +693,9 @@ default designs if relevant.
 No unit tests; verify by building and looking.
 
 - `npm run build` must pass.
+- Diner layouts: `node scripts/check-diner-layout.mjs` (seeds 0–50).
+- Office seeds: `node src/office/seedLayout.test.js` (seed 0 and seeds 1–50).
+- Room seeds: `node scripts/check-room-seeds.mjs` (clinic, police, minimarket, meeting, bedroom, studio, cafe, classroom, open office; seeds 0–50).
 - Drive the viewer with Playwright (Chromium is preinstalled; use
   `--use-gl=angle --use-angle=swiftshader`): `npx vite preview`, open the
   page, use `window.__cc` and take screenshots.

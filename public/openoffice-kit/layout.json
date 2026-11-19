@@ -1,0 +1,61 @@
+{
+  "units": "metres",
+  "note": "three.js coords; room centred on the origin; item origin bottom centre; rotY radians; y is height above the floor tiles. The glass door and the side windows are built in src/openoffice/items.js.",
+  "placements": [
+    { "item": "bench", "x": -1.9, "y": 0, "z": -2.55, "rotY": 0 },
+    { "item": "bench", "x": 2.2, "y": 0, "z": -2.55, "rotY": 0 },
+    { "item": "bench", "x": 2.2, "y": 0, "z": 0.55, "rotY": 0 },
+
+    { "item": "monitor", "x": -3.0, "y": 0.74, "z": -2.75, "rotY": 0 },
+    { "item": "monitor", "x": -1.9, "y": 0.74, "z": -2.75, "rotY": 0 },
+    { "item": "monitor", "x": -0.8, "y": 0.74, "z": -2.75, "rotY": 0 },
+    { "item": "task_chair", "x": -3.0, "y": 0, "z": -1.95, "rotY": 3.1416 },
+    { "item": "task_chair", "x": -1.9, "y": 0, "z": -1.95, "rotY": 3.1416 },
+    { "item": "task_chair", "x": -0.8, "y": 0, "z": -1.95, "rotY": 3.1416 },
+
+    { "item": "monitor", "x": 1.1, "y": 0.74, "z": -2.75, "rotY": 0 },
+    { "item": "monitor", "x": 2.2, "y": 0.74, "z": -2.75, "rotY": 0 },
+    { "item": "monitor", "x": 3.3, "y": 0.74, "z": -2.75, "rotY": 0 },
+    { "item": "task_chair", "x": 1.1, "y": 0, "z": -1.95, "rotY": 3.1416 },
+    { "item": "task_chair", "x": 2.2, "y": 0, "z": -1.95, "rotY": 3.1416 },
+    { "item": "task_chair", "x": 3.3, "y": 0, "z": -1.95, "rotY": 3.1416 },
+
+    { "item": "monitor", "x": 1.1, "y": 0.74, "z": 0.35, "rotY": 0 },
+    { "item": "monitor", "x": 2.2, "y": 0.74, "z": 0.35, "rotY": 0 },
+    { "item": "monitor", "x": 3.3, "y": 0.74, "z": 0.35, "rotY": 0 },
+    { "item": "task_chair", "x": 1.1, "y": 0, "z": 1.15, "rotY": 3.1416 },
+    { "item": "task_chair", "x": 2.2, "y": 0, "z": 1.15, "rotY": 3.1416 },
+    { "item": "task_chair", "x": 3.3, "y": 0, "z": 1.15, "rotY": 3.1416 },
+
+    { "item": "plant_small", "x": -3.4, "y": 0.74, "z": -2.4, "rotY": 0.4 },
+    { "item": "plant_small", "x": 0.7, "y": 0.74, "z": -2.4, "rotY": 0.2 },
+    { "item": "notebook", "x": -1.9, "y": 0.74, "z": -2.35, "rotY": 0.15 },
+    { "item": "notebook", "x": 2.55, "y": 0.74, "z": 0.75, "rotY": -0.2 },
+    { "item": "mug", "x": -0.85, "y": 0.74, "z": -2.35, "rotY": 0.6 },
+
+    { "item": "pendant_bar", "x": -1.9, "y": 2.15, "z": -2.55, "rotY": 0 },
+    { "item": "pendant_bar", "x": 2.2, "y": 2.15, "z": -2.55, "rotY": 0 },
+    { "item": "pendant_bar", "x": 2.2, "y": 2.15, "z": 0.55, "rotY": 0 },
+
+    { "item": "pinboard", "x": -4.4, "y": 1.2, "z": -4.86, "rotY": 0 },
+
+    { "item": "sofa", "x": -5.3, "y": 0, "z": 2.85, "rotY": 1.5708 },
+    { "item": "coffee_table", "x": -4.25, "y": 0, "z": 2.85, "rotY": 0 },
+    { "item": "rug", "x": -4.85, "y": 0, "z": 2.85, "rotY": 1.5708 },
+    { "item": "floor_lamp", "x": -5.35, "y": 0, "z": 1.55, "rotY": 0 },
+    { "item": "mug", "x": -4.15, "y": 0.38, "z": 2.7, "rotY": 0.4 },
+
+    { "item": "pantry", "x": -5.5, "y": 0, "z": -0.55, "rotY": 1.5708 },
+    { "item": "fridge", "x": -5.55, "y": 0, "z": -2.05, "rotY": 1.5708 },
+    { "item": "kettle", "x": -5.45, "y": 0.86, "z": -0.35, "rotY": 0.5 },
+    { "item": "mug", "x": -5.4, "y": 0.86, "z": -0.75, "rotY": 0.2 },
+    { "item": "mug", "x": -5.42, "y": 0.86, "z": -0.95, "rotY": -0.4 },
+
+    { "item": "printer", "x": 4.7, "y": 0, "z": -0.85, "rotY": -0.4 },
+    { "item": "bin", "x": 4.35, "y": 0, "z": 0.15, "rotY": 0.3 },
+
+    { "item": "plant", "x": -5.15, "y": 0, "z": -4.25, "rotY": 0.5 },
+    { "item": "plant", "x": -4.15, "y": 0, "z": 0.7, "rotY": 1.1 },
+    { "item": "plant", "x": -0.2, "y": 0, "z": 2.6, "rotY": 0.8 }
+  ]
+}

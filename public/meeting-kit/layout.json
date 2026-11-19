@@ -1,0 +1,31 @@
+{
+  "units": "metres",
+  "note": "three.js coords; room centred on the origin; item origin bottom centre; rotY radians; y is height above the floor tiles. The glass partition, its door and the solid walls are built in src/meeting/items.js.",
+  "placements": [
+    { "item": "table", "x": 0, "y": 0, "z": 0, "rotY": 0 },
+
+    { "item": "chair", "x": -1.05, "y": 0, "z": 0.8, "rotY": 3.1416 },
+    { "item": "chair", "x": 0, "y": 0, "z": 0.8, "rotY": 3.1416 },
+    { "item": "chair", "x": 1.05, "y": 0, "z": 0.8, "rotY": 3.1416 },
+    { "item": "chair", "x": -1.05, "y": 0, "z": -0.8, "rotY": 0 },
+    { "item": "chair", "x": 0, "y": 0, "z": -0.8, "rotY": 0 },
+    { "item": "chair", "x": 1.05, "y": 0, "z": -0.8, "rotY": 0 },
+    { "item": "chair", "x": -1.88, "y": 0, "z": 0, "rotY": 1.5708 },
+    { "item": "chair", "x": 1.88, "y": 0, "z": 0, "rotY": -1.5708 },
+
+    { "item": "carafe", "x": 0.15, "y": 0.74, "z": 0.06, "rotY": 0.3 },
+    { "item": "notepad", "x": -0.55, "y": 0.74, "z": 0.12, "rotY": -0.15 },
+    { "item": "pen_cup", "x": -0.28, "y": 0.74, "z": -0.14, "rotY": 0 },
+    { "item": "conference_phone", "x": 0.72, "y": 0.74, "z": -0.02, "rotY": 0.1 },
+
+    { "item": "whiteboard", "x": -2.88, "y": 0.9, "z": -0.5, "rotY": 1.5708 },
+    { "item": "wall_tv", "x": -2.88, "y": 1.15, "z": 1.2, "rotY": 1.5708 },
+    { "item": "credenza", "x": -2.64, "y": 0, "z": 1.2, "rotY": 1.5708 },
+    { "item": "plant", "x": -2.52, "y": 0.72, "z": 1.2, "rotY": 0.4 },
+
+    { "item": "pendant", "x": -0.8, "y": 1.65, "z": 0, "rotY": 0 },
+    { "item": "pendant", "x": 0.8, "y": 1.65, "z": 0, "rotY": 0 },
+
+    { "item": "trash_can", "x": 2.5, "y": 0, "z": 1.5, "rotY": 0.2 }
+  ]
+}
