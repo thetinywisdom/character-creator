@@ -404,13 +404,9 @@ export function buildCafeRoom(style, { cutaway = false, seed = 0 } = {}) {
   const side = new THREE.Group();
   const hits = [];
 
-  const tile = TILE_TOP - SLAB_TOP;
-  const planks = 16;
-  for (let i = 0; i < planks; i++) {
-    const pw = 8 / planks;
-    addBox(body, pw, tile, 6, mat(style, i % 2 ? 'wood:Walnut' : 'wood:Tan'),
-      [-4 + (i + 0.5) * pw, (SLAB_TOP + TILE_TOP) / 2, 0]);
-  }
+  // One solid wood floor. No planks.
+  const floorH = TILE_TOP - SLAB_TOP;
+  addBox(body, 8, floorH, 6, mat(style, 'wood:Walnut'), [0, (SLAB_TOP + TILE_TOP) / 2, 0]);
   addBox(body, 8, 0.22, 6, mat(style, 'concrete:Gray'), [0, SLAB_TOP - 0.11, 0]);
 
   const hole = (a0, a1, y0, h) => ({ a0: a0 + LIP, a1: a1 - LIP, y0: y0 + LIP, y1: y0 + h - LIP });
