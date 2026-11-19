@@ -9,9 +9,33 @@ const UP = new THREE.Vector3(0, 1, 0);
 // Geometry detail multiplier, set by the active style while a subject builds
 // (low-poly uses a fraction, clay uses extra). Subjects wrap every segment
 // count in seg() so they never need to know which style they are built for.
+//
+// The iso crowd (city/isoPeople.js) also lowers the segment floor (`capMin`)
+// and drops the round joint balls (`roundCaps`), then puts the previous
+// settings back. A plain setDetail(d) always restores the normal floors.
 let detail = 1;
-export function setDetail(d) { detail = d; }
-export function seg(n, min = 3) { return Math.max(min, Math.round(n * detail)); }
+let capMin = Infinity;
+let roundCaps = true;
+
+export function setDetail(d, opts) {
+  const prev = { d: detail, capMin, roundCaps };
+  detail = d;
+  capMin = opts?.capMin ?? Infinity;
+  roundCaps = opts?.roundCaps ?? true;
+  return prev;
+}
+
+export function restoreDetail(prev) {
+  if (!prev) return;
+  detail = prev.d;
+  capMin = prev.capMin;
+  roundCaps = prev.roundCaps;
+}
+
+export function seg(n, min = 3) {
+  const m = capMin < min ? capMin : min;
+  return Math.max(m, Math.round(n * detail));
+}
 
 /** Sphere of radius `r`, then stretched by `scale` = [sx, sy, sz]. */
 export function ellipsoid(r, scale, material, { position, rotation, segments = 32 } = {}) {
@@ -28,7 +52,10 @@ export function capsuleBetween(a, b, radius, material, radialSegments = 16) {
   const B = new THREE.Vector3(...b);
   const dir = B.clone().sub(A);
   const length = dir.length();
-  const geo = new THREE.CapsuleGeometry(radius, Math.max(length, 1e-4), seg(8, 1), seg(radialSegments, 4));
+  // iso builds skip the rounded ends: a plain tube is the same shape at street size
+  const geo = roundCaps
+    ? new THREE.CapsuleGeometry(radius, Math.max(length, 1e-4), seg(8, 1), seg(radialSegments, 4))
+    : new THREE.CylinderGeometry(radius, radius, Math.max(length, 1e-4), Math.max(3, seg(radialSegments, 4)));
   const mesh = new THREE.Mesh(geo, material);
   mesh.position.copy(A).add(B).multiplyScalar(0.5);
   if (length > 1e-6) mesh.quaternion.setFromUnitVectors(UP, dir.normalize());
@@ -49,11 +76,16 @@ export function taperBetween(a, b, r1, r2, material, radialSegments = 14) {
   const cyl = new THREE.Mesh(new THREE.CylinderGeometry(r2, r1, length, seg(radialSegments, 4)), material);
   cyl.position.copy(A).add(B).multiplyScalar(0.5);
   cyl.quaternion.setFromUnitVectors(UP, dir.clone().normalize());
-  const ballA = new THREE.Mesh(new THREE.SphereGeometry(r1, seg(radialSegments, 4), seg(radialSegments * 0.66, 3)), material);
-  ballA.position.copy(A);
-  const ballB = new THREE.Mesh(new THREE.SphereGeometry(r2, seg(radialSegments, 4), seg(radialSegments * 0.66, 3)), material);
-  ballB.position.copy(B);
-  g.add(cyl, ballA, ballB);
+  g.add(cyl);
+  // balls hide the seam at a joint. At iso size they cost more than they show,
+  // so the low-detail build leaves them off (setDetail's roundCaps).
+  if (roundCaps) {
+    const ballA = new THREE.Mesh(new THREE.SphereGeometry(r1, seg(radialSegments, 4), seg(radialSegments * 0.66, 3)), material);
+    ballA.position.copy(A);
+    const ballB = new THREE.Mesh(new THREE.SphereGeometry(r2, seg(radialSegments, 4), seg(radialSegments * 0.66, 3)), material);
+    ballB.position.copy(B);
+    g.add(ballA, ballB);
+  }
   return g;
 }
 

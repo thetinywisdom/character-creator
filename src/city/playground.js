@@ -161,7 +161,12 @@ export function playWorld(pk, lx, lz) {
 function J(body) {
   if (!body.userData.joints) {
     const j = {};
-    body.traverse((o) => { if (JOINT_NAMES.includes(o.name)) j[o.name] = o; });
+    const walk = (o) => {
+      if (o.name === 'isoWrap') return;
+      if (o !== body && JOINT_NAMES.includes(o.name)) j[o.name] = o;
+      for (const c of o.children) walk(c);
+    };
+    walk(body);
     body.userData.joints = j;
   }
   return body.userData.joints;
@@ -170,6 +175,7 @@ function J(body) {
 /** Sit pose on a swing seat; legs out going forward, tucked going back; hands up on the chains. */
 function swingPose(body, j, seatY, vel) {
   const hipY = j.legL?.position.y ?? 0.6;
+  body.userData.hipLock = true; // iso mesh keeps its hips on the seat (isoPeople.js)
   body.position.set(0, seatY - hipY + 0.05, 0);
   body.rotation.set(0, 0, 0);
   const out = Math.max(0, Math.min(1, 0.5 + vel * 1.4)); // 1 = legs straight out
@@ -195,6 +201,7 @@ function hangFrom(body, barY, angle) {
 
 /** Climbing pose: arms reaching up in turn, knees up in turn. */
 function climbPose(body, j, t) {
+  body.userData.hipLock = false;
   body.position.set(0, 0, 0);
   body.rotation.set(0, 0, 0);
   const a = Math.sin(t * 5);
