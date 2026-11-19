@@ -229,7 +229,15 @@ export const COMEDY = {
 /** Reset the joints a comic pose may have touched, back to a standing pose. */
 function stand(body, gait) {
   // every joint back to its rest rotation (stored the first time)
-  if (!body.userData.rest) { body.userData.rest = []; body.traverse((o) => { if (JOINT_NAMES.includes(o.name)) body.userData.rest.push([o, o.rotation.clone(), o.position.clone()]); }); }
+  if (!body.userData.rest) {
+    body.userData.rest = [];
+    const walk = (o) => {
+      if (o.name === 'isoWrap') return;
+      if (o !== body && JOINT_NAMES.includes(o.name)) body.userData.rest.push([o, o.rotation.clone(), o.position.clone()]);
+      for (const c of o.children) walk(c);
+    };
+    walk(body);
+  }
   for (const [o, r, q] of body.userData.rest) { o.rotation.copy(r); o.position.copy(q); }
   body.position.set(0, 0, 0);
   body.rotation.set(0, 0, 0);
@@ -252,7 +260,16 @@ export class ComedyStage {
     this.x = x; this.z = z; this.heading = heading;
   }
   joints(body) {
-    if (!body.userData.cjoints) { const j = {}; body.traverse((o) => { if (JOINT_NAMES.includes(o.name)) j[o.name] ??= o; }); body.userData.cjoints = j; }
+    if (!body.userData.cjoints) {
+      const j = {};
+      const walk = (o) => {
+        if (o.name === 'isoWrap') return;
+        if (o !== body && JOINT_NAMES.includes(o.name)) j[o.name] ??= o;
+        for (const c of o.children) walk(c);
+      };
+      walk(body);
+      body.userData.cjoints = j;
+    }
     return body.userData.cjoints;
   }
   play(kind, n) { this.spec = COMEDY[kind][n]; this.kind = kind; }

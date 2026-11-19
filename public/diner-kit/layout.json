@@ -1,0 +1,78 @@
+{
+  "units": "metres",
+  "note": "three.js coords; room centred on the origin; item origin bottom centre; rotY radians; y is height above the floor tiles. Walls, windows and the door are built in src/diner/items.js so the openings match.",
+  "placements": [
+    { "item": "counter", "x": -3.2, "y": 0, "z": -1.18, "rotY": 0 },
+    { "item": "counter", "x": 0, "y": 0, "z": -1.18, "rotY": 0 },
+    { "item": "counter", "x": 3.2, "y": 0, "z": -1.18, "rotY": 0 },
+
+    { "item": "stool", "x": -4.2, "y": 0, "z": -0.44, "rotY": 0 },
+    { "item": "stool", "x": -3.15, "y": 0, "z": -0.44, "rotY": 0 },
+    { "item": "stool", "x": -2.1, "y": 0, "z": -0.44, "rotY": 0 },
+    { "item": "stool", "x": -1.05, "y": 0, "z": -0.44, "rotY": 0 },
+    { "item": "stool", "x": 0, "y": 0, "z": -0.44, "rotY": 0 },
+    { "item": "stool", "x": 1.05, "y": 0, "z": -0.44, "rotY": 0 },
+    { "item": "stool", "x": 2.1, "y": 0, "z": -0.44, "rotY": 0 },
+    { "item": "stool", "x": 3.15, "y": 0, "z": -0.44, "rotY": 0 },
+    { "item": "stool", "x": 4.2, "y": 0, "z": -0.44, "rotY": 0 },
+
+    { "item": "booth", "x": -4.5, "y": 0, "z": 1.42, "rotY": 0 },
+    { "item": "booth", "x": -2.68, "y": 0, "z": 1.42, "rotY": 0 },
+    { "item": "booth", "x": -0.86, "y": 0, "z": 1.42, "rotY": 0 },
+    { "item": "booth", "x": 0.96, "y": 0, "z": 1.42, "rotY": 0 },
+
+    { "item": "ketchup", "x": -4.64, "y": 0.755, "z": 1.52, "rotY": 0.4 },
+    { "item": "mustard", "x": -4.64, "y": 0.755, "z": 1.32, "rotY": -0.3 },
+    { "item": "napkin_dispenser", "x": -4.34, "y": 0.755, "z": 1.5, "rotY": 0 },
+    { "item": "salt_pepper", "x": -4.36, "y": 0.755, "z": 1.3, "rotY": 0.2 },
+
+    { "item": "ketchup", "x": -2.82, "y": 0.755, "z": 1.52, "rotY": 0.2 },
+    { "item": "mustard", "x": -2.82, "y": 0.755, "z": 1.32, "rotY": 0.5 },
+    { "item": "napkin_dispenser", "x": -2.52, "y": 0.755, "z": 1.5, "rotY": 0 },
+    { "item": "salt_pepper", "x": -2.54, "y": 0.755, "z": 1.3, "rotY": -0.2 },
+
+    { "item": "ketchup", "x": -1.0, "y": 0.755, "z": 1.52, "rotY": -0.2 },
+    { "item": "mustard", "x": -1.0, "y": 0.755, "z": 1.32, "rotY": 0.3 },
+    { "item": "napkin_dispenser", "x": -0.7, "y": 0.755, "z": 1.5, "rotY": 0 },
+    { "item": "salt_pepper", "x": -0.72, "y": 0.755, "z": 1.3, "rotY": 0.1 },
+
+    { "item": "ketchup", "x": 0.82, "y": 0.755, "z": 1.52, "rotY": 0.6 },
+    { "item": "mustard", "x": 0.82, "y": 0.755, "z": 1.32, "rotY": -0.4 },
+    { "item": "napkin_dispenser", "x": 1.12, "y": 0.755, "z": 1.5, "rotY": 0 },
+    { "item": "salt_pepper", "x": 1.1, "y": 0.755, "z": 1.3, "rotY": 0 },
+
+    { "item": "work_counter", "x": -3.6, "y": 0, "z": -3.53, "rotY": 0 },
+    { "item": "work_counter", "x": -1.2, "y": 0, "z": -3.53, "rotY": 0 },
+    { "item": "work_counter", "x": 1.2, "y": 0, "z": -3.53, "rotY": 0 },
+    { "item": "work_counter", "x": 3.6, "y": 0, "z": -3.53, "rotY": 0 },
+
+    { "item": "grill", "x": 0.15, "y": 0.92, "z": -3.42, "rotY": 0 },
+    { "item": "soda_fountain", "x": -3.55, "y": 0.92, "z": -3.5, "rotY": 0 },
+    { "item": "coffee_maker", "x": -2.15, "y": 1.05, "z": -1.32, "rotY": 0 },
+    { "item": "milkshake_mixer", "x": -0.55, "y": 1.05, "z": -1.32, "rotY": 0.1 },
+    { "item": "cup_stack", "x": 0.7, "y": 1.05, "z": -1.16, "rotY": 0.3 },
+    { "item": "straw_holder", "x": 1.35, "y": 1.05, "z": -1.08, "rotY": 0 },
+    { "item": "pie_case", "x": 2.4, "y": 1.05, "z": -1.24, "rotY": 0.15 },
+    { "item": "service_bell", "x": 3.25, "y": 1.05, "z": -0.96, "rotY": 0 },
+    { "item": "register", "x": 4.15, "y": 1.05, "z": -1.24, "rotY": 0 },
+
+    { "item": "pass_window", "x": -1.85, "y": 0, "z": -2.2, "rotY": 0 },
+    { "item": "pass_window", "x": 1.85, "y": 0, "z": -2.2, "rotY": 0 },
+
+    { "item": "menu_board", "x": -0.9, "y": 1.64, "z": -3.875, "rotY": 0 },
+    { "item": "clock", "x": 3.35, "y": 1.95, "z": -3.875, "rotY": 0 },
+    { "item": "neon_sign", "x": -5.875, "y": 1.82, "z": -0.85, "rotY": 1.5708 },
+    { "item": "poster", "x": -5.875, "y": 1.2, "z": 2.55, "rotY": 1.5708 },
+
+    { "item": "pendant", "x": -3.2, "y": 2.02, "z": -1.18, "rotY": 0 },
+    { "item": "pendant", "x": 0, "y": 2.02, "z": -1.18, "rotY": 0 },
+    { "item": "pendant", "x": 3.2, "y": 2.02, "z": -1.18, "rotY": 0 },
+    { "item": "pendant", "x": -4.5, "y": 2.02, "z": 1.42, "rotY": 0 },
+    { "item": "pendant", "x": -0.86, "y": 2.02, "z": 1.42, "rotY": 0 },
+    { "item": "pendant", "x": 2.6, "y": 2.02, "z": 2.35, "rotY": 0 },
+
+    { "item": "jukebox", "x": -5.63, "y": 0, "z": 3.15, "rotY": 1.5708 },
+    { "item": "coat_rack", "x": -4.05, "y": 0, "z": 3.18, "rotY": 0.4 },
+    { "item": "welcome_mat", "x": 4.65, "y": -0.004, "z": 3.38, "rotY": 0 }
+  ]
+}

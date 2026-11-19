@@ -1,0 +1,260 @@
+{
+ "units": "metres",
+ "up": "+y",
+ "front": "+z",
+ "origin": "bottom centre",
+ "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+ "note": "Procedural kit. The catalogue builds these in src/bedroom/items.js. No GLBs: createAsset stays synchronous.",
+ "items": {
+  "bed": {
+   "label": "Single bed (96 cm, powder-blue duvet)",
+   "group": "sleep",
+   "size": [
+    0.96,
+    0.775,
+    1.98
+   ],
+   "footprint": [
+    0.96,
+    2
+   ],
+   "materials": [
+    "wood:Walnut",
+    "paint:Off white",
+    "cloth:Powder blue",
+    "paint:Paper"
+   ],
+   "tris": 132
+  },
+  "side_table": {
+   "label": "Side table",
+   "group": "sleep",
+   "size": [
+    0.4,
+    0.515,
+    0.4
+   ],
+   "footprint": [
+    0.4,
+    0.4
+   ],
+   "materials": [
+    "wood:Walnut",
+    "metal:Stone"
+   ],
+   "tris": 96
+  },
+  "lamp": {
+   "label": "Table lamp",
+   "group": "sleep",
+   "size": [
+    0.208,
+    0.366,
+    0.24
+   ],
+   "footprint": [
+    0.24,
+    0.24
+   ],
+   "materials": [
+    "metal:Light gray",
+    "paint:Paper",
+    "light:Butter"
+   ],
+   "tris": 120
+  },
+  "wardrobe": {
+   "label": "Wardrobe",
+   "group": "storage",
+   "size": [
+    0.96,
+    1.86,
+    0.57
+   ],
+   "footprint": [
+    0.96,
+    0.56
+   ],
+   "materials": [
+    "paint:Off white",
+    "wood:Walnut",
+    "paint:Light gray",
+    "paint:Stone",
+    "metal:Stone"
+   ],
+   "tris": 96
+  },
+  "desk": {
+   "label": "Small desk",
+   "group": "work",
+   "size": [
+    0.9,
+    0.718,
+    0.48
+   ],
+   "footprint": [
+    0.9,
+    0.48
+   ],
+   "materials": [
+    "wood:Tan",
+    "wood:Walnut",
+    "metal:Stone"
+   ],
+   "tris": 84
+  },
+  "chair": {
+   "label": "Desk chair",
+   "group": "work",
+   "size": [
+    0.4,
+    0.82,
+    0.4
+   ],
+   "footprint": [
+    0.42,
+    0.42
+   ],
+   "materials": [
+    "wood:Walnut",
+    "cloth:Sand"
+   ],
+   "tris": 84
+  },
+  "window": {
+   "label": "Window with curtains",
+   "group": "wall",
+   "size": [
+    1.14,
+    1.221,
+    0.135
+   ],
+   "footprint": [
+    1.06,
+    0.14
+   ],
+   "materials": [
+    "wood:Walnut",
+    "glass:Sky",
+    "cloth:Blush",
+    "darkMetal:Charcoal"
+   ],
+   "tris": 128
+  },
+  "rug": {
+   "label": "Rug",
+   "group": "floor",
+   "size": [
+    1.55,
+    0.018,
+    1.85
+   ],
+   "footprint": [
+    1.55,
+    1.85
+   ],
+   "materials": [
+    "cloth:Dusty rose",
+    "cloth:Sand"
+   ],
+   "tris": 24
+  },
+  "books": {
+   "label": "Book stack",
+   "group": "work",
+   "size": [
+    0.16,
+    0.07,
+    0.22
+   ],
+   "footprint": [
+    0.18,
+    0.22
+   ],
+   "materials": [
+    "paint:Navy",
+    "paint:Dusty rose",
+    "paint:Sage",
+    "paint:Paper"
+   ],
+   "tris": 72
+  },
+  "plant": {
+   "label": "Pot plant",
+   "group": "decor",
+   "size": [
+    0.167,
+    0.201,
+    0.14
+   ],
+   "footprint": [
+    0.14,
+    0.14
+   ],
+   "materials": [
+    "concrete:Stone",
+    "leaf:Moss"
+   ],
+   "tris": 84
+  },
+  "basket": {
+   "label": "Wastebasket",
+   "group": "floor",
+   "size": [
+    0.244,
+    0.227,
+    0.238
+   ],
+   "footprint": [
+    0.26,
+    0.26
+   ],
+   "materials": [
+    "paint:Sand",
+    "wood:Tan",
+    "paint:Paper"
+   ],
+   "tris": 80
+  },
+  "clock": {
+   "label": "Alarm clock",
+   "group": "sleep",
+   "size": [
+    0.1,
+    0.07,
+    0.064
+   ],
+   "footprint": [
+    0.12,
+    0.06
+   ],
+   "materials": [
+    "paint:Off white",
+    "paint:Paper",
+    "darkMetal:Ink",
+    "darkMetal:Charcoal"
+   ],
+   "tris": 104
+  },
+  "picture": {
+   "label": "Framed picture",
+   "group": "wall",
+   "size": [
+    0.46,
+    0.36,
+    0.038
+   ],
+   "footprint": [
+    0.46,
+    0.04
+   ],
+   "materials": [
+    "wood:Walnut",
+    "paint:Powder blue",
+    "paint:Butter",
+    "paint:Sage"
+   ],
+   "tris": 64
+  }
+ }
+}

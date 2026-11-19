@@ -1,0 +1,38 @@
+{
+  "units": "metres",
+  "note": "three.js coords; room centred on the origin; item origin bottom centre; rotY radians; y is height above the floor tiles. Walls, windows and the door are built in src/clinic/items.js.",
+  "placements": [
+    { "item": "exam_bed", "x": -2.35, "y": 0, "z": -2.55, "rotY": 0 },
+    { "item": "privacy_curtain", "x": -2.35, "y": 0, "z": -1.42, "rotY": 0 },
+    { "item": "iv_stand", "x": -1.5, "y": 0, "z": -3.2, "rotY": 0.3 },
+    { "item": "exam_bed", "x": 1.55, "y": 0, "z": -2.55, "rotY": 0 },
+    { "item": "privacy_curtain", "x": 1.55, "y": 0, "z": -1.42, "rotY": 3.1416 },
+    { "item": "doctor_desk", "x": 3.35, "y": 0, "z": -2.5, "rotY": 1.5708 },
+    { "item": "exam_stool", "x": 4.15, "y": 0, "z": -2.5, "rotY": -1.5708 },
+    { "item": "blood_pressure", "x": 0.5, "y": 0, "z": -1.95, "rotY": -0.3 },
+    { "item": "medicine_cabinet", "x": -4.5, "y": 0, "z": -3.1, "rotY": 1.5708 },
+    { "item": "sink", "x": -4.48, "y": 0, "z": -1.45, "rotY": 1.5708 },
+    { "item": "chart_rack", "x": 0.15, "y": 1.15, "z": -3.86, "rotY": 0 },
+    { "item": "clinic_cross", "x": -3.35, "y": 1.9, "z": -3.86, "rotY": 0 },
+    { "item": "clock", "x": 4.15, "y": 2.0, "z": -3.86, "rotY": 0 },
+
+    { "item": "scale", "x": -2.1, "y": 0, "z": 0.4, "rotY": 0.2 },
+    { "item": "reception_desk", "x": 1.45, "y": 0, "z": 1.15, "rotY": 0 },
+    { "item": "waiting_chair", "x": -3.4, "y": 0, "z": 0.4, "rotY": 1.5708 },
+    { "item": "waiting_chair", "x": -3.4, "y": 0, "z": 1.2, "rotY": 1.5708 },
+    { "item": "waiting_chair", "x": -3.4, "y": 0, "z": 2.0, "rotY": 1.5708 },
+    { "item": "waiting_chair", "x": -3.4, "y": 0, "z": 2.8, "rotY": 1.5708 },
+    { "item": "waiting_chair", "x": 2.55, "y": 0, "z": 2.45, "rotY": 3.1416 },
+    { "item": "waiting_chair", "x": 3.45, "y": 0, "z": 2.45, "rotY": 3.1416 },
+    { "item": "waste_bin", "x": 2.95, "y": 0, "z": 0.4, "rotY": 0.2 },
+    { "item": "slipper_rack", "x": -1.65, "y": 0, "z": 3.25, "rotY": 0 },
+    { "item": "coat_hooks", "x": -4.86, "y": 1.4, "z": 2.2, "rotY": 1.5708 },
+    { "item": "plant", "x": 4.3, "y": 0, "z": 3.25, "rotY": 0.5 },
+    { "item": "floor_mat", "x": 0.9, "y": 0, "z": 3.42, "rotY": 0 },
+
+    { "item": "ceiling_light", "x": -2.3, "y": 2.15, "z": -2.45, "rotY": 0 },
+    { "item": "ceiling_light", "x": 1.6, "y": 2.15, "z": -2.45, "rotY": 0 },
+    { "item": "ceiling_light", "x": -1.5, "y": 2.15, "z": 1.35, "rotY": 0 },
+    { "item": "ceiling_light", "x": 2.1, "y": 2.15, "z": 1.45, "rotY": 0 }
+  ]
+}
