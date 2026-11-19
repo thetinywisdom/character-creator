@@ -1,0 +1,37 @@
+{
+  "units": "metres",
+  "note": "three.js coords; room centred on the origin; item origin bottom centre; rotY radians; y is height above the floor tiles. Walls, windows and the door are built in src/police/items.js. Desk-top props use y = 0.75, the officer desk top.",
+  "placements": [
+    { "item": "holding_cell", "x": -4.4, "y": 0, "z": -2.65, "rotY": 0 },
+    { "item": "locker_bank", "x": -5.45, "y": 0, "z": 0.45, "rotY": 1.5708 },
+    { "item": "coat_rack", "x": -5.25, "y": 0, "z": 2.35, "rotY": 0.4 },
+    { "item": "waiting_bench", "x": -3.35, "y": 0, "z": 2.55, "rotY": 0 },
+
+    { "item": "officer_desk", "x": -1.05, "y": 0, "z": 0.15, "rotY": 0 },
+    { "item": "officer_chair", "x": -2.2, "y": 0, "z": 0.15, "rotY": 0.5 },
+    { "item": "desk_lamp", "x": -0.55, "y": 0.75, "z": 0.28, "rotY": -0.4 },
+    { "item": "mug", "x": -1.45, "y": 0.75, "z": 0.05, "rotY": 0.6 },
+
+    { "item": "officer_desk", "x": 1.75, "y": 0, "z": 0.15, "rotY": 0 },
+    { "item": "officer_chair", "x": 2.95, "y": 0, "z": 0.15, "rotY": -0.5 },
+    { "item": "radio", "x": 2.15, "y": 0.75, "z": 0.22, "rotY": 0.2 },
+
+    { "item": "front_counter", "x": 0.1, "y": 0, "z": 1.75, "rotY": 0 },
+    { "item": "beacon", "x": 0.1, "y": 2.15, "z": 2.55, "rotY": 0 },
+
+    { "item": "filing_cabinet", "x": 5.4, "y": 0, "z": -2.65, "rotY": 0 },
+    { "item": "filing_cabinet", "x": 5.4, "y": 0, "z": -1.35, "rotY": 0 },
+    { "item": "water_cooler", "x": 5.15, "y": 0, "z": 0.45, "rotY": -0.4 },
+    { "item": "trash_bin", "x": 3.7, "y": 0, "z": 2.55, "rotY": 0 },
+    { "item": "floor_mat", "x": 4.4, "y": 0, "z": 3.4, "rotY": 0 },
+
+    { "item": "notice_board", "x": 0.35, "y": 1.25, "z": -3.86, "rotY": 0 },
+    { "item": "key_board", "x": 2.55, "y": 1.4, "z": -3.86, "rotY": 0 },
+    { "item": "clock", "x": 4.35, "y": 2.05, "z": -3.86, "rotY": 0 },
+
+    { "item": "ceiling_light", "x": -3.4, "y": 2.15, "z": -0.4, "rotY": 0 },
+    { "item": "ceiling_light", "x": 0.4, "y": 2.15, "z": -0.6, "rotY": 0 },
+    { "item": "ceiling_light", "x": 2.4, "y": 2.15, "z": 1.7, "rotY": 0 },
+    { "item": "ceiling_light", "x": -2.2, "y": 2.15, "z": 1.9, "rotY": 0 }
+  ]
+}

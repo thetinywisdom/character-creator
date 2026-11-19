@@ -1,0 +1,465 @@
+{
+  "units": "metres",
+  "up": "+y",
+  "front": "+z",
+  "origin": "bottom centre",
+  "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+  "note": "Procedural kit. The catalogue builds these in src/clinic/items.js. No GLBs.",
+  "items": {
+    "reception_desk": {
+      "label": "Reception desk",
+      "group": "reception",
+      "size": [
+        2.4,
+        1.357,
+        0.794
+      ],
+      "footprint": [
+        2.4,
+        0.8
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "glass:Navy",
+        "metal:Light gray",
+        "paint:Off white",
+        "paint:Paper",
+        "paint:Powder blue",
+        "paint:Seafoam"
+      ],
+      "tris": 132
+    },
+    "waiting_chair": {
+      "label": "Waiting chair",
+      "group": "reception",
+      "size": [
+        0.44,
+        0.86,
+        0.455
+      ],
+      "footprint": [
+        0.5,
+        0.5
+      ],
+      "materials": [
+        "cloth:Powder blue",
+        "darkMetal:Charcoal",
+        "metal:Light gray"
+      ],
+      "tris": 84
+    },
+    "exam_bed": {
+      "label": "Exam bed",
+      "group": "exam",
+      "size": [
+        0.76,
+        0.64,
+        1.88
+      ],
+      "footprint": [
+        0.78,
+        1.95
+      ],
+      "materials": [
+        "cloth:Off white",
+        "cloth:Sky",
+        "darkMetal:Charcoal",
+        "metal:Light gray",
+        "paint:Paper"
+      ],
+      "tris": 168
+    },
+    "privacy_curtain": {
+      "label": "Privacy curtain",
+      "group": "exam",
+      "size": [
+        1.52,
+        1.965,
+        0.052
+      ],
+      "footprint": [
+        1.55,
+        0.14
+      ],
+      "materials": [
+        "cloth:Seafoam",
+        "cloth:Sky",
+        "metal:Light gray"
+      ],
+      "tris": 132
+    },
+    "doctor_desk": {
+      "label": "Doctor desk",
+      "group": "exam",
+      "size": [
+        1.16,
+        0.955,
+        0.58
+      ],
+      "footprint": [
+        1.2,
+        0.64
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "light:Butter",
+        "metal:Light gray",
+        "paint:Off white",
+        "paint:Paper",
+        "paint:Powder blue",
+        "paint:Seafoam"
+      ],
+      "tris": 152
+    },
+    "scale": {
+      "label": "Scale",
+      "group": "clinical",
+      "size": [
+        0.36,
+        1.04,
+        0.36
+      ],
+      "footprint": [
+        0.4,
+        0.42
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "metal:Light gray",
+        "paint:Off white",
+        "paint:Paper"
+      ],
+      "tris": 116
+    },
+    "iv_stand": {
+      "label": "IV stand",
+      "group": "clinical",
+      "size": [
+        0.24,
+        1.53,
+        0.24
+      ],
+      "footprint": [
+        0.28,
+        0.28
+      ],
+      "materials": [
+        "cloth:Off white",
+        "darkMetal:Charcoal",
+        "metal:Light gray",
+        "paint:Powder blue",
+        "paint:Seafoam"
+      ],
+      "tris": 104
+    },
+    "medicine_cabinet": {
+      "label": "Medicine cabinet",
+      "group": "clinical",
+      "size": [
+        0.76,
+        1.72,
+        0.38
+      ],
+      "footprint": [
+        0.8,
+        0.4
+      ],
+      "materials": [
+        "glass:Sky",
+        "metal:Light gray",
+        "paint:Apricot",
+        "paint:Butter",
+        "paint:Dusty rose",
+        "paint:Lilac",
+        "paint:Navy",
+        "paint:Off white",
+        "paint:Powder blue",
+        "paint:Sage",
+        "paint:Seafoam"
+      ],
+      "tris": 228
+    },
+    "exam_stool": {
+      "label": "Exam stool",
+      "group": "exam",
+      "size": [
+        0.339,
+        0.51,
+        0.34
+      ],
+      "footprint": [
+        0.38,
+        0.38
+      ],
+      "materials": [
+        "cloth:Seafoam",
+        "metal:Light gray"
+      ],
+      "tris": 80
+    },
+    "sink": {
+      "label": "Sink",
+      "group": "clinical",
+      "size": [
+        0.62,
+        1.29,
+        0.42
+      ],
+      "footprint": [
+        0.66,
+        0.48
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "metal:Light gray",
+        "paint:Off white",
+        "paint:Seafoam"
+      ],
+      "tris": 96
+    },
+    "blood_pressure": {
+      "label": "Blood pressure stand",
+      "group": "clinical",
+      "size": [
+        0.261,
+        0.875,
+        0.28
+      ],
+      "footprint": [
+        0.38,
+        0.36
+      ],
+      "materials": [
+        "cloth:Navy",
+        "darkMetal:Charcoal",
+        "glass:Navy",
+        "metal:Light gray",
+        "paint:Off white"
+      ],
+      "tris": 124
+    },
+    "chart_rack": {
+      "label": "Chart rack",
+      "group": "clinical",
+      "size": [
+        0.68,
+        0.5,
+        0.063
+      ],
+      "footprint": [
+        0.7,
+        0.08
+      ],
+      "materials": [
+        "metal:Light gray",
+        "paint:Blush",
+        "paint:Butter",
+        "paint:Lilac",
+        "paint:Off white",
+        "paint:Powder blue",
+        "paint:Seafoam"
+      ],
+      "tris": 84
+    },
+    "waste_bin": {
+      "label": "Waste bin",
+      "group": "reception",
+      "size": [
+        0.3,
+        0.41,
+        0.3
+      ],
+      "footprint": [
+        0.32,
+        0.32
+      ],
+      "materials": [
+        "darkMetal:Charcoal",
+        "paint:Off white",
+        "paint:Seafoam"
+      ],
+      "tris": 36
+    },
+    "slipper_rack": {
+      "label": "Slipper rack",
+      "group": "reception",
+      "size": [
+        0.78,
+        0.17,
+        0.3
+      ],
+      "footprint": [
+        0.82,
+        0.34
+      ],
+      "materials": [
+        "cloth:Dusty rose",
+        "cloth:Off white",
+        "cloth:Powder blue",
+        "cloth:Seafoam",
+        "wood:Tan"
+      ],
+      "tris": 84
+    },
+    "coat_hooks": {
+      "label": "Coat hooks",
+      "group": "reception",
+      "size": [
+        0.52,
+        0.36,
+        0.07
+      ],
+      "footprint": [
+        0.56,
+        0.12
+      ],
+      "materials": [
+        "cloth:Powder blue",
+        "metal:Light gray",
+        "wood:Walnut"
+      ],
+      "tris": 60
+    },
+    "clinic_cross": {
+      "label": "Clinic cross",
+      "group": "walls",
+      "size": [
+        0.42,
+        0.42,
+        0.044
+      ],
+      "footprint": [
+        0.46,
+        0.06
+      ],
+      "materials": [
+        "paint:Dusty rose",
+        "paint:Off white"
+      ],
+      "tris": 36
+    },
+    "plant": {
+      "label": "Pot plant",
+      "group": "reception",
+      "size": [
+        0.233,
+        0.322,
+        0.2
+      ],
+      "footprint": [
+        0.26,
+        0.26
+      ],
+      "materials": [
+        "leaf:Moss",
+        "leaf:Sage",
+        "paint:Off white",
+        "paint:Seafoam"
+      ],
+      "tris": 108
+    },
+    "clock": {
+      "label": "Wall clock",
+      "group": "walls",
+      "size": [
+        0.36,
+        0.36,
+        0.05
+      ],
+      "footprint": [
+        0.4,
+        0.08
+      ],
+      "materials": [
+        "darkMetal:Ink",
+        "metal:Light gray",
+        "paint:Off white"
+      ],
+      "tris": 88
+    },
+    "ceiling_light": {
+      "label": "Ceiling light",
+      "group": "walls",
+      "size": [
+        0.346,
+        0.736,
+        0.4
+      ],
+      "footprint": [
+        0.44,
+        0.44
+      ],
+      "materials": [
+        "darkMetal:Ink",
+        "light:Butter",
+        "metal:Light gray",
+        "paint:Off white"
+      ],
+      "tris": 88
+    },
+    "floor_mat": {
+      "label": "Floor mat",
+      "group": "reception",
+      "size": [
+        1.05,
+        0.016,
+        0.66
+      ],
+      "footprint": [
+        1.1,
+        0.7
+      ],
+      "materials": [
+        "cloth:Seafoam",
+        "paint:Off white"
+      ],
+      "tris": 24
+    },
+    "window_bay": {
+      "label": "Window",
+      "group": "walls",
+      "size": [
+        1.9,
+        1.42,
+        0.12
+      ],
+      "footprint": [
+        1.9,
+        0.14
+      ],
+      "materials": [
+        "paint:Off white",
+        "paint:Seafoam"
+      ],
+      "tris": 84
+    },
+    "door": {
+      "label": "Sliding door",
+      "group": "walls",
+      "size": [
+        1.46,
+        2.2,
+        0.135
+      ],
+      "footprint": [
+        1.5,
+        0.14
+      ],
+      "materials": [
+        "metal:Light gray",
+        "paint:Off white",
+        "paint:Seafoam"
+      ],
+      "tris": 132
+    }
+  },
+  "room": {
+    "size": [
+      10,
+      3,
+      8
+    ],
+    "note": "Cutaway hides room_wall_front and room_wall_side. Triangle count includes the hidden walls.",
+    "tris": 4916
+  }
+}

@@ -79,7 +79,12 @@ const FART_R = 3.5;       // m: how far the stink knocks people over
 function joints(body) {
   if (!body.userData.ixJoints) {
     const j = {};
-    body.traverse((o) => { if (JOINT_NAMES.includes(o.name)) j[o.name] = o; });
+    const walk = (o) => {
+      if (o.name === 'isoWrap') return;
+      if (o !== body && JOINT_NAMES.includes(o.name)) j[o.name] = o;
+      for (const c of o.children) walk(c);
+    };
+    walk(body);
     body.userData.ixJoints = j;
   }
   return body.userData.ixJoints;
@@ -118,9 +123,29 @@ export class Interactions {
   }
   /** A person's name, if they have one (optional: `name` on the person or in their look / character JSON). */
   nameOf(n) { return n?.name ?? n?.look?.name ?? null; }
-  headOf(n) { const f = () => n.root.position.clone().add(new THREE.Vector3(0, (n.look?.height ?? 1.7) + 0.3, 0)); f.who = n; return f; }
-  playerHead() { const p = this.city.player; const f = () => p.root.position.clone().add(new THREE.Vector3(0, (p.height ?? 1.7) + 0.3, 0)); f.who = p; return f; }
-  midOf(n) { return () => n.root.position.clone().add(new THREE.Vector3(0, (n.look?.height ?? 1.7) * 0.75, 0)); }
+  headOf(n) {
+    const f = () => {
+      const s = this.city.viewMode === 'iso' ? 1.2 : 1;
+      return n.root.position.clone().add(new THREE.Vector3(0, (n.look?.height ?? 1.7) * s + 0.3, 0));
+    };
+    f.who = n;
+    return f;
+  }
+  playerHead() {
+    const p = this.city.player;
+    const f = () => {
+      const s = this.city.viewMode === 'iso' ? 1.2 : 1;
+      return p.root.position.clone().add(new THREE.Vector3(0, (p.height ?? 1.7) * s + 0.3, 0));
+    };
+    f.who = p;
+    return f;
+  }
+  midOf(n) {
+    return () => {
+      const s = this.city.viewMode === 'iso' ? 1.2 : 1;
+      return n.root.position.clone().add(new THREE.Vector3(0, (n.look?.height ?? 1.7) * 0.75 * s, 0));
+    };
+  }
 
   // --- what are we facing / what was clicked ---------------------------------------
   /**
@@ -791,6 +816,7 @@ export class Interactions {
     c.parked = true; // stays where you left it
     p.riding = null;
     p.body.visible = true;
+    p.body.userData.hipLock = false;
     p.body.position.set(0, 0, 0);
     // step out on the right (the driver's side in Japan)
     const h = c.drive.heading, side = c.size.hw + 0.55;
@@ -964,6 +990,7 @@ export class Interactions {
       const fx = Math.sin(h), fz = Math.cos(h), sx = Math.cos(h) * -side, sz = -Math.sin(h) * -side;
       c.obj.remove(rb);
       this.city.scene.add(rb);
+      rb.userData.hipLock = false; // no longer on the saddle; the iso mesh follows the fall
       rb.rotation.order = 'YXZ';
       c.fallen.rider = { from: new THREE.Vector3(P.x, P.y + 0.3, P.z), to: new THREE.Vector3(P.x + fx * 2.0 + sx * 1.1, P.y, P.z + fz * 2.0 + sz * 1.1), h: h + (Math.random() - 0.5) * 1.2 };
       const j = joints(rb);
@@ -1013,6 +1040,7 @@ export class Interactions {
     // each vehicle's own seat (props/vehicles.js userData.seat): its height, how far
     // back, and for a wide body (the mini scooter) knees spread either side of it
     const seat = c.seat ?? (c.bike === 'bicycle' ? { y: 0.86, z: -0.2 } : { y: 0.76, z: -0.4 });
+    p.body.userData.hipLock = true; // iso mesh keeps its hips on the saddle (isoPeople.js)
     p.body.position.set(0, seat.y - hipY + 0.05, seat.z);
     p.body.rotation.set(0, 0, 0);
     if (j.legL) j.legL.rotation.z = seat.splay ?? 0;
