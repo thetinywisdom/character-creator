@@ -46,8 +46,9 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   cars, buses, motorbikes and cats. 🎲 makes a different town, ☀ changes the time of
   day (at night windows, signs and lamps glow), 🌤 the weather (rain: people
   open umbrellas; snow), 🎥 (or V) switches third person / isometric (< >
-  rotate); in the iso view people, cats and cars behind buildings show as
-  silhouettes (you in yellow). WASD / arrows, Shift to run (it builds up speed), Space to jump, a joystick
+  rotate); in the iso view people are drawn a little bigger and chunkier, with
+  lighter clothes, and people, cats and cars behind buildings show as
+  silhouettes (you in pale yellow, with a faint ring at your feet). WASD / arrows, Shift to run (it builds up speed), Space to jump, a joystick
   on touch screens.
 - **Cats:** the owner's pick: version 6's lofted body and jointed legs with
   version 2's round head (cheeks, a little muzzle, small ears).

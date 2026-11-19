@@ -148,6 +148,8 @@ src/city/backs.js      dresses bare backs and sides of every building (windows, 
                        back door, drain pipe, emergency stairs), found with rays
 src/city/variety.js    shared building variety: flatsAbove, roofTop, frontExtras, side, pick, between
 src/city/silhouette.js see-through people in the iso view (stencil + GreaterDepth copy)
+src/city/isoPeople.js  iso view only: chunkier 6-head people at 1.2×, lighter clothes,
+                       a low-detail mesh, and silhouettes only when a building hides them
 src/city/playground.js park playground: swings (seats on pivot groups, userData.swing, taken out
                        of the merged town by takeSwings, swung by updateSwings), slide (chuteAt
                        curve), climbing frame; kid roles swing / slide / climb (updatePlayKid);
@@ -310,16 +312,31 @@ pedestrians sidestep; cars brake for things ahead. A new item needs a collider.
 many small meshes ("feel real, not be real").
 
 **See-through movers.** In the iso view, everything that moves (people,
-cats, cars, buses) shows as a flat silhouette when hidden by a building
-(blue; the player yellow), `src/city/silhouette.js`: `addSilhouette` for
-skinned people and cats, `addObjectSilhouette` for rigid things like cars.
-A new moving thing in the city needs one. Every
+cats, cars, buses) can show as a flat silhouette when a building is between
+it and the camera, `src/city/silhouette.js`: `addSilhouette` for skinned
+people and cats, `addObjectSilhouette` for rigid things like cars. A new
+moving thing in the city needs one. People are a stronger blue
+(`0x2a56b0`), the player a pale yellow (`0xfff3c4`, so it stays off warm
+roofs), cars a faint blue-grey. `City.syncPresentation` turns a silhouette
+on only when `occludedByBuilding` says a building box is within 10 m along
+the view ray (`src/city/isoPeople.js`); third person draws none. Every
 style material writes stencil 0, a person's materials stencil 1
-(`markPerson`), and a copy of each skinned person is drawn last with
-`depthFunc: GreaterDepth` where the stencil is not 1. `City.setViewMode`
-shows them in iso only. The PS1 render target has a depth + stencil buffer;
-keep it. A silhouette pixel is drawn once (it marks the stencil), so overlapping
-parts tint evenly.
+(`markPerson`), and the copy is drawn last with `depthFunc: GreaterDepth`
+where the stencil is not 1. The PS1 render target has a depth + stencil
+buffer; keep it. A silhouette pixel is drawn once (it marks the stencil),
+so overlapping parts tint evenly.
+
+**Iso people** (`src/city/isoPeople.js`). The creator and the third-person
+view keep the full character. The iso view parents a second, coarser mesh
+under `isoWrap` (scale 1.2): adults about 6 heads tall, head width 0.95,
+limbs 25% thicker, about 700–1,000 triangles (`setDetail` cap, no joint
+balls). Generated townspeople get lighter legwear than their top, and
+about 40% get light hair or a light hat; the stored look is unchanged.
+The iso mesh copies joint rotations each frame. `userData.hipLock` (set by
+sit, swing and bike poses) keeps its hips on the seat; otherwise it stands
+on the same feet. Joint caches must skip the group named `isoWrap`, or
+they will pose the picture instead of the real skeleton. A faint ring
+(`playerRing`) sits under the player in iso only.
 
 **The crowd** (`src/city/crowd.js`). Every pedestrian has a role
 (`n.role.kind`): `walk` (walks a block's pavement and, at corners, sometimes

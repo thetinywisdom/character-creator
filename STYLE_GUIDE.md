@@ -636,10 +636,19 @@ Dusty rose, Blush, Powder blue, Lilac and Denim.
   door is in, and whether a chimney, dormer, balcony, shutter or window box
   is there. Doors are about 2.1 m, the same scale as the other houses and the
   1.6 m people.
-- **Iso view: see-through people.** People behind buildings show as flat
-  silhouettes, blue (the player yellow), so nobody is lost behind a
-  building; the same for cats, cars and buses. Each silhouette is one even
-  flat tint.
+- **Iso view: people read at street size.** Only the isometric view changes.
+  Adults are drawn about 6 heads tall, with a wider head and thicker limbs,
+  and the whole figure is 1.2× (cats stay at their own exaggeration).
+  Townspeople wear lighter trousers than their top (denim, sage, dusty rose
+  instead of navy or black), and about 40% have light hair or a light hat,
+  because from above the head is mostly hair. The creator and the
+  third-person view keep the original proportions and colours.
+- **Iso view: see-through people.** A person, cat or car behind a building
+  shows as a flat silhouette: people a stronger blue, the player a pale
+  yellow (it was gold, and disappeared on warm roofs), cars a faint
+  blue-grey. One is drawn only when a building actually hides them. A faint
+  ring under the player makes them findable in the crowd. Each silhouette
+  is one even flat tint.
 
 - **Buildings** are boxes with a few strong details, in muted wall colours:
   houses (2 floors, gable tile roof, low block wall, small balcony), apartment
