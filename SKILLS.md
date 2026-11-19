@@ -217,6 +217,12 @@ src/minimarket/items.js minimarket kit (catalogue Minimarket tab): procedural ko
                        counter, shelves, fridges and the furnished room. Not placed
                        by the sample town
 public/minimarket-kit/ manifest.json and layout.json (no GLBs)
+src/meeting/items.js   meeting-room kit (catalogue Meeting tab). Not placed by the sample town
+src/bedroom/items.js   small-bedroom kit (catalogue Bedroom tab). Not placed by the sample town
+src/studio/items.js    1R studio kit (catalogue Studio tab). Not placed by the sample town
+public/meeting-kit/    manifest.json, layout.json (no GLBs)
+public/bedroom-kit/    manifest.json, layout.json (no GLBs)
+public/studio-kit/     manifest.json, layout.json (no GLBs)
 src/creator/Creator.js the character creator panel (viewer only)
 src/viewer/            Cell (a preview stage), params (saved settings)
 src/lib/               shapes, foliage (lobes, fronds, shaded leaf/bark, trimmed hedges), merge
@@ -255,7 +261,7 @@ defaults. `params.variant` picks from `variants`, `params.color` from
 `colors`, `params.seed` changes the look of seeded items, buildings take
 `w` / `d` (lot size) and shops `shopType`. Groups (catalogue tabs):
 buildings, street, traffic, extras, nature, animals, vehicles, office, diner,
-clinic, police, minimarket, areas.
+clinic, police, minimarket, meeting, bedroom, studio, areas.
 `animated: 'cat'` marks items with joints (`animal.cat`: pose it with
 `poseCat`, `anim/catGait.js`; resting poses via `gait.pose = 'sit' |
 'loaf' | 'sleep'`; joints legF*/legB* plus lowF*/lowB* elbows and hocks). Cats take `pattern`, `tailType`, `earType` and `coat`
@@ -308,6 +314,21 @@ jitter and a few swatches change. A 0.9 m path from the door stays clear.
 footprints and the furniture layout are in `public/clinic-kit/`, `public/police-kit/`
 and `public/minimarket-kit/`. Floor mats, ceiling lights, the koban lamp and the
 noren have no collider. The room floor is 2 cm above y = 0, same as the office.
+
+**Meeting, bedroom and studio kits** (catalogue only, not placed by `layout.js`).
+Tabs **Meeting**, **Bedroom**, **Studio**. `createAsset('meeting.chair', {}, style)`,
+`createAsset('bedroom.bed', {}, style)`, `createAsset('studio.sink', {}, style)`
+and the other ids build the pieces from boxes and cylinders. `meeting.room`
+(6 × 4 m), `bedroom.room` (3.5 × 3 m, one single bed) and `studio.room`
+(6 × 4 m, a Japanese 1R) are the furnished rooms, front facing +z:
+`variant: 'Cutaway'` (default; the +z and +x walls are hidden) or `'Full'`.
+`seed: 0` (or omitting it) is the hand-made layout; any other integer rebuilds
+the same room, via `mulberry32` in `src/lib/roomSeed.js`. The catalogue panel
+has a seed number and Randomize, and the copied `createAsset` line includes it.
+Parts use `style.material(role, swatch)`. There are no GLBs. Names, footprints
+and the furniture layout are in `public/meeting-kit/`, `public/bedroom-kit/`
+and `public/studio-kit/`. Rugs, the floor cushion and the hanging lamps have
+no collider. The room floor is 2 cm above y = 0, same as the office.
 
 Catalogue-only street details (the sample town does not place them; `params.seed` and 🎲 New look, same as a tree): `prop.manhole` (Flower, Wave, Grid; 40 triangles at PS1 detail), `prop.backClutter` (Propane tanks 156, Gas meter 64, Drainpipe 78, Cluster 310), `prop.nobori` (Stripes, Blocks; 92; call `tickProps` from `anim/props.js` each frame so the cloth sways), `animal.bird` (Pigeon 154, Sparrow 156; the same `tickProps` runs the peck and the perched look). No new palette swatches. No separate outdoor AC prop: units already dress backs, balconies and roofs. Trees (`nature.tree`) are clumped low-poly lobes (bamboo: segmented culms; the old giant: a kinked trunk that splits) and come in 11 presets the city plants
 (oak, lollipop, pine, old giant, cherry blossom, Japanese maple, ginkgo,
@@ -634,7 +655,7 @@ No unit tests; verify by building and looking.
 
 - `npm run build` must pass.
 - Diner layouts: `node scripts/check-diner-layout.mjs` (seeds 0–50).
-- Room seeds: `node scripts/check-room-seeds.mjs` (clinic, police, minimarket, seeds 0–50).
+- Room seeds: `node scripts/check-room-seeds.mjs` (clinic, police, minimarket, meeting, bedroom, studio; seeds 0–50).
 - Drive the viewer with Playwright (Chromium is preinstalled; use
   `--use-gl=angle --use-angle=swiftshader`): `npx vite preview`, open the
   page, use `window.__cc` and take screenshots.

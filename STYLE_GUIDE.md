@@ -372,6 +372,14 @@ Not placed in the sample town. A game places a piece with `createAsset('office.d
 - Colour is a palette swatch on a role (`wood:Tan`, `cloth:Cocoa`, `leaf:Moss`, `light:Butter`). No new swatches. Walls stay on the building greys. A cane seat, a woven basket and the terrazzo chips use `cloth` or `paint` so Sand, Peach and Dusty rose are not flattened by the building-colour rule.
 - The room is 6.5 × 14.5 m, open at the top, with a checker floor, a glass north wall and a stair. Cutaway hides the east wall. The floor sits 2 cm above y = 0 so it does not flicker against a ground on the same plane.
 
+## 3e-11. Meeting, bedroom and studio kits (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('meeting.chair', {}, style)`, `createAsset('bedroom.bed', {}, style)` or `createAsset('studio.sink', {}, style)`, or a whole room with `createAsset('meeting.room', { variant: 'Cutaway' }, style)` (also `bedroom.room`, `studio.room`).
+
+- The same low-poly boxes and cylinders as the office kit. No readable lettering: the whiteboard is a blank board with a couple of coloured marks, television screens are flat blocks of colour, book spines are plain.
+- Colour is a palette swatch on a role. Walls use `paint` so Off white is not pulled onto the building greys. Bedding, upholstery and rugs use `cloth`. `light` is the glow on lamps, the same as every other lamp. No new swatches.
+- Meeting is 6 × 4 m: a long table, eight chairs, a wall TV, a whiteboard, and a glass partition with a door on the far wall. Bedroom is 3.5 × 3 m with one single bed. Studio is a 6 × 4 m Japanese 1R: bed, mini kitchen, low table, sofa, TV, and a unit bath (open at the top) behind a door. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0. `seed: 0` is the arranged room; another integer moves chairs, beds, sofas and loose props by rule, and recolours bedding and rugs from the same palette.
+
 ## 3e-7. Diner kit (catalogue only)
 
 Not placed in the sample town. A game places a piece with `createAsset('diner.stool', {}, style)` (ids `diner.*`) or the whole room with `createAsset('diner.room', { variant: 'Cutaway' }, style)`.

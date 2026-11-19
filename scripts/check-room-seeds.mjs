@@ -1,10 +1,15 @@
-// Bounding-box check for seeded clinic, police and minimarket layouts.
-// Seeds 1–50 must not overlap, leave the room, or block a 0.9 m walkway.
-// Seed 0 is the hand-made layout and is checked for overlaps only.
+// Bounding-box and determinism checks for seeded room kits.
+// Clinic, police and minimarket: seeds 1–50 must not overlap, leave the room,
+// or block a 0.9 m walkway. Seed 0 is the hand-made layout (overlaps only).
+// Meeting, bedroom and studio: seed 0 stays the hand-made layout (the plan
+// returns null), and seeds 1–50 rebuild the same arrangement twice.
 //
 //   node scripts/check-room-seeds.mjs
 
 import { createServer } from 'vite';
+import { meetingPlan } from '../src/meeting/layout.js';
+import { bedroomPlan } from '../src/bedroom/layout.js';
+import { studioPlan } from '../src/studio/layout.js';
 
 const server = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const clinic = await server.ssrLoadModule('/src/clinic/layout.js');
@@ -48,9 +53,38 @@ for (const [name, layout, issues] of rooms) {
   console.log(`${name}: ${varied.size} distinct layouts in seeds 1-50`);
 }
 
+const interiors = [
+  ['meeting', meetingPlan],
+  ['bedroom', bedroomPlan],
+  ['studio', studioPlan],
+];
+for (const [name, plan] of interiors) {
+  if (plan(0) !== null) {
+    failed++;
+    console.log(`${name} seed 0 should keep the hand-made layout`);
+  }
+  for (let seed = 1; seed <= 50; seed++) {
+    let a;
+    let b;
+    try {
+      a = plan(seed);
+      b = plan(seed);
+    } catch (err) {
+      failed++;
+      console.log(`${name} seed ${seed}: ${err.message}`);
+      continue;
+    }
+    if (JSON.stringify(a) !== JSON.stringify(b)) {
+      failed++;
+      console.log(`${name} seed ${seed}: not deterministic`);
+    }
+  }
+}
+
 await server.close();
 if (failed) {
   console.error(`${failed} seed check(s) failed`);
   process.exit(1);
 }
 console.log('room seeds 0-50 ok');
+console.log('ok: seeds 0 and 1-50 for meeting, bedroom, studio');
