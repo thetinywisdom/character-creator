@@ -369,6 +369,40 @@ checks seeds 0–50 for overlaps and a clear walk from the door.
 Rugs, mats, the noren and hanging lamps have no floor collider. The room
 floor is 2 cm above y = 0, same as the office.
 
+**Ramen, kitchen and library** (catalogue only, not placed by `layout.js`).
+Tabs **Ramen**, **Kitchen** and **Library**. `createAsset('ramen.stool', {}, style)`,
+`createAsset('kitchen.chair', {}, style)` and `createAsset('library.shelf_bay', {}, style)`
+build the pieces from boxes and cylinders in `src/ramen/items.js`, `src/kitchen/items.js`
+and `src/library/items.js`. Each `*.room` is the furnished room:
+`variant: 'Cutaway'` (default; the +z and +x walls are hidden) or `'Full'`.
+Sizes: ramen 7 × 5 m, kitchen 5 × 4 m, library 10 × 8 m, front facing +z.
+Parts use `style.material(role, swatch)`. There are no GLBs. Names, footprints
+and the hand-made layout are in `public/ramen-kit/`, `public/kitchen-kit/` and
+`public/library-kit/`. `createAsset('ramen.room', { variant: 'Cutaway', seed: 7 }, style)`
+(the same for `kitchen.room` and `library.room`) rebuilds that seed every time.
+Omit `seed`, or pass `0`, for the hand-made `layout.json`. The long counter,
+the kitchen run and three library shelf rows stay put. The seed changes the
+ramen counter's L, the stool count, the dining table's spot, the library's
+fourth shelf row, and which end is the reading room. Chairs and stools face
+their table or counter. `node scripts/check-room-seeds.mjs` checks seeds 0–50.
+Floors are one solid colour. The room floor is 2 cm above y = 0.
+
+**Dojo and station** (catalogue only, not placed by `layout.js`).
+Tabs **Dojo** and **Station**. `createAsset('dojo.punching_bag', {}, style)` and
+`createAsset('station.ticket_gate', {}, style)` build the pieces from boxes and
+cylinders in `src/dojo/items.js` and `src/station/items.js`. Each `*.room` is
+the furnished room: `variant: 'Cutaway'` (default; the +z and +x walls are
+hidden) or `'Full'`. Sizes: dojo 9 × 9 m, station 16 × 6 m, front facing +z.
+Parts use `style.material(role, swatch)`. There are no GLBs. Names, footprints
+and the hand-made layout are in `public/dojo-kit/` and `public/station-kit/`.
+`createAsset('dojo.room', { variant: 'Cutaway', seed: 7 }, style)` (the same
+for `station.room`) rebuilds that seed every time. Omit `seed`, or pass `0`,
+for the hand-made `layout.json`. The dojo floor is one solid sage tatami slab.
+The station gates and the platform edge stay put; the seed only moves benches
+and ticket machines. `station.room` sets `fillFrame`, so the catalogue thumbnail
+fits the 16 × 6 m box. `node scripts/check-room-seeds.mjs` checks seeds 0–50.
+Floors are one solid colour. The room floor is 2 cm above y = 0.
+
 Catalogue-only street details (the sample town does not place them; `params.seed` and 🎲 New look, same as a tree): `prop.manhole` (Flower, Wave, Grid; 40 triangles at PS1 detail), `prop.backClutter` (Propane tanks 156, Gas meter 64, Drainpipe 78, Cluster 310), `prop.nobori` (Stripes, Blocks; 92; call `tickProps` from `anim/props.js` each frame so the cloth sways), `animal.bird` (Pigeon 154, Sparrow 156; the same `tickProps` runs the peck and the perched look). No new palette swatches. No separate outdoor AC prop: units already dress backs, balconies and roofs. Trees (`nature.tree`) are clumped low-poly lobes (bamboo: segmented culms; the old giant: a kinked trunk that splits) and come in 11 presets the city plants
 (oak, lollipop, pine, old giant, cherry blossom, Japanese maple, ginkgo,
 zelkova, black pine, weeping willow, bamboo). Catalogue-only kinds live in `tree.more` (the park and the shrine grove never see them): Japanese cedar, windmill palm, camphor, pagoda tree, winter tree, autumn maple. Bushes (`nature.bush`) are the Small and Large mounds, plus boxwood, azalea, hydrangea and a fern clump. Doorstep pots (`nature.pot`: fern, leafy, snake plant, cactus) are separate from the street planter. Motorbikes

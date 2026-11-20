@@ -28,6 +28,9 @@ import { STUDIO_ITEMS, buildStudioItem, buildStudioRoom } from '../studio/items.
 import { CAFE_ITEMS, buildCafeItem, buildCafeRoom } from '../cafe/items.js';
 import { CLASSROOM_ITEMS, buildClassroomItem, buildClassroomRoom } from '../classroom/items.js';
 import { OPEN_OFFICE_ITEMS, buildOpenOfficeItem, buildOpenOfficeRoom } from '../openoffice/items.js';
+import { RAMEN_ITEMS, buildRamenItem, buildRamenRoom } from '../ramen/items.js';
+import { KITCHEN_ITEMS, buildKitchenItem, buildKitchenRoom } from '../kitchen/items.js';
+import { LIBRARY_ITEMS, buildLibraryItem, buildLibraryRoom } from '../library/items.js';
 import { DOJO_ITEMS, buildDojoItem, buildDojoRoom } from '../dojo/items.js';
 import { STATION_ITEMS, buildStationItem, buildStationRoom } from '../station/items.js';
 
@@ -42,7 +45,8 @@ import { STATION_ITEMS, buildStationItem, buildStationRoom } from '../station/it
 //   group     catalogue tab: 'buildings' | 'street' | 'traffic' | 'extras' |
 //             'vehicles' | 'nature' | 'animals' | 'areas' | 'office' | 'diner' |
 //             'clinic' | 'police' | 'minimarket' | 'meeting' | 'bedroom' | 'studio' |
-//             'cafe' | 'classroom' | 'openoffice' | 'dojo' | 'station'
+//             'cafe' | 'classroom' | 'openoffice' | 'dojo' | 'station' |
+//             'ramen' | 'kitchen' | 'library'
 //             (none = not listed)
 //   params    default settings (a city object's params override these)
 //   variants  optional list of variant names (params.variant)
@@ -573,7 +577,18 @@ const openOfficeAssets = [
   roomAsset('openoffice.room', 'Open office', 'openoffice', [12, 10], buildOpenOfficeRoom),
   ...kitAssets('openoffice', OPEN_OFFICE_ITEMS, buildOpenOfficeItem),
 ];
-// Separate kits so a parallel room branch can land beside these.
+const ramenAssets = [
+  roomAsset('ramen.room', 'Ramen shop', 'ramen', [7, 5], buildRamenRoom),
+  ...kitAssets('ramen', RAMEN_ITEMS, buildRamenItem),
+];
+const kitchenAssets = [
+  roomAsset('kitchen.room', 'Kitchen', 'kitchen', [5, 4], buildKitchenRoom),
+  ...kitAssets('kitchen', KITCHEN_ITEMS, buildKitchenItem),
+];
+const libraryAssets = [
+  roomAsset('library.room', 'Library', 'library', [10, 8], buildLibraryRoom),
+  ...kitAssets('library', LIBRARY_ITEMS, buildLibraryItem),
+];
 const dojoAssets = [
   roomAsset('dojo.room', 'Dojo', 'dojo', [9, 9], buildDojoRoom),
   ...kitAssets('dojo', DOJO_ITEMS, buildDojoItem),
@@ -584,7 +599,7 @@ const stationAssets = [
   ...kitAssets('station', STATION_ITEMS, buildStationItem),
 ];
 
-export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...detailAssets, ...officeAssets, ...dinerAssets, ...clinicAssets, ...policeAssets, ...minimarketAssets, ...meetingAssets, ...bedroomAssets, ...studioAssets, ...cafeAssets, ...classroomAssets, ...openOfficeAssets, ...dojoAssets, ...stationAssets, ...groundAssets];
+export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...detailAssets, ...officeAssets, ...dinerAssets, ...clinicAssets, ...policeAssets, ...minimarketAssets, ...meetingAssets, ...bedroomAssets, ...studioAssets, ...cafeAssets, ...classroomAssets, ...openOfficeAssets, ...ramenAssets, ...kitchenAssets, ...libraryAssets, ...dojoAssets, ...stationAssets, ...groundAssets];
 export const CATALOG = Object.fromEntries(ASSETS.map((a) => [a.id, a]));
 
 /** Assets of one category (or all). */
