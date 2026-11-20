@@ -28,6 +28,8 @@ import { STUDIO_ITEMS, buildStudioItem, buildStudioRoom } from '../studio/items.
 import { CAFE_ITEMS, buildCafeItem, buildCafeRoom } from '../cafe/items.js';
 import { CLASSROOM_ITEMS, buildClassroomItem, buildClassroomRoom } from '../classroom/items.js';
 import { OPEN_OFFICE_ITEMS, buildOpenOfficeItem, buildOpenOfficeRoom } from '../openoffice/items.js';
+import { DOJO_ITEMS, buildDojoItem, buildDojoRoom } from '../dojo/items.js';
+import { STATION_ITEMS, buildStationItem, buildStationRoom } from '../station/items.js';
 
 // The asset catalogue: everything that can be placed in a city, behind one
 // interface, so a city file, the generator, the editor and future games can
@@ -40,7 +42,7 @@ import { OPEN_OFFICE_ITEMS, buildOpenOfficeItem, buildOpenOfficeRoom } from '../
 //   group     catalogue tab: 'buildings' | 'street' | 'traffic' | 'extras' |
 //             'vehicles' | 'nature' | 'animals' | 'areas' | 'office' | 'diner' |
 //             'clinic' | 'police' | 'minimarket' | 'meeting' | 'bedroom' | 'studio' |
-//             'cafe' | 'classroom' | 'openoffice'
+//             'cafe' | 'classroom' | 'openoffice' | 'dojo' | 'station'
 //             (none = not listed)
 //   params    default settings (a city object's params override these)
 //   variants  optional list of variant names (params.variant)
@@ -571,8 +573,17 @@ const openOfficeAssets = [
   roomAsset('openoffice.room', 'Open office', 'openoffice', [12, 10], buildOpenOfficeRoom),
   ...kitAssets('openoffice', OPEN_OFFICE_ITEMS, buildOpenOfficeItem),
 ];
+// Separate kits so a parallel room branch can land beside these.
+const dojoAssets = [
+  roomAsset('dojo.room', 'Dojo', 'dojo', [9, 9], buildDojoRoom),
+  ...kitAssets('dojo', DOJO_ITEMS, buildDojoItem),
+];
+const stationAssets = [
+  roomAsset('station.room', 'Train platform', 'station', [16, 6], buildStationRoom),
+  ...kitAssets('station', STATION_ITEMS, buildStationItem),
+];
 
-export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...detailAssets, ...officeAssets, ...dinerAssets, ...clinicAssets, ...policeAssets, ...minimarketAssets, ...meetingAssets, ...bedroomAssets, ...studioAssets, ...cafeAssets, ...classroomAssets, ...openOfficeAssets, ...groundAssets];
+export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...detailAssets, ...officeAssets, ...dinerAssets, ...clinicAssets, ...policeAssets, ...minimarketAssets, ...meetingAssets, ...bedroomAssets, ...studioAssets, ...cafeAssets, ...classroomAssets, ...openOfficeAssets, ...dojoAssets, ...stationAssets, ...groundAssets];
 export const CATALOG = Object.fromEntries(ASSETS.map((a) => [a.id, a]));
 
 /** Assets of one category (or all). */
