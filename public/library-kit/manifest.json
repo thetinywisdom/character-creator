@@ -1,0 +1,141 @@
+{
+  "units": "metres",
+  "up": "+y",
+  "front": "+z",
+  "origin": "bottom centre",
+  "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+  "note": "Procedural kit. The catalogue builds these in src/library/items.js. No GLBs.",
+  "items": {
+    "shelf_bay": {
+      "label": "Bookshelf bay",
+      "group": "shelves",
+      "footprint": [
+        1.12,
+        0.36
+      ],
+      "materials": [],
+      "tris": 288
+    },
+    "low_shelf": {
+      "label": "Low shelf",
+      "group": "shelves",
+      "footprint": [
+        1.5,
+        0.32
+      ],
+      "materials": [],
+      "tris": 180
+    },
+    "table": {
+      "label": "Reading table",
+      "group": "reading",
+      "footprint": [
+        1.1,
+        0.68
+      ],
+      "materials": [],
+      "tris": 60
+    },
+    "chair": {
+      "label": "Reading chair",
+      "group": "reading",
+      "footprint": [
+        0.4,
+        0.38
+      ],
+      "materials": [],
+      "tris": 72
+    },
+    "lamp": {
+      "label": "Table lamp",
+      "group": "light",
+      "footprint": [
+        0.22,
+        0.22
+      ],
+      "materials": [],
+      "tris": 76
+    },
+    "desk": {
+      "label": "Front desk",
+      "group": "desk",
+      "footprint": [
+        1.5,
+        0.66
+      ],
+      "materials": [],
+      "tris": 36
+    },
+    "cart": {
+      "label": "Return cart",
+      "group": "desk",
+      "footprint": [
+        0.66,
+        0.42
+      ],
+      "materials": [],
+      "tris": 120
+    },
+    "magazine": {
+      "label": "Magazine rack",
+      "group": "desk",
+      "footprint": [
+        0.85,
+        0.26
+      ],
+      "materials": [],
+      "tris": 84
+    },
+    "cushion": {
+      "label": "Floor cushion",
+      "group": "kids",
+      "footprint": [
+        0.44,
+        0.44
+      ],
+      "materials": [],
+      "tris": 44
+    },
+    "plant": {
+      "label": "Floor plant",
+      "group": "plant",
+      "footprint": [
+        0.34,
+        0.34
+      ],
+      "materials": [],
+      "tris": 84
+    },
+    "book": {
+      "label": "Book",
+      "group": "reading",
+      "footprint": [
+        0.2,
+        0.26
+      ],
+      "materials": [],
+      "tris": 24
+    },
+    "window": {
+      "label": "Library window",
+      "group": "entrance",
+      "footprint": [
+        1.7,
+        0.16
+      ],
+      "materials": [],
+      "tris": 72
+    },
+    "door": {
+      "label": "Library door",
+      "group": "entrance",
+      "footprint": [
+        1.05,
+        0.12
+      ],
+      "materials": [],
+      "tris": 84
+    }
+  },
+  "room_tris": 6932
+}

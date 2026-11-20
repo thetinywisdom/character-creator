@@ -423,6 +423,15 @@ Not placed in the sample town. A game places a piece with `createAsset('cafe.tab
 - Rooms are open at the top, front facing +z: cafe 8 × 6 m, classroom 9 × 7 m, open office 12 × 10 m. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0.
 - `seed: 0` (or leaving it out) is the hand-made layout. Any other integer rebuilds the same arrangement every time. The bar, the blackboard, the pantry, the doors and the windows do not move. Tables, desk rows and benches change count inside a range. Chairs keep facing their table or desk, with a small pull. Classroom desks stay in neat rows facing the board. Optional props and one accent (a pot, a shade, the noren, the sofa, a chair cloth) come from swatches already in the palette.
 
+## 3e-13. Ramen, kitchen and library (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('ramen.stool', {}, style)`, `createAsset('kitchen.chair', {}, style)` or `createAsset('library.shelf_bay', {}, style)`, or the whole room with `createAsset('ramen.room', { variant: 'Cutaway', seed: 0 }, style)` (the same for `kitchen.room` and `library.room`).
+
+- The same low-poly boxes and cylinders as the office kit. No readable lettering: menu strips, book rows and the ticket machine are colour blocks.
+- Colour is a palette swatch on a role. Lantern reds, the noren and chair cushions use `paint` or `cloth`, so the building-colour rule does not turn them grey. Floors are one solid `wood` box (walnut in the ramen shop, tan in the kitchen and the library). No planks, stripes or tiles. No new swatches.
+- Rooms are open at the top, front facing +z: ramen 7 × 5 m, kitchen 5 × 4 m, library 10 × 8 m. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0.
+- `seed: 0` (or leaving it out) is the hand-made layout. Any other integer rebuilds the same arrangement every time. The ramen counter, the kitchen run and three library shelf rows do not move. The seed picks an L or a straight counter, 8 to 10 stools, one of three dining spots, three or four shelf rows, and swaps the reading tables with the kids' corner. Chairs and stools keep facing their table or counter.
+
 ## 3e-1. People content
 
 - **Held items** put the arm in a pose and stay upright whatever the arm does:

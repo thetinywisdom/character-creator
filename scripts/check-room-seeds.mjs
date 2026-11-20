@@ -5,8 +5,10 @@
 // returns null), and seeds 1–50 rebuild the same arrangement twice.
 // Studio seeds 0–50 also keep the TV facing the sofa, with the screen in
 // the iso camera's half-space (the catalogue never sees the TV's back).
-// Cafe, classroom and open office: seeds 1–50 stay inside, miss each other,
-// and leave a connected walk. Seed 0 is overlaps and bounds only.
+// Cafe, classroom, open office, ramen, kitchen and library: seeds 1–50 stay
+// inside, miss each other, and leave a connected walk. Seed 0 is overlaps
+// and bounds only. Ramen, kitchen and library also keep their fixed anchors
+// and point chairs (and ramen stools) at the table or counter.
 //
 //   node scripts/check-room-seeds.mjs
 
@@ -25,6 +27,9 @@ const market = await server.ssrLoadModule('/src/minimarket/layout.js');
 const { cafePlan, cafeFloorBoxes } = await server.ssrLoadModule('/src/cafe/arrange.js');
 const { classroomPlan, classroomFloorBoxes } = await server.ssrLoadModule('/src/classroom/arrange.js');
 const { openOfficePlan, openOfficeFloorBoxes } = await server.ssrLoadModule('/src/openoffice/arrange.js');
+const { ramenPlan, ramenFloorBoxes, ramenExtraErrors } = await server.ssrLoadModule('/src/ramen/arrange.js');
+const { kitchenPlan, kitchenFloorBoxes, kitchenExtraErrors } = await server.ssrLoadModule('/src/kitchen/arrange.js');
+const { libraryPlan, libraryFloorBoxes, libraryExtraErrors } = await server.ssrLoadModule('/src/library/arrange.js');
 const { planProblems } = await server.ssrLoadModule('/src/lib/roomPlan.js');
 
 const rooms = [
@@ -102,11 +107,14 @@ for (const [name, plan] of interiors) {
 }
 
 const kits = [
-  ['cafe', cafePlan, cafeFloorBoxes],
-  ['classroom', classroomPlan, classroomFloorBoxes],
-  ['open office', openOfficePlan, openOfficeFloorBoxes],
+  ['cafe', cafePlan, cafeFloorBoxes, null],
+  ['classroom', classroomPlan, classroomFloorBoxes, null],
+  ['open office', openOfficePlan, openOfficeFloorBoxes, null],
+  ['ramen', ramenPlan, ramenFloorBoxes, ramenExtraErrors],
+  ['kitchen', kitchenPlan, kitchenFloorBoxes, kitchenExtraErrors],
+  ['library', libraryPlan, libraryFloorBoxes, libraryExtraErrors],
 ];
-for (const [name, planFn, boxesFn] of kits) {
+for (const [name, planFn, boxesFn, extraFn] of kits) {
   for (let seed = 0; seed <= 50; seed++) {
     const plan = planFn(seed);
     const again = planFn(seed);
@@ -118,6 +126,7 @@ for (const [name, planFn, boxesFn] of kits) {
     const errs = seed === 0
       ? planProblems({ ...plan, keepOut: null, goals: null, door: null }, boxes)
       : planProblems(plan, boxes);
+    if (extraFn) errs.push(...extraFn(plan));
     if (errs.length) {
       failed += 1;
       console.log(`${name} seed ${seed}:`);
@@ -135,4 +144,4 @@ if (failed) {
 console.log('room seeds 0-50 ok');
 console.log('ok: seeds 0 and 1-50 for meeting, bedroom, studio');
 console.log('ok: studio seeds 0-50 — tv faces the sofa and the iso camera');
-console.log('ok: cafe, classroom, open office — seeds 0–50 inside, clear, and deterministic');
+console.log('ok: cafe, classroom, open office, ramen, kitchen, library — seeds 0–50 inside, clear, and deterministic');
