@@ -11,7 +11,7 @@ import { dojoPlan } from './arrange.js';
 //
 // Origin at the bottom centre, front facing +z. The floor sits 2 cm above
 // y = 0. Cutaway hides the +z and +x walls. The wood floor is one solid
-// colour. Tatami are solid sage mats with a gap of floor between them.
+// colour. The tatami is one solid sage slab, with no seams inside it.
 
 const P = Math.PI;
 const SLAB_TOP = 0.02;
@@ -72,8 +72,38 @@ function addCyl(g, rTop, rBottom, h, material, pos, { seg = 6, rot = null } = {}
 
 const BUILDERS = {
   tatami(g, style) {
-    // One solid mat. The floor shows in the gap around it. No woven stripes.
-    addBox(g, 1.56, 0.02, 0.78, mat(style, 'paint:Sage'), [0, 0.014, 0]);
+    // Catalogue sample: one solid mat. The room itself is a single slab.
+    addBox(g, 1.8, 0.028, 0.9, mat(style, 'paint:Sage'), [0, 0.016, 0]);
+  },
+  dummy(g, style) {
+    const wood = mat(style, 'wood:Walnut');
+    const pad = mat(style, 'cloth:Navy');
+    const sand = mat(style, 'cloth:Sand');
+    addBox(g, 0.32, 0.04, 0.32, wood, [0, 0.02, 0]);
+    addBox(g, 0.08, 1.05, 0.08, wood, [0, 0.56, 0]);
+    addBox(g, 0.28, 0.36, 0.16, pad, [0, 1.05, 0.02]);
+    addBox(g, 0.14, 0.14, 0.14, sand, [0, 1.32, 0.02]);
+    addBox(g, 0.22, 0.05, 0.05, wood, [-0.16, 1.08, 0]);
+    addBox(g, 0.22, 0.05, 0.05, wood, [0.16, 1.08, 0]);
+  },
+  scroll(g, style) {
+    const wood = mat(style, 'wood:Walnut');
+    const paper = mat(style, 'paint:Paper');
+    const ink = mat(style, 'paint:Navy');
+    addBox(g, 0.66, 0.04, 0.04, wood, [0, 1.02, 0.02]);
+    addBox(g, 0.56, 0.92, 0.012, paper, [0, 0.52, 0.02]);
+    addBox(g, 0.36, 0.42, 0.012, ink, [0, 0.58, 0.028]);
+    addBox(g, 0.62, 0.035, 0.035, wood, [0, 0.04, 0.02]);
+  },
+  mat_stack(g, style) {
+    // Folded mats in a corner. One sage colour; the steps are the stack, not floor seams.
+    const sage = mat(style, 'paint:Sage');
+    const tie = mat(style, 'cloth:Sand');
+    addBox(g, 0.7, 0.045, 0.46, sage, [0, 0.025, 0]);
+    addBox(g, 0.66, 0.045, 0.44, sage, [0.02, 0.07, 0]);
+    addBox(g, 0.62, 0.045, 0.42, sage, [-0.015, 0.115, 0]);
+    addBox(g, 0.58, 0.04, 0.4, sage, [0.01, 0.155, 0]);
+    addBox(g, 0.04, 0.16, 0.42, tie, [0, 0.09, 0]);
   },
   kamidana(g, style) {
     const wood = mat(style, 'wood:Walnut');
@@ -203,10 +233,13 @@ const LABELS = {
   mirror: 'Mirror wall',
   window: 'Dojo window',
   sliding_door: 'Sliding door',
+  dummy: 'Training dummy',
+  scroll: 'Wall scroll',
+  mat_stack: 'Stacked mats',
 };
 
-const NO_HIT = new Set();
-const BACK = new Set(['kamidana', 'mirror']);
+const NO_HIT = new Set(['scroll']);
+const BACK = new Set(['kamidana', 'mirror', 'scroll']);
 
 function hitFor(name, footprint) {
   if (NO_HIT.has(name)) return [];
@@ -304,10 +337,14 @@ export function buildDojoRoom(style, { cutaway = false, seed = 0 } = {}) {
   const side = new THREE.Group();
   const hits = [];
 
-  // One solid wood floor. Tatami mats sit on it as separate solid slabs.
+  // Wood border, then one solid tatami slab. No seams inside the mat.
   const floorH = TILE_TOP - SLAB_TOP;
   addBox(body, 9, floorH, 9, mat(style, 'wood:Tan'), [0, (SLAB_TOP + TILE_TOP) / 2, 0]);
   addBox(body, 9, 0.22, 9, mat(style, 'concrete:Gray'), [0, SLAB_TOP - 0.11, 0]);
+  if (plan.mat) {
+    const { x, z, w, d } = plan.mat;
+    addBox(body, w, 0.028, d, mat(style, 'paint:Sage'), [x, TILE_TOP + 0.016, z]);
+  }
 
   const hole = (a0, a1, y0, h) => ({ a0: a0 + LIP, a1: a1 - LIP, y0: y0 + LIP, y1: y0 + h - LIP });
   const backWin = [-4.28, -4.28 + WIN.w];

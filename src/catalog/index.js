@@ -579,7 +579,8 @@ const dojoAssets = [
   ...kitAssets('dojo', DOJO_ITEMS, buildDojoItem),
 ];
 const stationAssets = [
-  roomAsset('station.room', 'Train platform', 'station', [16, 6], buildStationRoom),
+  // fillFrame: the 16 × 6 platform is framed to its box, so the thumbnail fills like the squarer rooms.
+  { ...roomAsset('station.room', 'Train platform', 'station', [16, 6], buildStationRoom), fillFrame: true },
   ...kitAssets('station', STATION_ITEMS, buildStationItem),
 ];
 

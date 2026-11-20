@@ -109,8 +109,13 @@ export class Cell {
       this.content.add(pivot);
       this.pivots.push(pivot);
       const z = pivot.position.z;
-      bounds.expandByPoint(new THREE.Vector3(pivot.position.x - it.hr, it.box.min.y, z - it.hr));
-      bounds.expandByPoint(new THREE.Vector3(pivot.position.x + it.hr, it.box.max.y, z + it.hr));
+      if (entry.tight) {
+        bounds.expandByPoint(new THREE.Vector3(pivot.position.x + it.box.min.x, it.box.min.y, z + it.box.min.z));
+        bounds.expandByPoint(new THREE.Vector3(pivot.position.x + it.box.max.x, it.box.max.y, z + it.box.max.z));
+      } else {
+        bounds.expandByPoint(new THREE.Vector3(pivot.position.x - it.hr, it.box.min.y, z - it.hr));
+        bounds.expandByPoint(new THREE.Vector3(pivot.position.x + it.hr, it.box.max.y, z + it.hr));
+      }
     });
 
     // a wide ground plane, so subjects read as standing in a world

@@ -9,10 +9,34 @@
     "tatami": {
       "label": "Tatami mat",
       "group": "floor",
-      "size": [1.56, 0.02, 0.78],
-      "footprint": [1.56, 0.78],
+      "size": [1.8, 0.028, 0.9],
+      "footprint": [1.8, 0.9],
       "materials": ["paint:Sage"],
       "tris": 12
+    },
+    "dummy": {
+      "label": "Training dummy",
+      "group": "training",
+      "size": [0.42, 1.4, 0.42],
+      "footprint": [0.42, 0.42],
+      "materials": ["wood:Walnut", "cloth:Navy", "cloth:Sand"],
+      "tris": 72
+    },
+    "scroll": {
+      "label": "Wall scroll",
+      "group": "wall",
+      "size": [0.66, 1.06, 0.04],
+      "footprint": [0.66, 0.04],
+      "materials": ["wood:Walnut", "paint:Paper", "paint:Navy"],
+      "tris": 48
+    },
+    "mat_stack": {
+      "label": "Stacked mats",
+      "group": "floor",
+      "size": [0.72, 0.18, 0.5],
+      "footprint": [0.72, 0.5],
+      "materials": ["paint:Sage", "cloth:Sand"],
+      "tris": 60
     },
     "kamidana": {
       "label": "Kamidana shrine",

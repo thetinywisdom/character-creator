@@ -107,7 +107,7 @@ function openItem(id, p) {
   const a = CATALOG[id];
   selected = { id, params: { ...a.params, ...p } };
   const subject = { id: 'item', label: a.label, schema: {}, isProp: true, build: (_q, st) => createAsset(id, selected.params, st) };
-  itemCell = new Cell({ entries: [{ subject }], style, renderer, viewDir: a.viewDir });
+  itemCell = new Cell({ entries: [{ subject, tight: !!a.fillFrame }], style, renderer, viewDir: a.viewDir });
   itemCell.rebuild({});
   itemCell.applyLighting(lightingPresets[state.lighting]);
   setNightGlow(itemCell.scene, !!lightingPresets[state.lighting].night);

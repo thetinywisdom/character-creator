@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { activePalette } from '../styles/palette.js';
-import { createAsset } from './index.js';
+import { CATALOG, createAsset } from './index.js';
 import { setDetail } from '../lib/shapes.js';
 
 // Little pictures of catalogue assets for the editor's palette, in the app's
@@ -9,7 +9,7 @@ import { setDetail } from '../lib/shapes.js';
 // show them at once and only new assets get drawn. Bump VERSION when assets
 // change shape and their pictures should be redrawn.
 
-const VERSION = 20; // 20: clumped trees, bamboo culms, trimmed hedges; 9: octagon wheels; 12-13: new cats
+const VERSION = 21; // 21: long rooms with fillFrame use the box, not the bounding sphere
 const SIZE = 64; // drawn small, shown scaled up with crisp pixels
 const mem = new Map();
 const queue = [];
@@ -30,6 +30,28 @@ function getStage(renderer, style) {
   return stage;
 }
 
+/** Fit the camera to the box corners. Same direction as the sphere fit, just closer. */
+function frameBox(camera, box, dir, margin) {
+  const fov = 30;
+  const tv = Math.tan(THREE.MathUtils.degToRad(fov) / 2);
+  const right = new THREE.Vector3(0, 1, 0).cross(dir).normalize();
+  const up = dir.clone().cross(right);
+  const center = box.getCenter(new THREE.Vector3());
+  const { min, max } = box;
+  const p = new THREE.Vector3();
+  let dist = 0;
+  for (let i = 0; i < 8; i++) {
+    p.set(i & 1 ? max.x : min.x, i & 2 ? max.y : min.y, i & 4 ? max.z : min.z).sub(center);
+    const z = p.dot(dir);
+    dist = Math.max(dist, (Math.abs(p.dot(right)) * margin) / tv + z, (Math.abs(p.dot(up)) * margin) / tv + z);
+  }
+  camera.position.copy(center).addScaledVector(dir, dist);
+  camera.near = Math.max(0.05, dist / 50);
+  camera.far = dist * 3;
+  camera.lookAt(center);
+  camera.updateProjectionMatrix();
+}
+
 /** Draw one asset now and return a PNG data URL (transparent background). */
 function draw(renderer, style, id, params) {
   const s = getStage(renderer, style);
@@ -40,13 +62,21 @@ function draw(renderer, style, id, params) {
   s.scene.add(obj);
   // frame it from the front-right, a little above
   const box = new THREE.Box3().setFromObject(obj);
-  const sphere = box.getBoundingSphere(new THREE.Sphere());
-  const dir = new THREE.Vector3(0.75, 0.6, 1).normalize();
-  const dist = sphere.radius / Math.sin(THREE.MathUtils.degToRad(15)) * 1.02;
-  s.camera.position.copy(sphere.center).addScaledVector(dir, dist);
-  s.camera.near = dist / 50; s.camera.far = dist * 3;
-  s.camera.lookAt(sphere.center);
-  s.camera.updateProjectionMatrix();
+  const asset = CATALOG[id];
+  const thumbDir = new THREE.Vector3(0.75, 0.6, 1).normalize();
+  if (asset?.fillFrame) {
+    // The room's own iso angle. The shared thumb angle leaves a 16 m platform as a thin sliver.
+    const dir = asset.viewDir ? new THREE.Vector3(...asset.viewDir).normalize() : thumbDir;
+    frameBox(s.camera, box, dir, 1.06);
+  } else {
+    const dir = thumbDir;
+    const sphere = box.getBoundingSphere(new THREE.Sphere());
+    const dist = sphere.radius / Math.sin(THREE.MathUtils.degToRad(15)) * 1.02;
+    s.camera.position.copy(sphere.center).addScaledVector(dir, dist);
+    s.camera.near = dist / 50; s.camera.far = dist * 3;
+    s.camera.lookAt(sphere.center);
+    s.camera.updateProjectionMatrix();
+  }
 
   const prevTarget = renderer.getRenderTarget();
   const prevClear = renderer.getClearColor(new THREE.Color());
