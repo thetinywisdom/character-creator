@@ -647,6 +647,10 @@ Dusty rose, Blush, Powder blue, Lilac and Denim.
   yellow.
 - **Earshot:** speech is full size near you, then shrinks to half and fades
   out with distance (talk gone past ~22 m, shouts ~34 m).
+- **Human lab:** three other ways of building a person (Refined, Toy, Lofted),
+  shown beside today's figure. They follow this guide (no face, palette
+  colours, low poly, the same rig). They are a comparison only. The creator,
+  the catalogue and the City still use the person described above.
 - **The cat:** the faceted lofted body and slim jointed legs of version 6,
   with version 2's head: a round, slightly wide skull, round cheeks low on
   the sides, a small soft muzzle and small pointed ears.

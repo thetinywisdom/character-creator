@@ -65,6 +65,11 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   faces, round bean or loaf bodies, big paws and cheek fluff; make them all
   walk, run, sit, loaf or sleep. Cats got new options for this: Face, Body
   shape, Paw size, Cheek fluff.
+- **🧍 Human lab:** today's person beside three other builds (A Refined,
+  B Toy, C Lofted), wearing the same outfit, standing, walking or running.
+  Drag to turn them. Pick a body type and all four change together. The
+  creator, the catalogue and the City keep today's person. None of the
+  trials has a face.
 - **Walk and run styles:** in the character creator pick a walk (Natural,
   Brisk, Swagger, Sneak) and, separately, a run (Natural, Ninja, Panic);
   townspeople get a random mix. **Animation (everyone)** switches between the
