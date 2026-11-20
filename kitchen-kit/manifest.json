@@ -1,0 +1,161 @@
+{
+  "units": "metres",
+  "up": "+y",
+  "front": "+z",
+  "origin": "bottom centre",
+  "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+  "note": "Procedural kit. The catalogue builds these in src/kitchen/items.js. No GLBs.",
+  "items": {
+    "run": {
+      "label": "Cabinet run",
+      "group": "kitchen",
+      "footprint": [
+        2.7,
+        0.56
+      ],
+      "materials": [],
+      "tris": 72
+    },
+    "fridge": {
+      "label": "Fridge",
+      "group": "kitchen",
+      "footprint": [
+        0.62,
+        0.66
+      ],
+      "materials": [],
+      "tris": 48
+    },
+    "microwave": {
+      "label": "Microwave rack",
+      "group": "kitchen",
+      "footprint": [
+        0.48,
+        0.4
+      ],
+      "materials": [],
+      "tris": 84
+    },
+    "sink": {
+      "label": "Sink",
+      "group": "kitchen",
+      "footprint": [
+        0.55,
+        0.42
+      ],
+      "materials": [],
+      "tris": 56
+    },
+    "hob": {
+      "label": "Gas hob",
+      "group": "kitchen",
+      "footprint": [
+        0.6,
+        0.5
+      ],
+      "materials": [],
+      "tris": 72
+    },
+    "grill": {
+      "label": "Fish grill",
+      "group": "kitchen",
+      "footprint": [
+        0.42,
+        0.38
+      ],
+      "materials": [],
+      "tris": 60
+    },
+    "rice": {
+      "label": "Rice cooker",
+      "group": "kitchen",
+      "footprint": [
+        0.32,
+        0.3
+      ],
+      "materials": [],
+      "tris": 60
+    },
+    "dish": {
+      "label": "Dish rack",
+      "group": "kitchen",
+      "footprint": [
+        0.4,
+        0.3
+      ],
+      "materials": [],
+      "tris": 60
+    },
+    "jar": {
+      "label": "Jar",
+      "group": "kitchen",
+      "footprint": [
+        0.14,
+        0.14
+      ],
+      "materials": [],
+      "tris": 40
+    },
+    "board": {
+      "label": "Cutting board",
+      "group": "kitchen",
+      "footprint": [
+        0.36,
+        0.24
+      ],
+      "materials": [],
+      "tris": 12
+    },
+    "table": {
+      "label": "Dining table",
+      "group": "dining",
+      "footprint": [
+        1.1,
+        0.7
+      ],
+      "materials": [],
+      "tris": 60
+    },
+    "chair": {
+      "label": "Dining chair",
+      "group": "dining",
+      "footprint": [
+        0.42,
+        0.4
+      ],
+      "materials": [],
+      "tris": 72
+    },
+    "pendant": {
+      "label": "Pendant lamp",
+      "group": "light",
+      "footprint": [
+        0.32,
+        0.32
+      ],
+      "materials": [],
+      "tris": 64
+    },
+    "window": {
+      "label": "Kitchen window",
+      "group": "entrance",
+      "footprint": [
+        1.46,
+        0.16
+      ],
+      "materials": [],
+      "tris": 72
+    },
+    "door": {
+      "label": "Kitchen door",
+      "group": "entrance",
+      "footprint": [
+        0.92,
+        0.12
+      ],
+      "materials": [],
+      "tris": 72
+    }
+  },
+  "room_tris": 1576
+}

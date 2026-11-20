@@ -1,0 +1,28 @@
+{
+  "units": "metres",
+  "note": "three.js coords; room centred on the origin; item origin bottom centre; rotY radians; y is height above the concrete floor. The yellow tactile strip, roof canopy, windows and the end door are built in src/station/items.js. Gates and the platform edge stay fixed for every seed.",
+  "placements": [
+    { "item": "ticket_gate", "x": -5.4, "y": 0, "z": -2.28, "rotY": 0 },
+    { "item": "ticket_gate", "x": -3.6, "y": 0, "z": -2.28, "rotY": 0 },
+    { "item": "ticket_gate", "x": -1.8, "y": 0, "z": -2.28, "rotY": 0 },
+    { "item": "ticket_gate", "x": 0, "y": 0, "z": -2.28, "rotY": 0 },
+    { "item": "ticket_gate", "x": 1.8, "y": 0, "z": -2.28, "rotY": 0 },
+    { "item": "ticket_gate", "x": 3.6, "y": 0, "z": -2.28, "rotY": 0 },
+    { "item": "ticket_gate", "x": 5.4, "y": 0, "z": -2.28, "rotY": 0 },
+
+    { "item": "pillar", "x": -4.4, "y": 0, "z": 0.18, "rotY": 0 },
+    { "item": "pillar", "x": -1.5, "y": 0, "z": 0.18, "rotY": 0 },
+    { "item": "pillar_clock", "x": 1.6, "y": 0, "z": 0.18, "rotY": 0 },
+    { "item": "pillar", "x": 5.2, "y": 0, "z": 0.18, "rotY": 0 },
+
+    { "item": "vending", "x": 6.65, "y": 0, "z": -0.3, "rotY": 0 },
+    { "item": "ticket_machine", "x": 0.3, "y": 0, "z": -0.3, "rotY": 0 },
+    { "item": "bench", "x": -5.5, "y": 0, "z": 0.7, "rotY": 0 },
+    { "item": "bench", "x": -2.8, "y": 0, "z": 0.7, "rotY": 0 },
+    { "item": "bench", "x": 3.4, "y": 0, "z": 0.7, "rotY": 0 },
+
+    { "item": "departure_board", "x": 0, "y": 2.05, "z": -1.35, "rotY": 0 },
+    { "item": "platform_sign", "x": -3.3, "y": 2.15, "z": 0.42, "rotY": 0 },
+    { "item": "platform_sign", "x": 3.5, "y": 2.15, "z": 0.42, "rotY": 0 }
+  ]
+}

@@ -1,0 +1,181 @@
+{
+  "units": "metres",
+  "up": "+y",
+  "front": "+z",
+  "origin": "bottom centre",
+  "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+  "note": "Procedural kit. The catalogue builds these in src/ramen/items.js. No GLBs.",
+  "items": {
+    "counter": {
+      "label": "Ramen counter",
+      "group": "counter",
+      "footprint": [
+        4.2,
+        0.56
+      ],
+      "materials": [],
+      "tris": 48
+    },
+    "counter_return": {
+      "label": "Counter return",
+      "group": "counter",
+      "footprint": [
+        0.56,
+        1.5
+      ],
+      "materials": [],
+      "tris": 48
+    },
+    "stool": {
+      "label": "Counter stool",
+      "group": "seating",
+      "footprint": [
+        0.36,
+        0.34
+      ],
+      "materials": [],
+      "tris": 72
+    },
+    "prep": {
+      "label": "Prep counter",
+      "group": "kitchen",
+      "footprint": [
+        2.4,
+        0.48
+      ],
+      "materials": [],
+      "tris": 36
+    },
+    "boiler": {
+      "label": "Noodle boiler",
+      "group": "kitchen",
+      "footprint": [
+        0.68,
+        0.55
+      ],
+      "materials": [],
+      "tris": 84
+    },
+    "pot": {
+      "label": "Stock pot",
+      "group": "kitchen",
+      "footprint": [
+        0.38,
+        0.38
+      ],
+      "materials": [],
+      "tris": 72
+    },
+    "ticket": {
+      "label": "Ticket machine",
+      "group": "entrance",
+      "footprint": [
+        0.48,
+        0.4
+      ],
+      "materials": [],
+      "tris": 108
+    },
+    "lantern": {
+      "label": "Chouchin lantern",
+      "group": "light",
+      "footprint": [
+        0.28,
+        0.28
+      ],
+      "materials": [],
+      "tris": 100
+    },
+    "menu_strip": {
+      "label": "Menu strip",
+      "group": "wall",
+      "footprint": [
+        0.9,
+        0.06
+      ],
+      "materials": [],
+      "tris": 48
+    },
+    "shelf": {
+      "label": "Sake shelf",
+      "group": "wall",
+      "footprint": [
+        1.15,
+        0.3
+      ],
+      "materials": [],
+      "tris": 168
+    },
+    "bottle": {
+      "label": "Sake bottle",
+      "group": "counter",
+      "footprint": [
+        0.12,
+        0.12
+      ],
+      "materials": [],
+      "tris": 40
+    },
+    "condiment": {
+      "label": "Condiment set",
+      "group": "counter",
+      "footprint": [
+        0.22,
+        0.16
+      ],
+      "materials": [],
+      "tris": 52
+    },
+    "noren": {
+      "label": "Noren curtain",
+      "group": "entrance",
+      "footprint": [
+        0.92,
+        0.06
+      ],
+      "materials": [],
+      "tris": 116
+    },
+    "mat": {
+      "label": "Floor mat",
+      "group": "entrance",
+      "footprint": [
+        0.6,
+        0.4
+      ],
+      "materials": [],
+      "tris": 24
+    },
+    "plant": {
+      "label": "Floor plant",
+      "group": "plant",
+      "footprint": [
+        0.34,
+        0.34
+      ],
+      "materials": [],
+      "tris": 84
+    },
+    "window": {
+      "label": "Shop window",
+      "group": "entrance",
+      "footprint": [
+        1.7,
+        0.16
+      ],
+      "materials": [],
+      "tris": 84
+    },
+    "door": {
+      "label": "Shop door",
+      "group": "entrance",
+      "footprint": [
+        1.02,
+        0.12
+      ],
+      "materials": [],
+      "tris": 84
+    }
+  },
+  "room_tris": 3128
+}

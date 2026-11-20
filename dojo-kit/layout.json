@@ -1,0 +1,31 @@
+{
+  "units": "metres",
+  "note": "Seed 0. The tatami is one solid slab (mat), not a grid. y is height above the wood floor. Windows, the sliding door, the kamidana and the mirror are built in src/dojo/items.js.",
+  "mat": { "x": -0.2, "z": -1.005, "w": 7.7, "d": 6.15 },
+  "placements": [
+    { "item": "shoe_shelf", "x": -4.16, "y": 0, "z": 1.8, "rotY": 1.5708 },
+    { "item": "shoe_shelf", "x": -4.12, "y": 0, "z": 0.4, "rotY": 1.5708 },
+    { "item": "bokken_rack", "x": -3.4, "y": 0, "z": -4.12, "rotY": 0 },
+    { "item": "bokken_rack", "x": -1.45, "y": 0, "z": -4.12, "rotY": 0 },
+    { "item": "bokken_rack", "x": 3.45, "y": 0, "z": -4.08, "rotY": 0 },
+    { "item": "mat_stack", "x": -3.55, "y": 0, "z": -3.2, "rotY": 0 },
+    { "item": "dummy", "x": -2.4, "y": 0, "z": -2.15, "rotY": 0 },
+    { "item": "dummy", "x": -0.7, "y": 0, "z": -2.15, "rotY": 0 },
+    { "item": "dummy", "x": 0.6, "y": 0, "z": -2.15, "rotY": 0 },
+    { "item": "dummy", "x": -2.4, "y": 0, "z": -0.45, "rotY": 0 },
+    { "item": "dummy", "x": -0.7, "y": 0, "z": -0.45, "rotY": 0 },
+    { "item": "dummy", "x": 0.6, "y": 0, "z": -0.45, "rotY": 0 },
+    { "item": "dummy", "x": -2.4, "y": 0, "z": 1.05, "rotY": 0 },
+    { "item": "dummy", "x": -0.7, "y": 0, "z": 1.05, "rotY": 0 },
+    { "item": "punching_bag", "x": 1.5, "y": 0, "z": -1.15, "rotY": 0 },
+    { "item": "punching_bag", "x": 1.5, "y": 0, "z": 0.7, "rotY": 0 },
+    { "item": "punching_bag", "x": 3.15, "y": 0, "z": 0.35, "rotY": 0 },
+    { "item": "weight_bench", "x": 3.05, "y": 0, "z": -2.5, "rotY": 0 },
+    { "item": "weight_bench", "x": 3.4, "y": 0, "z": 1.35, "rotY": 1.5708 },
+    { "item": "dumbbell_rack", "x": 3.88, "y": 0, "z": -0.95, "rotY": 1.5708 },
+    { "item": "scroll", "x": -0.15, "y": 1.35, "z": -4.36, "rotY": 0 },
+    { "item": "scroll", "x": 3.55, "y": 1.35, "z": -4.36, "rotY": 0 },
+    { "item": "scroll", "x": -4.36, "y": 1.35, "z": -3.6, "rotY": 1.5708 },
+    { "item": "scroll", "x": -4.36, "y": 1.35, "z": 0.55, "rotY": 1.5708 }
+  ]
+}

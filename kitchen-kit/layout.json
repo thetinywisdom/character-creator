@@ -1,0 +1,23 @@
+{
+  "units": "metres",
+  "note": "three.js coords; room centred on the origin; item origin bottom centre; rotY radians; y is height above the floor. Walls, windows and the door are built in src/kitchen/items.js. Seed 0 is the left-hand dining nook with the counter fully dressed.",
+  "look": { "chair": "cushion", "shade": "Butter", "pot": "Sage" },
+  "placements": [
+    { "item": "run", "x": -0.7, "y": 0, "z": -1.48, "rotY": 0 },
+    { "item": "fridge", "x": 1.25, "y": 0, "z": -1.46, "rotY": 0 },
+    { "item": "microwave", "x": 1.98, "y": 0, "z": -1.5, "rotY": 0 },
+    { "item": "sink", "x": -1.6, "y": 0.9, "z": -1.4, "rotY": 0 },
+    { "item": "hob", "x": -0.85, "y": 0.9, "z": -1.38, "rotY": 0 },
+    { "item": "grill", "x": -0.22, "y": 0.9, "z": -1.38, "rotY": 0 },
+    { "item": "table", "x": -0.55, "y": 0, "z": 0.32, "rotY": 0 },
+    { "item": "chair", "x": -0.55, "y": 0, "z": -0.31, "rotY": 0 },
+    { "item": "chair", "x": -0.55, "y": 0, "z": 0.95, "rotY": 3.1416 },
+    { "item": "chair", "x": -1.38, "y": 0, "z": 0.32, "rotY": 1.5708 },
+    { "item": "chair", "x": 0.28, "y": 0, "z": 0.32, "rotY": -1.5708 },
+    { "item": "pendant", "x": -0.55, "y": 1.72, "z": 0.32, "rotY": 0 },
+    { "item": "rice", "x": 0.38, "y": 0.9, "z": -1.4, "rotY": 0.2 },
+    { "item": "dish", "x": -1.95, "y": 0.9, "z": -1.58, "rotY": 0 },
+    { "item": "jar", "x": 0.12, "y": 0.9, "z": -1.62, "rotY": 0.4 },
+    { "item": "board", "x": -1.2, "y": 0.9, "z": -1.58, "rotY": 0.3 }
+  ]
+}
