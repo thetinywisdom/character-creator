@@ -7,6 +7,8 @@
 // the iso camera's half-space (the catalogue never sees the TV's back).
 // Cafe, classroom and open office: seeds 1–50 stay inside, miss each other,
 // and leave a connected walk. Seed 0 is overlaps and bounds only.
+// Dojo and station: same rules. Dojo varies the mat/gym split. Station keeps
+// the gates and the platform edge fixed.
 //
 //   node scripts/check-room-seeds.mjs
 
@@ -127,6 +129,38 @@ for (const [name, planFn, boxesFn] of kits) {
   }
 }
 
+const { dojoPlan, dojoFloorBoxes } = await server.ssrLoadModule('/src/dojo/arrange.js');
+const { stationPlan, stationFloorBoxes } = await server.ssrLoadModule('/src/station/arrange.js');
+const addedKits = [
+  ['dojo', dojoPlan, dojoFloorBoxes],
+  ['station', stationPlan, stationFloorBoxes],
+];
+for (const [name, planFn, boxesFn] of addedKits) {
+  for (let seed = 0; seed <= 50; seed++) {
+    const plan = planFn(seed);
+    const again = planFn(seed);
+    if (JSON.stringify(again) !== JSON.stringify(plan)) {
+      failed += 1;
+      console.log(`${name} seed ${seed}: not deterministic`);
+    }
+    const boxes = boxesFn(plan);
+    const errs = seed === 0
+      ? planProblems({ ...plan, keepOut: null, goals: null, door: null }, boxes)
+      : planProblems(plan, boxes);
+    if (errs.length) {
+      failed += 1;
+      console.log(`${name} seed ${seed}:`);
+      for (const e of errs.slice(0, 12)) console.log(`  ${e}`);
+      if (errs.length > 12) console.log(`  … ${errs.length - 12} more`);
+    }
+  }
+  const varied = new Set();
+  for (let seed = 1; seed <= 50; seed++) {
+    try { varied.add(JSON.stringify(planFn(seed).placements)); } catch { /* already reported */ }
+  }
+  console.log(`${name}: ${varied.size} distinct layouts in seeds 1-50`);
+}
+
 await server.close();
 if (failed) {
   console.error(`${failed} seed check(s) failed`);
@@ -136,3 +170,4 @@ console.log('room seeds 0-50 ok');
 console.log('ok: seeds 0 and 1-50 for meeting, bedroom, studio');
 console.log('ok: studio seeds 0-50 — tv faces the sofa and the iso camera');
 console.log('ok: cafe, classroom, open office — seeds 0–50 inside, clear, and deterministic');
+console.log('ok: dojo, station — seeds 0–50 inside, clear, and deterministic');

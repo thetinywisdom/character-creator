@@ -1,0 +1,98 @@
+{
+  "units": "metres",
+  "up": "+y",
+  "front": "+z",
+  "origin": "bottom centre",
+  "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+  "note": "Procedural kit. The catalogue builds these in src/station/items.js. No GLBs: createAsset stays synchronous.",
+  "items": {
+    "ticket_gate": {
+      "label": "Ticket gate",
+      "group": "gates",
+      "size": [0.5, 0.98, 0.44],
+      "footprint": [0.5, 0.44],
+      "materials": ["metal:Light gray", "darkMetal:Ink", "glass:Navy", "paint:Sage", "light:Butter"],
+      "tris": 72
+    },
+    "ticket_machine": {
+      "label": "Ticket machine",
+      "group": "machines",
+      "size": [0.68, 1.52, 0.48],
+      "footprint": [0.68, 0.48],
+      "materials": ["paint:Off white", "darkMetal:Charcoal", "glass:Navy", "paint:Powder blue", "paint:Butter"],
+      "tris": 96
+    },
+    "bench": {
+      "label": "Platform bench",
+      "group": "platform",
+      "size": [1.46, 0.78, 0.46],
+      "footprint": [1.46, 0.46],
+      "materials": ["wood:Walnut", "darkMetal:Charcoal"],
+      "tris": 84
+    },
+    "departure_board": {
+      "label": "Departure board",
+      "group": "signs",
+      "size": [3.2, 1.15, 0.1],
+      "footprint": [3.2, 0.1],
+      "materials": ["darkMetal:Ink", "darkMetal:Charcoal", "paint:Butter", "paint:Sage", "paint:Powder blue", "paint:Off white"],
+      "tris": 168
+    },
+    "vending": {
+      "label": "Vending machine",
+      "group": "machines",
+      "size": [0.76, 1.8, 0.5],
+      "footprint": [0.76, 0.5],
+      "materials": ["paint:Navy", "darkMetal:Ink", "glass:Sky", "paint:Butter", "paint:Sage", "paint:Dusty rose", "paint:Powder blue"],
+      "tris": 108
+    },
+    "pillar_clock": {
+      "label": "Pillar clock",
+      "group": "structure",
+      "size": [0.36, 3.1, 0.36],
+      "footprint": [0.32, 0.32],
+      "materials": ["concrete:Stone", "darkMetal:Charcoal", "paint:Off white", "darkMetal:Ink"],
+      "tris": 124
+    },
+    "platform_sign": {
+      "label": "Platform sign",
+      "group": "signs",
+      "size": [0.78, 0.97, 0.08],
+      "footprint": [0.78, 0.08],
+      "materials": ["darkMetal:Charcoal", "paint:Navy", "paint:Butter", "paint:Off white"],
+      "tris": 48
+    },
+    "pillar": {
+      "label": "Platform pillar",
+      "group": "structure",
+      "size": [0.36, 3.06, 0.36],
+      "footprint": [0.32, 0.32],
+      "materials": ["concrete:Stone"],
+      "tris": 36
+    },
+    "window": {
+      "label": "Station window",
+      "group": "shell",
+      "size": [1.7, 0.95, 0.1],
+      "footprint": [1.7, 0.1],
+      "materials": ["metal:Light gray", "glass:Sky"],
+      "tris": 72
+    },
+    "door": {
+      "label": "Station door",
+      "group": "shell",
+      "size": [1.15, 2.2, 0.1],
+      "footprint": [1.15, 0.1],
+      "materials": ["metal:Light gray", "paint:Off white", "glass:Sky", "metal:Stone"],
+      "tris": 72
+    },
+    "tactile": {
+      "label": "Tactile strip",
+      "group": "platform",
+      "size": [1.6, 0.04, 0.3],
+      "footprint": [1.6, 0.3],
+      "materials": ["paint:Butter"],
+      "tris": 48
+    }
+  }
+}
