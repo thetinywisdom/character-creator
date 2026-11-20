@@ -31,6 +31,8 @@ import { OPEN_OFFICE_ITEMS, buildOpenOfficeItem, buildOpenOfficeRoom } from '../
 import { RAMEN_ITEMS, buildRamenItem, buildRamenRoom } from '../ramen/items.js';
 import { KITCHEN_ITEMS, buildKitchenItem, buildKitchenRoom } from '../kitchen/items.js';
 import { LIBRARY_ITEMS, buildLibraryItem, buildLibraryRoom } from '../library/items.js';
+import { DOJO_ITEMS, buildDojoItem, buildDojoRoom } from '../dojo/items.js';
+import { STATION_ITEMS, buildStationItem, buildStationRoom } from '../station/items.js';
 
 // The asset catalogue: everything that can be placed in a city, behind one
 // interface, so a city file, the generator, the editor and future games can
@@ -43,7 +45,8 @@ import { LIBRARY_ITEMS, buildLibraryItem, buildLibraryRoom } from '../library/it
 //   group     catalogue tab: 'buildings' | 'street' | 'traffic' | 'extras' |
 //             'vehicles' | 'nature' | 'animals' | 'areas' | 'office' | 'diner' |
 //             'clinic' | 'police' | 'minimarket' | 'meeting' | 'bedroom' | 'studio' |
-//             'cafe' | 'classroom' | 'openoffice' | 'ramen' | 'kitchen' | 'library'
+//             'cafe' | 'classroom' | 'openoffice' | 'dojo' | 'station' |
+//             'ramen' | 'kitchen' | 'library'
 //             (none = not listed)
 //   params    default settings (a city object's params override these)
 //   variants  optional list of variant names (params.variant)
@@ -586,8 +589,17 @@ const libraryAssets = [
   roomAsset('library.room', 'Library', 'library', [10, 8], buildLibraryRoom),
   ...kitAssets('library', LIBRARY_ITEMS, buildLibraryItem),
 ];
+const dojoAssets = [
+  roomAsset('dojo.room', 'Dojo', 'dojo', [9, 9], buildDojoRoom),
+  ...kitAssets('dojo', DOJO_ITEMS, buildDojoItem),
+];
+const stationAssets = [
+  // fillFrame: the 16 × 6 platform is framed to its box, so the thumbnail fills like the squarer rooms.
+  { ...roomAsset('station.room', 'Train platform', 'station', [16, 6], buildStationRoom), fillFrame: true },
+  ...kitAssets('station', STATION_ITEMS, buildStationItem),
+];
 
-export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...detailAssets, ...officeAssets, ...dinerAssets, ...clinicAssets, ...policeAssets, ...minimarketAssets, ...meetingAssets, ...bedroomAssets, ...studioAssets, ...cafeAssets, ...classroomAssets, ...openOfficeAssets, ...ramenAssets, ...kitchenAssets, ...libraryAssets, ...groundAssets];
+export const ASSETS = [...buildingAssets, ...areaAssets, ...natureAssets, ...animalAssets, ...propAssets, ...detailAssets, ...officeAssets, ...dinerAssets, ...clinicAssets, ...policeAssets, ...minimarketAssets, ...meetingAssets, ...bedroomAssets, ...studioAssets, ...cafeAssets, ...classroomAssets, ...openOfficeAssets, ...ramenAssets, ...kitchenAssets, ...libraryAssets, ...dojoAssets, ...stationAssets, ...groundAssets];
 export const CATALOG = Object.fromEntries(ASSETS.map((a) => [a.id, a]));
 
 /** Assets of one category (or all). */

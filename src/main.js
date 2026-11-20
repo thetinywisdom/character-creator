@@ -63,7 +63,7 @@ let reframe = true;
 // ---------------------------------------------------------------------------
 // 📦 Catalogue
 // ---------------------------------------------------------------------------
-const TABS = [['palette', '🎨 Palette'], ['all', 'All'], ['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['nature', 'Nature'], ['animals', 'Animals'], ['vehicles', 'Vehicles'], ['office', 'Office'], ['diner', 'Diner'], ['clinic', 'Clinic'], ['police', 'Police'], ['minimarket', 'Minimarket'], ['meeting', 'Meeting'], ['bedroom', 'Bedroom'], ['studio', 'Studio'], ['cafe', 'Cafe'], ['classroom', 'Classroom'], ['openoffice', 'Open office'], ['ramen', 'Ramen'], ['kitchen', 'Kitchen'], ['library', 'Library'], ['areas', 'Areas']];
+const TABS = [['palette', '🎨 Palette'], ['all', 'All'], ['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['nature', 'Nature'], ['animals', 'Animals'], ['vehicles', 'Vehicles'], ['office', 'Office'], ['diner', 'Diner'], ['clinic', 'Clinic'], ['police', 'Police'], ['minimarket', 'Minimarket'], ['meeting', 'Meeting'], ['bedroom', 'Bedroom'], ['studio', 'Studio'], ['cafe', 'Cafe'], ['classroom', 'Classroom'], ['openoffice', 'Open office'], ['ramen', 'Ramen'], ['kitchen', 'Kitchen'], ['library', 'Library'], ['dojo', 'Dojo'], ['station', 'Station'], ['areas', 'Areas']];
 const catalogEl = document.querySelector('#catalog');
 const itemEl = document.querySelector('#item');
 const items = ASSETS.filter((a) => a.group);
@@ -107,7 +107,7 @@ function openItem(id, p) {
   const a = CATALOG[id];
   selected = { id, params: { ...a.params, ...p } };
   const subject = { id: 'item', label: a.label, schema: {}, isProp: true, build: (_q, st) => createAsset(id, selected.params, st) };
-  itemCell = new Cell({ entries: [{ subject }], style, renderer, viewDir: a.viewDir });
+  itemCell = new Cell({ entries: [{ subject, tight: !!a.fillFrame }], style, renderer, viewDir: a.viewDir });
   itemCell.rebuild({});
   itemCell.applyLighting(lightingPresets[state.lighting]);
   setNightGlow(itemCell.scene, !!lightingPresets[state.lighting].night);
