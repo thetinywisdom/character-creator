@@ -1,4 +1,5 @@
 import { CatLab } from './ui/catLab.js';
+import { HumanLab } from './ui/humanLab.js';
 import { WalkLab } from './ui/walkLab.js';
 import { PixelOverlay } from './ui/pixelOverlay.js';
 import { ActionPad, PAD_LAYOUTS } from './ui/actionPad.js';
@@ -251,6 +252,8 @@ document.querySelector('#lightBtn').onclick = () => {
   const names = Object.keys(lightingPresets);
   state.lighting = names[(names.indexOf(state.lighting) + 1) % names.length];
   for (const c of [city, humanCell, itemCell]) c?.applyLighting(lightingPresets[state.lighting]);
+  humanLab?.applyLighting(lightingPresets[state.lighting]);
+  catLab?.applyLighting(lightingPresets[state.lighting]);
   if (itemCell) setNightGlow(itemCell.scene, !!lightingPresets[state.lighting].night);
   updateCityBar();
 };
@@ -270,8 +273,9 @@ window.addEventListener('keydown', (e) => {
 // ---------------------------------------------------------------------------
 // Views and the app bar
 // ---------------------------------------------------------------------------
-const MODE = { catalog: 'catalog', item: 'catalog', creator: 'characters', city: 'city', catlab: 'catlab' };
+const MODE = { catalog: 'catalog', item: 'catalog', creator: 'characters', city: 'city', catlab: 'catlab', humanlab: 'humanlab' };
 let catLab = null; // the Cat lab (ui/catLab.js), made the first time you open it
+let humanLab = null; // the Human lab (ui/humanLab.js): today's person beside three trials
 /** Dev tools (the Walk lab button): on with #dev in the address, or __cc.devTools(true). */
 function devTools() {
   try { return location.hash === '#dev' || localStorage.getItem('tinycity.dev') === '1'; } catch { return location.hash === '#dev'; }
@@ -305,12 +309,18 @@ function setView(view) {
     catLab.applyLighting(lightingPresets[state.lighting]);
     hint.textContent = 'Every cat so far, and cute proposals on the same rig';
   }
+  document.querySelector('#humanLab').hidden = view !== 'humanlab';
+  if (view === 'humanlab') {
+    humanLab ??= new HumanLab({ style, renderer, el: document.querySelector('#humanLab'), canvas });
+    humanLab.applyLighting(lightingPresets[state.lighting]);
+    hint.textContent = 'Drag to turn · same outfit on all four · the City still uses Current';
+  }
   // snow lies on shared materials: show it only in the city
   if (city) setSnowCover(city.scene, view === 'city' && state.weather === 'Snow');
 }
 document.querySelector('#modes').onclick = (e) => {
   const m = e.target.closest('[data-mode]')?.dataset.mode;
-  if (m) setView({ catalog: 'catalog', characters: 'creator', city: 'city', catlab: 'catlab' }[m]);
+  if (m) setView({ catalog: 'catalog', characters: 'creator', city: 'city', catlab: 'catlab', humanlab: 'humanlab' }[m]);
 };
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.view === 'item') setView('catalog'); });
 
@@ -491,6 +501,8 @@ function loop(time) {
     preview(humanCell, creator.previewRect(W, H), H);
   } else if (state.view === 'catlab' && catLab) {
     try { catLab.render(ps1, dt, W, H); } catch (err) { if (!loop.warnedCat) { loop.warnedCat = true; console.error('cat lab', err); } }
+  } else if (state.view === 'humanlab' && humanLab) {
+    try { humanLab.render(ps1, dt, W, H); } catch (err) { if (!loop.warnedHuman) { loop.warnedHuman = true; console.error('human lab', err); } }
   } else if (state.view === 'city' && city) {
     // an error in one update must never stop the picture (the city would go black)
     if (city.playerTune === undefined) walkLab.apply();
@@ -513,6 +525,8 @@ requestAnimationFrame(loop);
 Object.assign(window, {
   __cc: {
     params, state, setView, openItem, CATALOG, human, getCity: () => ensureCity(), cityInput, gait, tuneOf,
+    /** The Human lab (today's person beside the three trials). Opening the lab creates it. */
+    humanLab: () => humanLab,
     /** Set character settings (rules applied). */
     apply: (id, values) => { Object.assign(params[id], values); humanChanged(); reframe = true; },
     /**
