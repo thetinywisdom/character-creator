@@ -6,7 +6,9 @@ import { ComedyStage, COMEDY } from './city/comedy.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { subjects } from './subjects/index.js';
+import { setCharacterStyle } from './subjects/human.js';
 import { lightingPresets, style } from './styles/index.js';
+import { LOOKS, activeLook, setLook } from './styles/ps1.js';
 import { Cell } from './viewer/Cell.js';
 import { defaultsFor, loadParams, saveParams } from './viewer/params.js';
 import { createPs1Renderer } from './render/ps1.js';
@@ -179,11 +181,13 @@ humanCell.rebuild(params);
 humanCell.applyLighting(lightingPresets[state.lighting]);
 let lastHuman = { ...params.human };
 setGaitEngine(params.human.animation);
+setCharacterStyle(params.human.characterStyle); // iso-city (default) or Classic, for everyone
 /** After any change: apply the character rules, rebuild the preview, remember the settings. */
 function humanChanged(key) {
   if (key) human.adjust?.(params.human, key, lastHuman[key]);
   human.applyRules?.(params.human);
   setGaitEngine(params.human.animation); // New (foot targets + IK) or Classic, for everyone
+  setCharacterStyle(params.human.characterStyle);
   lastHuman = { ...params.human };
   humanCell.rebuild(params);
   saveParams(params);
@@ -329,13 +333,23 @@ pie.addEventListener('click', (e) => {
 const paletteBtn = document.querySelector('#paletteBtn'), palettePanel = document.querySelector('#palettePanel');
 const STRIP = ['Sky', 'Sage', 'Moss', 'Butter', 'Apricot', 'Dusty rose', 'Powder blue', 'Lilac', 'Brick', 'Tan', 'Paper', 'Charcoal'];
 paletteBtn.innerHTML = `🎨<span> ${activePalette()}</span>`;
-palettePanel.innerHTML = `<h3>Colour palette</h3>${Object.entries(PALETTES).map(([name, p]) => `
+palettePanel.innerHTML = `<h3>Look</h3><div class="looks">${LOOKS.map((l) => `<button type="button" data-look="${l}" class="${l === activeLook() ? 'on' : ''}">${l}</button>`).join('')}</div>
+<h3>Colour palette</h3>${Object.entries(PALETTES).map(([name, p]) => `
   <button type="button" data-palette="${name}" class="${name === activePalette() ? 'on' : ''}">
     <b>${name}</b><small>${p.label}</small>
     <span class="strip">${STRIP.map((n) => `<i style="background:#${swatchOf(name, n).toString(16).padStart(6, '0')}"></i>`).join('')}</span>
   </button>`).join('')}`;
 paletteBtn.onclick = () => { palettePanel.hidden = !palettePanel.hidden; };
 palettePanel.addEventListener('click', (e) => {
+  // the look switches at once (no reload): Default, PS1, 8-bit
+  const lk = e.target.closest('[data-look]');
+  if (lk) {
+    setLook(lk.dataset.look);
+    palettePanel.querySelectorAll('[data-look]').forEach((x) => x.classList.toggle('on', x === lk));
+    toast(`Look: ${lk.dataset.look}`);
+    if (state.view !== 'city') setView(state.view); // redraw the catalogue pictures in this look
+    return;
+  }
   const b = e.target.closest('[data-palette]');
   if (!b) return;
   if (b.dataset.palette === activePalette()) { palettePanel.hidden = true; return; }

@@ -104,6 +104,10 @@ Publish to the Artifact, `main` and GitHub Pages after every task.
 ```
 src/main.js            the viewer: three modes, render loop, debug hooks (not reused by games)
 src/render/ps1.js      createPs1Renderer: low-res render + dither + outlines (reuse this).
+                       THE LOOK (styles/ps1.js LOOKS, setLook / activeLook, localStorage
+                       'tinycity.look', the 🎨 panel): Default (pixelScale 0: full resolution, no
+                       post step, no vertex snapping), PS1, 8-bit (pixel scale ~4, phones 2;
+                       style.levels 5 per channel + dither; verts on the pixel grid)
                        Outlines read the alpha the materials write: characters 1 (strong dark
                        edge x0.28), everything else 0.5 (styles/ps1.js sets opacity 0.5 on
                        non-character roles, still opaque): a soft x0.8 shade fading out
@@ -112,12 +116,18 @@ src/render/ps1.js      createPs1Renderer: low-res render + dither + outlines (re
 src/styles/            ps1.js (materials by role, lights), palette.js, lightingPresets
 src/catalog/index.js   ASSET CATALOGUE: every placeable item behind one interface
 src/catalog/thumbs.js  catalogue pictures (drawn on demand, cached in the browser)
-src/subjects/human/isoCity.js  the iso-city style human (owner's previous game, being ported in
-                       steps; NOT used by the game yet; not the isometric-view people of city/isoPeople.js): buildIsoCityHuman(p, style) builds our
-                       settings with iso-city's shapes (lathed torso, egg head without eyes,
-                       paddle hands, shell clothes, cap + blob hair, HAIR_MAP from our hair
-                       names) on OUR rig (spine / armL > foreL / legL > shinL > footL + sole),
-                       in iso-city units, then scaled to the person's height
+src/subjects/human/isoCity.js  the iso-city style human (owner's previous game; the DEFAULT
+                       character style, not the isometric-view people of city/isoPeople.js):
+                       buildIsoCityHuman(p, style) builds every creator setting with iso-city's
+                       shapes (lathed torso, egg head without eyes, paddle hands, shell clothes,
+                       cap + blob hair via HAIR_MAP, hats, beards, outer layers, wings on
+                       wingL / wingR) on OUR rig (spine / armL > foreL / legL > shinL > footL +
+                       sole), in iso-city units scaled to the person's height; our sliders scale
+                       it (REF = the Man's defaults); build thickness goes into the limb shapes.
+                       human.build(p, style, { characterStyle }) picks iso-city or Classic
+                       (setCharacterStyle / characterStyle(); creator setting "Character style
+                       (everyone)", param characterStyle) and puts hand items in the paddle hand
+                       (root.userData.isoHand / isoGrip, also used by giveHeldItem)
 compare.html, src/compare.js, src/compare.css, vite.compare.config.js
                        the old / new human comparison page (Artifact of its own): build with
                        `npx vite build --config vite.compare.config.js`, pack with

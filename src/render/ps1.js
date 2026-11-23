@@ -17,13 +17,13 @@ export function createPs1Renderer(renderer) {
   const blitMat = new THREE.ShaderMaterial({
     uniforms: {
       tDiffuse: { value: null }, tDepth: { value: null }, size: { value: new THREE.Vector2(1, 1) },
-      dither: { value: 1 }, outline: { value: 0 }, near: { value: 0.1 }, far: { value: 100 }, ortho: { value: 0 },
+      dither: { value: 1 }, levels: { value: 31 }, outline: { value: 0 }, near: { value: 0.1 }, far: { value: 100 }, ortho: { value: 0 },
     },
     vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
     fragmentShader: `
       #include <packing>
       uniform sampler2D tDiffuse; uniform sampler2D tDepth; uniform vec2 size;
-      uniform float dither; uniform float outline; uniform float near; uniform float far; uniform float ortho;
+      uniform float dither; uniform float levels; uniform float outline; uniform float near; uniform float far; uniform float ortho;
       varying vec2 vUv;
       float viewDepth(vec2 uv) {
         float z = texture2D(tDepth, uv).x;
@@ -59,8 +59,8 @@ export function createPs1Renderer(renderer) {
         }
         if (dither > 0.5) {
           vec2 px = floor(vUv * size);
-          c.rgb += (bayer4(px) - 0.5) / 31.0;
-          c.rgb = floor(clamp(c.rgb, 0.0, 1.0) * 31.0 + 0.5) / 31.0;
+          c.rgb += (bayer4(px) - 0.5) / levels;   // 31 levels: PS1's 15-bit colour; 5: 8-bit
+          c.rgb = floor(clamp(c.rgb, 0.0, 1.0) * levels + 0.5) / levels;
         }
         gl_FragColor = vec4(c.rgb, 1.0);
       }`,
@@ -99,6 +99,7 @@ export function createPs1Renderer(renderer) {
     u.size.value.set(lw, lh);
     u.tDepth.value = stage.rt.depthTexture;
     u.dither.value = stage.style.dither === false ? 0 : 1;
+    u.levels.value = stage.style.levels ?? 31;
     u.outline.value = stage.style.outline ? 1 : 0;
     u.near.value = camera.near;
     u.far.value = camera.far;

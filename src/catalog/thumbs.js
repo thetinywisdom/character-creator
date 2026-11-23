@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { activePalette } from '../styles/palette.js';
+import { activeLook } from '../styles/ps1.js';
 import { CATALOG, createAsset } from './index.js';
 import { setDetail } from '../lib/shapes.js';
 
@@ -16,7 +17,7 @@ const queue = [];
 let busy = false;
 let stage = null;
 
-const keyOf = (id, params) => `tcb.thumb.v${VERSION}:${activePalette()}:${id}:${JSON.stringify(params ?? {})}`; // one set of pictures per palette
+const keyOf = (id, params) => `tcb.thumb.v${VERSION}:${activePalette()}:${activeLook()}:${id}:${JSON.stringify(params ?? {})}`; // one set of pictures per palette
 
 function getStage(renderer, style) {
   if (stage) return stage;

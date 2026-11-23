@@ -26,6 +26,24 @@ function adjust(color, { saturate = 1, lighten = 0 }) {
   return color;
 }
 
+// THE LOOK (owner: "turn off the PS1 look; add an 8-bit look"): how the
+// picture is drawn, chosen in the 🎨 panel and kept in localStorage
+// 'tinycity.look'. Default = full resolution, smooth, no post effects;
+// PS1 = low-res pixels, 15-bit colour + dither, vertex wobble, pixel outlines;
+// 8-bit = big pixels, 5 levels per colour channel + strong dither, snapped verts.
+export const LOOKS = ['Default', 'PS1', '8-bit'];
+let LOOK = 'PS1';
+try { const v = localStorage.getItem('tinycity.look'); if (LOOKS.includes(v)) LOOK = v; } catch { /* no storage: PS1 */ }
+export function activeLook() { return LOOK; }
+const lookListeners = new Set();
+/** Switch the look now (and for the next visit). */
+export function setLook(v) {
+  if (!LOOKS.includes(v)) return;
+  LOOK = v;
+  try { localStorage.setItem('tinycity.look', v); } catch { /* fine */ }
+  for (const f of lookListeners) f(v);
+}
+
 export function createPs1Style({
   id,
   label,
@@ -44,6 +62,9 @@ export function createPs1Style({
   blobShadows = false,
 }) {
   const snapRes = { value: new THREE.Vector2(320, 240) };
+  const unsnap = () => { if (LOOK === 'Default') snapRes.value.set(1e6, 1e6); };
+  unsnap();
+  lookListeners.add(unsnap);
   const cache = new Map();
 
   const blobMaterial = new THREE.MeshBasicMaterial({
@@ -72,18 +93,23 @@ export function createPs1Style({
      * instead of ~200 (owner: on a phone everything was black lines).
      */
     get pixelScale() {
-      const base = this.options.pixelSize.value;
       const short = typeof window === 'undefined' ? 1000 : Math.min(window.innerWidth, window.innerHeight);
+      if (LOOK === 'Default') return 0;                                   // full resolution, no post step
+      if (LOOK === '8-bit') return Math.max(2, Math.min(5, Math.round(short / 190))); // desktop ~4, phone 2
+      const base = this.options.pixelSize.value;
       return Math.max(1, Math.min(base, Math.floor(short / 300)));
     },
-    get outline() { return this.options.outline.value; },
-    get dither() { return this.options.dither.value; },
+    get outline() { return LOOK !== 'Default' && this.options.outline.value; },
+    get dither() { return LOOK !== 'Default' && this.options.dither.value; },
+    /** Colour levels per channel after the post step (PS1 15-bit: 31; 8-bit: 5). */
+    get levels() { return LOOK === '8-bit' ? 5 : 31; },
+    get look() { return LOOK; },
 
     /** Called right before rendering a cell at low resolution w × h. */
     prepareRender(w, h) {
       // wobble 0 snaps to a grid 4x finer than the pixels (barely visible),
       // wobble 1 snaps to a grid at half the pixel resolution (very shaky)
-      const k = 4 - 3.5 * this.options.wobble.value;
+      const k = LOOK === '8-bit' ? 1 : 4 - 3.5 * this.options.wobble.value; // 8-bit: verts on the pixel grid
       snapRes.value.set(w * k, h * k);
     },
 

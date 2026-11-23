@@ -38,6 +38,7 @@ games), 🏙 City (walk a generated sample town to experiment).
 
 ## Done
 
+90. **iso-city human is the default; Classic kept; three looks** (owner: "keep both, fix the iso-city problems, merge it into the main project"; "add an option to turn off the PS1 look and an 8-bit look"): every creator setting now has an iso-city version (all tops incl. yukata / sailor / gakuran / police, outer layers, boots, all hats, glasses / sunglasses, flu mask, beards and moustaches, backpack, wings, body accessories, our hand items in the paddle hand); the shirt hem sits higher and flares over a waistband, so walking no longer breaks it up; sliders work (heads tall, leg length, shoulder / hip / head width, arm / leg thickness, a softer torso for women); build thickness is in the shapes (no shear); the City's person material is double-sided (no holes in open shells). "Character style (everyone)" in the creator: iso-city (default) or Classic. Looks in the 🎨 panel, instant: Default (smooth, full resolution), PS1, 8-bit. Checked: all 885 option builds, 7-town soak, third person, from behind, iso view, riding.
 89. **iso-city human, step 1 of 3** (owner: "my previous attempt on human is better, follow what I was doing there, adjust so nothing breaks"; confirm before each step): `src/subjects/human/isoCity.js` ports iso-city's body, egg head, paddle hands, wedge shoes, shirt / tee / trousers / shorts / skirt and hair onto our rig; shown next to the current human on a comparison page (own Artifact). Owner decisions: no eyes (nose and ear lines only), natural skin tones. Not wired into the game yet. (Merged with main's #11-#25 first; publish-pages.sh now skips an unchanged site.) Step 2: the other tops, outer layers, hats, glasses, beards, bags, held items. Step 3: children / grandparents tuning, creator panel, townspeople, switch the game over, full City test.
 88. **Dojo and station kits, catalogue only** (not placed in the sample town). Two tabs. Dojo (`dojo.room`, 9 × 9 m, up to 3,948 triangles): one solid sage tatami slab, kamidana, bokken racks, punching bags, training dummies, a weights corner, shoe shelves, stacked mats, wall scrolls, a mirror, windows and a sliding door. Station (`station.room`, 16 × 6 m, up to 2,704 triangles): ticket gates, ticket machines, a yellow tactile edge, benches, a block departure board, a vending machine, a pillar clock, signs, pillars and a roof canopy. Cutaway hides the +z and +x walls. Built in `src/dojo/items.js` and `src/station/items.js` so `createAsset` stays synchronous and every colour is a palette swatch through `style.material`. No new swatches. No GLBs. Floors are one solid colour (the tatami is one slab, not a grid). Manifest and the hand-made layout are in `public/dojo-kit/` and `public/station-kit/`. Each room takes `seed`: `0` is that layout; any other integer is deterministic (`src/dojo/arrange.js`, `src/station/arrange.js`, using `mulberry32`). Station gates and the platform edge stay put. The station catalogue thumbnail uses `fillFrame` so the long platform fills the square. `node scripts/check-room-seeds.mjs` checks seeds 0–50. Every piece is under 300 triangles. The sample town is unchanged.
 
@@ -181,12 +182,9 @@ Ideas, not commitments. The owner decides what to add.
   you can talk (tap someone) and push (double tap), but not slap, fart, jump,
   run or drop a peel. Bring the pad back (`SHOW_PAD` in main.js) or design new
   phone controls when the owner asks.
-- iso-city human, risks for step 3: the isometric view's chunky copy of each person (city/isoPeople.js, buildIsoCharacter) also calls the human builder, so the switch must cover it too; skinning in the City bakes everything into one
-  vertex-colour material, so the double-sided hair / skirt / open shells may show holes
-  from behind (test one skinned iso person early); Bulky / Fat use non-uniform group
-  scales on legs and arms, which shear when joints bend (move thickness into the
-  geometry); the Heads tall, Leg length, Shoulder width and Hip width sliders do
-  nothing in the new builder yet.
+- iso-city characters: the yukata is a rigid robe, so striding feet poke out of
+  its hem; skirts are rigid too (the thighs under them are skirt-coloured, the
+  old trick). The isometric view's chunky copy uses the same builder.
 - The previous project's 7 `cursor/*` branches are still on GitHub: the
   session was not allowed to delete branches; the owner deletes them on
   GitHub (Branches page).

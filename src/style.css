@@ -288,3 +288,6 @@ body[data-hud="pixel"] #joystick .knob { background: transparent; }
 #palettePanel small { color: var(--muted); font-size: 12px; }
 #palettePanel .strip { display: flex; height: 18px; border-radius: 4px; overflow: hidden; }
 #palettePanel .strip i { flex: 1; }
+#palettePanel .looks { display: flex; gap: 6px; }
+#palettePanel .looks button { flex: 1; display: block; text-align: center; font-weight: 600; }
+#palettePanel .looks button.on { background: var(--accent); color: #1d1d1d; border-color: var(--accent); }

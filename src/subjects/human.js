@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { buildIsoCityHuman } from './human/isoCity.js';
 import { RUNS, WALKS } from '../anim/gait.js';
 import { ellipsoid, seg } from '../lib/shapes.js';
 import { CLOTH_COLORS, HAIR_COLORS, SKIN_TONES } from '../styles/palette.js';
@@ -29,6 +30,12 @@ function accentFor(topColor) {
   return ['White', 'Yellow', 'Khaki', 'Pink'].includes(topColor) ? CLOTH_COLORS.Navy : CLOTH_COLORS.White;
 }
 
+// Which character style everyone is built in (owner: keep both; iso-city is
+// the default). Set from the creator (characterStyle) by main.js.
+let CHARACTER_STYLE = 'iso-city';
+export function setCharacterStyle(v) { CHARACTER_STYLE = v === 'Classic' ? 'Classic' : 'iso-city'; }
+export function characterStyle() { return CHARACTER_STYLE; }
+
 export const human = {
   id: 'human',
   label: 'Human',
@@ -40,6 +47,7 @@ export const human = {
     walkStyle:     { group: 'Body', value: 'Natural', options: Object.keys(WALKS), label: 'Walk' },
     runStyle:      { group: 'Body', value: 'Natural', options: Object.keys(RUNS), label: 'Run' },
     animation:     { group: 'Body', value: 'New', options: ['New', 'Classic'], label: 'Animation (everyone)' },
+    characterStyle: { group: 'Body', value: 'iso-city', options: ['iso-city', 'Classic'], label: 'Character style (everyone)' },
     build:         { group: 'Body', value: 'Normal', options: BUILDS, label: 'Build' },
     headsTall:     { group: 'Body', value: 7.5,   min: 2.5,   max: 7.5,  step: 0.1,   label: 'Heads tall' },
     height:        { group: 'Body', value: 1.6,   min: 1.0,   max: 2.0,  step: 0.01,  label: 'Height (m)' },
@@ -191,8 +199,27 @@ export const human = {
   /** Correct `p` in place so every value is allowed. */
   applyRules: (p) => applyRules(p, human.schema),
 
-  build(p, style) {
+  /**
+   * Build a person. opts.characterStyle overrides the style chosen for
+   * everyone (setCharacterStyle): 'iso-city' (isoCity.js, the default) or
+   * 'Classic' (the builder below).
+   */
+  build(p, style, opts = {}) {
     p = applyRules({ ...p }, human.schema); // older saved settings may break a rule
+    if ((opts.characterStyle ?? CHARACTER_STYLE) === 'iso-city') {
+      const iso = buildIsoCityHuman(p, style);
+      // things in the hand: our own items, held in the paddle hand
+      const { fore, grip, dir } = iso.userData.isoHand;
+      if (p.handItem && p.handItem !== 'None') {
+        const f = measure(p);
+        f.mats = { trim: style.material('accent', 0x2a2a30) };
+        const item = buildHandItem(f, p.handItem, style.material('cloth', CLOTH_COLORS[p.handItemColor] ?? CLOTH_COLORS.Brown), grip, dir, style);
+        if (item && !item.userData.upright) fore.add(item);
+        else if (item && HOLD_POSES[p.handItem]) placeHeld(iso, fore, item, grip, HOLD_POSES[p.handItem]);
+      }
+      if (iso.userData.stoop && !iso.userData.hold) poseHold(iso, {});
+      return iso;
+    }
     const root = new THREE.Group();
     root.name = 'human';
     const f = measure(p);
@@ -332,7 +359,7 @@ export function giveHeldItem(root, p, kind, color, style) {
   if (!hold || !fore) return null;
   const f = measure(p);
   f.mats = { trim: style.material('accent', 0x2a2a30) };
-  const { grip, dir } = handGrip(f, -1);
+  const { grip, dir } = root.userData.isoGrip ?? handGrip(f, -1); // the iso-city hand, or ours
   const raw = buildHandItem(f, kind, style.material('cloth', CLOTH_COLORS[color] ?? CLOTH_COLORS.Blue), grip, dir, style);
   const item = mergeByMaterial(raw); // a few draw calls, not one per part
   const before = root.userData.hold;

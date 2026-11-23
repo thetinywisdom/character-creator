@@ -78,6 +78,10 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   the road (or waits and honks if you block it); people walk round your car (and any parked car)
   instead of through it; at low speed your car stops against them, at speed
   it knocks them over.
+- **Character style and looks:** people are built in the iso-city style
+  (the owner's previous game) by default, or Classic ("Character style" in
+  the creator). The 🎨 panel also picks the look: Default (smooth), PS1 or
+  8-bit.
 - **Colour palettes:** the town uses warm **Golden hour** colours. Other
   palettes (Muted, Vibrant, Candy pop, Cool city, Retro 16, Manga ink) are
   under 🎨 in the top bar outside the City (Catalogue, Characters, Cat lab);

@@ -725,6 +725,21 @@ Dusty rose, Blush, Powder blue, Lilac and Denim.
 - **Large flat surfaces are tiled** (about 6 m pieces): PS1 vertex snapping
   distorts huge polygons.
 
+## 3f-2. Character style and looks
+
+- **Character style (everyone):** iso-city (default) or Classic. iso-city
+  people, after the owner's previous game: a smooth faceted torso, an egg head
+  with no eyes (a small nose wedge with a hooked line, a "C" line in each ear,
+  in a darker shade of the skin), big flat paddle hands with three finger
+  lines, simple tapered limbs, wedge shoes, about 6.5 heads tall with long
+  legs. Clothes are shells grown from the torso's own profile (nothing pokes
+  through), hair is a cap plus blobs, spikes or curls. Natural skin tones
+  (owner). Flat shaded.
+- **Looks** (🎨 panel): **Default** = full resolution, smooth, no dither, no
+  outlines, no wobble; **PS1** = the look described above; **8-bit** = chunky
+  pixels (~4 px on a desktop, 2 on a phone), 5 levels per colour channel with
+  ordered dither, vertices locked to the pixel grid, the same outlines.
+
 ## 3g. Animation
 
 - Characters have real joints: hip → knee → ankle, shoulder → elbow.

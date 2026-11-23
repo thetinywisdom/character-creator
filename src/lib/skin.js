@@ -16,7 +16,8 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 /** A vertex-colour material that looks like the style's other materials (PS1 snapping included). */
 export function vertexColorMaterial(style) {
   const base = style.material('skin', 0xffffff);
-  const m = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });
+  // double-sided: iso-city clothes and hair are open shells (no holes from behind)
+  const m = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide });
   m.onBeforeCompile = base.onBeforeCompile;
   m.customProgramCacheKey = () => 'ps1-snap-vc';
   m.userData.role = 'character';
