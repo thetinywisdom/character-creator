@@ -107,7 +107,9 @@ src/render/ps1.js      createPs1Renderer: low-res render + dither + outlines (re
                        THE LOOK (styles/ps1.js LOOKS, setLook / activeLook, localStorage
                        'tinycity.look', the 🎨 panel): Default (pixelScale 0: full resolution, no
                        post step, no vertex snapping), PS1, 8-bit (pixel scale ~4, phones 2;
-                       style.levels 5 per channel + dither; verts on the pixel grid)
+                       style.levels 5 per channel + dither; verts on the pixel grid). The
+                       renderer is created with stencil: true (Default draws to the canvas,
+                       and the iso-view silhouettes need a stencil buffer)
                        Outlines read the alpha the materials write: characters 1 (strong dark
                        edge x0.28), everything else 0.5 (styles/ps1.js sets opacity 0.5 on
                        non-character roles, still opaque): a soft x0.8 shade fading out
@@ -123,7 +125,9 @@ src/subjects/human/isoCity.js  the iso-city style human (owner's previous game; 
                        cap + blob hair via HAIR_MAP, hats, beards, outer layers, wings on
                        wingL / wingR) on OUR rig (spine / armL > foreL / legL > shinL > footL +
                        sole), in iso-city units scaled to the person's height; our sliders scale
-                       it (REF = the Man's defaults); build thickness goes into the limb shapes.
+                       it (REF = the Man's defaults); build thickness goes into the limb shapes;
+                       inside the iso crowd's low detail (shapes.js lowDetail()) it builds a
+                       lighter copy (~1,160 triangles: fewer segments, no tiny line details).
                        human.build(p, style, { characterStyle }) picks iso-city or Classic
                        (setCharacterStyle / characterStyle(); creator setting "Character style
                        (everyone)", param characterStyle) and puts hand items in the paddle hand

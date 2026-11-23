@@ -35,7 +35,7 @@ import './style.css';
 // Everything shown here is plain modules under src/ that games reuse (see SKILLS.md).
 
 const canvas = document.querySelector('#c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, stencil: true }); // stencil: the iso-view silhouettes in the Default look (no render target)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;

@@ -32,6 +32,9 @@ export function restoreDetail(prev) {
   roundCaps = prev.roundCaps;
 }
 
+/** True while the iso crowd's low-detail copies are being built (isoPeople.js). */
+export function lowDetail() { return capMin < Infinity; }
+
 export function seg(n, min = 3) {
   const m = capMin < min ? capMin : min;
   return Math.max(m, Math.round(n * detail));

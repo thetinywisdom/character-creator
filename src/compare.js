@@ -12,7 +12,7 @@ import './compare.css';
 // iso-city style builder (right), in the game's PS1 look, walking in place.
 
 const canvas = document.querySelector('#c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, stencil: true }); // stencil: the iso-view silhouettes in the Default look (no render target)
 renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
 renderer.shadowMap.enabled = true;
 const ps1 = createPs1Renderer(renderer);

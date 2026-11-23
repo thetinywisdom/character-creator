@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CLOTH_COLORS, HAIR_COLORS, SKIN_TONES } from '../../styles/palette.js';
 import { coversHair, hairUnder } from './head.js';
+import { lowDetail } from '../../lib/shapes.js';
 
 // The iso-city human (owner: "my previous attempt on human is better: follow
 // what I was doing there", github.com/thetinywisdom/iso-city,
@@ -49,9 +50,16 @@ export const HAIR_MAP = {
 };
 
 // ---------- helpers (as in iso-city) ----------
+// LOW: building the isometric view's small copy (isoPeople.js lowers the
+// detail): fewer segments, simpler blobs, no hairline details nobody can see
+// at that size (finger, ear and nose lines). Keeps that copy near its budget.
+let LOW = false;
+const segs = (n) => (LOW ? Math.max(5, Math.round(n * 0.62)) : n);
+/** A sphere (or part of one); coarser in the iso view's small copy. */
+const sphere = (r, w, h, ...rest) => new THREE.SphereGeometry(r, LOW ? Math.max(4, w - 2) : w, LOW ? Math.max(2, h - 1) : h, ...rest);
 const flat = (g) => { const n = g.index ? g.toNonIndexed() : g; n.computeVertexNormals(); return n; };
-function lathe(profile, segs, zs = 1, phiStart = 0, phiLength = Math.PI * 2) {
-  const g = new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(Math.max(r, 0.0001), y)), segs, phiStart, phiLength);
+function lathe(profile, n, zs = 1, phiStart = 0, phiLength = Math.PI * 2) {
+  const g = new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(Math.max(r, 0.0001), y)), segs(n), phiStart, phiLength);
   g.scale(1, 1, zs);
   return g;
 }
@@ -68,8 +76,8 @@ function clip(profile, y0, y1, grow = 1, yGrow = 1) {
   out.push([at(y1), y1]);
   return out.map(([r, y]) => [r * grow, y * yGrow]);
 }
-function limb(rTop, rBot, len, segs = 6, y0 = 0) {
-  const g = new THREE.CylinderGeometry(rTop, rBot, len, segs, 1);
+function limb(rTop, rBot, len, n = 6, y0 = 0) {
+  const g = new THREE.CylinderGeometry(rTop, rBot, len, Math.max(3, segs(n) - (LOW && n <= 4 ? 1 : 0)), 1);
   g.translate(0, y0 - len / 2, 0);
   return g;
 }
@@ -103,6 +111,7 @@ export function isoHandGrip(root) {
 
 /** Build the iso-city style person for our settings `p`. */
 export function buildIsoCityHuman(p, style) {
+  LOW = lowDetail();
   // materials from the style (palette, PS1 snapping); double-sided copies for open shells and hair
   const doubles = new Map();
   const two = (m) => {
@@ -200,14 +209,16 @@ export function buildIsoCityHuman(p, style) {
   hc.scale.set(headK * headW, headK, headK);
   mesh(lathe(HEAD, 8, HEAD_Z), M.skin, hc);
   for (const sx of [-1, 1]) {
-    mesh(new THREE.SphereGeometry(0.03, 5, 4), M.skin, hc, { pos: [sx * 0.11, 0.0, -0.005], scale: [0.5, 1, 0.75] });
-    mesh(new THREE.TorusGeometry(0.012, 0.0028, 3, 5, Math.PI * 1.3), M.line, hc,
+    mesh(sphere(0.03, 5, 4), M.skin, hc, { pos: [sx * 0.11, 0.0, -0.005], scale: [0.5, 1, 0.75] });
+    if (!LOW) mesh(new THREE.TorusGeometry(0.012, 0.0028, 3, 5, Math.PI * 1.3), M.line, hc,
       { pos: [sx * 0.1255, 0.0, -0.004], rot: [0, sx * Math.PI / 2, Math.PI * 0.35 * (sx > 0 ? 1 : -1) + (sx > 0 ? 0 : Math.PI)] });
   }
   const nose = new THREE.ConeGeometry(0.017, 0.045, 4); nose.rotateX(Math.PI / 2 + 0.5);
   mesh(nose, M.skin, hc, { pos: [0, -0.012, 0.12] });
-  mesh(new THREE.BoxGeometry(0.0045, 0.04, 0.0045), M.line, hc, { pos: [0.012, -0.006, 0.128], rot: [0.35, 0, 0.15] });
-  mesh(new THREE.BoxGeometry(0.02, 0.0045, 0.0045), M.line, hc, { pos: [0.006, -0.028, 0.134] });
+  if (!LOW) {
+    mesh(new THREE.BoxGeometry(0.0045, 0.04, 0.0045), M.line, hc, { pos: [0.012, -0.006, 0.128], rot: [0.35, 0, 0.15] });
+    mesh(new THREE.BoxGeometry(0.02, 0.0045, 0.0045), M.line, hc, { pos: [0.006, -0.028, 0.134] });
+  }
 
   // arms: shoulder -> elbow -> wrist, big flat paddle hands
   const arms = {};
@@ -215,7 +226,7 @@ export function buildIsoCityHuman(p, style) {
   for (const [side, sx] of [['L', 1], ['R', -1]]) {
     const sh = arms[side] = group(upper, sx * SHOULDER_X * S.sh, SHOULDER_Y, 0, `arm${side}`);
     sh.rotation.z = sx * (0.06 + 0.05 * (b - 1) * 4 * (b > 1 ? 1 : 0)); // heavier builds hold their arms out a little
-    limbParts.push([mesh(new THREE.SphereGeometry(0.05, 6, 4), M.skin, sh, { scale: [1, 0.85, 0.9] }), S.arm]);
+    limbParts.push([mesh(sphere(0.05, 6, 4), M.skin, sh, { scale: [1, 0.85, 0.9] }), S.arm]);
     limbParts.push([mesh(limb(0.052, 0.045, UPPER, 6), M.skin, sh), S.arm]);
     const el = group(sh, 0, -UPPER, 0, `fore${side}`);
     limbParts.push([mesh(limb(0.045, 0.036, FORE, 6), M.skin, el), S.arm]);
@@ -225,7 +236,7 @@ export function buildIsoCityHuman(p, style) {
     hand.translate(0, -0.085, 0.006);
     mesh(hand, M.skin, hg);
     mesh(new THREE.BoxGeometry(0.03, 0.085, 0.032), M.skin, hg, { pos: [-sx * 0.012, -0.055, 0.062], rot: [0.55, 0, 0] });
-    for (const dz of [-0.02, 0.0, 0.02])
+    if (!LOW) for (const dz of [-0.02, 0.0, 0.02])
       mesh(new THREE.BoxGeometry(0.005, 0.075, 0.005), M.line, hg, { pos: [sx * 0.019, -0.13, dz] });
   }
 
@@ -252,7 +263,7 @@ export function buildIsoCityHuman(p, style) {
   const sleeves = (m, upperLen, foreLen = 0, r = [0.066, 0.06], puff = false) => {
     for (const side of ['L', 'R']) {
       const sh = arms[side];
-      limbParts.push([mesh(new THREE.SphereGeometry(r[0] + 0.003, 7, 3, 0, Math.PI * 2, 0, Math.PI / 2), m, sh, { scale: [1, 0.8, 1] }), S.arm]);
+      limbParts.push([mesh(sphere(r[0] + 0.003, 7, 3, 0, Math.PI * 2, 0, Math.PI / 2), m, sh, { scale: [1, 0.8, 1] }), S.arm]);
       limbParts.push([mesh(limb(r[0], puff ? r[1] + 0.02 : r[1], upperLen, 7, 0.0), m, sh), S.arm]);
       if (foreLen) limbParts.push([mesh(limb(r[1] - 0.004, r[1] - 0.008, foreLen, 7, 0.01), m, sh.getObjectByName(`fore${side}`)), S.arm]);
     }
@@ -351,7 +362,7 @@ export function buildIsoCityHuman(p, style) {
   const dressLegs = (thighM, shinM, { thighR = [0.086, 0.082], shinR = [0.082, 0.082], shorts = 0 } = {}) => {
     for (const side of ['L', 'R']) {
       const { hip, knee } = legs[side];
-      limbParts.push([mesh(new THREE.SphereGeometry(thighR[0], 6, 3, 0, Math.PI * 2, 0, Math.PI / 2), thighM, hip), S.leg]);
+      limbParts.push([mesh(sphere(thighR[0], 6, 3, 0, Math.PI * 2, 0, Math.PI / 2), thighM, hip), S.leg]);
       limbParts.push([mesh(limb(thighR[0], thighR[1], thigh, 6), thighM, hip), S.leg]);
       limbParts.push([mesh(limb(shinR[0], shinR[1], shin, 6), shinM, knee), S.leg]);
       if (shorts) limbParts.push([mesh(limb(thighR[0] + 0.022, thighR[0] + 0.016, shorts * legK, 7), M.legwear, hip), S.leg]);
@@ -425,8 +436,8 @@ export function buildIsoCityHuman(p, style) {
     for (const sx of [-1, 1]) mesh(new THREE.ConeGeometry(0.025, 0.045, 4), M.bodyAcc, T, { pos: [sx * 0.022, 1.66, 0.12], rot: [0, 0, sx * Math.PI / 2] });
   } else if (acc === 'Baby carrier') {
     mesh(new THREE.BoxGeometry(0.2, 0.22, 0.1), M.bodyAcc, T, { pos: [0, 1.32, 0.19] });
-    mesh(new THREE.SphereGeometry(0.075, 7, 5), M.skin, T, { pos: [0, 1.48, 0.2] });
-    mesh(new THREE.SphereGeometry(0.078, 7, 4, 0, Math.PI * 2, 0, Math.PI / 2), M.babyCloth, T, { pos: [0, 1.5, 0.195] });
+    mesh(sphere(0.075, 7, 5), M.skin, T, { pos: [0, 1.48, 0.2] });
+    mesh(sphere(0.078, 7, 4, 0, Math.PI * 2, 0, Math.PI / 2), M.babyCloth, T, { pos: [0, 1.5, 0.195] });
     for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(0.03, 0.012, 0.3), M.bodyAcc, T, { pos: [sx * 0.11, 1.645, 0], rot: [0, 0, sx * -0.4] });
   } else if (acc === 'Apron') {
     mesh(lathe([[0.2, 0.62], [0.19, 0.9], [0.182, 1.1], [0.19, 1.35], [0.185, 1.5]], 10, 0.9, -Math.PI * 0.36, Math.PI * 0.72), M.bodyAcc, T, { double: true });
@@ -532,7 +543,7 @@ function buildHair(hc, style, color, accent, rnd, mesh) {
   const back = (low = -0.07, top = 0.07, grow = 1.08, spread = 1) =>
     mesh(lathe(clip(HEAD, low, top, grow), 6, HEAD_Z, Math.PI * (1 - spread / 2), Math.PI * spread), color, hc, { double: D });
   const blob = (r, pos, scale, rot, detail = 0, c = color) =>
-    mesh(new THREE.IcosahedronGeometry(r, detail), c, hc, { pos, scale: scale ?? undefined, rot: rot ?? undefined });
+    mesh(new THREE.IcosahedronGeometry(r, LOW ? 0 : detail), c, hc, { pos, scale: scale ?? undefined, rot: rot ?? undefined });
   const sideburns = () => {
     for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(0.014, 0.07, 0.03), color, hc, { pos: [sx * 0.108, 0.035, 0.035] });
   };
@@ -559,7 +570,7 @@ function buildHair(hc, style, color, accent, rnd, mesh) {
       break;
     case 'curly':
       cap(0.06); back(-0.07); sideburns();
-      onCap(11, (dir) => blob(0.038, dir.clone().multiply(new THREE.Vector3(0.125, 0.17, 0.135)).toArray(), null, [rnd(), rnd(), rnd()]), 0.9);
+      onCap(LOW ? 7 : 11, (dir) => blob(0.038, dir.clone().multiply(new THREE.Vector3(0.125, 0.17, 0.135)).toArray(), null, [rnd(), rnd(), rnd()]), 0.9);
       break;
     case 'quiff':
       cap(0.04, 1.1); back(-0.08); sideburns();
@@ -596,7 +607,7 @@ function buildHair(hc, style, color, accent, rnd, mesh) {
       break;
     case 'curlyLong':
       cap(0.06, 1.1);
-      for (let i = 0; i < 14; i++) {
+      for (let i = 0; i < (LOW ? 8 : 14); i++) {
         const az = Math.PI * (0.32 + 1.36 * (i % 7) / 6);
         const y = i < 7 ? 0.04 : -0.11;
         const r = 0.13 + rnd() * 0.02;
