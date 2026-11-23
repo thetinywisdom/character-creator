@@ -96,7 +96,7 @@ Branches and the public page: `main` is Tiny City Builder (keep it equal to
 the working branch: push the branch, then `git push origin <branch>:main`, a
 fast-forward). The game is also on GitHub Pages,
 https://thetinywisdom.github.io/character-creator/ : after a change run
-`scripts/publish-pages.sh` (builds, adds a normal commit to `gh-pages`).
+`scripts/publish-pages.sh` (builds, adds a normal commit to `gh-pages`; does nothing when the site is unchanged).
 Publish to the Artifact, `main` and GitHub Pages after every task.
 
 ## Code map
