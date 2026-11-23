@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Human Comparison</title>
+  </head>
+  <body>
+    <header>
+      <h1>Human: now vs iso-city style</h1>
+      <p>Each pair: <b>left = now</b>, <b>right = iso-city style</b> (same settings). Drag to turn.</p>
+      <p class="note">Step 1: body, head, hands, feet, shirt / tee / trousers / shorts / skirt and hair. Hats, glasses, beards, jackets, hoods, robes, bags and held items come in step 2, so they are missing on the right for now.</p>
+      <nav id="looks" aria-label="Look"></nav>
+      <div id="anim"><button data-a="Still">■ Still</button><button data-a="Walk" class="on">🚶 Walk</button><button data-a="Run">🏃 Run</button></div>
+    </header>
+    <canvas id="c"></canvas>
+    <div id="labels"></div>
+    <script type="module" src="./src/compare.js"></script>
+  </body>
+</html>

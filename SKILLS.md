@@ -84,7 +84,8 @@ npm run build    # must pass before committing
 ```
 
 The owner reviews the viewer as a single-file page published with the
-Artifact tool: `npm run build`, then `python3 scripts/single-file.py OUT.html`
+Artifact tool: `npm run build`, then `python3 scripts/single-file.py OUT.html` (an optional
+second argument packs another build folder, e.g. `dist-compare`)
 (inlines the app's CSS and JS, keeps external font links, and fails if
 anything from `assets/` is left unlinked), then open OUT.html in a browser to
 check it loads, and publish to the same artifact URL each time.
@@ -111,6 +112,17 @@ src/render/ps1.js      createPs1Renderer: low-res render + dither + outlines (re
 src/styles/            ps1.js (materials by role, lights), palette.js, lightingPresets
 src/catalog/index.js   ASSET CATALOGUE: every placeable item behind one interface
 src/catalog/thumbs.js  catalogue pictures (drawn on demand, cached in the browser)
+src/subjects/human/iso.js  the iso-city style human (owner's previous game, being ported in
+                       steps; NOT used by the game yet): buildIsoHuman(p, style) builds our
+                       settings with iso-city's shapes (lathed torso, egg head without eyes,
+                       paddle hands, shell clothes, cap + blob hair, HAIR_MAP from our hair
+                       names) on OUR rig (spine / armL > foreL / legL > shinL > footL + sole),
+                       in iso-city units, then scaled to the person's height
+compare.html, src/compare.js, src/compare.css, vite.compare.config.js
+                       the old / new human comparison page (Artifact of its own): build with
+                       `npx vite build --config vite.compare.config.js`, pack with
+                       `python3 scripts/single-file.py OUT.html dist-compare`; narrow screens
+                       show one pair with look chips; `__cmp.view(yaw)` for tests
 src/subjects/          human.js (+ human/*: frame, sculpt, hair, head, tops, arms, legwear,
                        footwear, outerwear, accessories, handheld, rules), cat.js, tree.js
 scripts/publish-pages.sh  build + publish to GitHub Pages (gh-pages branch, a normal commit):
