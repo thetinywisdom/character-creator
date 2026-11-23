@@ -15,6 +15,7 @@ import { JOINT_NAMES, NPC_RUN_SPEED, PLAYER_RUN_SPEED, createGait, landGait, pos
 import { Precipitation, lampPools, setNightGlow, setSnowCover, weatherLight } from './atmosphere.js';
 import { giveHeldItem } from '../subjects/human.js';
 import { addObjectSilhouette, addSilhouette, markPerson, silhouetteMaterial } from './silhouette.js';
+import { buildIsoCharacter, collectBuildingBoxes, isoCrowdLook, isoProportions, mountIsoPerson, occludedByBuilding, silhouetteAnchor, syncIsoPerson } from './isoPeople.js';
 import { CAT_JOINTS, CAT_RUN_SPEED, CAT_WALK_SPEED, createCatGait, poseCat, stepCatGait } from '../anim/catGait.js';
 
 // The walkable town: a generated city, your character (built from the
@@ -111,6 +112,8 @@ export class City {
     this.parkedRides = takeRideables(this, city.group, city.colliders);
     // the swing seats too, so they swing (playground.js)
     this.swings = takeSwings(this, city.group);
+    // building volumes for "is this person behind a wall?" (iso silhouettes)
+    this.buildingBoxes = collectBuildingBoxes(city.group);
     this.scene.add(mergeByMaterial(city.group));
     // light pools under the street lamps, shown at night (atmosphere.js);
     // a lamp's head reaches 1.45 m out over the road from its post
@@ -131,19 +134,42 @@ export class City {
     // bright colour so you can always find yourself, everyone else in blue
     this.silhouettes = [];
     const silCache = new Map();
-    const silPeople = silhouetteMaterial(0x3a64b8, 0.7), silPlayer = silhouetteMaterial(0xf2b64a, 0.85);
+    // People read stronger than cars. The player's yellow is pale so it stays
+    // off warm roofs (the old gold sat in the same range as golden-hour tile).
+    const silPeople = silhouetteMaterial(0x2a56b0, 0.92), silPlayer = silhouetteMaterial(0xfff3c4, 0.95);
+    let isoSalt = 1;
     const buildPerson = (p, player = false) => {
       const raw = human.build(p, style);
       style.decorate?.(raw);
       const body = skinCharacter(raw, LIMBS, personMat);
-      const sil = addSilhouette(body, player ? silPlayer : silPeople, silCache);
+      // the full mesh is what third person and the creator use. The iso view
+      // draws a chunkier, lighter copy instead (isoPeople.js).
+      const isoParams = isoProportions(player ? p : isoCrowdLook(p, isoSalt++));
+      const { body: iso, sil } = buildIsoCharacter(human, isoParams, style, personMat, player ? silPlayer : silPeople);
       if (sil) this.silhouettes.push(sil);
+      mountIsoPerson(body, iso);
+      body.userData.isoParams = isoParams;
       return body;
     };
     this.buildPerson = buildPerson; // for previews (comedy.js)
     this.humanParams = params.human; // your look (walk / run styles come from it)
     this.player = { body: buildPerson(params.human, true), root: new THREE.Group(), x: 0, z: 0, heading: 0, speed: 0, gait: createGait(), height: params.human.height };
     this.player.root.add(this.player.body);
+    // a faint ring so the player can be found among the crowd (iso only)
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.22, 0.58, 14),
+      new THREE.MeshBasicMaterial({
+        color: 0xd5e7f8, transparent: true, opacity: 0.72, depthWrite: false, side: THREE.DoubleSide,
+        polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+      }),
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.035;
+    ring.renderOrder = 2;
+    ring.visible = false;
+    ring.name = 'playerRing';
+    this.playerRing = ring;
+    this.player.root.add(ring);
     this.scene.add(this.player.root);
     // start on the sidewalk next to the park (or the first block)
     this.player.x = city.start.x;
@@ -227,7 +253,7 @@ export class City {
       // one skinned mesh per cat, joints kept for the walk / run (anim/catGait.js)
       const body = skinCharacter(raw, new Set(CAT_JOINTS), personMat);
       const catSil = addSilhouette(body, silPeople, silCache);
-      if (catSil) this.silhouettes.push(catSil);
+      if (catSil) { catSil.userData.occBody = body; this.silhouettes.push(catSil); }
       const root = new THREE.Group();
       root.scale.setScalar(cat.exaggeration ?? 1);
       root.add(body);
@@ -240,7 +266,7 @@ export class City {
     this.cars.push(...this.parkedRides); // parked cars and bicycles you can ride
     const kinds = ['Kei car', 'Sedan', 'Taxi', 'Minivan', 'Hatchback', 'Bus', 'Sports car', 'Kei car'];
     const colors = ['White', 'Red', undefined, 'Blue', 'Gray', 'White', 'Yellow', 'Green'];
-    const silCars = silhouetteMaterial(0x3a64b8, 0.65);
+    const silCars = silhouetteMaterial(0x8aa4c8, 0.32);
     const loops = city.carLoops ?? (city.carLoop ? [city.carLoop] : []);
     for (let i = 0; i < kinds.length && loops.length; i++) {
       const loop = loops[(i * 7) % loops.length]; // spread over the blocks
@@ -524,7 +550,12 @@ export class City {
       const colors = ['Blue', 'Navy', 'Red', 'Black', 'White', 'Green', 'Pink', 'Yellow'];
       this.npcs.forEach((n, i) => {
         if ((n.look.handItem && n.look.handItem !== 'None') || i % 4 === 3) return;
-        n.putAway = giveHeldItem(n.body, n.look, 'Umbrella (open)', colors[i % colors.length], this.style);
+        const color = colors[i % colors.length];
+        const undo = giveHeldItem(n.body, n.look, 'Umbrella (open)', color, this.style);
+        // the iso mesh is a second rig, so it needs its own umbrella
+        const iso = n.body.userData.isoBody;
+        const undoIso = iso ? giveHeldItem(iso, n.body.userData.isoParams ?? n.look, 'Umbrella (open)', color, this.style) : null;
+        n.putAway = () => { undo?.(); undoIso?.(); };
       });
     }
     this.applyLighting(this.lightPreset);
@@ -625,8 +656,8 @@ export class City {
       this.iso.yaw = this.iso.targetYaw = snap;
     }
     this.viewMode = mode;
-    // hidden people show through buildings in the iso view
-    for (const sil of this.silhouettes) sil.visible = mode === 'iso';
+    for (const sil of this.silhouettes) sil.visible = false;
+    this.syncPresentation();
     return mode;
   }
 
@@ -961,6 +992,32 @@ export class City {
     this.key.position.set(p.x, 0, p.z).addScaledVector(this.lightDir, 50);
     this.key.target.position.set(p.x, 0, p.z);
     this.key.target.updateMatrixWorld();
+    this.syncPresentation();
+  }
+
+  /**
+   * Iso view: show the chunky low-detail people and only the silhouettes that
+   * a building actually hides. Third person: the full meshes, no silhouettes.
+   */
+  syncPresentation() {
+    const iso = this.viewMode === 'iso';
+    const bodies = [this.player?.body];
+    for (const n of this.npcs ?? []) bodies.push(n.body);
+    for (const c of this.cars ?? []) if (c.riderBody) bodies.push(c.riderBody);
+    const stage = this.comedyStage;
+    if (stage) { bodies.push(stage.a?.body, stage.v?.body); }
+    for (const b of bodies) if (b) syncIsoPerson(b, iso);
+    if (this.playerRing) this.playerRing.visible = iso && !this.player.riding && this.player.body.visible !== false;
+    if (!iso) {
+      for (const sil of this.silhouettes) sil.visible = false;
+      return;
+    }
+    this._towardCam ??= new THREE.Vector3();
+    this.isoCamera.getWorldDirection(this._towardCam);
+    this._towardCam.negate();
+    for (const sil of this.silhouettes) {
+      sil.visible = occludedByBuilding(silhouetteAnchor(sil), this._towardCam, this.buildingBoxes);
+    }
   }
 }
 

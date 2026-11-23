@@ -1,0 +1,50 @@
+{
+  "units": "metres",
+  "note": "three.js coords; room centred on the origin; item origin bottom centre; rotY radians; y is height above the floor tiles. The sliding door and the side windows are built in src/classroom/items.js. Teacher pieces sit on the low dais (y 0.08).",
+  "placements": [
+    { "item": "blackboard", "x": 0.35, "y": 0.78, "z": -3.36, "rotY": 0 },
+    { "item": "clock", "x": 0.35, "y": 2.15, "z": -3.36, "rotY": 0 },
+    { "item": "podium", "x": -1.2, "y": 0.08, "z": -2.32, "rotY": 0 },
+    { "item": "pencil_cup", "x": -1.05, "y": 1.12, "z": -2.2, "rotY": 0.3 },
+    { "item": "teacher_desk", "x": 1.75, "y": 0.08, "z": -2.42, "rotY": 0 },
+    { "item": "teacher_chair", "x": 1.75, "y": 0.08, "z": -3.05, "rotY": 0 },
+    { "item": "globe", "x": 2.15, "y": 0.86, "z": -2.28, "rotY": 0.4 },
+    { "item": "books", "x": 1.35, "y": 0.86, "z": -2.5, "rotY": 0.15 },
+
+    { "item": "student_desk", "x": -1.85, "y": 0, "z": -0.45, "rotY": 0 },
+    { "item": "student_chair", "x": -1.85, "y": 0, "z": -0.05, "rotY": 3.1416 },
+    { "item": "student_desk", "x": -0.55, "y": 0, "z": -0.45, "rotY": 0 },
+    { "item": "student_chair", "x": -0.55, "y": 0, "z": -0.05, "rotY": 3.1416 },
+    { "item": "student_desk", "x": 0.75, "y": 0, "z": -0.45, "rotY": 0 },
+    { "item": "student_chair", "x": 0.75, "y": 0, "z": -0.05, "rotY": 3.1416 },
+    { "item": "student_desk", "x": 2.05, "y": 0, "z": -0.45, "rotY": 0 },
+    { "item": "student_chair", "x": 2.05, "y": 0, "z": -0.05, "rotY": 3.1416 },
+
+    { "item": "student_desk", "x": -1.85, "y": 0, "z": 0.85, "rotY": 0 },
+    { "item": "student_chair", "x": -1.85, "y": 0, "z": 1.25, "rotY": 3.1416 },
+    { "item": "student_desk", "x": -0.55, "y": 0, "z": 0.85, "rotY": 0 },
+    { "item": "student_chair", "x": -0.55, "y": 0, "z": 1.25, "rotY": 3.1416 },
+    { "item": "student_desk", "x": 0.75, "y": 0, "z": 0.85, "rotY": 0 },
+    { "item": "student_chair", "x": 0.75, "y": 0, "z": 1.25, "rotY": 3.1416 },
+    { "item": "student_desk", "x": 2.05, "y": 0, "z": 0.85, "rotY": 0 },
+    { "item": "student_chair", "x": 2.05, "y": 0, "z": 1.25, "rotY": 3.1416 },
+
+    { "item": "student_desk", "x": -1.85, "y": 0, "z": 2.15, "rotY": 0 },
+    { "item": "student_chair", "x": -1.85, "y": 0, "z": 2.55, "rotY": 3.1416 },
+    { "item": "student_desk", "x": -0.55, "y": 0, "z": 2.15, "rotY": 0 },
+    { "item": "student_chair", "x": -0.55, "y": 0, "z": 2.55, "rotY": 3.1416 },
+    { "item": "student_desk", "x": 0.75, "y": 0, "z": 2.15, "rotY": 0 },
+    { "item": "student_chair", "x": 0.75, "y": 0, "z": 2.55, "rotY": 3.1416 },
+    { "item": "student_desk", "x": 2.05, "y": 0, "z": 2.15, "rotY": 0 },
+    { "item": "student_chair", "x": 2.05, "y": 0, "z": 2.55, "rotY": 3.1416 },
+
+    { "item": "books", "x": -0.55, "y": 0.74, "z": 0.78, "rotY": -0.2 },
+    { "item": "pencil_cup", "x": 0.75, "y": 0.74, "z": -0.38, "rotY": 0.5 },
+
+    { "item": "cubbies", "x": -4.18, "y": 0, "z": -1.55, "rotY": 1.5708 },
+    { "item": "cubbies", "x": -4.18, "y": 0, "z": 0.35, "rotY": 1.5708 },
+    { "item": "bin", "x": -3.65, "y": 0, "z": 1.7, "rotY": 0.2 },
+    { "item": "broom", "x": -3.9, "y": 0, "z": -3.05, "rotY": 0.15 },
+    { "item": "plant", "x": 3.7, "y": 0, "z": -2.7, "rotY": 0.6 }
+  ]
+}

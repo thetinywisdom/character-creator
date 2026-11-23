@@ -57,6 +57,12 @@ night glow are not snapped (they are not seen as colours).
   pink, blue or green buildings. Signs, awnings, noren and shop goods keep
   the pastels. Enforced: the `building`, `buildingAlt`, `roof`, `concrete`
   and `wood` roles snap to `BUILDING_PALETTE`.
+- **European houses** (catalogue only, `src/city/europe.js`) keep that rule
+  for plaster, stone, timber and roofs. A wall or a shutter that has to stay
+  a pastel the building palette would flatten uses the `paint` role and an
+  existing swatch: Scandinavian walls are Dusty rose, Butter, Apricot or
+  Brick; some Dutch facades are Dusty rose, Denim, Navy, Butter, Sage or
+  Lilac; shutters use those pastels too. No new swatches.
 - **Sky:** the palette's Sky `#bcd2e0`.
 - **Signs:** the text is always readable: if the snapped text and board are
   too close in lightness, the text becomes Ink or Off white. Sign faces glow
@@ -332,6 +338,110 @@ About one in six random characters is a child.
   (vending machines, bins, benches) against the buildings, parked cars in the
   lane next to the curb.
 
+## 3e-5. Catalogue-only street details
+
+Not placed in the sample town. A game places them with `createAsset`. Each
+takes `seed`; 🎲 New look in the catalogue rebuilds the same way it does for
+a tree. No new palette swatches.
+
+- **Manhole cover** (`prop.manhole`): a flat octagon (eight sides, the same
+  read of "round" as the wheels) with a small nearest-filtered texture.
+  Flower, wave (overlapping arcs) or a plain grid. The seed picks the
+  colours, the petal count or the spacing, and the size.
+- **Back-of-house clutter** (`prop.backClutter`): a propane pair with a short
+  chain between the collars, a gas meter (dial and pipes), a drainpipe with
+  an elbow and a shoe, or a cluster of those three on a pad. Outdoor AC units
+  are not a new prop: the town already puts them on bare backs, balconies and
+  roofs.
+- **Nobori** (`prop.nobori`, のぼり): a tall narrow banner on a pole with a
+  weighted base. Stripes, or a stack of abstract blocks. No readable writing.
+  The cloth is one plane; `swayNobori` (`anim/props.js`) bends its vertices
+  the way the skirt does, the free top moving most, the pole edge staying
+  put. Call `tickProps(root, time)` each frame.
+- **Bird** (`animal.bird`): a pigeon or a sparrow, faceted like the cat (a
+  short loft, a faceted head, a beak, no eyes). Pigeons are a few greys and
+  loop between standing and a peck. Sparrows are smaller, browner, and perch
+  on a short wire, feet still, head turning. The seed picks the markings and
+  the pose offset, so the same seed is the same bird.
+
+## 3e-6. Office kit (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('office.desk', {}, style)` (ids `office.*`) or the whole room with `createAsset('office.room', { variant: 'Cutaway', seed: 0 }, style)`. `seed: 0` (or omitting it) is the authored furniture plan. Another integer rearranges desks, lounge and meeting around the fixed kitchen, bar, walls and door; the same seed is the same room.
+
+- The same low-poly boxes and cylinders as the rest of the town. Screens are flat navy, whiteboards are blank, plants are faceted lobes (lighter on top, same as the trees).
+- Colour is a palette swatch on a role (`wood:Tan`, `cloth:Cocoa`, `leaf:Moss`, `light:Butter`). No new swatches. Walls stay on the building greys. A cane seat, a woven basket and the terrazzo chips use `cloth` or `paint` so Sand, Peach and Dusty rose are not flattened by the building-colour rule.
+- The room is 6.5 × 14.5 m, open at the top, with a checker floor, a glass north wall and a stair. Cutaway hides the east wall. The floor sits 2 cm above y = 0 so it does not flicker against a ground on the same plane.
+
+## 3e-11. Meeting, bedroom and studio kits (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('meeting.chair', {}, style)`, `createAsset('bedroom.bed', {}, style)` or `createAsset('studio.sink', {}, style)`, or a whole room with `createAsset('meeting.room', { variant: 'Cutaway' }, style)` (also `bedroom.room`, `studio.room`).
+
+- The same low-poly boxes and cylinders as the office kit. No readable lettering: the whiteboard is a blank board with a couple of coloured marks, television screens are flat blocks of colour, book spines are plain.
+- Colour is a palette swatch on a role. Walls use `paint` so Off white is not pulled onto the building greys. Bedding, upholstery and rugs use `cloth`. `light` is the glow on lamps, the same as every other lamp. No new swatches.
+- Meeting is 6 × 4 m: a long table, eight chairs, a wall TV, a whiteboard, and a glass partition with a door on the far wall. Bedroom is 3.5 × 3 m with one single bed. Studio is a 6 × 4 m Japanese 1R: bed, mini kitchen, low table, sofa, TV, and a unit bath (open at the top) behind a door. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0. `seed: 0` is the arranged room; another integer moves chairs, beds, sofas and loose props by rule, and recolours bedding and rugs from the same palette.
+
+## 3e-7. Diner kit (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('diner.stool', {}, style)` (ids `diner.*`) or the whole room with `createAsset('diner.room', { variant: 'Cutaway' }, style)`.
+
+- The same low-poly boxes and cylinders as the office kit. No readable lettering: the menu is coloured bands, the neon is a cup, a star and an arrow, the register screen is flat navy.
+- Colour is a palette swatch on a role. Diner red is Dusty rose (`cloth` on the seats, `paint` on the counter and the door), teal is Seafoam (the wainscot and the cup bands), cream is Off white, chrome is Light gray metal. `light` is the glow on the neon, the pendant bulbs and the coffee hotplate, the same as every other lamp. No new swatches. Walls and the wainscot use `paint`, not `building`, so Seafoam and Off white are not pulled onto the building greys.
+- The room is 12 × 8 m, open at the top, front facing +z: checker floor, a counter and stools, booths, a kitchen line and a window wall. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0.
+- `seed: 0` (or no seed) is the hand-placed layout. Any other integer is a deterministic variation: booths along the counter, in the front half, or down the left wall; stool count; a mirror of a row; small turns on loose props; a palette theme for the red and teal surfaces. The door, windows, counter and kitchen do not move, and a clear path stays open from the entrance.
+
+## 3e-8. Clinic kit (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('clinic.exam_bed', {}, style)` (ids `clinic.*`) or the whole room with `createAsset('clinic.room', { variant: 'Cutaway' }, style)`.
+
+- The same low-poly boxes and cylinders as the office kit. No readable lettering: the cross is two bars, charts are coloured folders, the monitor is flat navy.
+- Colour is a palette swatch on a role. Clinic green is Seafoam (`paint` on the desk and the wainscot, `cloth` on the stool), the curtain is Sky cloth, the cross is Dusty rose. `light` is only the ceiling bulb and the desk-lamp bulb. No new swatches. Walls use `paint`, not `building`, so Seafoam and Off white are not pulled onto the building greys. The floor checker stays on `concrete`.
+- The room is 10 × 8 m, open at the top, front facing +z: two exam bays along the back, a reception desk and a waiting row. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0. `seed` 0 is that layout. Another integer moves the waiting row (left wall, right wall or the front), the chair count, which bay gets an IV, and the wainscot, chair and curtain swatches. The sink, the medicine cabinet and the reception desk stay.
+
+## 3e-9. Police station kit (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('police.holding_cell', {}, style)` (ids `police.*`) or the whole room with `createAsset('police.room', { variant: 'Cutaway' }, style)`.
+
+- Koban colours at the size of a small station. No readable lettering: the notice board is coloured sheets and two head-and-shoulders blocks, the counter glass is a service window.
+- Navy is the counter, the wainscot and the chair cloth. The stripe and the hanging lamp are Dusty rose (`paint` and `light`). Bars are Charcoal. No new swatches. Walls use `paint`, so Navy is not flattened to a building grey.
+- The room is 12 × 8 m, open at the top, front facing +z: counter toward the street, a barred holding cell in the back corner, desks and lockers. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0. `seed` 0 is that layout. Another integer sets one to three desks, with each chair on the staff side facing its desk, two or three filing cabinets, and the chair cloth (Navy, Denim or Slate). The counter and the cell stay, and a 0.9 m path runs from the door to the cell.
+
+## 3e-10. Minimarket kit (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('minimarket.shelf_aisle', {}, style)` (ids `minimarket.*`) or the whole room with `createAsset('minimarket.room', { variant: 'Cutaway' }, style)`.
+
+- A konbini aisle: goods are colour blocks, drink rows sit behind fridge glass, the noren is a split curtain with a circle. No readable lettering.
+- Navy, Butter and Seafoam mark the counter, the cornice and the warmer. Drink and shelf colours are the existing pastels on `paint`. `light` is the warmer strip, the coffee hotplate and the ceiling lamp. No new swatches. Walls use `paint`, so the navy cornice stays navy.
+- The room is 10 × 8 m, open at the top, front facing +z: a fridge wall, two shelf aisles, a register and the entrance machines. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0. `seed` 0 is that layout. Another integer puts the register on the left or the right, uses four or five fridges (the open end is an ice chest), two or three aisles with a 0.9 m gap, and rotates the goods colours. The +x side of a fridge is glass so the end case still shows drinks from the isometric corner. The door and the fridge wall stay.
+
+## 3e-12. Cafe, classroom and open office (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('cafe.table', {}, style)`, `createAsset('classroom.student_desk', {}, style)` or `createAsset('openoffice.bench', {}, style)`, or the whole room with `createAsset('cafe.room', { variant: 'Cutaway' }, style)` (the same for `classroom.room` and `openoffice.room`).
+
+- The same low-poly boxes and cylinders as the office kit. No readable lettering: the cafe menu is chalk strokes, the blackboard is a green field with a few strokes, the pinboard is blank notes.
+- Colour is a palette swatch on a role. Walls that should stay a colour use `paint` (cafe cream, classroom off-white, the open office's sage accent wall), so the building-colour rule does not turn them grey. Wood floors and desk tops use `wood`. Plants are faceted lobes. No new swatches.
+- The open office is not the office kit. It is one open room: long shared benches, sled chairs, a seafoam sofa, a printer island and a short pantry. No cubicle dividers, no meeting room, no individual pedestal desks.
+- Rooms are open at the top, front facing +z: cafe 8 × 6 m, classroom 9 × 7 m, open office 12 × 10 m. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0.
+- `seed: 0` (or leaving it out) is the hand-made layout. Any other integer rebuilds the same arrangement every time. The bar, the blackboard, the pantry, the doors and the windows do not move. Tables, desk rows and benches change count inside a range. Chairs keep facing their table or desk, with a small pull. Classroom desks stay in neat rows facing the board. Optional props and one accent (a pot, a shade, the noren, the sofa, a chair cloth) come from swatches already in the palette.
+
+## 3e-13. Ramen, kitchen and library (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('ramen.stool', {}, style)`, `createAsset('kitchen.chair', {}, style)` or `createAsset('library.shelf_bay', {}, style)`, or the whole room with `createAsset('ramen.room', { variant: 'Cutaway', seed: 0 }, style)` (the same for `kitchen.room` and `library.room`).
+
+- The same low-poly boxes and cylinders as the office kit. No readable lettering: menu strips, book rows and the ticket machine are colour blocks.
+- Colour is a palette swatch on a role. Lantern reds, the noren and chair cushions use `paint` or `cloth`, so the building-colour rule does not turn them grey. Floors are one solid `wood` box (walnut in the ramen shop, tan in the kitchen and the library). No planks, stripes or tiles. No new swatches.
+- Rooms are open at the top, front facing +z: ramen 7 × 5 m, kitchen 5 × 4 m, library 10 × 8 m. Cutaway hides the +z and +x walls. The floor sits 2 cm above y = 0.
+- `seed: 0` (or leaving it out) is the hand-made layout. Any other integer rebuilds the same arrangement every time. The ramen counter, the kitchen run and three library shelf rows do not move. The seed picks an L or a straight counter, 8 to 10 stools, one of three dining spots, three or four shelf rows, and swaps the reading tables with the kids' corner. Chairs and stools keep facing their table or counter.
+
+## 3e-14. Dojo and station (catalogue only)
+
+Not placed in the sample town. A game places a piece with `createAsset('dojo.punching_bag', {}, style)` or `createAsset('station.ticket_gate', {}, style)`, or the whole room with `createAsset('dojo.room', { variant: 'Cutaway', seed: 0 }, style)` (the same for `station.room`).
+
+- The same low-poly boxes and cylinders as the office kit. No readable lettering: the departure board and platform signs are colour blocks.
+- Colour is a palette swatch on a role. The tatami is one solid `paint:Sage` slab, not a grid of mats. The station floor is one solid `concrete:Stone` box, with one yellow tactile band along the edge. No planks, stripes or tiles. No new swatches.
+- Rooms are open at the top, front facing +z: dojo 9 × 9 m, station 16 × 6 m. Cutaway hides the +z and +x walls. The station canopy stays open enough that Cutaway still shows the concourse. The floor sits 2 cm above y = 0.
+- `seed: 0` (or leaving it out) is the hand-made layout. Any other integer rebuilds the same arrangement every time. The dojo door, shrine and mirror stay put; the seed changes how far the one mat reaches and which extra bags, racks, dummies, benches and scrolls are out. The station gates and the platform edge stay put; the seed only moves benches and ticket machines.
+- `station.room` sets `fillFrame`. The catalogue thumbnail and the item view fit the platform's real box, so the 16 × 6 m room fills the frame.
+
 ## 3e-1. People content
 
 - **Held items** put the arm in a pose and stay upright whatever the arm does:
@@ -406,6 +516,31 @@ vase-shaped street / shrine tree), **black pine** (leaning kinked trunk, flat
 pads of needles), **weeping willow** (round crown, thin curtains to near the
 ground) and **bamboo** (a clump of thin green canes with leaf tufts). Parks
 mix all of them; shrine groves use old giants, zelkova and pines.
+
+Catalogue only (a game can place them; the sample town does not): **Japanese
+cedar** (sugi: a tall narrow spire of drooping tiers, not the pine's cones),
+**windmill palm** (shuro: a ringed trunk, a skirt of brown fronds, fan
+leaves), **camphor** (kusunoki: a thick trunk and one heavy round crown),
+**pagoda tree** (enju: limbs under one wide flat crown), **winter tree**
+(bare branching, no leaves) and **autumn maple** (flat layers in Apricot and
+Brick, wider and more orange than the small red Japanese maple). Bushes
+besides the plain mound: a trimmed **boxwood** ball, **azalea** (low, with
+Dusty rose and Blush blossoms), **hydrangea** (round heads in Powder blue,
+Lilac and Denim) and a low **fern clump** with grass. **Doorstep pots** (not
+the street planter): a fern, a small leafy plant, a tall snake plant with a
+Butter edge, and a ribbed cactus with two arms.
+
+Canopies are clumps of faceted lobes, not one smooth ball. The leaf colour
+stays the palette colour: vertex colour only lightens the top and darkens the
+underside. Flat leaves (palm fans, cedar tiers, ferns, snake-plant blades)
+are the same idea: a chunky diamond, lighter at the tip. Trunks taper and bend a little. Bamboo is thin culms with a ring
+at each node and a few leaf sprays near the top, leaning differently per
+cane. The old giant's trunk kinks and splits into a few heavy limbs, with
+separate clumps and gaps between them. A bush is a small mound of the same
+lumps. A house hedge keeps its length, height and thickness, but the sides
+lean in and the top is clipped in a regular rhythm. No new palette swatches
+were added for the autumn maple or the flowers: they use Brick, Apricot,
+Dusty rose, Blush, Powder blue, Lilac and Denim.
 
 **Park playground** (`city/playground.js`), in bright signage colours:
 - **Swings:** a red A-frame and top bar (2.4 m), two wooden seats on thin
@@ -547,11 +682,34 @@ mix all of them; shrine groves use old giants, zelkova and pines.
 - **No dead walls.** Backs and sides have windows with curtains in floor rows
   (some small, a few blank), AC units, a back door with a canopy and a bin,
   a drain pipe, and on taller buildings a grey steel fire escape with a
-  landing and door per floor. At night these windows light up too.
-- **Iso view: see-through people.** People behind buildings show as flat
-  silhouettes, blue (the player yellow), so nobody is lost behind a
-  building; the same for cats, cars and buses. Each silhouette is one even
-  flat tint.
+  landing and door per floor. At night these windows light up too. That pass
+  is for the Japanese town buildings. The European houses model their own
+  sides and are left out of it, so they do not grow AC units or a fire escape.
+- **European houses** (catalogue only): a different silhouette from the
+  Japanese houses. Tudor cottage: pale plaster, dark timber, a steep roof, a
+  tall chimney. Mediterranean villa: stucco, a low hip of tile, arched
+  windows, sometimes a thin iron balcony. Dutch canal house: tall and narrow,
+  a stepped or bell gable, often a hoist beam. French country house: a
+  mansard, dormers, shutters, window boxes. Scandinavian house: one simple
+  gable, Dusty rose, Butter or Apricot walls, white corner boards. Stone
+  chapel: a pointed window and either a bellcote or a corner tower. The seed
+  changes storeys (where the type allows), how many windows and which bay the
+  door is in, and whether a chimney, dormer, balcony, shutter or window box
+  is there. Doors are about 2.1 m, the same scale as the other houses and the
+  1.6 m people.
+- **Iso view: people read at street size.** Only the isometric view changes.
+  Adults are drawn about 6 heads tall, with a wider head and thicker limbs,
+  and the whole figure is 1.2× (cats stay at their own exaggeration).
+  Townspeople wear lighter trousers than their top (denim, sage, dusty rose
+  instead of navy or black), and about 40% have light hair or a light hat,
+  because from above the head is mostly hair. The creator and the
+  third-person view keep the original proportions and colours.
+- **Iso view: see-through people.** A person, cat or car behind a building
+  shows as a flat silhouette: people a stronger blue, the player a pale
+  yellow (it was gold, and disappeared on warm roofs), cars a faint
+  blue-grey. One is drawn only when a building actually hides them. A faint
+  ring under the player makes them findable in the crowd. Each silhouette
+  is one even flat tint.
 
 - **Buildings** are boxes with a few strong details, in muted wall colours:
   houses (2 floors, gable tile roof, low block wall, small balcony), apartment
@@ -622,6 +780,10 @@ mix all of them; shrine groves use old giants, zelkova and pines.
   an option ("Preview animation" and "City movement").
 - Walk blends into run with speed, and both fade to a standing pose with a
   slight breathing motion.
+- **Nobori and birds** (`anim/props.js`, `tickProps(root, time)`): the banner
+  bends a few of its own vertices (the pole edge stays put). A pigeon bobs
+  and pecks on a loop; a sparrow stays perched and turns its head. The seed
+  sets the phase, so two copies do not move together.
 
 ## 4. Readability checklist (for any new character)
 

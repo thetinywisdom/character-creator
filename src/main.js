@@ -21,6 +21,7 @@ import { SHOP_TYPES } from './city/buildings.js';
 import { Creator } from './creator/Creator.js';
 import { RUN_SPEED, WALK_SPEED, createGait, poseGait, setGaitEngine, stepGait, tuneOf } from './anim/gait.js';
 import { CAT_RUN_SPEED, CAT_WALK_SPEED, createCatGait, poseCat, stepCatGait } from './anim/catGait.js';
+import { tickProps } from './anim/props.js';
 import { saveFile, openTextFile } from './lib/saveFile.js';
 import { CLOTH_COLORS, PALETTE, PALETTES, activePalette, choosePalette, swatchOf } from './styles/palette.js';
 import './style.css';
@@ -62,7 +63,7 @@ let reframe = true;
 // ---------------------------------------------------------------------------
 // 📦 Catalogue
 // ---------------------------------------------------------------------------
-const TABS = [['palette', '🎨 Palette'], ['all', 'All'], ['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['nature', 'Nature'], ['animals', 'Animals'], ['vehicles', 'Vehicles'], ['areas', 'Areas']];
+const TABS = [['palette', '🎨 Palette'], ['all', 'All'], ['buildings', 'Buildings'], ['street', 'Street'], ['traffic', 'Traffic'], ['extras', 'Extras'], ['nature', 'Nature'], ['animals', 'Animals'], ['vehicles', 'Vehicles'], ['office', 'Office'], ['diner', 'Diner'], ['clinic', 'Clinic'], ['police', 'Police'], ['minimarket', 'Minimarket'], ['meeting', 'Meeting'], ['bedroom', 'Bedroom'], ['studio', 'Studio'], ['cafe', 'Cafe'], ['classroom', 'Classroom'], ['openoffice', 'Open office'], ['ramen', 'Ramen'], ['kitchen', 'Kitchen'], ['library', 'Library'], ['dojo', 'Dojo'], ['station', 'Station'], ['areas', 'Areas']];
 const catalogEl = document.querySelector('#catalog');
 const itemEl = document.querySelector('#item');
 const items = ASSETS.filter((a) => a.group);
@@ -106,7 +107,7 @@ function openItem(id, p) {
   const a = CATALOG[id];
   selected = { id, params: { ...a.params, ...p } };
   const subject = { id: 'item', label: a.label, schema: {}, isProp: true, build: (_q, st) => createAsset(id, selected.params, st) };
-  itemCell = new Cell({ entries: [{ subject }], style, renderer });
+  itemCell = new Cell({ entries: [{ subject, tight: !!a.fillFrame }], style, renderer, viewDir: a.viewDir });
   itemCell.rebuild({});
   itemCell.applyLighting(lightingPresets[state.lighting]);
   setNightGlow(itemCell.scene, !!lightingPresets[state.lighting].night);
@@ -116,6 +117,12 @@ function openItem(id, p) {
 }
 
 const OPTION_LABELS = { pattern: 'Pattern', tailType: 'Tail', earType: 'Ears', coat: 'Coat' };
+// One seed box for every furnished room. A kit opts in with seedInput or
+// seedControl, or by being a *.room that already stores a seed. Other seeded
+// props keep the New look button. Randomize skips 0, the hand-made layout.
+function usesRoomSeed(a) {
+  return !!(a.seedInput || a.seedControl || (a.id.endsWith('.room') && 'seed' in (a.params ?? {})));
+}
 function renderItemPanel() {
   const a = CATALOG[selected.id];
   const p = selected.params;
@@ -134,11 +141,23 @@ function renderItemPanel() {
       ${chips('Shop', 'shopType', shopTypes)}
       ${Object.entries(a.options ?? {}).map(([k, vals]) => chips(OPTION_LABELS[k] ?? k, k, vals)).join('')}
       ${a.animated ? `<h3>Animation</h3><div class="chips">${['Still', 'Walk', 'Run', 'Sit', 'Loaf', 'Sleep'].map((m) => `<button data-anim="${m}" class="${state.itemAnim === m ? 'on' : ''}">${m}</button>`).join('')}</div>` : ''}
-      ${'seed' in a.params ? '<h3>Look</h3><div class="chips"><button data-act="seed">🎲 New look</button></div>' : ''}
+      ${usesRoomSeed(a)
+        ? `<h3>Layout seed</h3><div class="seed-row"><input data-act="seed-num" type="number" step="1" value="${Number.isFinite(Number(p.seed)) ? Math.trunc(Number(p.seed)) : 0}" aria-label="Layout seed"><button data-act="seed-random">Randomize</button></div><p class="it-note">0 is the hand-made layout. The same number rebuilds the same room.</p>`
+        : ('seed' in (a.params ?? {}) ? '<h3>Look</h3><div class="chips"><button data-act="seed">🎲 New look</button></div>' : '')}
       <h3>Use it in a game</h3>
       <pre>${code}</pre>
       <button data-act="copy">Copy</button>
     </div>`;
+  itemEl.onmousedown = (e) => {
+    // Keep a seed number from blurring (and rebuilding) before Randomize runs.
+    if (e.target.closest('[data-act="seed-random"]')) e.preventDefault();
+  };
+  itemEl.onchange = (e) => {
+    if (e.target.dataset.act !== 'seed-num') return;
+    const n = Math.trunc(Number(e.target.value));
+    selected.params.seed = Number.isFinite(n) ? n : 0;
+    openItem(selected.id, selected.params);
+  };
   itemEl.onclick = (e) => {
     const b = e.target.closest('button');
     if (!b) return;
@@ -146,6 +165,7 @@ function renderItemPanel() {
     if (b.dataset.anim) { state.itemAnim = b.dataset.anim; return renderItemPanel(); }
     if (b.dataset.act === 'copy') return navigator.clipboard?.writeText(code).then(() => toast('Copied'), () => toast(code));
     if (b.dataset.act === 'seed') selected.params.seed = Math.floor(Math.random() * 1e9);
+    if (b.dataset.act === 'seed-random') selected.params.seed = 1 + Math.floor(Math.random() * 1e9);
     if (b.dataset.k) selected.params[b.dataset.k] = b.dataset.v === '' ? null : b.dataset.v;
     openItem(selected.id, selected.params);
   };
@@ -422,6 +442,7 @@ function drawOverlay(c, W, H) { drawPixelOverlay(c, W, H); }
 const timer = new THREE.Timer();
 const gait = createGait(); // walk / run preview for the character creator
 const catGait = createCatGait();
+let propTime = 0; // nobori sway and bird idles (anim/props.js)
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight, pr = renderer.getPixelRatio();
   if (canvas.width !== Math.floor(w * pr) || canvas.height !== Math.floor(h * pr)) renderer.setSize(w, h, false);
@@ -452,6 +473,8 @@ function loop(time) {
   renderer.setClearColor(PAGE_BG);
   renderer.clear();
   if (state.view === 'item' && itemCell) {
+    propTime += dt;
+    tickProps(itemCell.scene, propTime);
     if (CATALOG[selected.id].animated === 'cat') {
       // walk / run in place: the cat's gait (anim/catGait.js)
       catGait.pose = { Sit: 'sit', Loaf: 'loaf', Sleep: 'sleep' }[state.itemAnim] ?? null;

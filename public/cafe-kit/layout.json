@@ -1,0 +1,48 @@
+{
+  "units": "metres",
+  "note": "three.js coords; room centred on the origin; item origin bottom centre; rotY radians; y is height above the floor tiles. Walls, the left window, the front windows and the door are built in src/cafe/items.js.",
+  "placements": [
+    { "item": "bar", "x": -1.15, "y": 0, "z": -2.2, "rotY": 0 },
+    { "item": "espresso_machine", "x": -1.9, "y": 1.05, "z": -2.28, "rotY": 0 },
+    { "item": "grinder", "x": -1.28, "y": 1.05, "z": -2.18, "rotY": 0.2 },
+    { "item": "caddy", "x": -0.7, "y": 1.05, "z": -2.1, "rotY": 0 },
+    { "item": "register", "x": -0.28, "y": 1.05, "z": -2.12, "rotY": 0 },
+    { "item": "pastry_case", "x": 1.15, "y": 0, "z": -2.15, "rotY": 0 },
+    { "item": "menu_board", "x": -1.15, "y": 1.42, "z": -2.86, "rotY": 0 },
+    { "item": "shelf", "x": -3.86, "y": 1.35, "z": -0.15, "rotY": 1.5708 },
+    { "item": "plant", "x": -3.35, "y": 0, "z": -2.35, "rotY": 0.4 },
+    { "item": "plant", "x": 3.25, "y": 0, "z": -2.25, "rotY": 1.2 },
+
+    { "item": "table", "x": -2.2, "y": 0, "z": -0.95, "rotY": 0 },
+    { "item": "chair", "x": -2.2, "y": 0, "z": -1.52, "rotY": 0 },
+    { "item": "chair", "x": -2.2, "y": 0, "z": -0.38, "rotY": 3.1416 },
+    { "item": "cup", "x": -2.05, "y": 0.74, "z": -0.95, "rotY": 0.4 },
+    { "item": "cake", "x": -2.38, "y": 0.74, "z": -0.88, "rotY": 0.2 },
+
+    { "item": "table", "x": -0.35, "y": 0, "z": -0.95, "rotY": 0 },
+    { "item": "chair", "x": -0.35, "y": 0, "z": -1.52, "rotY": 0 },
+    { "item": "chair", "x": -0.35, "y": 0, "z": -0.38, "rotY": 3.1416 },
+    { "item": "cup", "x": -0.2, "y": 0.74, "z": -1.02, "rotY": -0.3 },
+
+    { "item": "table", "x": -2.2, "y": 0, "z": 0.85, "rotY": 0 },
+    { "item": "chair", "x": -2.2, "y": 0, "z": 0.28, "rotY": 0 },
+    { "item": "chair", "x": -2.2, "y": 0, "z": 1.42, "rotY": 3.1416 },
+    { "item": "cup", "x": -2.35, "y": 0.74, "z": 0.78, "rotY": 0.6 },
+    { "item": "cake", "x": -2.02, "y": 0.74, "z": 0.95, "rotY": -0.2 },
+
+    { "item": "pendant", "x": -2.2, "y": 1.9, "z": -0.95, "rotY": 0 },
+    { "item": "pendant", "x": -0.35, "y": 1.9, "z": -0.95, "rotY": 0 },
+    { "item": "pendant", "x": -2.2, "y": 1.9, "z": 0.85, "rotY": 0 },
+
+    { "item": "window_counter", "x": 0.7, "y": 0, "z": 2.15, "rotY": 0 },
+    { "item": "stool", "x": -0.15, "y": 0, "z": 1.55, "rotY": 0 },
+    { "item": "stool", "x": 0.7, "y": 0, "z": 1.55, "rotY": 0 },
+    { "item": "stool", "x": 1.55, "y": 0, "z": 1.55, "rotY": 0 },
+    { "item": "plant_small", "x": 1.7, "y": 1.05, "z": 2.12, "rotY": 0 },
+    { "item": "cup", "x": 0.15, "y": 1.05, "z": 2.08, "rotY": 0.5 },
+
+    { "item": "noren", "x": 2.66, "y": 1.22, "z": 2.5, "rotY": 0 },
+    { "item": "mat", "x": 2.66, "y": 0, "z": 2.35, "rotY": 0 },
+    { "item": "plant_small", "x": -0.55, "y": 1.05, "z": -2.05, "rotY": 0.8 }
+  ]
+}

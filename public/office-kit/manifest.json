@@ -1,0 +1,711 @@
+{
+ "units": "metres",
+ "up": "+y",
+ "front": "+z",
+ "origin": "bottom centre",
+ "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+ "items": {
+  "desk": {
+   "label": "Desk (IDÅSEN-style sit/stand, 160x80)",
+   "group": "work",
+   "file": "models/desk.glb",
+   "size": [
+    1.6,
+    0.73,
+    0.8
+   ],
+   "footprint": [
+    1.6,
+    0.8
+   ],
+   "tris": 72,
+   "materials": [
+    "wood:Tan",
+    "darkMetal:Charcoal"
+   ],
+   "bytes": 5668
+  },
+  "office_chair": {
+   "label": "Office chair (MARKUS-style, high back)",
+   "group": "work",
+   "file": "models/office_chair.glb",
+   "size": [
+    0.61,
+    1.314,
+    0.653
+   ],
+   "footprint": [
+    0.61,
+    0.653
+   ],
+   "tris": 224,
+   "materials": [
+    "darkMetal:Ink",
+    "metal:Stone",
+    "cloth:Ink",
+    "cloth:Charcoal"
+   ],
+   "bytes": 15312
+  },
+  "monitor": {
+   "label": "Monitor (27in, tilt stand)",
+   "group": "work",
+   "file": "models/monitor.glb",
+   "size": [
+    0.62,
+    0.471,
+    0.16
+   ],
+   "footprint": [
+    0.62,
+    0.16
+   ],
+   "tris": 48,
+   "materials": [
+    "darkMetal:Ink",
+    "glass:Navy",
+    "metal:Light gray"
+   ],
+   "bytes": 4952
+  },
+  "laptop": {
+   "label": "Laptop (open)",
+   "group": "work",
+   "file": "models/laptop.glb",
+   "size": [
+    0.31,
+    0.218,
+    0.262
+   ],
+   "footprint": [
+    0.31,
+    0.262
+   ],
+   "tris": 48,
+   "materials": [
+    "metal:Stone",
+    "darkMetal:Charcoal",
+    "glass:Navy"
+   ],
+   "bytes": 5136
+  },
+  "keyboard": {
+   "label": "Keyboard + mouse",
+   "group": "work",
+   "file": "models/keyboard.glb",
+   "size": [
+    0.47,
+    0.025,
+    0.12
+   ],
+   "footprint": [
+    0.47,
+    0.12
+   ],
+   "tris": 24,
+   "materials": [
+    "paint:Off white"
+   ],
+   "bytes": 2340
+  },
+  "desk_lamp": {
+   "label": "Desk lamp (angled arm)",
+   "group": "work",
+   "file": "models/desk_lamp.glb",
+   "size": [
+    0.139,
+    0.502,
+    0.314
+   ],
+   "footprint": [
+    0.139,
+    0.314
+   ],
+   "tris": 84,
+   "materials": [
+    "darkMetal:Charcoal",
+    "light:Butter"
+   ],
+   "bytes": 6132
+  },
+  "mug": {
+   "label": "Mug",
+   "group": "work",
+   "file": "models/mug.glb",
+   "size": [
+    0.094,
+    0.095,
+    0.084
+   ],
+   "footprint": [
+    0.094,
+    0.084
+   ],
+   "tris": 32,
+   "materials": [
+    "paint:Off white"
+   ],
+   "bytes": 2672
+  },
+  "bookcase": {
+   "label": "Bookcase (BILLY-style 80x28x202) with books",
+   "group": "work",
+   "file": "models/bookcase.glb",
+   "size": [
+    0.8,
+    2.02,
+    0.28
+   ],
+   "footprint": [
+    0.8,
+    0.28
+   ],
+   "tris": 372,
+   "materials": [
+    "paint:Off white",
+    "paint:Powder blue",
+    "paint:Lilac",
+    "paint:Dusty rose",
+    "paint:Slate",
+    "paint:Sage",
+    "paint:Sand",
+    "paint:Navy"
+   ],
+   "bytes": 25168
+  },
+  "copier": {
+   "label": "Copier/printer on cabinet",
+   "group": "work",
+   "file": "models/copier.glb",
+   "size": [
+    0.6,
+    1.064,
+    0.62
+   ],
+   "footprint": [
+    0.6,
+    0.62
+   ],
+   "tris": 72,
+   "materials": [
+    "paint:Light gray",
+    "darkMetal:Charcoal",
+    "paint:Off white",
+    "darkMetal:Ink",
+    "paint:Paper"
+   ],
+   "bytes": 7468
+  },
+  "flat_file": {
+   "label": "Flat-file cabinet (5 drawers, 165x42x75)",
+   "group": "work",
+   "file": "models/flat_file.glb",
+   "size": [
+    1.65,
+    0.75,
+    0.442
+   ],
+   "footprint": [
+    1.65,
+    0.442
+   ],
+   "tris": 132,
+   "materials": [
+    "paint:Off white",
+    "paint:Light gray",
+    "metal:Stone"
+   ],
+   "bytes": 9168
+  },
+  "wall_shelf": {
+   "label": "Wall shelf plank (100x20)",
+   "group": "work",
+   "file": "models/wall_shelf.glb",
+   "size": [
+    1.0,
+    0.14,
+    0.2
+   ],
+   "footprint": [
+    1.0,
+    0.2
+   ],
+   "tris": 36,
+   "materials": [
+    "wood:Tan",
+    "darkMetal:Charcoal"
+   ],
+   "bytes": 3676
+  },
+  "sofa": {
+   "label": "Sofa 3-seat (BORKUM-style, 218 cm)",
+   "group": "lounge",
+   "file": "models/sofa.glb",
+   "size": [
+    2.18,
+    0.829,
+    0.86
+   ],
+   "footprint": [
+    2.18,
+    0.86
+   ],
+   "tris": 180,
+   "materials": [
+    "metal:Light gray",
+    "cloth:Walnut",
+    "cloth:Cocoa"
+   ],
+   "bytes": 12264
+  },
+  "coffee_table": {
+   "label": "Coffee table (LISTERBY-style 140x60)",
+   "group": "lounge",
+   "file": "models/coffee_table.glb",
+   "size": [
+    1.4,
+    0.37,
+    0.6
+   ],
+   "footprint": [
+    1.4,
+    0.6
+   ],
+   "tris": 72,
+   "materials": [
+    "wood:Tan"
+   ],
+   "bytes": 4936
+  },
+  "side_table": {
+   "label": "Side tray table (GLADOM-style)",
+   "group": "lounge",
+   "file": "models/side_table.glb",
+   "size": [
+    0.45,
+    0.538,
+    0.45
+   ],
+   "footprint": [
+    0.45,
+    0.45
+   ],
+   "tris": 64,
+   "materials": [
+    "darkMetal:Ink"
+   ],
+   "bytes": 4336
+  },
+  "rug": {
+   "label": "Rug (jute, 300x200)",
+   "group": "lounge",
+   "file": "models/rug.glb",
+   "size": [
+    3.0,
+    0.012,
+    2.0
+   ],
+   "footprint": [
+    3.0,
+    2.0
+   ],
+   "tris": 24,
+   "materials": [
+    "cloth:Sand",
+    "cloth:Tan"
+   ],
+   "bytes": 2796
+  },
+  "rug_large": {
+   "label": "Rug (jute, 350x240)",
+   "group": "meeting",
+   "file": "models/rug_large.glb",
+   "size": [
+    3.5,
+    0.012,
+    2.4
+   ],
+   "footprint": [
+    3.5,
+    2.4
+   ],
+   "tris": 24,
+   "materials": [
+    "cloth:Sand",
+    "cloth:Tan"
+   ],
+   "bytes": 2844
+  },
+  "whiteboard_mobile": {
+   "label": "Mobile whiteboard (120x90 on casters)",
+   "group": "lounge",
+   "file": "models/whiteboard_mobile.glb",
+   "size": [
+    1.37,
+    1.76,
+    0.56
+   ],
+   "footprint": [
+    1.37,
+    0.56
+   ],
+   "tris": 132,
+   "materials": [
+    "metal:Stone",
+    "darkMetal:Ink",
+    "metal:Light gray",
+    "paint:Off white"
+   ],
+   "bytes": 10232
+  },
+  "whiteboard_wall": {
+   "label": "Wall whiteboard (180x120, back at z=0)",
+   "group": "meeting",
+   "file": "models/whiteboard_wall.glb",
+   "size": [
+    1.84,
+    1.243,
+    0.07
+   ],
+   "footprint": [
+    1.84,
+    0.07
+   ],
+   "tris": 36,
+   "materials": [
+    "metal:Light gray",
+    "paint:Off white",
+    "metal:Stone"
+   ],
+   "bytes": 4084
+  },
+  "meeting_table": {
+   "label": "Meeting table (boat shape 200x100)",
+   "group": "meeting",
+   "file": "models/meeting_table.glb",
+   "size": [
+    2.0,
+    0.75,
+    1.0
+   ],
+   "footprint": [
+    2.0,
+    1.0
+   ],
+   "tris": 80,
+   "materials": [
+    "wood:Tan"
+   ],
+   "bytes": 4908
+  },
+  "meeting_chair": {
+   "label": "Meeting chair (Brno-style)",
+   "group": "meeting",
+   "file": "models/meeting_chair.glb",
+   "size": [
+    0.525,
+    0.813,
+    0.595
+   ],
+   "footprint": [
+    0.525,
+    0.595
+   ],
+   "tris": 120,
+   "materials": [
+    "metal:Light gray",
+    "cloth:Ink"
+   ],
+   "bytes": 8244
+  },
+  "kitchen_run": {
+   "label": "Kitchen run (324 cm, sage cabinets, sink)",
+   "group": "kitchen",
+   "file": "models/kitchen_run.glb",
+   "size": [
+    3.246,
+    1.175,
+    0.64
+   ],
+   "footprint": [
+    3.246,
+    0.64
+   ],
+   "tris": 288,
+   "materials": [
+    "darkMetal:Charcoal",
+    "paint:Sage",
+    "paint:Moss",
+    "paint:Seafoam",
+    "metal:Stone"
+   ],
+   "bytes": 19400
+  },
+  "fridge": {
+   "label": "Fridge (top freezer, 76x77x169)",
+   "group": "kitchen",
+   "file": "models/fridge.glb",
+   "size": [
+    0.76,
+    1.69,
+    0.815
+   ],
+   "footprint": [
+    0.76,
+    0.815
+   ],
+   "tris": 60,
+   "materials": [
+    "metal:Light gray",
+    "darkMetal:Charcoal",
+    "metal:Stone"
+   ],
+   "bytes": 5500
+  },
+  "trash_can": {
+   "label": "Trash can (sensor, 58 L)",
+   "group": "kitchen",
+   "file": "models/trash_can.glb",
+   "size": [
+    0.47,
+    0.63,
+    0.33
+   ],
+   "footprint": [
+    0.47,
+    0.33
+   ],
+   "tris": 24,
+   "materials": [
+    "darkMetal:Ink",
+    "darkMetal:Charcoal"
+   ],
+   "bytes": 2896
+  },
+  "coffee_machine": {
+   "label": "Espresso machine",
+   "group": "kitchen",
+   "file": "models/coffee_machine.glb",
+   "size": [
+    0.34,
+    0.52,
+    0.41
+   ],
+   "footprint": [
+    0.34,
+    0.41
+   ],
+   "tris": 68,
+   "materials": [
+    "metal:Stone",
+    "glass:Charcoal",
+    "darkMetal:Ink",
+    "darkMetal:Charcoal"
+   ],
+   "bytes": 6872
+  },
+  "microwave": {
+   "label": "Microwave",
+   "group": "kitchen",
+   "file": "models/microwave.glb",
+   "size": [
+    0.46,
+    0.28,
+    0.374
+   ],
+   "footprint": [
+    0.46,
+    0.374
+   ],
+   "tris": 36,
+   "materials": [
+    "paint:Off white",
+    "glass:Ink",
+    "paint:Light gray"
+   ],
+   "bytes": 4068
+  },
+  "bar_table": {
+   "label": "Bar table (terrazzo top, terracotta base, 220x65x105)",
+   "group": "kitchen",
+   "file": "models/bar_table.glb",
+   "size": [
+    2.2,
+    1.038,
+    0.65
+   ],
+   "footprint": [
+    2.2,
+    0.65
+   ],
+   "tris": 240,
+   "materials": [
+    "paint:Dusty rose",
+    "concrete:Paper",
+    "concrete:Peach",
+    "concrete:Stone",
+    "concrete:Dusty rose"
+   ],
+   "bytes": 16788
+  },
+  "bar_stool": {
+   "label": "Bar stool (cane seat, 78 cm)",
+   "group": "kitchen",
+   "file": "models/bar_stool.glb",
+   "size": [
+    0.4,
+    0.79,
+    0.4
+   ],
+   "footprint": [
+    0.4,
+    0.4
+   ],
+   "tris": 104,
+   "materials": [
+    "wood:Walnut",
+    "wood:Sand"
+   ],
+   "bytes": 7044
+  },
+  "pendant_lamp": {
+   "label": "Bar pendant (coral, hangs 1.23 m)",
+   "group": "kitchen",
+   "file": "models/pendant_lamp.glb",
+   "size": [
+    0.22,
+    1.231,
+    0.22
+   ],
+   "footprint": [
+    0.22,
+    0.22
+   ],
+   "tris": 88,
+   "materials": [
+    "paint:Dusty rose",
+    "light:Butter",
+    "darkMetal:Ink"
+   ],
+   "bytes": 6916
+  },
+  "plant_fig": {
+   "label": "Fiddle-leaf fig (1.7 m)",
+   "group": "plants",
+   "file": "models/plant_fig.glb",
+   "size": [
+    0.636,
+    1.713,
+    0.633
+   ],
+   "footprint": [
+    0.636,
+    0.633
+   ],
+   "tris": 156,
+   "materials": [
+    "concrete:Off white",
+    "wood:Walnut",
+    "leaf:Sage",
+    "leaf:Moss"
+   ],
+   "bytes": 13884
+  },
+  "plant_monstera": {
+   "label": "Monstera in woven basket",
+   "group": "plants",
+   "file": "models/plant_monstera.glb",
+   "size": [
+    0.775,
+    1.093,
+    0.812
+   ],
+   "footprint": [
+    0.775,
+    0.812
+   ],
+   "tris": 168,
+   "materials": [
+    "wood:Sand",
+    "leaf:Sage",
+    "leaf:Moss"
+   ],
+   "bytes": 14788
+  },
+  "plant_snake": {
+   "label": "Snake plant (tall blades)",
+   "group": "plants",
+   "file": "models/plant_snake.glb",
+   "size": [
+    0.225,
+    1.063,
+    0.26
+   ],
+   "footprint": [
+    0.225,
+    0.26
+   ],
+   "tris": 116,
+   "materials": [
+    "concrete:Charcoal",
+    "leaf:Sage",
+    "leaf:Moss"
+   ],
+   "bytes": 8724
+  },
+  "plant_small": {
+   "label": "Small potted plant (ZZ / pothos)",
+   "group": "plants",
+   "file": "models/plant_small.glb",
+   "size": [
+    0.248,
+    0.261,
+    0.199
+   ],
+   "footprint": [
+    0.248,
+    0.199
+   ],
+   "tris": 80,
+   "materials": [
+    "concrete:Off white",
+    "leaf:Moss"
+   ],
+   "bytes": 7472
+  },
+  "planter_divider": {
+   "label": "Planter divider (240 cm trough + greenery, 1.46 m)",
+   "group": "plants",
+   "file": "models/planter_divider.glb",
+   "size": [
+    2.623,
+    1.451,
+    0.558
+   ],
+   "footprint": [
+    2.623,
+    0.558
+   ],
+   "tris": 364,
+   "materials": [
+    "paint:Off white",
+    "leaf:Moss",
+    "leaf:Sage"
+   ],
+   "bytes": 28920
+  }
+ },
+ "room": {
+  "file": "models/office_room.glb",
+  "size": [
+   6.5,
+   3.0,
+   14.5
+  ],
+  "tris": 7844,
+  "placed_items": 68,
+  "shell_tris": 876,
+  "bytes": 317764,
+  "note": "room centred on the origin; north window wall at z=-7.25; east wall node is room_wall_east (hide it for a cutaway)"
+ }
+}

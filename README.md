@@ -13,11 +13,37 @@ agents to build games on. **Agents: read `SKILLS.md`.**
 
 - **📦 Catalogue** (home): the 🎨 colour palette everything uses, and every
   item a game can place, in tabs (Buildings,
-  Street, Traffic, Extras, Nature, Animals, Vehicles, Areas), including the
-  bus, the bus stop shelter and the banana peel. Tap one to turn
+  Street, Traffic, Extras, Nature, Animals, Vehicles, Areas). Trees and bushes
+  are clumped low-poly foliage; house hedges are trimmed rather than plain
+  boxes. The Nature tab also has a cedar, a windmill palm, a camphor, a pagoda
+  tree, a bare winter tree, an autumn maple, boxwood, azalea, hydrangea, a
+  fern clump and doorstep pots (the sample town does not plant these). The Extras
+  tab also has manhole covers, back-of-house clutter (propane tanks, a gas
+  meter, a drainpipe, or a cluster of the three) and nobori flags; Animals has
+  pigeons and sparrows. The sample town does not place those. The catalogue includes the
+  bus, the bus stop shelter and the banana peel. The **Office** tab is a
+  furniture kit (desks, chairs, a lounge, a meeting room, a kitchen, plants)
+  and the whole furnished office. The office room takes a seed (0 keeps the
+  authored layout; Randomize builds another arrangement of the same room).
+  The **Diner** tab is a 1950s American diner
+  in the same low-poly look: the furnished room (Cutaway or Full) and its
+  counter, stools, booths, jukebox, grill and the rest of the kit. The **Clinic**,
+  **Police** and **Minimarket** tabs are interior kits in the same look: a clinic
+  with exam bays, a koban-style police station with a holding cell, and a
+  convenience store with shelves and a fridge wall. **Meeting**, **Bedroom** and
+  **Studio** are more furnished rooms (a meeting room, a small bedroom, and a
+  Japanese 1R). The **Cafe**, **Classroom** and **Open office** tabs are a small
+  kissaten, a Japanese classroom, and an open-plan studio, separate from the
+  Office kit. Each room is Cutaway or Full. A layout seed of 0 is the hand-made
+  room; the same number always rebuilds that room. They stay
+  in the catalogue: the sample town does not place them. Tap one to turn
   it around, try its types, colours and looks, and copy the `createAsset(...)`
   line that builds it. 🎲 New look gives a really different building (shape,
-  height, roof, layout), not just a new colour. The cat has patterns, tail, ear and coat types, and Still / Walk / Run /
+  height, roof, layout), not just a new colour. The Buildings tab also lists
+  six European houses (Tudor cottage, Mediterranean villa, Dutch canal house,
+  French country house, Scandinavian house, stone chapel). They stay in the
+  catalogue: the sample town does not place them. The same seed always
+  rebuilds the same house. The cat has patterns, tail, ear and coat types, and Still / Walk / Run /
   Sit / Loaf / Sleep.
 - **👤 Characters**: the character creator (Body, Hair & face, Clothes,
   Accessories; Still / Walk / Run preview). Body types Man, Woman, Boy, Girl,
@@ -28,8 +54,9 @@ agents to build games on. **Agents: read `SKILLS.md`.**
   cars, buses, motorbikes and cats. 🎲 makes a different town, ☀ changes the time of
   day (at night windows, signs and lamps glow), 🌤 the weather (rain: people
   open umbrellas; snow), 🎥 (or V) switches third person / isometric (< >
-  rotate); in the iso view people, cats and cars behind buildings show as
-  silhouettes (you in yellow). WASD / arrows, Shift to run (it builds up speed), Space to jump, a joystick
+  rotate); in the iso view people are drawn a little bigger and chunkier, with
+  lighter clothes, and people, cats and cars behind buildings show as
+  silhouettes (you in pale yellow, with a faint ring at your feet). WASD / arrows, Shift to run (it builds up speed), Space to jump, a joystick
   on touch screens.
 - **Cats:** the owner's pick: version 6's lofted body and jointed legs with
   version 2's round head (cheeks, a little muzzle, small ears).

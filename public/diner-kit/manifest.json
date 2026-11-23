@@ -1,0 +1,586 @@
+{
+ "units": "metres",
+ "up": "+y",
+ "front": "+z",
+ "origin": "bottom centre",
+ "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+ "note": "Procedural kit. The catalogue builds these in src/diner/items.js. No GLBs: createAsset stays synchronous.",
+ "items": {
+  "counter": {
+   "label": "Diner counter (320 cm, red base, chrome edge)",
+   "group": "counter",
+   "size": [
+    3.2,
+    1.084,
+    0.776
+   ],
+   "footprint": [
+    3.2,
+    0.78
+   ],
+   "materials": [
+    "paint:Dusty rose",
+    "paint:Off white",
+    "metal:Light gray",
+    "darkMetal:Charcoal"
+   ],
+   "tris": 108
+  },
+  "stool": {
+   "label": "Swivel stool (chrome, red seat)",
+   "group": "counter",
+   "size": [
+    0.303,
+    0.745,
+    0.35
+   ],
+   "footprint": [
+    0.38,
+    0.38
+   ],
+   "materials": [
+    "metal:Light gray",
+    "cloth:Dusty rose"
+   ],
+   "tris": 120
+  },
+  "booth": {
+   "label": "Booth (two benches and a table)",
+   "group": "seating",
+   "size": [
+    1.61,
+    1.04,
+    1.18
+   ],
+   "footprint": [
+    1.62,
+    1.18
+   ],
+   "materials": [
+    "cloth:Dusty rose",
+    "metal:Light gray",
+    "paint:Off white"
+   ],
+   "tris": 224
+  },
+  "napkin_dispenser": {
+   "label": "Napkin dispenser",
+   "group": "table",
+   "size": [
+    0.15,
+    0.074,
+    0.075
+   ],
+   "footprint": [
+    0.16,
+    0.08
+   ],
+   "materials": [
+    "metal:Light gray",
+    "darkMetal:Ink",
+    "paint:Paper"
+   ],
+   "tris": 36
+  },
+  "ketchup": {
+   "label": "Ketchup bottle",
+   "group": "table",
+   "size": [
+    0.062,
+    0.175,
+    0.076
+   ],
+   "footprint": [
+    0.08,
+    0.08
+   ],
+   "materials": [
+    "paint:Dusty rose",
+    "paint:Off white"
+   ],
+   "tris": 76
+  },
+  "mustard": {
+   "label": "Mustard bottle",
+   "group": "table",
+   "size": [
+    0.062,
+    0.175,
+    0.076
+   ],
+   "footprint": [
+    0.08,
+    0.08
+   ],
+   "materials": [
+    "paint:Butter",
+    "paint:Dusty rose"
+   ],
+   "tris": 76
+  },
+  "salt_pepper": {
+   "label": "Salt and pepper",
+   "group": "table",
+   "size": [
+    0.1,
+    0.092,
+    0.05
+   ],
+   "footprint": [
+    0.12,
+    0.06
+   ],
+   "materials": [
+    "metal:Light gray",
+    "paint:Off white",
+    "paint:Charcoal",
+    "darkMetal:Ink"
+   ],
+   "tris": 92
+  },
+  "straw_holder": {
+   "label": "Straw holder",
+   "group": "table",
+   "size": [
+    0.073,
+    0.17,
+    0.084
+   ],
+   "footprint": [
+    0.12,
+    0.12
+   ],
+   "materials": [
+    "metal:Light gray",
+    "paint:Dusty rose",
+    "paint:Off white"
+   ],
+   "tris": 72
+  },
+  "cup_stack": {
+   "label": "Stacked cups",
+   "group": "table",
+   "size": [
+    0.104,
+    0.157,
+    0.12
+   ],
+   "footprint": [
+    0.14,
+    0.14
+   ],
+   "materials": [
+    "paint:Off white",
+    "paint:Seafoam"
+   ],
+   "tris": 120
+  },
+  "service_bell": {
+   "label": "Service bell",
+   "group": "table",
+   "size": [
+    0.1,
+    0.056,
+    0.1
+   ],
+   "footprint": [
+    0.1,
+    0.1
+   ],
+   "materials": [
+    "metal:Light gray",
+    "darkMetal:Ink"
+   ],
+   "tris": 82
+  },
+  "jukebox": {
+   "label": "Jukebox",
+   "group": "floor",
+   "size": [
+    0.74,
+    1.45,
+    0.5
+   ],
+   "footprint": [
+    0.74,
+    0.5
+   ],
+   "materials": [
+    "darkMetal:Ink",
+    "metal:Light gray",
+    "paint:Dusty rose",
+    "paint:Butter",
+    "paint:Seafoam",
+    "paint:Powder blue",
+    "paint:Lilac",
+    "glass:Sky",
+    "light:Butter"
+   ],
+   "tris": 180
+  },
+  "milkshake_mixer": {
+   "label": "Milkshake mixer",
+   "group": "service",
+   "size": [
+    0.36,
+    0.42,
+    0.24
+   ],
+   "footprint": [
+    0.38,
+    0.26
+   ],
+   "materials": [
+    "metal:Light gray",
+    "metal:Stone",
+    "paint:Off white",
+    "paint:Dusty rose"
+   ],
+   "tris": 172
+  },
+  "coffee_maker": {
+   "label": "Coffee maker",
+   "group": "service",
+   "size": [
+    0.26,
+    0.34,
+    0.22
+   ],
+   "footprint": [
+    0.28,
+    0.24
+   ],
+   "materials": [
+    "metal:Light gray",
+    "metal:Stone",
+    "glass:Sky",
+    "paint:Walnut",
+    "darkMetal:Charcoal",
+    "light:Butter"
+   ],
+   "tris": 132
+  },
+  "pie_case": {
+   "label": "Pie display case",
+   "group": "service",
+   "size": [
+    0.42,
+    0.39,
+    0.42
+   ],
+   "footprint": [
+    0.52,
+    0.52
+   ],
+   "materials": [
+    "metal:Light gray",
+    "paint:Off white",
+    "paint:Apricot",
+    "paint:Dusty rose",
+    "paint:Butter",
+    "paint:Cocoa",
+    "glass:Sky"
+   ],
+   "tris": 233
+  },
+  "register": {
+   "label": "Cash register",
+   "group": "service",
+   "size": [
+    0.34,
+    0.297,
+    0.355
+   ],
+   "footprint": [
+    0.36,
+    0.38
+   ],
+   "materials": [
+    "metal:Light gray",
+    "metal:Stone",
+    "darkMetal:Ink",
+    "glass:Navy",
+    "paint:Charcoal"
+   ],
+   "tris": 144
+  },
+  "soda_fountain": {
+   "label": "Soda fountain",
+   "group": "service",
+   "size": [
+    0.7,
+    0.53,
+    0.38
+   ],
+   "footprint": [
+    0.72,
+    0.38
+   ],
+   "materials": [
+    "metal:Light gray",
+    "metal:Stone",
+    "darkMetal:Charcoal",
+    "paint:Dusty rose",
+    "paint:Butter",
+    "paint:Seafoam",
+    "paint:Cocoa"
+   ],
+   "tris": 192
+  },
+  "grill": {
+   "label": "Flat-top grill",
+   "group": "kitchen",
+   "size": [
+    1.16,
+    0.285,
+    0.69
+   ],
+   "footprint": [
+    1.18,
+    0.7
+   ],
+   "materials": [
+    "darkMetal:Charcoal",
+    "darkMetal:Ink",
+    "metal:Stone",
+    "metal:Light gray",
+    "paint:Apricot",
+    "paint:Cocoa",
+    "paint:Sand"
+   ],
+   "tris": 180
+  },
+  "work_counter": {
+   "label": "Kitchen counter",
+   "group": "kitchen",
+   "size": [
+    2.4,
+    0.88,
+    0.663
+   ],
+   "footprint": [
+    2.4,
+    0.66
+   ],
+   "materials": [
+    "darkMetal:Charcoal",
+    "metal:Light gray",
+    "metal:Stone"
+   ],
+   "tris": 84
+  },
+  "pass_window": {
+   "label": "Pass window with order wheel",
+   "group": "kitchen",
+   "size": [
+    1.68,
+    1.62,
+    0.164
+   ],
+   "footprint": [
+    1.68,
+    0.2
+   ],
+   "materials": [
+    "metal:Light gray",
+    "darkMetal:Charcoal",
+    "paint:Paper",
+    "paint:Butter",
+    "paint:Blush",
+    "paint:Powder blue"
+   ],
+   "tris": 224
+  },
+  "menu_board": {
+   "label": "Menu board",
+   "group": "wall",
+   "size": [
+    1.7,
+    1.04,
+    0.059
+   ],
+   "footprint": [
+    1.72,
+    0.06
+   ],
+   "materials": [
+    "darkMetal:Ink",
+    "paint:Off white",
+    "paint:Dusty rose",
+    "paint:Butter",
+    "paint:Seafoam",
+    "paint:Sand",
+    "paint:Powder blue",
+    "light:Dusty rose"
+   ],
+   "tris": 156
+  },
+  "neon_sign": {
+   "label": "Neon sign",
+   "group": "wall",
+   "size": [
+    1.22,
+    0.6,
+    0.14
+   ],
+   "footprint": [
+    1.22,
+    0.15
+   ],
+   "materials": [
+    "darkMetal:Ink",
+    "metal:Light gray",
+    "light:Dusty rose",
+    "light:Seafoam",
+    "light:Butter"
+   ],
+   "tris": 144
+  },
+  "pendant": {
+   "label": "Pendant lamp",
+   "group": "light",
+   "size": [
+    0.346,
+    0.972,
+    0.4
+   ],
+   "footprint": [
+    0.46,
+    0.46
+   ],
+   "materials": [
+    "paint:Off white",
+    "metal:Light gray",
+    "light:Butter",
+    "darkMetal:Ink"
+   ],
+   "tris": 112
+  },
+  "clock": {
+   "label": "Wall clock",
+   "group": "wall",
+   "size": [
+    0.418,
+    0.44,
+    0.065
+   ],
+   "footprint": [
+    0.48,
+    0.07
+   ],
+   "materials": [
+    "metal:Light gray",
+    "paint:Off white",
+    "darkMetal:Ink"
+   ],
+   "tris": 128
+  },
+  "poster": {
+   "label": "Pie poster",
+   "group": "wall",
+   "size": [
+    0.58,
+    0.74,
+    0.061
+   ],
+   "footprint": [
+    0.6,
+    0.07
+   ],
+   "materials": [
+    "wood:Walnut",
+    "paint:Off white",
+    "paint:Apricot",
+    "paint:Cocoa",
+    "paint:Dusty rose"
+   ],
+   "tris": 92
+  },
+  "window_bay": {
+   "label": "Front window",
+   "group": "shell",
+   "size": [
+    2.26,
+    1.483,
+    0.18
+   ],
+   "footprint": [
+    2.26,
+    0.18
+   ],
+   "materials": [
+    "metal:Light gray",
+    "darkMetal:Charcoal",
+    "glass:Sky"
+   ],
+   "tris": 96
+  },
+  "door": {
+   "label": "Entrance door",
+   "group": "shell",
+   "size": [
+    1.22,
+    2.26,
+    0.15
+   ],
+   "footprint": [
+    1.22,
+    0.18
+   ],
+   "materials": [
+    "metal:Light gray",
+    "paint:Dusty rose",
+    "glass:Sky",
+    "darkMetal:Charcoal"
+   ],
+   "tris": 144
+  },
+  "coat_rack": {
+   "label": "Coat rack",
+   "group": "floor",
+   "size": [
+    0.4,
+    1.68,
+    0.4
+   ],
+   "footprint": [
+    0.48,
+    0.48
+   ],
+   "materials": [
+    "metal:Light gray",
+    "darkMetal:Charcoal",
+    "cloth:Sand",
+    "cloth:Cocoa"
+   ],
+   "tris": 168
+  },
+  "welcome_mat": {
+   "label": "Floor mat",
+   "group": "floor",
+   "size": [
+    0.9,
+    0.016,
+    0.56
+   ],
+   "footprint": [
+    0.9,
+    0.56
+   ],
+   "materials": [
+    "cloth:Dusty rose",
+    "paint:Off white"
+   ],
+   "tris": 24
+  }
+ },
+ "room": {
+  "size": [
+   12,
+   3,
+   8
+  ],
+  "note": "12 m wide (x) by 8 m deep (z), centred, open top. Front is +z. Cutaway hides room_wall_front and room_wall_side. Triangle count includes the hidden walls.",
+  "tris": 9747
+ }
+}

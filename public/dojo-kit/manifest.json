@@ -1,0 +1,114 @@
+{
+  "units": "metres",
+  "up": "+y",
+  "front": "+z",
+  "origin": "bottom centre",
+  "palette_source": "thetinywisdom/character-creator src/styles/palette.js",
+  "note": "Procedural kit. The catalogue builds these in src/dojo/items.js. No GLBs: createAsset stays synchronous.",
+  "items": {
+    "tatami": {
+      "label": "Tatami mat",
+      "group": "floor",
+      "size": [1.8, 0.028, 0.9],
+      "footprint": [1.8, 0.9],
+      "materials": ["paint:Sage"],
+      "tris": 12
+    },
+    "dummy": {
+      "label": "Training dummy",
+      "group": "training",
+      "size": [0.42, 1.4, 0.42],
+      "footprint": [0.42, 0.42],
+      "materials": ["wood:Walnut", "cloth:Navy", "cloth:Sand"],
+      "tris": 72
+    },
+    "scroll": {
+      "label": "Wall scroll",
+      "group": "wall",
+      "size": [0.66, 1.06, 0.04],
+      "footprint": [0.66, 0.04],
+      "materials": ["wood:Walnut", "paint:Paper", "paint:Navy"],
+      "tris": 48
+    },
+    "mat_stack": {
+      "label": "Stacked mats",
+      "group": "floor",
+      "size": [0.72, 0.18, 0.5],
+      "footprint": [0.72, 0.5],
+      "materials": ["paint:Sage", "cloth:Sand"],
+      "tris": 60
+    },
+    "kamidana": {
+      "label": "Kamidana shrine",
+      "group": "wall",
+      "size": [1.25, 0.62, 0.38],
+      "footprint": [1.25, 0.38],
+      "materials": ["wood:Walnut", "paint:Off white", "paint:Butter", "paint:Moss"],
+      "tris": 144
+    },
+    "bokken_rack": {
+      "label": "Bokken rack",
+      "group": "training",
+      "size": [1.15, 1.05, 0.26],
+      "footprint": [1.15, 0.26],
+      "materials": ["wood:Walnut", "wood:Tan"],
+      "tris": 156
+    },
+    "punching_bag": {
+      "label": "Punching bag",
+      "group": "training",
+      "size": [0.46, 3.0, 0.46],
+      "footprint": [0.46, 0.46],
+      "materials": ["cloth:Navy", "paint:Sand", "darkMetal:Charcoal"],
+      "tris": 124
+    },
+    "weight_bench": {
+      "label": "Weight bench",
+      "group": "gym",
+      "size": [1.3, 0.98, 0.5],
+      "footprint": [1.3, 0.5],
+      "materials": ["cloth:Navy", "darkMetal:Charcoal", "metal:Slate"],
+      "tris": 144
+    },
+    "dumbbell_rack": {
+      "label": "Dumbbell rack",
+      "group": "gym",
+      "size": [0.92, 0.9, 0.4],
+      "footprint": [0.92, 0.4],
+      "materials": ["darkMetal:Charcoal", "metal:Slate", "darkMetal:Ink"],
+      "tris": 204
+    },
+    "shoe_shelf": {
+      "label": "Shoe shelf",
+      "group": "entrance",
+      "size": [1.08, 0.52, 0.32],
+      "footprint": [1.08, 0.32],
+      "materials": ["wood:Walnut", "paint:Ink", "paint:Charcoal"],
+      "tris": 120
+    },
+    "mirror": {
+      "label": "Mirror wall",
+      "group": "wall",
+      "size": [2.4, 1.7, 0.06],
+      "footprint": [2.4, 0.06],
+      "materials": ["wood:Walnut", "glass:Powder blue"],
+      "tris": 60
+    },
+    "window": {
+      "label": "Dojo window",
+      "group": "shell",
+      "size": [1.54, 1.16, 0.14],
+      "footprint": [1.54, 0.14],
+      "materials": ["wood:Walnut", "glass:Sky"],
+      "tris": 84
+    },
+    "sliding_door": {
+      "label": "Sliding door",
+      "group": "shell",
+      "size": [1.2, 2.16, 0.1],
+      "footprint": [1.2, 0.1],
+      "materials": ["wood:Walnut", "paint:Paper", "metal:Stone"],
+      "tris": 108
+    }
+  }
+}
