@@ -87,7 +87,7 @@ function mulberry32(seed) {
 }
 
 /** Build the iso-city style person for our settings `p`. */
-export function buildIsoHuman(p, style) {
+export function buildIsoCityHuman(p, style) {
   // materials from the style (palette, PS1 snapping); double-sided copies for open shells and hair
   const doubles = new Map();
   const two = (m) => {
@@ -286,7 +286,7 @@ export function buildIsoHuman(p, style) {
     if (o.isMesh && !o.geometry.userData.scaled) { o.geometry.scale(k, k, k); o.geometry.userData.scaled = true; }
   });
   for (const side of ['L', 'R']) legs[side].ankle.userData.sole.forEach((v) => v.multiplyScalar(k));
-  root.userData.iso = true;
+  root.userData.isoCity = true;
   return root;
 }
 

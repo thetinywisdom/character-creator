@@ -112,8 +112,8 @@ src/render/ps1.js      createPs1Renderer: low-res render + dither + outlines (re
 src/styles/            ps1.js (materials by role, lights), palette.js, lightingPresets
 src/catalog/index.js   ASSET CATALOGUE: every placeable item behind one interface
 src/catalog/thumbs.js  catalogue pictures (drawn on demand, cached in the browser)
-src/subjects/human/iso.js  the iso-city style human (owner's previous game, being ported in
-                       steps; NOT used by the game yet): buildIsoHuman(p, style) builds our
+src/subjects/human/isoCity.js  the iso-city style human (owner's previous game, being ported in
+                       steps; NOT used by the game yet; not the isometric-view people of city/isoPeople.js): buildIsoCityHuman(p, style) builds our
                        settings with iso-city's shapes (lathed torso, egg head without eyes,
                        paddle hands, shell clothes, cap + blob hair, HAIR_MAP from our hair
                        names) on OUR rig (spine / armL > foreL / legL > shinL > footL + sole),

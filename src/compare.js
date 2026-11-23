@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { human } from './subjects/human.js';
-import { buildIsoHuman } from './subjects/human/iso.js';
+import { buildIsoCityHuman } from './subjects/human/isoCity.js';
 import { style } from './styles/index.js';
 import { createPs1Renderer } from './render/ps1.js';
 import { defaultsFor } from './viewer/params.js';
@@ -34,7 +34,7 @@ const cells = looks.map(({ name, p }) => {
   ground.receiveShadow = true;
   scene.add(ground);
   const tune = tuneOf(p);
-  const people = [human.build(p, style), buildIsoHuman(p, style)].map((body, i) => {
+  const people = [human.build(p, style), buildIsoCityHuman(p, style)].map((body, i) => {
     const root = new THREE.Group();
     root.add(body);
     root.position.x = i ? 0.5 : -0.5;
